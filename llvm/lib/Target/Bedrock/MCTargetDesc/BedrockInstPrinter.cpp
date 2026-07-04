@@ -717,6 +717,25 @@ void BedrockInstPrinter::printRegMask16(const MCInst *MI, unsigned OpNo,
   OS << '}';
 }
 
+void BedrockInstPrinter::printFRegMask16(const MCInst *MI, unsigned OpNo,
+                                         raw_ostream &OS) {
+  const MCOperand &Op = MI->getOperand(OpNo);
+  assert(Op.isImm() && "F register mask must be an immediate");
+
+  uint16_t Mask = static_cast<uint16_t>(Op.getImm());
+  OS << '{';
+  bool NeedComma = false;
+  for (unsigned I = 0; I != 16; ++I) {
+    if ((Mask & (uint16_t(1) << I)) == 0)
+      continue;
+    if (NeedComma)
+      OS << ',';
+    NeedComma = true;
+    printRegName(OS, MCRegister(Bedrock::F0 + I));
+  }
+  OS << '}';
+}
+
 void BedrockInstPrinter::printMemoryOrder(const MCInst *MI, unsigned OpNo,
                                           raw_ostream &OS) {
   const MCOperand &Op = MI->getOperand(OpNo);

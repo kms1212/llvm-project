@@ -24,8 +24,10 @@ bool BedrockPeephole::runOnMachineFunction(MachineFunction &MF) {
       !OptNone && profileAtLeast(Profile, BedrockPeepholeProfile::O2);
   bool EnableO2OrSize = EnableO2 || (!OptNone && MF.getFunction().hasMinSize());
   bool Changed = false;
-  if (EnableO1)
+  if (EnableO1) {
     Changed |= foldPrologue(MF);
+    Changed |= foldFPrologue(MF);
+  }
   Changed |= foldEntryLiveInStores(MF);
   SmallVector<MachineBasicBlock *, 8> Blocks;
   for (MachineBasicBlock &MBB : MF)
@@ -106,8 +108,10 @@ bool BedrockPeephole::runOnMachineFunction(MachineFunction &MF) {
       Changed |= foldSumReturnCopy(*MBB, MF);
     if (!OptNone && MF.getFunction().hasMinSize() && MBB->getParent() == &MF)
       Changed |= foldSignedClampReturn(*MBB, MF);
-    if (EnableO1)
+    if (EnableO1) {
       Changed |= foldEpilogue(*MBB, MF);
+      Changed |= foldFEpilogue(*MBB, MF);
+    }
     Changed |= foldFallthroughJumps(*MBB, MF);
   }
   if (!OptNone && MF.getFunction().hasMinSize())

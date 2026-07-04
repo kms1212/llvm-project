@@ -129,6 +129,9 @@ def u6sel8 : Operand<i8>, ImmLeaf<i8, [{
 def regmask16 : Operand<i16> {
   let PrintMethod = "printRegMask16";
 }
+def fregmask16 : Operand<i16> {
+  let PrintMethod = "printFRegMask16";
+}
 
 def memri : Operand<iPTR> {
   let MIOperandInfo = (ops PTR64:$base, i64imm:$offset);
@@ -1343,6 +1346,12 @@ def POPD : BedrockInst<(outs D64:$reg), (ins), "POP\t$reg">;
 def POPA : BedrockInst<(outs A64:$reg), (ins), "POP\t$reg">;
 def POPM : BedrockInst<(outs), (ins regmask16:$regs), "POPM\t$regs">;
 }
+
+let Defs = [SP], Uses = [SP], hasSideEffects = 1, mayStore = 1 in
+def FPUSHM : BedrockInst<(outs), (ins fregmask16:$regs), "FPUSHM\t$regs">;
+
+let Defs = [SP], Uses = [SP], hasSideEffects = 1, mayLoad = 1 in
+def FPOPM : BedrockInst<(outs), (ins fregmask16:$regs), "FPOPM\t$regs">;
 
 class SumR<string Suffix, RegisterClass RC>
     : BedrockInst<(outs RC:$dst), (ins regmask16:$regs),

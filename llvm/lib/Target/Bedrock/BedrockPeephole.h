@@ -96,6 +96,8 @@ private:
   bool foldFallthroughJumps(MachineBasicBlock &MBB, MachineFunction &MF) const;
   bool foldPrologue(MachineFunction &MF) const;
   bool foldEpilogue(MachineBasicBlock &MBB, MachineFunction &MF) const;
+  bool foldFPrologue(MachineFunction &MF) const;
+  bool foldFEpilogue(MachineBasicBlock &MBB, MachineFunction &MF) const;
   bool foldMemoryBitOps(MachineBasicBlock &MBB, MachineFunction &MF) const;
   bool foldMemoryBinStore(MachineBasicBlock &MBB, MachineFunction &MF) const;
   bool foldMemoryBinStoreAcrossDef(MachineBasicBlock &MBB,
@@ -206,12 +208,22 @@ static inline std::optional<unsigned> getMaskBit(Register Reg) {
   return std::nullopt;
 }
 
+static inline std::optional<unsigned> getFMaskBit(Register Reg) {
+  if (Reg >= Bedrock::F0 && Reg <= Bedrock::F15)
+    return Reg - Bedrock::F0;
+  return std::nullopt;
+}
+
 static inline bool isDReg(Register Reg) {
   return Reg >= Bedrock::D0 && Reg <= Bedrock::D7;
 }
 
 static inline bool isAReg(Register Reg) {
   return Reg >= Bedrock::A0 && Reg <= Bedrock::A7;
+}
+
+static inline bool isFReg(Register Reg) {
+  return Reg >= Bedrock::F0 && Reg <= Bedrock::F15;
 }
 
 static inline bool isIntReg(Register Reg) { return isDReg(Reg) || isAReg(Reg); }
@@ -224,6 +236,10 @@ static inline bool fitsDisp16(int64_t Offset) {
 static inline Register getRegForMaskBit(unsigned Bit) {
   return Bit < 8 ? Register(Bedrock::D0 + Bit)
                  : Register(Bedrock::A0 + Bit - 8);
+}
+
+static inline Register getFRegForMaskBit(unsigned Bit) {
+  return Register(Bedrock::F0 + Bit);
 }
 
 static inline std::optional<Register> getSavedDReg(uint16_t Mask) {
@@ -1022,6 +1038,32 @@ static inline bool isCalleeSaveLoad(const MachineInstr &MI, Register &Reg,
   return getMaskBit(Reg).has_value();
 }
 
+static inline bool isCalleeSaveFStore(const MachineInstr &MI, Register &Reg,
+                                      int64_t &Offset) {
+  if (MI.getOpcode() != Bedrock::FMOV64mr || MI.getNumOperands() < 3 ||
+      !MI.getOperand(0).isReg() || !MI.getOperand(1).isReg() ||
+      !MI.getOperand(2).isImm())
+    return false;
+  if (MI.getOperand(1).getReg() != Bedrock::SP)
+    return false;
+  Reg = MI.getOperand(0).getReg();
+  Offset = MI.getOperand(2).getImm();
+  return getFMaskBit(Reg).has_value();
+}
+
+static inline bool isCalleeSaveFLoad(const MachineInstr &MI, Register &Reg,
+                                     int64_t &Offset) {
+  if (MI.getOpcode() != Bedrock::FMOV64rm || MI.getNumOperands() < 3 ||
+      !MI.getOperand(0).isReg() || !MI.getOperand(1).isReg() ||
+      !MI.getOperand(2).isImm())
+    return false;
+  if (MI.getOperand(1).getReg() != Bedrock::SP)
+    return false;
+  Reg = MI.getOperand(0).getReg();
+  Offset = MI.getOperand(2).getImm();
+  return getFMaskBit(Reg).has_value();
+}
+
 static inline bool expectedStoreOffset(uint16_t Mask, Register Reg, int64_t Total,
                                 int64_t Offset) {
   unsigned Seen = 0;
@@ -1030,6 +1072,19 @@ static inline bool expectedStoreOffset(uint16_t Mask, Register Reg, int64_t Tota
       continue;
     ++Seen;
     if (getRegForMaskBit(Bit) == Reg)
+      return Offset == Total - int64_t(Seen) * 8;
+  }
+  return false;
+}
+
+static inline bool expectedFStoreOffset(uint16_t Mask, Register Reg,
+                                        int64_t Total, int64_t Offset) {
+  unsigned Seen = 0;
+  for (unsigned Bit = 0; Bit != 16; ++Bit) {
+    if ((Mask & (uint16_t(1) << Bit)) == 0)
+      continue;
+    ++Seen;
+    if (getFRegForMaskBit(Bit) == Reg)
       return Offset == Total - int64_t(Seen) * 8;
   }
   return false;
@@ -1120,6 +1175,40 @@ buildPopForMask(MachineBasicBlock &MBB, MachineBasicBlock::iterator Insert,
   MachineInstrBuilder Pop =
       BuildMI(MBB, Insert, DL, TII.get(Bedrock::POPM)).addImm(Mask);
   addImplicitPopRegs(Pop, Mask);
+  return Pop;
+}
+
+static inline void addImplicitFPushRegs(MachineInstrBuilder MIB,
+                                        uint16_t Mask) {
+  for (unsigned Bit = 0; Bit != 16; ++Bit) {
+    if ((Mask & (uint16_t(1) << Bit)) != 0)
+      MIB.addReg(getFRegForMaskBit(Bit), RegState::Implicit | RegState::Kill);
+  }
+}
+
+static inline void addImplicitFPopRegs(MachineInstrBuilder MIB,
+                                       uint16_t Mask) {
+  for (unsigned Bit = 0; Bit != 16; ++Bit) {
+    if ((Mask & (uint16_t(1) << Bit)) != 0)
+      MIB.addReg(getFRegForMaskBit(Bit), RegState::Implicit | RegState::Define);
+  }
+}
+
+static inline MachineInstrBuilder
+buildFPushForMask(MachineBasicBlock &MBB, MachineBasicBlock::iterator Insert,
+                  DebugLoc DL, const BedrockInstrInfo &TII, uint16_t Mask) {
+  MachineInstrBuilder Push =
+      BuildMI(MBB, Insert, DL, TII.get(Bedrock::FPUSHM)).addImm(Mask);
+  addImplicitFPushRegs(Push, Mask);
+  return Push;
+}
+
+static inline MachineInstrBuilder
+buildFPopForMask(MachineBasicBlock &MBB, MachineBasicBlock::iterator Insert,
+                 DebugLoc DL, const BedrockInstrInfo &TII, uint16_t Mask) {
+  MachineInstrBuilder Pop =
+      BuildMI(MBB, Insert, DL, TII.get(Bedrock::FPOPM)).addImm(Mask);
+  addImplicitFPopRegs(Pop, Mask);
   return Pop;
 }
 

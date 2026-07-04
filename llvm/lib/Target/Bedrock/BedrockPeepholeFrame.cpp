@@ -167,6 +167,166 @@ bool BedrockPeephole::foldEpilogue(MachineBasicBlock &MBB,
   return true;
 }
 
+bool BedrockPeephole::foldFPrologue(MachineFunction &MF) const {
+  if (MF.empty())
+    return false;
+
+  MachineBasicBlock &MBB = MF.front();
+  auto I = MBB.begin();
+  while (I != MBB.end() &&
+         (isFrameMetaInstruction(*I) || isPushOpcode(I->getOpcode())))
+    ++I;
+  if (I == MBB.end())
+    return false;
+
+  int64_t Total = 0;
+  if (!isStackAdjust(*I, Bedrock::SUB64ri, Total))
+    return false;
+  MachineInstr &Sub = *I;
+
+  SmallVector<MachineInstr *, 8> Stores;
+  uint16_t Mask = 0;
+  for (++I; I != MBB.end(); ++I) {
+    if (isFrameMetaInstruction(*I))
+      continue;
+    Register Reg;
+    int64_t Offset = 0;
+    if (!isCalleeSaveFStore(*I, Reg, Offset))
+      break;
+    std::optional<unsigned> Bit = getFMaskBit(Reg);
+    if (!Bit || (Mask & (uint16_t(1) << *Bit)) != 0)
+      return false;
+    Mask |= uint16_t(1) << *Bit;
+    Stores.push_back(&*I);
+  }
+
+  unsigned MinSavedRegs = MF.getFunction().hasMinSize() ? 1 : 2;
+  if (Stores.size() < MinSavedRegs || int64_t(Stores.size()) * 8 > Total)
+    return false;
+
+  auto RecomputeValidMask = [&]() -> std::optional<uint16_t> {
+    uint16_t CandidateMask = 0;
+    for (MachineInstr *Store : Stores) {
+      Register Reg;
+      int64_t Offset = 0;
+      if (!isCalleeSaveFStore(*Store, Reg, Offset))
+        return std::nullopt;
+      std::optional<unsigned> Bit = getFMaskBit(Reg);
+      if (!Bit || (CandidateMask & (uint16_t(1) << *Bit)) != 0)
+        return std::nullopt;
+      CandidateMask |= uint16_t(1) << *Bit;
+    }
+    if (Stores.size() < MinSavedRegs || int64_t(Stores.size()) * 8 > Total)
+      return std::nullopt;
+    for (MachineInstr *Store : Stores) {
+      Register Reg;
+      int64_t Offset = 0;
+      if (!isCalleeSaveFStore(*Store, Reg, Offset) ||
+          !expectedFStoreOffset(CandidateMask, Reg, Total, Offset))
+        return std::nullopt;
+    }
+    return CandidateMask;
+  };
+
+  while (Stores.size() >= MinSavedRegs) {
+    if (std::optional<uint16_t> CandidateMask = RecomputeValidMask()) {
+      Mask = *CandidateMask;
+      break;
+    }
+    Stores.pop_back();
+  }
+  if (Stores.size() < MinSavedRegs)
+    return false;
+
+  const BedrockInstrInfo &TII =
+      *static_cast<const BedrockInstrInfo *>(MF.getSubtarget().getInstrInfo());
+  DebugLoc DL = Sub.getDebugLoc();
+  MachineInstrBuilder Push =
+      buildFPushForMask(MBB, Sub.getIterator(), DL, TII, Mask);
+  Push.setMIFlag(MachineInstr::FrameSetup);
+
+  int64_t Residual = Total - int64_t(Stores.size()) * 8;
+  if (Residual == 0) {
+    Sub.eraseFromParent();
+  } else {
+    Sub.getOperand(2).setImm(Residual);
+  }
+  for (MachineInstr *Store : Stores)
+    Store->eraseFromParent();
+  return true;
+}
+
+bool BedrockPeephole::foldFEpilogue(MachineBasicBlock &MBB,
+                                    MachineFunction &MF) const {
+  MachineBasicBlock::iterator RetI = MBB.getLastNonDebugInstr();
+  if (RetI == MBB.end() || RetI->getOpcode() != Bedrock::RET)
+    return false;
+  MachineInstr *Ret = &*RetI;
+
+  MachineInstr *Add = nullptr;
+  for (auto I = Ret->getIterator(); I != MBB.begin();) {
+    --I;
+    if (isFrameMetaInstruction(*I) || isPopOpcode(I->getOpcode()))
+      continue;
+    Add = &*I;
+    break;
+  }
+  if (!Add)
+    return false;
+
+  int64_t Total = 0;
+  if (!isStackAdjust(*Add, Bedrock::ADD64ri, Total))
+    return false;
+
+  SmallVector<MachineInstr *, 8> Loads;
+  uint16_t Mask = 0;
+  for (auto I = Add->getIterator(); I != MBB.begin();) {
+    --I;
+    if (isFrameMetaInstruction(*I))
+      continue;
+    Register Reg;
+    int64_t Offset = 0;
+    if (!isCalleeSaveFLoad(*I, Reg, Offset))
+      break;
+    std::optional<unsigned> Bit = getFMaskBit(Reg);
+    if (!Bit || (Mask & (uint16_t(1) << *Bit)) != 0)
+      return false;
+    Mask |= uint16_t(1) << *Bit;
+    Loads.push_back(&*I);
+  }
+
+  unsigned MinSavedRegs = MF.getFunction().hasMinSize() ? 1 : 2;
+  if (Loads.size() < MinSavedRegs || int64_t(Loads.size()) * 8 > Total)
+    return false;
+  for (MachineInstr *Load : Loads) {
+    Register Reg;
+    int64_t Offset = 0;
+    if (!isCalleeSaveFLoad(*Load, Reg, Offset) ||
+        !expectedFStoreOffset(Mask, Reg, Total, Offset))
+      return false;
+  }
+
+  const BedrockInstrInfo &TII =
+      *static_cast<const BedrockInstrInfo *>(MF.getSubtarget().getInstrInfo());
+  DebugLoc DL = Add->getDebugLoc();
+  int64_t Residual = Total - int64_t(Loads.size()) * 8;
+  if (Residual == 0) {
+    MachineInstrBuilder Pop =
+        buildFPopForMask(MBB, Add->getIterator(), DL, TII, Mask);
+    Pop.setMIFlag(MachineInstr::FrameDestroy);
+    Add->eraseFromParent();
+  } else {
+    Add->getOperand(2).setImm(Residual);
+    MachineInstrBuilder Pop =
+        buildFPopForMask(MBB, std::next(Add->getIterator()), DL, TII, Mask);
+    Pop.setMIFlag(MachineInstr::FrameDestroy);
+  }
+
+  for (MachineInstr *Load : Loads)
+    Load->eraseFromParent();
+  return true;
+}
+
 bool BedrockPeephole::foldDeadFrameTopPadding(MachineFunction &MF) const {
   MachineFrameInfo &MFI = MF.getFrameInfo();
   if (MFI.hasVarSizedObjects() || MFI.hasOpaqueSPAdjustment())

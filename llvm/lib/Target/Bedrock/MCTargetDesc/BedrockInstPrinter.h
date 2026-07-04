@@ -45,6 +45,7 @@ public:
                          raw_ostream &OS) const;
   void printCondCode(const MCInst *MI, unsigned OpNo, raw_ostream &OS);
   void printRegMask16(const MCInst *MI, unsigned OpNo, raw_ostream &OS);
+  void printFRegMask16(const MCInst *MI, unsigned OpNo, raw_ostream &OS);
   void printMemoryOrder(const MCInst *MI, unsigned OpNo, raw_ostream &OS);
   void printAbs64Operand(const MCInst *MI, unsigned OpNo, raw_ostream &OS);
   void printEncodedInst(const MCInst *MI, raw_ostream &OS);
