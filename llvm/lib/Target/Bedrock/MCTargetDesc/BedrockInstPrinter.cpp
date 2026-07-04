@@ -209,7 +209,112 @@ static bool printEAValue(raw_ostream &OS, const uint16_t *Words,
     return PrintDisp("", 2, 32);
   if (Value == BEDROCK_EA_ABS64)
     return PrintDisp("", 4, 64);
+  auto PrintImm = [&](size_t WordsToRead, unsigned Bits) -> bool {
+    if (PayloadCursor + WordsToRead > WordCount)
+      return false;
+    OS << signExtendValue(readPayload(Words, PayloadCursor, WordsToRead), Bits);
+    PayloadCursor += WordsToRead;
+    return true;
+  };
+  if (Value == BEDROCK_EA_IMM16)
+    return PrintImm(1, 16);
+  if (Value == BEDROCK_EA_IMM32)
+    return PrintImm(2, 32);
+  if (Value == BEDROCK_EA_IMM64)
+    return PrintImm(4, 64);
   return false;
+}
+
+static const char *condCodeName(uint64_t CC) {
+  switch (CC) {
+  default:
+    return nullptr;
+  case BedrockCC::T:
+    return "T";
+  case BedrockCC::F:
+    return "F";
+  case BedrockCC::EQ:
+    return "EQ";
+  case BedrockCC::NE:
+    return "NE";
+  case BedrockCC::ULT:
+    return "ULT";
+  case BedrockCC::UGE:
+    return "UGE";
+  case BedrockCC::MI:
+    return "MI";
+  case BedrockCC::PL:
+    return "PL";
+  case BedrockCC::VS:
+    return "VS";
+  case BedrockCC::VC:
+    return "VC";
+  case BedrockCC::ULE:
+    return "ULE";
+  case BedrockCC::UGT:
+    return "UGT";
+  case BedrockCC::LT:
+    return "LT";
+  case BedrockCC::GE:
+    return "GE";
+  case BedrockCC::LE:
+    return "LE";
+  case BedrockCC::GT:
+    return "GT";
+  }
+}
+
+static bool printDRegField(raw_ostream &OS, const bedrock_form_desc *Form,
+                           const uint16_t *Words, StringRef Source) {
+  const bedrock_field_desc *Field = findFieldBySource(Form, Source);
+  if (!Field || StringRef(Field->kind) != "DREG")
+    return false;
+  uint64_t RegNo = extractField(Words, Field);
+  if (RegNo >= 8)
+    return false;
+  OS << 'D' << unsigned(RegNo);
+  return true;
+}
+
+static bool printCountBranchEncoded(const uint16_t *Words, size_t WordCount,
+                                    raw_ostream &OS) {
+  const bedrock_form_desc *Form = bedrock_decode_form(Words, WordCount);
+  if (!Form)
+    return false;
+
+  StringRef Mnemonic(Form->mnemonic);
+  if (Mnemonic != "DJcc" && Mnemonic != "IJcc")
+    return false;
+
+  char Suffix = 0;
+  if (!sizeSuffixForForm(Form, Words, Suffix))
+    return false;
+
+  const bedrock_field_desc *CCField = findFieldBySource(Form, "cc");
+  const bedrock_field_desc *TargetField = findFieldBySource(Form, "target");
+  if (!CCField || !TargetField)
+    return false;
+
+  const char *CCName = condCodeName(extractField(Words, CCField));
+  if (!CCName)
+    return false;
+
+  size_t PayloadCursor = payloadStartWord(Form, Words);
+  OS << (Mnemonic == "DJcc" ? "DJ" : "IJ") << CCName << '.' << Suffix << '\t';
+  if (Mnemonic == "DJcc") {
+    if (!printDRegField(OS, Form, Words, "counter"))
+      return false;
+    OS << ", ";
+  } else {
+    if (!printDRegField(OS, Form, Words, "index"))
+      return false;
+    OS << ", ";
+    if (!printDRegField(OS, Form, Words, "bound"))
+      return false;
+    OS << ", ";
+  }
+  return printEAValue(OS, Words, WordCount, extractField(Words, TargetField),
+                      PayloadCursor);
 }
 
 static bool printImmToEAEncoded(const uint16_t *Words, size_t WordCount,
@@ -356,6 +461,9 @@ void BedrockInstPrinter::printEncodedInst(const MCInst *MI, raw_ostream &OS) {
   }
 
   char Text[256];
+  if (printCountBranchEncoded(Words, WordCount, OS))
+    return;
+
   if (printImmToEAEncoded(Words, WordCount, OS))
     return;
 
@@ -580,58 +688,11 @@ void BedrockInstPrinter::printCondCode(const MCInst *MI, unsigned OpNo,
   const MCOperand &Op = MI->getOperand(OpNo);
   assert(Op.isImm() && "condition code must be an immediate");
 
-  switch (Op.getImm()) {
-  default:
-    llvm_unreachable("unknown Bedrock condition code");
-  case BedrockCC::T:
-    OS << "T";
-    return;
-  case BedrockCC::F:
-    OS << "F";
-    return;
-  case BedrockCC::EQ:
-    OS << "EQ";
-    return;
-  case BedrockCC::NE:
-    OS << "NE";
-    return;
-  case BedrockCC::ULT:
-    OS << "ULT";
-    return;
-  case BedrockCC::UGE:
-    OS << "UGE";
-    return;
-  case BedrockCC::MI:
-    OS << "MI";
-    return;
-  case BedrockCC::PL:
-    OS << "PL";
-    return;
-  case BedrockCC::VS:
-    OS << "VS";
-    return;
-  case BedrockCC::VC:
-    OS << "VC";
-    return;
-  case BedrockCC::ULE:
-    OS << "ULE";
-    return;
-  case BedrockCC::UGT:
-    OS << "UGT";
-    return;
-  case BedrockCC::LT:
-    OS << "LT";
-    return;
-  case BedrockCC::GE:
-    OS << "GE";
-    return;
-  case BedrockCC::LE:
-    OS << "LE";
-    return;
-  case BedrockCC::GT:
-    OS << "GT";
+  if (const char *Name = condCodeName(Op.getImm())) {
+    OS << Name;
     return;
   }
+  llvm_unreachable("unknown Bedrock condition code");
 }
 
 void BedrockInstPrinter::printRegMask16(const MCInst *MI, unsigned OpNo,

@@ -41,6 +41,10 @@ generated_fallback:
 	FLOG2.D	F4, F5
 	FETOX.S	F6, F7
 	BSET.L	D2, [A1]
+	DJEQ.L	D0, [A0]
+	DJNE.L	D0, D2
+	IJEQ.Q	D1, D2, [A0]
+	IJGT.Q	D1, D2, D3
 	MOVSETDD	DB1, DB2, {D0-D3}
 	XCHGSETDD	DB1, DB2, {D0-D3}
 
@@ -82,5 +86,9 @@ generated_fallback:
 # CHECK: FLOG2.D{{[[:space:]]+}}F4, F5
 # CHECK: FETOX.S{{[[:space:]]+}}F6, F7
 # CHECK: BSET.L{{[[:space:]]+}}D2, [A1]
+# CHECK: DJEQ.L{{[[:space:]]+}}D0, [A0]
+# CHECK: DJNE.L{{[[:space:]]+}}D0, D2
+# CHECK: IJEQ.Q{{[[:space:]]+}}D1, D2, [A0]
+# CHECK: IJGT.Q{{[[:space:]]+}}D1, D2, D3
 # CHECK: MOVSETDD{{[[:space:]]+}}DB1, DB2, {D0-D3}
 # CHECK: XCHGSETDD{{[[:space:]]+}}DB1, DB2, {D0-D3}
