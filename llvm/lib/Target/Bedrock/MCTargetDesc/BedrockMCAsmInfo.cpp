@@ -60,6 +60,7 @@ BedrockMCAsmInfo::BedrockMCAsmInfo(const Triple &TT) {
   PrivateGlobalPrefix = ".L";
   UsesELFSectionDirectiveForBSS = true;
   SupportsDebugInformation = true;
+  ExceptionsType = ExceptionHandling::DwarfCFI;
 
   initializeAtSpecifiers(BedrockAtSpecifiers);
 }

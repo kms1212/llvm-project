@@ -5292,6 +5292,9 @@ bool BedrockPushPopMerge::foldDeadPlainDefs(MachineFunction &MF) const {
   for (MachineBasicBlock &MBB : MF) {
     for (auto I = MBB.begin(); I != MBB.end();) {
       MachineInstr &MI = *I++;
+      if (MI.getFlag(MachineInstr::FrameSetup) ||
+          MI.getFlag(MachineInstr::FrameDestroy))
+        continue;
       Register Reg;
       bool IsCandidate = !MI.isDebugInstr() && isPlainDeadDefCandidate(MI, Reg);
       if (!IsCandidate) {

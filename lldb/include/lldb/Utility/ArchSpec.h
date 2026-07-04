@@ -236,6 +236,8 @@ public:
 
     eCore_wasm32,
 
+    eCore_bedrock,
+
     kNumCores,
 
     kCore_invalid,

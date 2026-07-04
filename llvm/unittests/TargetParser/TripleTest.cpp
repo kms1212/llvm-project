@@ -2924,6 +2924,8 @@ TEST(TripleTest, DefaultExceptionHandling) {
             Triple("lanai-unknown-unknown").getDefaultExceptionHandling());
   EXPECT_EQ(ExceptionHandling::DwarfCFI,
             Triple("arc-unknown-unknown").getDefaultExceptionHandling());
+  EXPECT_EQ(ExceptionHandling::DwarfCFI,
+            Triple("bedrock-unknown-unknown").getDefaultExceptionHandling());
   EXPECT_EQ(
       ExceptionHandling::DwarfCFI,
       Triple("loongarch32-unknown-unknown").getDefaultExceptionHandling());

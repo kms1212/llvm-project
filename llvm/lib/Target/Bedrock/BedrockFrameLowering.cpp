@@ -14,9 +14,28 @@
 #include "llvm/CodeGen/MachineFrameInfo.h"
 #include "llvm/CodeGen/MachineFunction.h"
 #include "llvm/CodeGen/MachineInstrBuilder.h"
+#include "llvm/MC/MCDwarf.h"
 #include "llvm/Target/TargetMachine.h"
 
+#include <iterator>
+
 using namespace llvm;
+
+static constexpr int64_t BedrockReturnAddressSize = 8;
+
+static bool needsDwarfCFI(const MachineFunction &MF) {
+  return MF.needsFrameMoves();
+}
+
+static void buildCFI(MachineFunction &MF, MachineBasicBlock &MBB,
+                     MachineBasicBlock::iterator MBBI, const DebugLoc &DL,
+                     const BedrockInstrInfo &TII, const MCCFIInstruction &Inst,
+                     MachineInstr::MIFlag Flag) {
+  unsigned CFIIndex = MF.addFrameInst(Inst);
+  BuildMI(MBB, MBBI, DL, TII.get(TargetOpcode::CFI_INSTRUCTION))
+      .addCFIIndex(CFIIndex)
+      .setMIFlag(Flag);
+}
 
 BedrockFrameLowering::BedrockFrameLowering(const BedrockSubtarget &STI)
     : TargetFrameLowering(TargetFrameLowering::StackGrowsDown, Align(16), 0,
@@ -81,11 +100,20 @@ void BedrockFrameLowering::emitPrologue(MachineFunction &MF,
   const BedrockInstrInfo &TII = *STI.getInstrInfo();
   MachineBasicBlock::iterator MBBI = MBB.begin();
   DebugLoc DL = MBBI != MBB.end() ? MBBI->getDebugLoc() : DebugLoc();
+  const bool NeedsCFI = needsDwarfCFI(MF);
+  const TargetRegisterInfo &TRI = *MF.getSubtarget().getRegisterInfo();
 
   BuildMI(MBB, MBBI, DL, TII.get(Bedrock::SUB64ri), Bedrock::SP)
       .addReg(Bedrock::SP)
       .addImm(StackSize)
       .setMIFlag(MachineInstr::FrameSetup);
+
+  if (NeedsCFI) {
+    buildCFI(MF, MBB, MBBI, DL, TII,
+             MCCFIInstruction::cfiDefCfaOffset(
+                 nullptr, StackSize + BedrockReturnAddressSize),
+             MachineInstr::FrameSetup);
+  }
 
   if (HasFP) {
     BuildMI(MBB, MBBI, DL, TII.get(Bedrock::MOV64mr))
@@ -93,9 +121,40 @@ void BedrockFrameLowering::emitPrologue(MachineFunction &MF,
         .addReg(Bedrock::SP)
         .addImm(0)
         .setMIFlag(MachineInstr::FrameSetup);
+    if (NeedsCFI) {
+      buildCFI(MF, MBB, MBBI, DL, TII,
+               MCCFIInstruction::createOffset(
+                   nullptr, TRI.getDwarfRegNum(Bedrock::A7, true),
+                   -int64_t(StackSize + BedrockReturnAddressSize)),
+               MachineInstr::FrameSetup);
+    }
+
     BuildMI(MBB, MBBI, DL, TII.get(Bedrock::MOV64rr), Bedrock::A7)
         .addReg(Bedrock::SP)
         .setMIFlag(MachineInstr::FrameSetup);
+    if (NeedsCFI) {
+      buildCFI(MF, MBB, MBBI, DL, TII,
+               MCCFIInstruction::cfiDefCfa(
+                   nullptr, TRI.getDwarfRegNum(Bedrock::A7, true),
+                   StackSize + BedrockReturnAddressSize),
+               MachineInstr::FrameSetup);
+    }
+  }
+
+  if (NeedsCFI) {
+    MachineBasicBlock::iterator AfterCSI = MBBI;
+    const std::vector<CalleeSavedInfo> &CSI = MFI.getCalleeSavedInfo();
+    std::advance(AfterCSI, CSI.size());
+    for (const CalleeSavedInfo &Entry : CSI) {
+      if (HasFP && Entry.getReg() == Bedrock::A7)
+        continue;
+      int64_t Offset =
+          MFI.getObjectOffset(Entry.getFrameIdx()) - BedrockReturnAddressSize;
+      buildCFI(MF, MBB, AfterCSI, DL, TII,
+               MCCFIInstruction::createOffset(
+                   nullptr, TRI.getDwarfRegNum(Entry.getReg(), true), Offset),
+               MachineInstr::FrameSetup);
+    }
   }
 }
 

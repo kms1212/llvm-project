@@ -138,6 +138,15 @@ TEST(ArchSpecTest, TestSetTriple) {
   EXPECT_EQ(ArchSpec::eCore_msp430, AS.GetCore());
 
   AS = ArchSpec();
+  EXPECT_TRUE(AS.SetTriple("bedrock-unknown-unknown"));
+  EXPECT_EQ(llvm::Triple::bedrock, AS.GetTriple().getArch());
+  EXPECT_STREQ("bedrock", AS.GetArchitectureName());
+  EXPECT_EQ(ArchSpec::eCore_bedrock, AS.GetCore());
+  EXPECT_EQ(8u, AS.GetAddressByteSize());
+  EXPECT_EQ(2u, AS.GetMinimumOpcodeByteSize());
+  EXPECT_EQ(16u, AS.GetMaximumOpcodeByteSize());
+
+  AS = ArchSpec();
   EXPECT_TRUE(AS.SetTriple("amd64-unknown-openbsd"));
   EXPECT_EQ(llvm::Triple::x86_64, AS.GetTriple().getArch());
   EXPECT_STREQ("amd64", AS.GetArchitectureName());
@@ -235,6 +244,19 @@ TEST(ArchSpecTest, MergeFrom) {
     EXPECT_EQ(llvm::Triple::OSType::Linux, A.GetTriple().getOS());
     EXPECT_EQ(llvm::Triple::EnvironmentType::UnknownEnvironment,
               A.GetTriple().getEnvironment());
+  }
+  {
+    ArchSpec A;
+    A.SetArchitecture(eArchTypeELF, llvm::ELF::EM_BEDROCK, LLDB_INVALID_CPUTYPE,
+                      llvm::ELF::ELFOSABI_NONE);
+
+    EXPECT_TRUE(A.IsValid());
+    EXPECT_EQ(llvm::Triple::ArchType::bedrock, A.GetTriple().getArch());
+    EXPECT_EQ(llvm::Triple::VendorType::UnknownVendor,
+              A.GetTriple().getVendor());
+    EXPECT_EQ(llvm::Triple::OSType::UnknownOS, A.GetTriple().getOS());
+    EXPECT_EQ(ArchSpec::eCore_bedrock, A.GetCore());
+    EXPECT_STREQ("bedrock", A.GetArchitectureName());
   }
   {
     ArchSpec A("arm--linux-eabihf");

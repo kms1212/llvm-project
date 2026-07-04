@@ -56,7 +56,6 @@ public:
     aarch64_32,  // AArch64 (little endian) ILP32: aarch64_32
     arc,         // ARC: Synopsys ARC
     avr,         // AVR: Atmel AVR microcontroller
-    bedrock,     // Bedrock: 64-bit little-endian word-oriented CISC
     bpfel,       // eBPF or extended BPF or 64-bit BPF (little endian)
     bpfeb,       // eBPF or extended BPF or 64-bit BPF (big endian)
     csky,        // CSKY: csky
@@ -111,7 +110,8 @@ public:
     renderscript32, // 32-bit RenderScript
     renderscript64, // 64-bit RenderScript
     ve,             // NEC SX-Aurora Vector Engine
-    LastArchType = ve
+    bedrock,        // Bedrock: 64-bit little-endian word-oriented CISC
+    LastArchType = bedrock
   };
   enum SubArchType {
     NoSubArch,
