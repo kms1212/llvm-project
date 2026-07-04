@@ -21,6 +21,12 @@ add_llvm_target(BedrockCodeGen
   BedrockMachineFunctionInfo.cpp
   BedrockMCInstLower.cpp
   BedrockPushPopMerge.cpp
+  BedrockPushPopMergeArithmetic.cpp
+  BedrockPushPopMergeCore.cpp
+  BedrockPushPopMergeFrame.cpp
+  BedrockPushPopMergeLoops.cpp
+  BedrockPushPopMergeMemory.cpp
+  BedrockPushPopMergeStack.cpp
   BedrockRegisterInfo.cpp
   BedrockSelectionDAGInfo.cpp
   BedrockSubtarget.cpp
