@@ -11,6 +11,9 @@ define i64 @call_indirect(ptr %f, i64 %x) {
 ; DIS-NOT:   @PCREL32
 ; DIS:       RET
 ; RELOC:     Relocations [
+; RELOC-NEXT:  Section {{.*}} .rela.eh_frame {
+; RELOC-NEXT:    0x20 R_BEDROCK_PCREL32 .text 0x0
+; RELOC-NEXT:  }
 ; RELOC-NEXT: ]
 entry:
   %r = call i64 %f(i64 %x)

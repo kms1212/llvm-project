@@ -254,7 +254,10 @@ static std::optional<Register> singleRegFromMask(uint16_t Mask) {
   return std::nullopt;
 }
 
-static bool fitsImm6(uint64_t Value) { return Value < 64; }
+static bool fitsImm6(int64_t Value) {
+  return Value >= 0 && Value < 64 && Value != 50 && Value != 51 &&
+         Value != 52;
+}
 
 static MachineBasicBlock::iterator nextNonDebug(MachineBasicBlock::iterator I,
                                                 MachineBasicBlock &MBB) {
@@ -990,6 +993,10 @@ static bool isStackAdjust(const MachineInstr &MI, unsigned Opcode,
     return false;
   Amount = MI.getOperand(2).getImm();
   return Amount >= 0;
+}
+
+static bool isFrameMetaInstruction(const MachineInstr &MI) {
+  return MI.isDebugInstr() || MI.getOpcode() == TargetOpcode::CFI_INSTRUCTION;
 }
 
 static bool isCalleeSaveStore(const MachineInstr &MI, Register &Reg,
@@ -1840,7 +1847,7 @@ static bool canEncodeMemImmFlagOpcode(unsigned RegOpcode, int64_t Imm) {
   case Bedrock::TEST16ri:
   case Bedrock::TEST32ri:
   case Bedrock::TEST64ri:
-    return Imm >= 0 && Imm < 64;
+    return fitsImm6(Imm);
   }
 }
 
@@ -2842,13 +2849,13 @@ static unsigned getProfitableCmpImmOpcode(unsigned MovOpcode,
   case Bedrock::CMP16rr:
     return MovOpcode == Bedrock::MOV16ri ? Bedrock::CMP16ri : 0;
   case Bedrock::CMP32rr:
-    return MovOpcode == Bedrock::MOV32ri && Imm > 0 && Imm < 64
-               ? Bedrock::CMP32ri
-               : 0;
+    if (MovOpcode == Bedrock::MOV32ri && Imm > 0 && fitsImm6(Imm))
+      return Bedrock::CMP32ri;
+    return 0;
   case Bedrock::CMP64rr:
-    return MovOpcode == Bedrock::MOV64ri && Imm > 0 && Imm < 64
-               ? Bedrock::CMP64ri
-               : 0;
+    if (MovOpcode == Bedrock::MOV64ri && Imm > 0 && fitsImm6(Imm))
+      return Bedrock::CMP64ri;
+    return 0;
   }
 }
 
@@ -5141,7 +5148,7 @@ bool BedrockPushPopMerge::foldAndTestToImmTest(MachineBasicBlock &MBB,
     Register AndDst = And.getOperand(0).getReg();
     Register AndSrc = And.getOperand(1).getReg();
     int64_t Mask = And.getOperand(2).getImm();
-    if (Mask <= 0 || Mask >= 64 || !regsOverlap(TRI, AndDst, AndSrc)) {
+    if (Mask <= 0 || !fitsImm6(Mask) || !regsOverlap(TRI, AndDst, AndSrc)) {
       ++I;
       continue;
     }
@@ -7203,7 +7210,7 @@ bool BedrockPushPopMerge::foldPrologue(MachineFunction &MF) const {
 
   MachineBasicBlock &MBB = MF.front();
   auto I = MBB.begin();
-  while (I != MBB.end() && I->isDebugInstr())
+  while (I != MBB.end() && isFrameMetaInstruction(*I))
     ++I;
   if (I == MBB.end())
     return false;
@@ -7216,7 +7223,7 @@ bool BedrockPushPopMerge::foldPrologue(MachineFunction &MF) const {
   SmallVector<MachineInstr *, 8> Stores;
   uint16_t Mask = 0;
   for (++I; I != MBB.end(); ++I) {
-    if (I->isDebugInstr())
+    if (isFrameMetaInstruction(*I))
       continue;
     Register Reg;
     int64_t Offset = 0;
@@ -7295,7 +7302,7 @@ bool BedrockPushPopMerge::foldEpilogue(MachineBasicBlock &MBB,
   MachineInstr *Add = nullptr;
   for (auto I = Ret->getIterator(); I != MBB.begin();) {
     --I;
-    if (I->isDebugInstr())
+    if (isFrameMetaInstruction(*I))
       continue;
     Add = &*I;
     break;
@@ -7311,7 +7318,7 @@ bool BedrockPushPopMerge::foldEpilogue(MachineBasicBlock &MBB,
   uint16_t Mask = 0;
   for (auto I = Add->getIterator(); I != MBB.begin();) {
     --I;
-    if (I->isDebugInstr())
+    if (isFrameMetaInstruction(*I))
       continue;
     Register Reg;
     int64_t Offset = 0;
@@ -7767,7 +7774,7 @@ bool BedrockPushPopMerge::foldMemoryImmBinStore(MachineBasicBlock &MBB,
           EncImm = -EncImm;
         }
       }
-      if (EncImm < 0 || EncImm >= 64) {
+      if (!fitsImm6(EncImm)) {
         ++I;
         continue;
       }
@@ -8007,8 +8014,8 @@ bool BedrockPushPopMerge::foldMemoryImmFlagOp(MachineBasicBlock &MBB,
           CmpI->getOperand(1).isReg() &&
           regsOverlap(TRI, CmpI->getOperand(0).getReg(), AndDst) &&
           regsOverlap(TRI, CmpI->getOperand(1).getReg(), AndDst);
-      if ((IsCmpZero || IsCmpKnownZero || IsTestSelf) && Mask >= 0 &&
-          Mask < 64 && regsOverlap(TRI, AndDst, AndLHS) &&
+      if ((IsCmpZero || IsCmpKnownZero || IsTestSelf) && fitsImm6(Mask) &&
+          regsOverlap(TRI, AndDst, AndLHS) &&
           regsOverlap(TRI, AndLHS, Loaded) &&
           (regsOverlap(TRI, AndDst, Loaded) ||
            operandIsKill(*OpI, Loaded, TRI) ||
@@ -20280,6 +20287,8 @@ bool BedrockPushPopMerge::legalizeLargeStackAdjustments(
     MachineBasicBlock::iterator Insert = MI.getIterator();
     while (Amount != 0) {
       uint64_t Chunk = std::min<uint64_t>(Amount, 63);
+      while (!fitsImm6(Chunk))
+        --Chunk;
       BuildMI(MBB, Insert, DL, TII.get(Opcode), Bedrock::SP)
           .addReg(Bedrock::SP)
           .addImm(Chunk)

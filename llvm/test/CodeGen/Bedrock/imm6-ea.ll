@@ -86,6 +86,29 @@ entry:
   ret void
 }
 
+define void @add_mem_reserved_imm6(ptr %p) {
+; CHECK-LABEL: add_mem_reserved_imm6:
+; CHECK-NOT: ADD.L{{[[:space:]]+}}51, [A0]
+; CHECK: MOV.L{{[[:space:]]+}}[A0], D0
+; CHECK: ADD.L{{[[:space:]]+}}51, D0
+; CHECK: MOV.L{{[[:space:]]+}}D0, [A0]
+; CHECK: RET
+entry:
+  %v = load i32, ptr %p, align 4
+  %r = add i32 %v, 51
+  store i32 %r, ptr %p, align 4
+  ret void
+}
+
+define i64 @shift_reserved_selector(i64 %x) {
+; CHECK-LABEL: shift_reserved_selector:
+; CHECK: SHL.Q{{[[:space:]]+}}51, D0
+; CHECK: RET
+entry:
+  %r = shl i64 %x, 51
+  ret i64 %r
+}
+
 define void @sub_mem_dec(ptr %p) {
 ; CHECK-LABEL: sub_mem_dec:
 ; CHECK: DEC.L{{[[:space:]]+}}[A0]

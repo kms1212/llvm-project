@@ -1,5 +1,5 @@
-; RUN: llc -mtriple=bedrock-unknown-unknown -O0 < %s | FileCheck %s
-; RUN: llc -mtriple=bedrock-unknown-unknown -O2 < %s | FileCheck %s
+; RUN: llc -mtriple=bedrock-unknown-unknown -O0 < %s | FileCheck %s --check-prefixes=CHECK,O0
+; RUN: llc -mtriple=bedrock-unknown-unknown -O2 < %s | FileCheck %s --check-prefixes=CHECK,O2
 
 target triple = "bedrock-unknown-unknown"
 
@@ -17,18 +17,27 @@ entry:
 define void @many_csr(ptr %p) uwtable {
 ; CHECK-LABEL: many_csr:
 ; CHECK-NEXT: .cfi_startproc
-; CHECK: SUB.Q 40, SP
-; CHECK-NEXT: .cfi_def_cfa_offset 48
-; CHECK: MOV.Q D6, [SP + 32]
-; CHECK: MOV.Q D7, [SP + 24]
-; CHECK: MOV.Q A6, [SP + 16]
-; CHECK: MOV.Q A7, [SP + 8]
+; O0: SUB.Q 40, SP
+; O0-NEXT: .cfi_def_cfa_offset 48
+; O0: MOV.Q D6, [SP + 32]
+; O0: MOV.Q D7, [SP + 24]
+; O0: MOV.Q A6, [SP + 16]
+; O0: MOV.Q A7, [SP + 8]
+; O2: PUSHM {D6,D7,A6,A7}
+; O2-NEXT: .cfi_def_cfa_offset 48
 ; CHECK: .cfi_offset D6, -16
 ; CHECK-NEXT: .cfi_offset D7, -24
 ; CHECK-NEXT: .cfi_offset A6, -32
 ; CHECK-NEXT: .cfi_offset A7, -40
-; CHECK: CALL use@PCREL16
-; CHECK: RET
+; O0: CALL use@PCREL16
+; O0: MOV.Q [SP + 8], A7
+; O0: MOV.Q [SP + 16], A6
+; O0: MOV.Q [SP + 24], D7
+; O0: MOV.Q [SP + 32], D6
+; O0: ADD.Q 40, SP
+; O0: RET
+; O2: POPM {D6,D7,A6,A7}
+; O2-NEXT: JMP.W use@WORD_PCREL16
 ; CHECK: .cfi_endproc
 entry:
   call void asm sideeffect "", "~{d6},~{d7},~{a6},~{a7}"()

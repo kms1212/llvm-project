@@ -547,6 +547,7 @@ default:
 define i64 @stack_slot(i64 %a) {
 ; CHECK-LABEL: stack_slot:
 ; CHECK:       SUB.Q 16, SP
+; CHECK-NEXT:  .cfi_def_cfa_offset 24
 ; CHECK-NEXT:  MOV.Q D0, [SP + 8]
 ; CHECK-NEXT:  MOV.Q [SP + 8], D0
 ; CHECK-NEXT:  ADD.Q 16, SP
@@ -563,6 +564,7 @@ declare void @use_ptr(ptr)
 define void @frame_addr_arg() {
 ; CHECK-LABEL: frame_addr_arg:
 ; CHECK:       SUB.Q 24, SP
+; CHECK-NEXT:  .cfi_def_cfa_offset 32
 ; CHECK-NEXT:  LEA [SP + 16], A0
 ; CHECK-NEXT:  CALL use_ptr@PCREL16
 ; CHECK-NEXT:  ADD.Q 24, SP

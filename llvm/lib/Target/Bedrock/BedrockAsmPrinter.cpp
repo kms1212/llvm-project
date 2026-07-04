@@ -730,6 +730,9 @@ static bool compactImmEA6Encoding(uint16_t *Words, size_t &WordCount,
   unsigned ImmPayloadWords = immediateEAPayloadWords(EncodedImmEA);
   if (ImmPayloadWords == 0)
     return true;
+  if (EncodedImmEA == BEDROCK_EA_IMM16 || EncodedImmEA == BEDROCK_EA_IMM32 ||
+      EncodedImmEA == BEDROCK_EA_IMM64)
+    return false;
 
   size_t PayloadStart = payloadStartWord(Form, Words);
   if (PayloadStart + ImmPayloadWords > WordCount)

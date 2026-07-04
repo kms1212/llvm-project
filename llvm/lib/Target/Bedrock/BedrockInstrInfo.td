@@ -94,28 +94,31 @@ def shortimm64 : Operand<i64> {
   let PrintMethod = "printShortImmOperand";
 }
 def u6imm8 : Operand<i8>, ImmLeaf<i8, [{
-  return Imm >= 0 && Imm < 64;
+  return Imm >= 0 && Imm < 64 && Imm != 50 && Imm != 51 && Imm != 52;
 }]>;
 def u6imm16 : Operand<i16>, ImmLeaf<i16, [{
-  return Imm >= 0 && Imm < 64;
+  return Imm >= 0 && Imm < 64 && Imm != 50 && Imm != 51 && Imm != 52;
 }]>;
 def u6imm32 : Operand<i32>, ImmLeaf<i32, [{
-  return Imm >= 0 && Imm < 64;
+  return Imm >= 0 && Imm < 64 && Imm != 50 && Imm != 51 && Imm != 52;
 }]>;
 def u6imm64 : Operand<i64>, ImmLeaf<i64, [{
-  return Imm >= 0 && Imm < 64;
+  return Imm >= 0 && Imm < 64 && Imm != 50 && Imm != 51 && Imm != 52;
 }]>;
 def u6nzimm8 : ImmLeaf<i8, [{
-  return Imm > 0 && Imm < 64;
+  return Imm > 0 && Imm < 64 && Imm != 50 && Imm != 51 && Imm != 52;
 }]>;
 def u6nzimm16 : ImmLeaf<i16, [{
-  return Imm > 0 && Imm < 64;
+  return Imm > 0 && Imm < 64 && Imm != 50 && Imm != 51 && Imm != 52;
 }]>;
 def u6nzimm32 : ImmLeaf<i32, [{
-  return Imm > 0 && Imm < 64;
+  return Imm > 0 && Imm < 64 && Imm != 50 && Imm != 51 && Imm != 52;
 }]>;
 def u6nzimm64 : ImmLeaf<i64, [{
-  return Imm > 0 && Imm < 64;
+  return Imm > 0 && Imm < 64 && Imm != 50 && Imm != 51 && Imm != 52;
+}]>;
+def u6sel8 : Operand<i8>, ImmLeaf<i8, [{
+  return Imm >= 0 && Imm < 64;
 }]>;
 def regmask16 : Operand<i16> {
   let PrintMethod = "printRegMask16";
@@ -868,20 +871,20 @@ class ShiftMR<string Mnemonic, string Suffix>
   let Defs = [FLAGS];
 }
 
-def SHL8ri  : ShiftRI<"SHL", "B", GPR8, u6imm8, shl>;
-def SHL16ri : ShiftRI<"SHL", "W", GPR16, u6imm8, shl>;
-def SHL32ri : ShiftRI<"SHL", "L", GPR32, u6imm8, shl>;
-def SHL64ri : ShiftRI<"SHL", "Q", GPR64, u6imm8, shl>;
+def SHL8ri  : ShiftRI<"SHL", "B", GPR8, u6sel8, shl>;
+def SHL16ri : ShiftRI<"SHL", "W", GPR16, u6sel8, shl>;
+def SHL32ri : ShiftRI<"SHL", "L", GPR32, u6sel8, shl>;
+def SHL64ri : ShiftRI<"SHL", "Q", GPR64, u6sel8, shl>;
 
-def SHR8ri  : ShiftRI<"SHR", "B", GPR8, u6imm8, srl>;
-def SHR16ri : ShiftRI<"SHR", "W", GPR16, u6imm8, srl>;
-def SHR32ri : ShiftRI<"SHR", "L", GPR32, u6imm8, srl>;
-def SHR64ri : ShiftRI<"SHR", "Q", GPR64, u6imm8, srl>;
+def SHR8ri  : ShiftRI<"SHR", "B", GPR8, u6sel8, srl>;
+def SHR16ri : ShiftRI<"SHR", "W", GPR16, u6sel8, srl>;
+def SHR32ri : ShiftRI<"SHR", "L", GPR32, u6sel8, srl>;
+def SHR64ri : ShiftRI<"SHR", "Q", GPR64, u6sel8, srl>;
 
-def SAR8ri  : ShiftRI<"SAR", "B", GPR8, u6imm8, sra>;
-def SAR16ri : ShiftRI<"SAR", "W", GPR16, u6imm8, sra>;
-def SAR32ri : ShiftRI<"SAR", "L", GPR32, u6imm8, sra>;
-def SAR64ri : ShiftRI<"SAR", "Q", GPR64, u6imm8, sra>;
+def SAR8ri  : ShiftRI<"SAR", "B", GPR8, u6sel8, sra>;
+def SAR16ri : ShiftRI<"SAR", "W", GPR16, u6sel8, sra>;
+def SAR32ri : ShiftRI<"SAR", "L", GPR32, u6sel8, sra>;
+def SAR64ri : ShiftRI<"SAR", "Q", GPR64, u6sel8, sra>;
 
 def SHL8rr  : ShiftRR<"SHL", "B", GPR8, shl>;
 def SHL16rr : ShiftRR<"SHL", "W", GPR16, shl>;
@@ -898,18 +901,18 @@ def SAR16rr : ShiftRR<"SAR", "W", GPR16, sra>;
 def SAR32rr : ShiftRR<"SAR", "L", GPR32, sra>;
 def SAR64rr : ShiftRR<"SAR", "Q", GPR64, sra>;
 
-def SHL8mi  : ShiftMI<"SHL", "B", u6imm8>;
-def SHL16mi : ShiftMI<"SHL", "W", u6imm8>;
-def SHL32mi : ShiftMI<"SHL", "L", u6imm8>;
-def SHL64mi : ShiftMI<"SHL", "Q", u6imm8>;
-def SHR8mi  : ShiftMI<"SHR", "B", u6imm8>;
-def SHR16mi : ShiftMI<"SHR", "W", u6imm8>;
-def SHR32mi : ShiftMI<"SHR", "L", u6imm8>;
-def SHR64mi : ShiftMI<"SHR", "Q", u6imm8>;
-def SAR8mi  : ShiftMI<"SAR", "B", u6imm8>;
-def SAR16mi : ShiftMI<"SAR", "W", u6imm8>;
-def SAR32mi : ShiftMI<"SAR", "L", u6imm8>;
-def SAR64mi : ShiftMI<"SAR", "Q", u6imm8>;
+def SHL8mi  : ShiftMI<"SHL", "B", u6sel8>;
+def SHL16mi : ShiftMI<"SHL", "W", u6sel8>;
+def SHL32mi : ShiftMI<"SHL", "L", u6sel8>;
+def SHL64mi : ShiftMI<"SHL", "Q", u6sel8>;
+def SHR8mi  : ShiftMI<"SHR", "B", u6sel8>;
+def SHR16mi : ShiftMI<"SHR", "W", u6sel8>;
+def SHR32mi : ShiftMI<"SHR", "L", u6sel8>;
+def SHR64mi : ShiftMI<"SHR", "Q", u6sel8>;
+def SAR8mi  : ShiftMI<"SAR", "B", u6sel8>;
+def SAR16mi : ShiftMI<"SAR", "W", u6sel8>;
+def SAR32mi : ShiftMI<"SAR", "L", u6sel8>;
+def SAR64mi : ShiftMI<"SAR", "Q", u6sel8>;
 
 def SHL8mr  : ShiftMR<"SHL", "B">;
 def SHL16mr : ShiftMR<"SHL", "W">;
@@ -1233,14 +1236,14 @@ def CLMUL32rr : CLMULRR<"L", D32>;
 def CLMUL64rr : CLMULRR<"Q", D64>;
 
 class BitOpRI<string Mnemonic, string Suffix, RegisterClass RC>
-    : BedrockInst<(outs RC:$dst), (ins RC:$src, u6imm8:$idx),
+    : BedrockInst<(outs RC:$dst), (ins RC:$src, u6sel8:$idx),
                   Mnemonic # "." # Suffix # "\t$idx, $dst"> {
   let Constraints = "$dst = $src";
   let Defs = [FLAGS];
 }
 
 class BitOpMI<string Mnemonic, string Suffix>
-    : BedrockInst<(outs), (ins u6imm8:$idx, memri:$addr),
+    : BedrockInst<(outs), (ins u6sel8:$idx, memri:$addr),
                   Mnemonic # "." # Suffix # "\t$idx, $addr"> {
   let mayLoad = 1;
   let mayStore = 1;
@@ -1274,7 +1277,7 @@ def BCHG32mi : BitOpMI<"BCHG", "L">;
 def BCHG64mi : BitOpMI<"BCHG", "Q">;
 
 class BTestRI<string Suffix, RegisterClass RC>
-    : BedrockInst<(outs), (ins RC:$src, u6imm8:$idx),
+    : BedrockInst<(outs), (ins RC:$src, u6sel8:$idx),
                   "BTEST." # Suffix # "\t$idx, $src"> {
   let Defs = [FLAGS];
 }
