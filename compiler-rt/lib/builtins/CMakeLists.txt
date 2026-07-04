@@ -730,6 +730,14 @@ endif()
 
 set(amdgcn_SOURCES ${GENERIC_SOURCES})
 
+set(bedrock_SOURCES
+  ${GENERIC_SOURCES}
+  bedrock/memcmp.S
+  bedrock/memcpy.S
+  bedrock/memmove.S
+  bedrock/memset.S
+)
+
 set(armv4t_SOURCES ${arm_min_SOURCES})
 set(armv5te_SOURCES ${arm_min_SOURCES})
 set(armv6_SOURCES ${arm_min_SOURCES})

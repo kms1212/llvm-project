@@ -261,6 +261,7 @@ void ScalarEnumerationTraits<ELFYAML::ELF_EM>::enumeration(
   ECase(EM_HUANY);
   ECase(EM_PRISM);
   ECase(EM_AVR);
+  ECase(EM_BEDROCK);
   ECase(EM_FR30);
   ECase(EM_D10V);
   ECase(EM_D30V);
@@ -943,6 +944,9 @@ void ScalarEnumerationTraits<ELFYAML::ELF_REL>::enumeration(
     break;
   case ELF::EM_AARCH64:
 #include "llvm/BinaryFormat/ELFRelocs/AArch64.def"
+    break;
+  case ELF::EM_BEDROCK:
+#include "llvm/BinaryFormat/ELFRelocs/Bedrock.def"
     break;
   case ELF::EM_ARM:
 #include "llvm/BinaryFormat/ELFRelocs/ARM.def"

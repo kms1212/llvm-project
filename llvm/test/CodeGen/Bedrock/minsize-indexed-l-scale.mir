@@ -1,0 +1,188 @@
+# RUN: llc -mtriple=bedrock -start-before=bedrock-push-pop-merge -stop-after=bedrock-push-pop-merge -verify-machineinstrs %s -o - | FileCheck %s
+
+# CHECK-LABEL: name: indexed_l_scale_from_scaled_d
+# CHECK:       $d2 = MOV32idx4lrm $sp, $d1, 16
+# CHECK-NOT:   EXTZQ32rr
+# CHECK-NOT:   SHL64ri
+# CHECK-NOT:   MOV32idx1rm
+
+# CHECK-LABEL: name: indexed_l_scale_scaled_value_live
+# CHECK:       $d0 = EXTZQ32rr $d1
+# CHECK:       $d0 = SHL64ri $d0, 2
+# CHECK:       $d2 = MOV32idx1rm $sp, $d0, 16
+# CHECK:       $d3 = MOV32rr $d0
+
+# CHECK-LABEL: name: indexed_l_scale_from_ext_idx4
+# CHECK:       $d2 = MOV32idx4lrm $a0, $d1, 0
+# CHECK-NOT:   EXTZQ32rr
+# CHECK-NOT:   MOV32idx4rm
+
+# CHECK-LABEL: name: indexed_l_scale_memcopy
+# CHECK-NOT:   EXTZQ32rr
+# CHECK-NOT:   SHL64ri
+# CHECK:       $d0 = MOV32idx4lrm $sp, $d2, 56
+# CHECK-NEXT:  MOV32idx4lmr killed $d0, $a6, killed $d2, 0
+
+# CHECK-LABEL: name: indexed_l_multiuse_lea
+# CHECK-NOT:   LEA4L
+# CHECK:       $d6 = MOV32idx4lrm $a2, $d2, 0
+# CHECK:       MOV32idx4lmr $d7, $a2, $d2, 4
+
+# CHECK-LABEL: name: indexed_l_multiuse_memcopy
+# CHECK-NOT:   LEA4L
+# CHECK:       MOV32idx4lmr $d1, $a0, $d4, 80
+# CHECK:       MOV32midx4l $a2, 0, $a0, $d4, 368
+
+# CHECK-LABEL: name: indexed_l_lea_bias_loop
+# CHECK-NOT:   LEAri
+# CHECK:       $d4 = MOV32idx4lrm $a0, $d4, 64
+
+# CHECK-LABEL: name: indexed_l_lea_bias_scale1_negative
+# CHECK:       $a1 = LEAri $a0, 1024
+# CHECK:       $d3 = MOV32idx1rm $a1, $d2, 0
+
+--- |
+  target triple = "bedrock"
+
+  define void @indexed_l_scale_from_scaled_d() #0 {
+    ret void
+  }
+
+  define void @indexed_l_scale_scaled_value_live() #0 {
+    ret void
+  }
+
+  define void @indexed_l_scale_from_ext_idx4() #0 {
+    ret void
+  }
+
+  define void @indexed_l_scale_memcopy() #0 {
+    ret void
+  }
+
+  define void @indexed_l_multiuse_lea() #0 {
+    ret void
+  }
+
+  define void @indexed_l_multiuse_memcopy() #0 {
+    ret void
+  }
+
+  define void @indexed_l_lea_bias_loop() #0 {
+    ret void
+  }
+
+  define void @indexed_l_lea_bias_scale1_negative() #0 {
+    ret void
+  }
+
+  attributes #0 = { minsize optsize }
+...
+---
+name: indexed_l_scale_from_scaled_d
+tracksRegLiveness: true
+body: |
+  bb.0:
+    liveins: $d1, $sp
+
+    $d0 = EXTZQ32rr $d1, implicit-def dead $flags
+    $d0 = SHL64ri $d0, 2, implicit-def dead $flags
+    $d2 = MOV32idx1rm $sp, $d0, 16
+    RET implicit $sp
+...
+---
+name: indexed_l_scale_scaled_value_live
+tracksRegLiveness: true
+body: |
+  bb.0:
+    liveins: $d1, $sp
+
+    $d0 = EXTZQ32rr $d1, implicit-def dead $flags
+    $d0 = SHL64ri $d0, 2, implicit-def dead $flags
+    $d2 = MOV32idx1rm $sp, $d0, 16
+    $d3 = MOV32rr $d0
+    RET implicit $sp
+...
+---
+name: indexed_l_scale_from_ext_idx4
+tracksRegLiveness: true
+body: |
+  bb.0:
+    liveins: $a0, $d1
+
+    $d0 = EXTZQ32rr $d1, implicit-def dead $flags
+    $d2 = MOV32idx4rm $a0, $d0, 0
+    RET implicit $sp
+...
+---
+name: indexed_l_scale_memcopy
+tracksRegLiveness: true
+body: |
+  bb.0:
+    liveins: $a6, $d2, $sp
+
+    $d2 = EXTZQ32rr killed $d2, implicit-def dead $flags
+    $d2 = SHL64ri killed $d2, 2, implicit-def dead $flags
+    $a0 = MOV64rr $a6
+    $a0 = ADD64rr killed $a0, $d2, implicit-def dead $flags
+    MOV32idx1mm $sp, $d2, 56, killed $a0, 0
+    RET implicit $sp
+...
+---
+name: indexed_l_multiuse_lea
+tracksRegLiveness: true
+body: |
+  bb.0:
+    liveins: $a2, $d2, $d7
+
+    $a0 = LEA4L $a2, $d2
+    $d6 = MOV32rm $a0, 0
+    MOV32mr $d7, $a0, 4
+    RET implicit $sp
+...
+---
+name: indexed_l_multiuse_memcopy
+tracksRegLiveness: true
+body: |
+  bb.0:
+    liveins: $a0, $a2, $d1, $d4
+
+    $a1 = LEA4L $a0, $d4
+    MOV32mr $d1, $a1, 80
+    MOV32mm $a2, 0, $a1, 368
+    RET implicit $sp
+...
+---
+name: indexed_l_lea_bias_loop
+tracksRegLiveness: true
+body: |
+  bb.0:
+    liveins: $a0, $d4
+    successors: %bb.1
+
+    $a1 = LEAri $a0, 64
+    JMP %bb.1
+
+  bb.1:
+    liveins: $a0, $a1, $d4
+
+    $d4 = MOV32idx4lrm $a1, $d4, 0
+    RET implicit $sp
+...
+---
+name: indexed_l_lea_bias_scale1_negative
+tracksRegLiveness: true
+body: |
+  bb.0:
+    liveins: $a0, $d2
+    successors: %bb.1
+
+    $a1 = LEAri $a0, 1024
+    JMP %bb.1
+
+  bb.1:
+    liveins: $a0, $a1, $d2
+
+    $d3 = MOV32idx1rm $a1, $d2, 0
+    RET implicit $sp
+...

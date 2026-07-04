@@ -1,0 +1,40 @@
+# RUN: llc -mtriple=bedrock -start-before=bedrock-push-pop-merge -stop-after=bedrock-push-pop-merge -verify-machineinstrs %s -o - | FileCheck %s
+
+# CHECK-LABEL: name: top_test_inc_to_ijcc
+# CHECK:       bb.1:
+# CHECK:       $d0 = IJCC32r $d0, $d1, %bb.1, 0
+# CHECK-NOT:   JMP %bb.0
+
+--- |
+  target triple = "bedrock"
+
+  define void @top_test_inc_to_ijcc() #0 {
+    ret void
+  }
+
+  attributes #0 = { minsize optsize }
+...
+---
+name: top_test_inc_to_ijcc
+tracksRegLiveness: true
+body: |
+  bb.0:
+    successors: %bb.2(0x04000000), %bb.1(0x7c000000)
+    liveins: $d0, $d1, $d2
+
+    CMP32rr $d0, $d1, implicit-def $flags
+    JCC %bb.2, 2, implicit $flags
+
+  bb.1:
+    successors: %bb.0(0x80000000)
+    liveins: $d0, $d1, $d2
+
+    $d2 = ADD32rr $d2, $d0, implicit-def $flags
+    $d0 = INC32r $d0, implicit-def $flags
+    JMP %bb.0
+
+  bb.2:
+    liveins: $d2
+
+    RET implicit $sp
+...

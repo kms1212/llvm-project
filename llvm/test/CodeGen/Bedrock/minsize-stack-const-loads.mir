@@ -1,0 +1,89 @@
+# RUN: llc -mtriple=bedrock -start-before=bedrock-push-pop-merge -stop-after=bedrock-push-pop-merge -verify-machineinstrs %s -o - | FileCheck %s
+
+# CHECK-LABEL: name: stack_const_i64_load_to_a
+# CHECK-NOT:   MOV64mr {{.*}}$sp
+# CHECK-NOT:   MOV64rm $sp, 24
+# CHECK:       MOV64mr killed $a7, $sp, 40
+
+# CHECK-LABEL: name: stack_const_zero32_from_clr64
+# CHECK-NOT:   MOV32mr {{.*}}$sp, 12
+# CHECK:       $d1 = CLR64r
+# CHECK-NEXT:  $d1 = INC32r $d1
+# CHECK-NOT:   MOV32rm $sp, 12
+
+# CHECK-LABEL: name: stack_zero_cmp_to_test
+# CHECK-NOT:   MOV64mr {{.*}}$sp, 24
+# CHECK-NOT:   MOV64rm $sp, 24
+# CHECK:       TEST64rr $d6, $d6
+# CHECK-NEXT:  $d0 = MOV32rr $d6
+# CHECK-NEXT:  JCC %bb.{{[0-9]+}}, 2
+# CHECK-NOT:   CMP64rr $d6, $d0
+
+--- |
+  target triple = "bedrock"
+
+  define void @stack_const_i64_load_to_a() #0 {
+    ret void
+  }
+
+  define void @stack_const_zero32_from_clr64() #0 {
+    ret void
+  }
+
+  define void @stack_zero_cmp_to_test() #0 {
+    ret void
+  }
+
+  attributes #0 = { minsize optsize }
+...
+---
+name: stack_const_i64_load_to_a
+tracksRegLiveness: true
+body: |
+  bb.0:
+    $d1 = MOV64ri 16
+    MOV64mr killed $d1, $sp, 24
+    $d1 = MOV64ri 7
+    $a7 = MOV64rm $sp, 24
+    $a7 = ADD64ri killed $a7, 1, implicit-def $flags
+    MOV64mr killed $a7, $sp, 40
+    RET implicit $sp
+...
+---
+name: stack_const_zero32_from_clr64
+tracksRegLiveness: true
+body: |
+  bb.0:
+    $d6 = CLR64r
+    MOV32mr killed $d6, $sp, 12
+    $d1 = MOV32rm $sp, 12
+    $d1 = ADD32ri killed $d1, 1, implicit-def $flags
+    MOV32mr killed $d1, $sp, 40
+    RET implicit $sp
+...
+---
+name: stack_zero_cmp_to_test
+tracksRegLiveness: true
+body: |
+  bb.0:
+    liveins: $d6
+    successors: %bb.1
+
+    $d0 = CLR64r
+    MOV64mr killed $d0, $sp, 24
+
+  bb.1:
+    liveins: $d6
+    successors: %bb.2, %bb.3
+
+    $d0 = MOV64rm $sp, 24
+    CMP64rr $d6, killed $d0, implicit-def $flags
+    $d0 = MOV32rr $d6
+    JCC %bb.2, 2, implicit $flags
+
+  bb.3:
+    RET implicit $sp
+
+  bb.2:
+    RET implicit $sp
+...

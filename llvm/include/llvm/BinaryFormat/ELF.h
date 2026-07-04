@@ -325,6 +325,7 @@ enum {
   EM_VE = 251,            // NEC SX-Aurora VE
   EM_CSKY = 252,          // C-SKY 32-bit processor
   EM_LOONGARCH = 258,     // LoongArch
+  EM_BEDROCK = 0xffb0,    // Bedrock Architecture
 };
 
 // Object file classes.
@@ -703,6 +704,11 @@ enum {
 // ELF Relocation type for Lanai.
 enum {
 #include "ELFRelocs/Lanai.def"
+};
+
+// ELF Relocation types for Bedrock.
+enum {
+#include "ELFRelocs/Bedrock.def"
 };
 
 // RISCV Specific e_flags

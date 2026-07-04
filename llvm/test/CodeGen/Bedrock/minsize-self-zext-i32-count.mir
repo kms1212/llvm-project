@@ -1,0 +1,179 @@
+# RUN: llc -mtriple=bedrock -start-before=bedrock-push-pop-merge -stop-after=bedrock-push-pop-merge -verify-machineinstrs %s -o - | FileCheck %s
+
+# CHECK-LABEL: name: zext_count_rep
+# CHECK-NOT:   EXTZQ32rr
+# CHECK:       TEST32rr $d0, $d0
+# CHECK:       $d0, $d2 = REPADD32postrm $d0, $d2, $a0, 4
+
+# CHECK-LABEL: name: zext_count_dec_loop
+# CHECK-NOT:   EXTZQ32rr
+# CHECK:       TEST32rr $d3, $d3
+# CHECK:       $d3 = DJCC32r $d3
+
+# CHECK-LABEL: name: zext_count_rep_with_zero_exit
+# CHECK-NOT:   EXTZQ32rr
+# CHECK:       $a0 = LEAri $sp, 168
+# CHECK:       TEST32rr $d0, $d0
+# CHECK:       $d0, $d2 = REPADD32postrm $d0, $d2, $a0, 4
+
+# CHECK-LABEL: name: zext_count_64_use
+# CHECK:       $d3 = EXTZQ32rr killed $d3
+# CHECK:       TEST64rr $d3, $d3
+# CHECK:       $d1 = ADD64rr $d1, $d3
+# CHECK:       $d3 = DJCC64r $d3
+
+--- |
+  target triple = "bedrock"
+
+  define i32 @zext_count_rep() #0 {
+    ret i32 0
+  }
+
+  define i32 @zext_count_dec_loop() #0 {
+    ret i32 0
+  }
+
+  define i32 @zext_count_rep_with_zero_exit() #0 {
+    ret i32 0
+  }
+
+  define i64 @zext_count_64_use() #0 {
+    ret i64 0
+  }
+
+  attributes #0 = { minsize optsize }
+...
+---
+name: zext_count_rep
+tracksRegLiveness: true
+body: |
+  bb.0:
+    successors: %bb.1(0x80000000)
+    liveins: $a0, $d0, $d2
+
+    $d0 = EXTZQ32rr killed $d0, implicit-def dead $flags
+    JMP %bb.1
+
+  bb.1:
+    successors: %bb.3(0x04000000), %bb.2(0x7c000000)
+    liveins: $a0, $d0, $d2
+
+    TEST64rr $d0, $d0, implicit-def $flags
+    JCC %bb.3, 2, implicit $flags
+
+  bb.2:
+    successors: %bb.3(0x80000000)
+    liveins: $a0, $d0, $d2
+
+    $d0, $d2 = REPADD32postrm $d0, $d2, $a0, 4, implicit-def $flags
+    JMP %bb.3
+
+  bb.3:
+    liveins: $d2
+
+    $d0 = MOV32rr $d2
+    RET implicit $sp, implicit $d0
+...
+---
+name: zext_count_rep_with_zero_exit
+tracksRegLiveness: true
+body: |
+  bb.0:
+    successors: %bb.1(0x80000000)
+    liveins: $d0, $d2
+
+    $d0 = EXTZQ32rr killed $d0, implicit-def dead $flags
+    $a0 = LEAri $sp, 168
+    JMP %bb.1
+
+  bb.1:
+    successors: %bb.3(0x04000000), %bb.2(0x7c000000)
+    liveins: $a0, $d0, $d2
+
+    TEST64rr $d0, $d0, implicit-def $flags
+    JCC %bb.3, 2, implicit $flags
+
+  bb.2:
+    successors: %bb.3(0x80000000)
+    liveins: $a0, $d0, $d2
+
+    $d0, $d2 = REPADD32postrm $d0, $d2, $a0, 4, implicit-def $flags
+    JMP %bb.3
+
+  bb.3:
+    successors: %bb.4(0x80000000)
+    liveins: $d2
+
+    $d2 = MULU32ri killed $d2, 3
+    JMP %bb.4
+
+  bb.4:
+    liveins: $d2
+
+    $d0 = MOV32rr $d2
+    RET implicit $sp, implicit $d0
+...
+---
+name: zext_count_dec_loop
+tracksRegLiveness: true
+body: |
+  bb.0:
+    successors: %bb.1(0x80000000)
+    liveins: $d1, $d3
+
+    $d3 = EXTZQ32rr killed $d3, implicit-def dead $flags
+    JMP %bb.1
+
+  bb.1:
+    successors: %bb.3(0x04000000), %bb.2(0x7c000000)
+    liveins: $d1, $d3
+
+    TEST64rr $d3, $d3, implicit-def $flags
+    JCC %bb.3, 2, implicit $flags
+
+  bb.2:
+    successors: %bb.1(0x7c000000), %bb.3(0x04000000)
+    liveins: $d1, $d3
+
+    $d1 = INC32r $d1, implicit-def $flags
+    $d3 = DEC64r $d3, implicit-def $flags
+    JCC %bb.1, 3, implicit $flags
+
+  bb.3:
+    liveins: $d1
+
+    $d0 = MOV32rr $d1
+    RET implicit $sp, implicit $d0
+...
+---
+name: zext_count_64_use
+tracksRegLiveness: true
+body: |
+  bb.0:
+    successors: %bb.1(0x80000000)
+    liveins: $d1, $d3
+
+    $d3 = EXTZQ32rr killed $d3, implicit-def dead $flags
+    JMP %bb.1
+
+  bb.1:
+    successors: %bb.3(0x04000000), %bb.2(0x7c000000)
+    liveins: $d1, $d3
+
+    TEST64rr $d3, $d3, implicit-def $flags
+    JCC %bb.3, 2, implicit $flags
+
+  bb.2:
+    successors: %bb.1(0x7c000000), %bb.3(0x04000000)
+    liveins: $d1, $d3
+
+    $d1 = ADD64rr $d1, $d3
+    $d3 = DEC64r $d3, implicit-def $flags
+    JCC %bb.1, 3, implicit $flags
+
+  bb.3:
+    liveins: $d1
+
+    $d0 = MOV64rr $d1
+    RET implicit $sp, implicit $d0
+...

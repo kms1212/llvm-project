@@ -1,0 +1,293 @@
+# RUN: llc -mtriple=bedrock -start-before=bedrock-push-pop-merge -stop-after=bedrock-push-pop-merge -verify-machineinstrs %s -o - | FileCheck %s
+
+# CHECK-LABEL: name: indexed_load_after_base_copy
+# CHECK-NOT:   EXTZQ32rr
+# CHECK-NOT:   SHL64ri
+# CHECK-NOT:   $a3 = MOV64rr $a0
+# CHECK:       $d0 = MOV32idx4lrm $a0, killed $d1, 0
+
+# CHECK-LABEL: name: indexed_store_after_base_copy
+# CHECK-NOT:   EXTZQ32rr
+# CHECK-NOT:   SHL64ri
+# CHECK-NOT:   $a3 = MOV64rr $a0
+# CHECK:       MOV32idx4lmr $d2, $a0, killed $d1, 0
+
+# CHECK-LABEL: name: indexed_load_from_areg_index
+# CHECK-NOT:   EXTZQ32rr
+# CHECK-NOT:   SHL64ri
+# CHECK:       $d4 = MOV64rr $a1
+# CHECK-NEXT:  $d4 = MOV32idx4lrm $a0, killed $d4, 0
+
+# CHECK-LABEL: name: indexed_store_from_areg_index
+# CHECK-NOT:   EXTZQ32rr
+# CHECK-NOT:   SHL64ri
+# CHECK:       $d0 = MOV64rr killed $a1
+# CHECK-NEXT:  MOV32idx4lmr killed $d3, $a0, killed $d0, 0
+
+# CHECK-LABEL: name: indexed_store_from_areg_index_loop
+# CHECK-NOT:   EXTZQ32rr
+# CHECK-NOT:   SHL64ri
+# CHECK:       $d4 = MOV64rr killed $a1
+# CHECK-NEXT:  MOV32idx4lmr killed $d3, $a0, killed $d4, 0
+
+# CHECK-LABEL: name: indexed_load_keeps_scaled_index
+# CHECK:       $a7 = EXTZQ32rr $d1
+# CHECK-NEXT:  $a7 = SHL64ri killed $a7, 2
+# CHECK-NOT:   $a3 = MOV64rr $a0
+# CHECK:       $d1 = MOV32idx4lrm $a0, $d1, 0
+# CHECK:       $a7 = ADD64rr killed $a7, killed $a1
+
+# CHECK-LABEL: name: indexed_load_from_live_scaled_areg
+# CHECK:       $a6 = EXTZQ32rr $d7
+# CHECK:       $a6 = SHL64ri $a6, 2
+# CHECK-NOT:   $a2 = MOV64rr $a0
+# CHECK-NOT:   $a2 = ADD64rr
+# CHECK:       $a2 = MOV32idx4lrm $a0, $d7, 0
+# CHECK:       $a7 = MOV64rr $a3
+# CHECK:       $a7 = ADD64rr $a7, $a6
+
+# CHECK-LABEL: name: indexed_load_from_live_scaled_areg_clobbered_index
+# CHECK:       $a2 = MOV64rr $a0
+# CHECK:       $a2 = ADD64rr $a2, $a6
+# CHECK:       $d7 = MOV32rm $a5, 0
+# CHECK:       $a2 = MOV32rm $a2, 0
+
+# CHECK-LABEL: name: indexed_scale1_successor_use
+# CHECK-NOT:   $a0 = MOV64rr
+# CHECK-NOT:   $a0 = ADD64rr
+# CHECK:       $d4 = MOV32idx1rm $a6, $d3, 0
+# CHECK:       $d6 = SUB32idx1rm $d6, $a6, $d3, -4
+
+# CHECK-LABEL: name: indexed_scale1_byte_imm_cmp
+# CHECK-NOT:   $a2 = MOV64rr $a0
+# CHECK-NOT:   $a2 = ADD64rr
+# CHECK:       CMP8idx1mi 0, $a0, $d4, 12
+
+# CHECK-LABEL: name: indexed_scale1_byte_reg_cmp
+# CHECK-NOT:   $a2 = MOV64rr $a0
+# CHECK-NOT:   $a2 = ADD64rr
+# CHECK:       CMP8idx1mr $d3, $a0, $d4, 20
+
+--- |
+  target triple = "bedrock"
+
+  define void @indexed_load_after_base_copy() #0 {
+    ret void
+  }
+
+  define void @indexed_store_after_base_copy() #0 {
+    ret void
+  }
+
+  define void @indexed_load_from_areg_index() #0 {
+    ret void
+  }
+
+  define void @indexed_store_from_areg_index() #0 {
+    ret void
+  }
+
+  define void @indexed_store_from_areg_index_loop() #0 {
+    ret void
+  }
+
+  define void @indexed_load_keeps_scaled_index() #0 {
+    ret void
+  }
+
+  define void @indexed_load_from_live_scaled_areg() #0 {
+    ret void
+  }
+
+  define void @indexed_load_from_live_scaled_areg_clobbered_index() #0 {
+    ret void
+  }
+
+  define void @indexed_scale1_successor_use() #0 {
+    ret void
+  }
+
+  define void @indexed_scale1_byte_imm_cmp() #0 {
+    ret void
+  }
+
+  define void @indexed_scale1_byte_reg_cmp() #0 {
+    ret void
+  }
+
+  attributes #0 = { minsize optsize }
+...
+---
+name: indexed_load_after_base_copy
+tracksRegLiveness: true
+body: |
+  bb.0:
+    liveins: $a0, $d1
+
+    $a7 = EXTZQ32rr killed $d1, implicit-def $flags
+    $a7 = SHL64ri killed $a7, 2, implicit-def $flags
+    $a3 = MOV64rr $a0
+    $a3 = ADD64rr killed $a3, killed $a7, implicit-def $flags
+    $d0 = MOV32rm killed $a3, 0
+    RET implicit $sp
+...
+---
+name: indexed_store_after_base_copy
+tracksRegLiveness: true
+body: |
+  bb.0:
+    liveins: $a0, $d1, $d2
+
+    $a7 = EXTZQ32rr killed $d1, implicit-def $flags
+    $a7 = SHL64ri killed $a7, 2, implicit-def $flags
+    $a3 = MOV64rr $a0
+    $a3 = ADD64rr killed $a3, killed $a7, implicit-def $flags
+    MOV32mr killed $d2, killed $a3, 0
+    RET implicit $sp
+...
+---
+name: indexed_load_from_areg_index
+tracksRegLiveness: true
+body: |
+  bb.0:
+    liveins: $a0, $a1
+
+    $a3 = MOV64rr $a1
+    $a3 = EXTZQ32rr killed $a3, implicit-def $flags
+    $a3 = SHL64ri killed $a3, 2, implicit-def dead $flags
+    $a3 = ADD64rr killed $a3, $a0, implicit-def dead $flags
+    $d4 = MOV32rm killed $a3, 0
+    RET implicit $sp
+...
+---
+name: indexed_store_from_areg_index
+tracksRegLiveness: true
+body: |
+  bb.0:
+    liveins: $a0, $a1, $d3
+
+    $a1 = EXTZQ32rr killed $a1, implicit-def $flags
+    $a1 = SHL64ri killed $a1, 2, implicit-def dead $flags
+    $a1 = ADD64rr killed $a1, $a0, implicit-def dead $flags
+    MOV32mr killed $d3, killed $a1, 0
+    RET implicit $sp
+...
+---
+name: indexed_store_from_areg_index_loop
+tracksRegLiveness: true
+body: |
+  bb.0:
+    successors: %bb.1
+    liveins: $a0, $a1, $d0, $d1, $d2, $d3
+
+    $a1 = EXTZQ32rr killed $a1, implicit-def $flags
+    $a1 = SHL64ri killed $a1, 2, implicit-def dead $flags
+    $a1 = ADD64rr killed $a1, $a0, implicit-def dead $flags
+    MOV32mr killed $d3, killed $a1, 0
+    $d1 = INC64r $d1, implicit-def $flags
+    JMP %bb.1
+
+  bb.1:
+    liveins: $a0, $d0, $d1, $d2
+
+    RET implicit $sp
+...
+---
+name: indexed_load_keeps_scaled_index
+tracksRegLiveness: true
+body: |
+  bb.0:
+    liveins: $a0, $a1, $d1
+
+    $a7 = EXTZQ32rr killed $d1, implicit-def $flags
+    $a7 = SHL64ri killed $a7, 2, implicit-def dead $flags
+    $a3 = MOV64rr $a0
+    $a3 = ADD64rr killed $a3, $a7, implicit-def dead $flags
+    $d1 = MOV32rm killed $a3, 0
+    $a7 = ADD64rr killed $a7, killed $a1, implicit-def dead $flags
+    RET implicit $sp
+...
+---
+name: indexed_load_from_live_scaled_areg
+tracksRegLiveness: true
+body: |
+  bb.0:
+    liveins: $a0, $a3, $d7
+
+    $a6 = EXTZQ32rr $d7, implicit-def dead $flags
+    $a6 = SHL64ri $a6, 2, implicit-def dead $flags
+    $a2 = MOV64rr $a0
+    $a2 = ADD64rr $a2, $a6, implicit-def dead $flags
+    $a2 = MOV32rm $a2, 0
+    $a7 = MOV64rr $a3
+    $a7 = ADD64rr $a7, $a6, implicit-def dead $flags
+    RET implicit $sp, implicit $a7
+...
+---
+name: indexed_load_from_live_scaled_areg_clobbered_index
+tracksRegLiveness: true
+body: |
+  bb.0:
+    liveins: $a0, $a5, $d7
+
+    $a6 = EXTZQ32rr $d7, implicit-def dead $flags
+    $a6 = SHL64ri $a6, 2, implicit-def dead $flags
+    $a2 = MOV64rr $a0
+    $a2 = ADD64rr $a2, $a6, implicit-def dead $flags
+    $d7 = MOV32rm $a5, 0
+    $a2 = MOV32rm $a2, 0
+    RET implicit $sp, implicit $d7, implicit $a2
+...
+---
+name: indexed_scale1_successor_use
+tracksRegLiveness: true
+body: |
+  bb.0:
+    successors: %bb.1, %bb.2
+    liveins: $a6, $d3, $d6
+
+    $a0 = MOV64rr $a6
+    $a0 = ADD64rr killed $a0, $d3, implicit-def dead $flags
+    $d4 = MOV32rm $a0, 0
+    TEST64rr $d3, $d3, implicit-def $flags
+    JCC %bb.2, 2, implicit $flags
+    JMP %bb.1
+
+  bb.1:
+    successors: %bb.2
+    liveins: $a0, $a6, $d3, $d4, $d6
+
+    $d6 = ADD32rr $d6, $d4, implicit-def dead $flags
+    $d5 = MOV32rm killed $a0, -4
+    $d6 = SUB32rr killed $d6, killed $d5, implicit-def dead $flags
+    JMP %bb.2
+
+  bb.2:
+    liveins: $d6
+
+    RET implicit $sp
+...
+---
+name: indexed_scale1_byte_imm_cmp
+tracksRegLiveness: true
+body: |
+  bb.0:
+    liveins: $a0, $d4
+
+    $a2 = MOV64rr $a0
+    $a2 = ADD64rr killed $a2, killed $d4, implicit-def dead $flags
+    CMP8mi 0, killed $a2, 12, implicit-def $flags
+    RET implicit $sp
+...
+---
+name: indexed_scale1_byte_reg_cmp
+tracksRegLiveness: true
+body: |
+  bb.0:
+    liveins: $a0, $d3, $d4
+
+    $a2 = MOV64rr $a0
+    $a2 = ADD64rr killed $a2, $d4, implicit-def dead $flags
+    CMP8mr $d3, killed $a2, 20, implicit-def $flags
+    RET implicit $sp
+...

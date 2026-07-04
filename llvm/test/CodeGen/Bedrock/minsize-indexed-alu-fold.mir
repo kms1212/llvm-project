@@ -1,0 +1,122 @@
+# RUN: llc -mtriple=bedrock -start-before=bedrock-push-pop-merge -stop-after=bedrock-push-pop-merge -verify-machineinstrs %s -o - | FileCheck %s
+
+# CHECK-LABEL: name: indexed_add_source
+# CHECK-NOT:   MOV32idx4lrm
+# CHECK:       $d0 = ADD32idx4lrm $d0, $a0, $d3, 0
+
+# CHECK-LABEL: name: indexed_sub_source
+# CHECK-NOT:   MOV32idx4lrm
+# CHECK:       $d6 = SUB32idx4lrm $d6, $a0, $d5, 8
+
+# CHECK-LABEL: name: indexed_cmp_source_dead
+# CHECK-NOT:   MOV32idx4lrm
+# CHECK:       CMP32idx4lmr $d3, $a6, $d4, 0
+
+# CHECK-LABEL: name: indexed_cmp_source_live
+# CHECK:       $d4 = MOV32idx4lrm $a6, $d4, 0
+# CHECK:       CMP32rr $d4, $d3
+
+# CHECK-LABEL: name: indexed_inc_lea
+# CHECK-NOT:   LEA4L
+# CHECK:       INC32idx4lm $a6, $d1, 0
+
+# CHECK-LABEL: name: indexed_single_store_from_lea4
+# CHECK-NOT:   LEA4
+# CHECK:       MOV32idx4mr
+
+--- |
+  target triple = "bedrock"
+
+  define void @indexed_add_source() #0 {
+    ret void
+  }
+
+  define void @indexed_sub_source() #0 {
+    ret void
+  }
+
+  define void @indexed_cmp_source_dead() #0 {
+    ret void
+  }
+
+  define void @indexed_cmp_source_live() #0 {
+    ret void
+  }
+
+  define void @indexed_inc_lea() #0 {
+    ret void
+  }
+
+  define void @indexed_single_store_from_lea4() #0 {
+    ret void
+  }
+
+  attributes #0 = { minsize optsize }
+...
+---
+name: indexed_add_source
+tracksRegLiveness: true
+body: |
+  bb.0:
+    liveins: $a0, $d0, $d3
+
+    $d3 = MOV32idx4lrm $a0, $d3, 0
+    $d0 = ADD32rr $d0, killed $d3
+    RET implicit $sp
+...
+---
+name: indexed_sub_source
+tracksRegLiveness: true
+body: |
+  bb.0:
+    liveins: $a0, $d5, $d6
+
+    $d4 = MOV32idx4lrm $a0, $d5, 8
+    $d6 = SUB32rr $d6, killed $d4
+    RET implicit $sp
+...
+---
+name: indexed_cmp_source_dead
+tracksRegLiveness: true
+body: |
+  bb.0:
+    liveins: $a6, $d3, $d4
+
+    $d4 = MOV32idx4lrm $a6, $d4, 0
+    CMP32rr killed $d4, $d3, implicit-def $flags
+    RET implicit $sp
+...
+---
+name: indexed_cmp_source_live
+tracksRegLiveness: true
+body: |
+  bb.0:
+    liveins: $a2, $a6, $d3, $d4
+
+    $d4 = MOV32idx4lrm $a6, $d4, 0
+    CMP32rr $d4, $d3, implicit-def $flags
+    MOV32mr killed $d4, $a2, 0
+    RET implicit $sp
+...
+---
+name: indexed_inc_lea
+tracksRegLiveness: true
+body: |
+  bb.0:
+    liveins: $a6, $d1
+
+    $a0 = LEA4L $a6, $d1
+    INC32m $a0, 0, implicit-def $flags
+    RET implicit $sp
+...
+---
+name: indexed_single_store_from_lea4
+tracksRegLiveness: true
+body: |
+  bb.0:
+    liveins: $a0, $d1, $d2
+
+    $a1 = LEA4 $a0, $d1
+    MOV32mr killed $d2, killed $a1, 12
+    RET implicit $sp
+...

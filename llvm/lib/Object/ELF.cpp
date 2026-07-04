@@ -83,6 +83,13 @@ StringRef llvm::object::getELFRelocationTypeName(uint32_t Machine,
       break;
     }
     break;
+  case ELF::EM_BEDROCK:
+    switch (Type) {
+#include "llvm/BinaryFormat/ELFRelocs/Bedrock.def"
+    default:
+      break;
+    }
+    break;
   case ELF::EM_HEXAGON:
     switch (Type) {
 #include "llvm/BinaryFormat/ELFRelocs/Hexagon.def"
@@ -222,6 +229,8 @@ uint32_t llvm::object::getELFRelativeRelocationType(uint32_t Machine) {
     return ELF::R_ARC_RELATIVE;
   case ELF::EM_AVR:
     break;
+  case ELF::EM_BEDROCK:
+    return ELF::R_BEDROCK_RELATIVE;
   case ELF::EM_HEXAGON:
     return ELF::R_HEX_RELATIVE;
   case ELF::EM_LANAI:

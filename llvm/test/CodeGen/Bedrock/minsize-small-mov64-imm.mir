@@ -1,0 +1,100 @@
+# RUN: llc -mtriple=bedrock -start-before=bedrock-push-pop-merge -stop-after=bedrock-push-pop-merge -verify-machineinstrs %s -o - | FileCheck %s
+
+# CHECK-LABEL: name: small_a64_imm
+# CHECK-NOT:   MOV64ri 384
+# CHECK:       $a1 = CLR64r
+# CHECK-NEXT:  $a1 = ADD64ri $a1, 384
+# CHECK-NEXT:  $a0 = MOV64rr killed $a1
+
+# CHECK-LABEL: name: large_a64_imm
+# CHECK:       $a1 = MOV64ri 32768
+# CHECK-NOT:   CLR64r
+# CHECK:       $a0 = MOV64rr killed $a1
+
+# CHECK-LABEL: name: compact_d64_imm
+# CHECK:       $d0 = MOV64ri 6
+# CHECK-NOT:   CLR64r
+# CHECK:       MOV64mr killed $d0, $sp, 0
+
+# CHECK-LABEL: name: u32_d64_imm
+# CHECK-NOT:   $d2 = MOV64ri 4294967295
+# CHECK:       $d2 = MOV32ri -1
+# CHECK-NEXT:  $d2 = EXTZQ32rr $d2
+# CHECK-NEXT:  MOV64mr killed $d2, $sp, 0
+
+# CHECK-LABEL: name: small_a32_imm
+# CHECK-NOT:   MOV32ri 16
+# CHECK:       $a7 = CLR64r
+# CHECK-NEXT:  $a7 = ADD64ri $a7, 16
+# CHECK-NEXT:  $a0 = MOV64rr killed $a7
+
+--- |
+  target triple = "bedrock"
+
+  define void @small_a64_imm() #0 {
+    ret void
+  }
+
+  define void @large_a64_imm() #0 {
+    ret void
+  }
+
+  define void @compact_d64_imm() #0 {
+    ret void
+  }
+
+  define void @u32_d64_imm() #0 {
+    ret void
+  }
+
+  define void @small_a32_imm() #0 {
+    ret void
+  }
+
+  attributes #0 = { minsize optsize }
+...
+---
+name: small_a64_imm
+tracksRegLiveness: true
+body: |
+  bb.0:
+    $a1 = MOV64ri 384
+    $a0 = MOV64rr killed $a1
+    RET implicit $sp
+...
+---
+name: large_a64_imm
+tracksRegLiveness: true
+body: |
+  bb.0:
+    $a1 = MOV64ri 32768
+    $a0 = MOV64rr killed $a1
+    RET implicit $sp
+...
+---
+name: compact_d64_imm
+tracksRegLiveness: true
+body: |
+  bb.0:
+    $d0 = MOV64ri 6
+    MOV64mr killed $d0, $sp, 0
+    RET implicit $sp
+...
+---
+name: u32_d64_imm
+tracksRegLiveness: true
+body: |
+  bb.0:
+    $d2 = MOV64ri 4294967295
+    MOV64mr killed $d2, $sp, 0
+    RET implicit $sp
+...
+---
+name: small_a32_imm
+tracksRegLiveness: true
+body: |
+  bb.0:
+    $a7 = MOV32ri 16
+    $a0 = MOV64rr killed $a7
+    RET implicit $sp
+...

@@ -13,6 +13,7 @@
 #include "ToolChains/AVR.h"
 #include "ToolChains/Arch/RISCV.h"
 #include "ToolChains/BareMetal.h"
+#include "ToolChains/Bedrock.h"
 #include "ToolChains/CSKYToolChain.h"
 #include "ToolChains/Clang.h"
 #include "ToolChains/CrossWindows.h"
@@ -6977,6 +6978,10 @@ const ToolChain &Driver::getToolChain(const ArgList &Args,
         break;
       case llvm::Triple::lanai:
         TC = std::make_unique<toolchains::LanaiToolChain>(*this, Target, Args);
+        break;
+      case llvm::Triple::bedrock:
+        TC =
+            std::make_unique<toolchains::BedrockToolChain>(*this, Target, Args);
         break;
       case llvm::Triple::xcore:
         TC = std::make_unique<toolchains::XCoreToolChain>(*this, Target, Args);

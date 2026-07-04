@@ -1,0 +1,85 @@
+# RUN: llc -mtriple=bedrock -start-before=bedrock-push-pop-merge -stop-after=bedrock-push-pop-merge -verify-machineinstrs %s -o - | FileCheck %s
+
+# CHECK-LABEL: name: stack_reload_zext_count
+# CHECK:       $d0 = MOV32rm $sp, 40
+# CHECK-NEXT:  $d6 = EXTZQ32rr $d0, implicit-def $flags
+# CHECK:       CMP64rr $d1, $d6
+# CHECK-NEXT:  $d0 = MOV32rr $d6
+# CHECK-NEXT:  MOV32mr $d0, $sp, 44
+# CHECK-NEXT:  JCC
+# CHECK-NOT:   $d0 = MOV32rm $sp, 40
+
+# CHECK-LABEL: name: stack_reload_zext_count_succ
+# CHECK:       bb.0:
+# CHECK:       $d6 = EXTZQ32rr $d0, implicit-def $flags
+# CHECK:       bb.1:
+# CHECK:       CMP64rr $d1, $d6
+# CHECK-NEXT:  $d0 = MOV32rr $d6
+# CHECK-NEXT:  MOV32mr $d0, $sp, 44
+# CHECK-NOT:   $d0 = MOV32rm $sp, 40
+
+--- |
+  target triple = "bedrock"
+
+  declare void @sink0()
+
+  define void @stack_reload_zext_count() #0 {
+    ret void
+  }
+
+  define void @stack_reload_zext_count_succ() #0 {
+    ret void
+  }
+
+  attributes #0 = { minsize optsize }
+...
+---
+name: stack_reload_zext_count
+tracksRegLiveness: true
+body: |
+  bb.0:
+    liveins: $d1, $d6
+
+    $d0 = MOV32rm $sp, 40
+    $d6 = EXTZQ32rr $d0, implicit-def $flags
+    CMP64rr $d1, $d6, implicit-def $flags
+    $d0 = MOV32rm $sp, 40
+    MOV32mr $d0, $sp, 44
+    JCC %bb.1, 0, implicit $flags
+
+  bb.1:
+    RET implicit $sp
+
+  bb.2:
+    CALLpcrel16 @sink0, csr_bedrock, implicit-def $sp, implicit $sp
+    RET implicit $sp
+...
+---
+name: stack_reload_zext_count_succ
+tracksRegLiveness: true
+body: |
+  bb.0:
+    successors: %bb.1(0x80000000)
+    liveins: $d1
+
+    $d0 = MOV32rm $sp, 40
+    $d6 = EXTZQ32rr $d0, implicit-def $flags
+    JMP %bb.1
+
+  bb.1:
+    successors: %bb.2(0x04000000), %bb.1(0x7c000000)
+    liveins: $d1, $d6
+
+    CMP64rr $d1, $d6, implicit-def $flags
+    $d0 = MOV32rm $sp, 40
+    MOV32mr $d0, $sp, 44
+    JCC %bb.2, 0, implicit $flags
+    JMP %bb.1
+
+  bb.2:
+    RET implicit $sp
+
+  bb.3:
+    CALLpcrel16 @sink0, csr_bedrock, implicit-def $sp, implicit $sp
+    RET implicit $sp
+...

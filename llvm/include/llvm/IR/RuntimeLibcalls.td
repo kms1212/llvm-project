@@ -3388,6 +3388,18 @@ def XCoreSystemLibrary
 )>;
 
 //===----------------------------------------------------------------------===//
+// Bedrock Runtime Libcalls
+//===----------------------------------------------------------------------===//
+
+def isBedrock : RuntimeLibcallPredicate<"TT.getArch() == Triple::bedrock">;
+
+def BedrockSystemLibrary
+    : SystemRuntimeLibrary<isBedrock,
+      (add DefaultLibcallImpls64,
+           CompilerRTOnlyInt64Libcalls, CompilerRTOnlyInt128Libcalls,
+           __powisf2, __powidf2)>;
+
+//===----------------------------------------------------------------------===//
 // ZOS Runtime Libcalls
 //===----------------------------------------------------------------------===//
 

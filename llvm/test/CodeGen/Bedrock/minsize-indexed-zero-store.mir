@@ -1,0 +1,34 @@
+# RUN: llc -mtriple=bedrock -start-before=bedrock-push-pop-merge -stop-after=bedrock-push-pop-merge -verify-machineinstrs %s -o - | FileCheck %s
+
+# CHECK-LABEL: name: indexed_zero_store_keeps_zero_reg
+# CHECK:       $a1 = CLR64r
+# CHECK-NEXT:  MOV32idx4lmr $a1, $a0, $d0, 0
+# CHECK-NEXT:  $d0 = CLR64r
+# CHECK-NOT:   EXTZQ32rr
+# CHECK-NOT:   SHL64ri
+# CHECK-NOT:   ADD64rr
+
+--- |
+  target triple = "bedrock"
+
+  define i32 @indexed_zero_store_keeps_zero_reg() #0 {
+    ret i32 0
+  }
+
+  attributes #0 = { minsize optsize }
+...
+---
+name: indexed_zero_store_keeps_zero_reg
+tracksRegLiveness: true
+body: |
+  bb.0:
+    liveins: $a0, $d0
+
+    $d0 = EXTZQ32rr killed $d0, implicit-def dead $flags
+    $d0 = nuw nsw SHL64ri killed $d0, 2, implicit-def dead $flags
+    $a1 = MOV64rr $a0
+    $a1 = nuw ADD64rr killed $a1, killed $d0
+    $d0 = CLR64r
+    MOV32mr $d0, killed $a1, 0
+    RET implicit $sp, implicit $d0
+...

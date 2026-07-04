@@ -83,6 +83,7 @@ uint16_t ELF::convertArchNameToEMachine(StringRef Arch) {
       .Case("huany", EM_HUANY)
       .Case("prism", EM_PRISM)
       .Case("avr", EM_AVR)
+      .Case("bedrock", EM_BEDROCK)
       .Case("fr30", EM_FR30)
       .Case("d10v", EM_D10V)
       .Case("d30v", EM_D30V)
@@ -219,6 +220,8 @@ uint16_t ELF::convertTripleArchTypeToEMachine(Triple::ArchType ArchType) {
     return EM_ARC;
   case Triple::avr:
     return EM_AVR;
+  case Triple::bedrock:
+    return EM_BEDROCK;
   case Triple::bpfel:
   case Triple::bpfeb:
     return EM_BPF;
@@ -402,6 +405,8 @@ StringRef ELF::convertEMachineToArchName(uint16_t EMachine) {
     return "prism";
   case EM_AVR:
     return "avr";
+  case EM_BEDROCK:
+    return "bedrock";
   case EM_FR30:
     return "fr30";
   case EM_D10V:

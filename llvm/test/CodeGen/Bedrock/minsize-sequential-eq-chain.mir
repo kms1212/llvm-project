@@ -1,0 +1,103 @@
+# RUN: llc -mtriple=bedrock -start-before=bedrock-push-pop-merge -stop-after=bedrock-push-pop-merge -verify-machineinstrs %s -o - | FileCheck %s
+
+# CHECK-LABEL: name: sequential_eq_chain
+# CHECK:       bb.0:
+# CHECK:       $d5 = DEC32r $d5, implicit-def $flags
+# CHECK-NEXT:  JCC %bb.{{[0-9]+}}, 2, implicit $flags
+# CHECK:       bb.1:
+# CHECK:       liveins: $d5
+# CHECK:       $d5 = DEC32r $d5, implicit-def $flags
+# CHECK-NEXT:  JCC %bb.{{[0-9]+}}, 2, implicit $flags
+# CHECK:       bb.2:
+# CHECK:       liveins: $d5
+# CHECK:       $d5 = DEC32r killed $d5, implicit-def $flags
+# CHECK-NEXT:  JCC %bb.{{[0-9]+}}, 2, implicit $flags
+# CHECK-NOT:   CMP32ri $d5, 1
+# CHECK-NOT:   CMP32ri $d5, 2
+# CHECK-NOT:   CMP32ri killed $d5, 3
+
+# CHECK-LABEL: name: sequential_eq_chain_live_case
+# CHECK:       CMP32ri $d5, 1
+# CHECK:       CMP32ri killed $d5, 2
+# CHECK-NOT:   DEC32r
+
+--- |
+  target triple = "bedrock"
+
+  define void @sequential_eq_chain() #0 {
+    ret void
+  }
+
+  define void @sequential_eq_chain_live_case() #0 {
+    ret void
+  }
+
+  attributes #0 = { minsize optsize }
+...
+---
+name: sequential_eq_chain
+tracksRegLiveness: true
+body: |
+  bb.0:
+    successors: %bb.3, %bb.1
+    liveins: $d5
+
+    CMP32ri $d5, 1, implicit-def $flags
+    JCC %bb.3, 2, implicit $flags
+
+  bb.1:
+    successors: %bb.4, %bb.2
+    liveins: $d5
+
+    CMP32ri $d5, 2, implicit-def $flags
+    JCC %bb.4, 2, implicit $flags
+
+  bb.2:
+    successors: %bb.5, %bb.6
+    liveins: $d5
+
+    CMP32ri killed $d5, 3, implicit-def $flags
+    JCC %bb.5, 2, implicit $flags
+
+  bb.6:
+    RET implicit $sp
+
+  bb.3:
+    RET implicit $sp
+
+  bb.4:
+    RET implicit $sp
+
+  bb.5:
+    RET implicit $sp
+...
+---
+name: sequential_eq_chain_live_case
+tracksRegLiveness: true
+body: |
+  bb.0:
+    successors: %bb.2, %bb.1
+    liveins: $a0, $d5
+
+    CMP32ri $d5, 1, implicit-def $flags
+    JCC %bb.2, 2, implicit $flags
+
+  bb.1:
+    successors: %bb.3, %bb.4
+    liveins: $a0, $d5
+
+    CMP32ri killed $d5, 2, implicit-def $flags
+    JCC %bb.3, 2, implicit $flags
+
+  bb.4:
+    RET implicit $sp
+
+  bb.2:
+    liveins: $a0, $d5
+
+    MOV32mr killed $d5, $a0, 0
+    RET implicit $sp
+
+  bb.3:
+    RET implicit $sp
+...

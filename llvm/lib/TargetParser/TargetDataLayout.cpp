@@ -554,6 +554,8 @@ std::string Triple::computeDataLayout(StringRef ABIName) const {
            "f32:32:32-i64:32-f64:32-a:0:32-n32";
   case Triple::avr:
     return "e-P1-p:16:8-i8:8-i16:8-i32:8-i64:8-f32:8-f64:8-n8:16-a:8";
+  case Triple::bedrock:
+    return "e-m:e-p:64:64-i64:64-i128:128-n8:16:32:64-S128";
   case Triple::bpfel:
   case Triple::bpfeb:
     return computeBPFDataLayout(*this);

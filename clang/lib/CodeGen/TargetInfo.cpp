@@ -102,6 +102,13 @@ bool TargetCodeGenInfo::isNoProtoCallVariadic(const CallArgList &args,
   return false;
 }
 
+RequiredArgs TargetCodeGenInfo::getNoProtoCallRequiredArgs(
+    const CallArgList &args, const FunctionNoProtoType *fnType) const {
+  if (isNoProtoCallVariadic(args, fnType))
+    return RequiredArgs(args.size());
+  return RequiredArgs::All;
+}
+
 void
 TargetCodeGenInfo::getDependentLibraryOption(llvm::StringRef Lib,
                                              llvm::SmallString<24> &Opt) const {

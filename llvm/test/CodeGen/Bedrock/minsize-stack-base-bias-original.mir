@@ -1,0 +1,57 @@
+# RUN: llc -mtriple=bedrock -start-before=bedrock-push-pop-merge -stop-after=bedrock-push-pop-merge -verify-machineinstrs %s -o - | FileCheck %s
+
+# CHECK-LABEL: name: stack_base_bias_original
+# CHECK:       $a6 = LEAri $sp, 184
+# CHECK:       $a0 = MOV64rr $a6
+# CHECK-NOT:   $a6 = ADD64ri $a6, 4256
+# CHECK:       $a0 = LEAri $a6, 4256
+# CHECK:       $a1 = MOV64rr $a6
+# CHECK:       $a0 = LEAri $a6, 4256
+# CHECK:       $a2 = MOV64rr $a6
+# CHECK:       $a3 = MOV64rr $a6
+# CHECK:       $a4 = MOV64rr $a6
+
+--- |
+  target triple = "bedrock"
+
+  declare void @init(ptr)
+  declare void @sort0(ptr)
+  declare void @sort1(ptr)
+  declare void @use1(ptr)
+  declare void @use2(ptr)
+  declare void @use3(ptr)
+  declare void @use4(ptr)
+
+  define void @stack_base_bias_original() #0 {
+    ret void
+  }
+
+  attributes #0 = { minsize optsize }
+...
+---
+name: stack_base_bias_original
+tracksRegLiveness: true
+body: |
+  bb.0:
+    liveins: $a6
+
+    frame-setup PUSHM 16384, implicit-def $sp, implicit $sp, implicit killed $a6
+    $a6 = LEAri $sp, 184
+    $a0 = MOV64rr $a6
+    CALLpcrel16 @init, csr_bedrock, implicit-def $sp, implicit $sp, implicit $a0
+    $a6 = ADD64ri $a6, 4256
+    $a0 = MOV64rr $a6
+    CALLpcrel16 @sort0, csr_bedrock, implicit-def $sp, implicit $sp, implicit $a0
+    $a1 = LEAri $sp, 184
+    CALLpcrel16 @use1, csr_bedrock, implicit-def $sp, implicit $sp, implicit $a1
+    $a0 = MOV64rr $a6
+    CALLpcrel16 @sort1, csr_bedrock, implicit-def $sp, implicit $sp, implicit $a0
+    $a2 = LEAri $sp, 184
+    CALLpcrel16 @use2, csr_bedrock, implicit-def $sp, implicit $sp, implicit $a2
+    $a3 = LEAri $sp, 184
+    CALLpcrel16 @use3, csr_bedrock, implicit-def $sp, implicit $sp, implicit $a3
+    $a4 = LEAri $sp, 184
+    CALLpcrel16 @use4, csr_bedrock, implicit-def $sp, implicit $sp, implicit $a4
+    frame-destroy POPM 16384, implicit-def $sp, implicit $sp, implicit-def $a6
+    RET implicit $sp
+...

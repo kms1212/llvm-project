@@ -84,6 +84,7 @@ module LLVM_BinaryFormat {
     textual header "llvm/BinaryFormat/ELFRelocs/ARM.def"
     textual header "llvm/BinaryFormat/ELFRelocs/ARC.def"
     textual header "llvm/BinaryFormat/ELFRelocs/AVR.def"
+    textual header "llvm/BinaryFormat/ELFRelocs/Bedrock.def"
     textual header "llvm/BinaryFormat/ELFRelocs/BPF.def"
     textual header "llvm/BinaryFormat/ELFRelocs/CSKY.def"
     textual header "llvm/BinaryFormat/ELFRelocs/Hexagon.def"

@@ -1,0 +1,113 @@
+# RUN: llc -mtriple=bedrock -start-before=bedrock-push-pop-merge -stop-after=bedrock-push-pop-merge -verify-machineinstrs %s -o - | FileCheck %s
+
+# CHECK-LABEL: name: mixed_zero_store_loop
+# CHECK-NOT:   CMP64rr
+# CHECK-NOT:   JCC %bb.3
+# CHECK-NOT:   $a1 = MOV64rr $a0
+# CHECK:       $d4 = MOV32ri 64
+# CHECK:       MOV8mr $d2, $a0, 12
+# CHECK-NEXT:  MOV32mr $d3, $a0, 8
+# CHECK-NEXT:  MOV64mr $d0, $a0, 0
+# CHECK-NEXT:  $a0 = ADD64ri $a0, 16
+# CHECK-NEXT:  $d4 = DJCC32r $d4, %bb.2, 0
+
+# CHECK-LABEL: name: mixed_zero_store_loop_keeps_live_base
+# CHECK:       $a1 = MOV64rr $a0
+# CHECK-NEXT:  $d4 = MOV32ri 64
+# CHECK:       MOV8mr $d2, $a1, 12
+# CHECK-NEXT:  MOV32mr $d3, $a1, 8
+# CHECK-NEXT:  MOV64mr $d0, $a1, 0
+# CHECK-NEXT:  $a1 = ADD64ri $a1, 16
+# CHECK-NEXT:  $d4 = DJCC32r $d4, %bb.2, 0
+# CHECK:       MOV64mr $d0, $a0, 2048
+
+--- |
+  target triple = "bedrock"
+
+  define void @mixed_zero_store_loop(ptr %p) #0 {
+    ret void
+  }
+
+  define void @mixed_zero_store_loop_keeps_live_base(ptr %p) #0 {
+    ret void
+  }
+
+  attributes #0 = { minsize optsize }
+...
+---
+name: mixed_zero_store_loop
+tracksRegLiveness: true
+body: |
+  bb.0:
+    successors: %bb.1
+    liveins: $a0
+
+    $d0 = CLR64r
+    MOV64mr $d0, $a0, 1024
+    $d1 = MOV64ri 1024
+    $d2 = CLR64r
+    $d3 = CLR64r
+    $d4 = MOV64rr $d0
+
+  bb.1:
+    successors: %bb.3, %bb.2
+    liveins: $a0, $d0, $d1, $d2, $d3, $d4
+
+    CMP64rr $d4, $d1, implicit-def $flags
+    JCC %bb.3, 2, implicit $flags
+
+  bb.2:
+    successors: %bb.1
+    liveins: $a0, $d0, $d1, $d2, $d3, $d4
+
+    $a1 = MOV64rr $a0
+    $a1 = ADD64rr killed $a1, $d4
+    MOV8mr $d2, $a1, 12
+    MOV32mr $d3, $a1, 8
+    MOV64mr $d0, killed $a1, 0
+    $d4 = ADD64ri killed $d4, 16
+    JMP %bb.1
+
+  bb.3:
+    RET implicit $sp
+...
+---
+name: mixed_zero_store_loop_keeps_live_base
+tracksRegLiveness: true
+body: |
+  bb.0:
+    successors: %bb.1
+    liveins: $a0
+
+    $d0 = CLR64r
+    MOV64mr $d0, $a0, 1024
+    $d1 = MOV64ri 1024
+    $d2 = CLR64r
+    $d3 = CLR64r
+    $d4 = MOV64rr $d0
+
+  bb.1:
+    successors: %bb.3, %bb.2
+    liveins: $a0, $d0, $d1, $d2, $d3, $d4
+
+    CMP64rr $d4, $d1, implicit-def $flags
+    JCC %bb.3, 2, implicit $flags
+
+  bb.2:
+    successors: %bb.1
+    liveins: $a0, $d0, $d1, $d2, $d3, $d4
+
+    $a1 = MOV64rr $a0
+    $a1 = ADD64rr killed $a1, $d4
+    MOV8mr $d2, $a1, 12
+    MOV32mr $d3, $a1, 8
+    MOV64mr $d0, killed $a1, 0
+    $d4 = ADD64ri killed $d4, 16
+    JMP %bb.1
+
+  bb.3:
+    liveins: $a0, $d0
+
+    MOV64mr $d0, $a0, 2048
+    RET implicit $sp
+...

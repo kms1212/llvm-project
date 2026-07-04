@@ -1,0 +1,31 @@
+# RUN: llc -mtriple=bedrock -start-before=bedrock-push-pop-merge -stop-after=bedrock-push-pop-merge -verify-machineinstrs %s -o - | FileCheck %s
+
+# CHECK-LABEL: name: jump_to_ret
+# CHECK:       bb.0:
+# CHECK-NEXT:    RET
+# CHECK-NOT:     JMP
+
+--- |
+  target triple = "bedrock"
+
+  define void @jump_to_ret() #0 {
+    ret void
+  }
+
+  attributes #0 = { minsize optsize }
+...
+---
+name: jump_to_ret
+tracksRegLiveness: true
+body: |
+  bb.0:
+    successors: %bb.2
+
+    JMP %bb.2
+
+  bb.1:
+    RET implicit $sp
+
+  bb.2:
+    RET implicit $sp
+...

@@ -1309,6 +1309,7 @@ const EnumEntry<unsigned> ElfMachineType[] = {
   ENUM_ENT(EM_VE,            "NEC SX-Aurora Vector Engine"),
   ENUM_ENT(EM_LOONGARCH,     "LoongArch"),
   ENUM_ENT(EM_INTELGT,       "Intel Graphics Technology"),
+  ENUM_ENT(EM_BEDROCK,       "Bedrock"),
 };
 // clang-format on
 

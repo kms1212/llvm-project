@@ -41,6 +41,7 @@ class CodeGenFunction;
 class CGHLSLOffsetInfo;
 class CGBlockInfo;
 class CGHLSLOffsetInfo;
+class RequiredArgs;
 class SwiftABIInfo;
 
 /// TargetCodeGenInfo - This class organizes various target-specific
@@ -289,6 +290,12 @@ public:
   virtual bool isNoProtoCallVariadic(const CodeGen::CallArgList &args,
                                      const FunctionNoProtoType *fnType) const;
 
+  /// Return the required-argument set for a call through an unprototyped
+  /// function type.
+  virtual RequiredArgs
+  getNoProtoCallRequiredArgs(const CodeGen::CallArgList &args,
+                             const FunctionNoProtoType *fnType) const;
+
   /// Gets the linker options necessary to link a dependent library on this
   /// platform.
   virtual void getDependentLibraryOption(llvm::StringRef Lib,
@@ -522,6 +529,9 @@ createWindowsARMTargetCodeGenInfo(CodeGenModule &CGM, ARMABIKind K);
 
 std::unique_ptr<TargetCodeGenInfo>
 createAVRTargetCodeGenInfo(CodeGenModule &CGM, unsigned NPR, unsigned NRR);
+
+std::unique_ptr<TargetCodeGenInfo>
+createBedrockTargetCodeGenInfo(CodeGenModule &CGM);
 
 std::unique_ptr<TargetCodeGenInfo>
 createBPFTargetCodeGenInfo(CodeGenModule &CGM);

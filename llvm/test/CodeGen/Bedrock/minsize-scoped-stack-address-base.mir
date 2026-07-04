@@ -1,0 +1,71 @@
+# RUN: llc -mtriple=bedrock -start-before=bedrock-push-pop-merge -stop-after=bedrock-push-pop-merge -verify-machineinstrs %s -o - | FileCheck %s
+
+# CHECK-LABEL: name: scoped_stack_address_base
+# CHECK:       $a6 = LEAri $sp, 256
+# CHECK-NEXT:  $a0 = MOV64rr $a6
+# CHECK:       bb.1:
+# CHECK:       liveins: $a6
+# CHECK:       $a1 = MOV64rr $a6
+# CHECK:       bb.2:
+# CHECK:       liveins: $a6
+# CHECK:       $a2 = MOV64rr $a6
+# CHECK:       bb.3:
+# CHECK:       liveins: $a6
+# CHECK:       $a0 = MOV64rr $a6
+# CHECK-NOT:   LEAri $sp, 256
+
+--- |
+  target triple = "bedrock"
+
+  declare void @sink0(ptr)
+  declare void @sink1(ptr)
+  declare void @sink2(ptr)
+  declare void @sink3(ptr)
+
+  define void @scoped_stack_address_base() #0 {
+    ret void
+  }
+
+  attributes #0 = { minsize optsize }
+...
+---
+name: scoped_stack_address_base
+tracksRegLiveness: true
+body: |
+  bb.0:
+    successors: %bb.1, %bb.2
+    liveins: $a6, $a7
+
+    frame-setup PUSHM 49152, implicit-def $sp, implicit $sp, implicit killed $a6, implicit killed $a7
+    $sp = frame-setup SUB64ri $sp, 64
+    $a0 = LEAri $sp, 256
+    CALLpcrel16 @sink0, csr_bedrock, implicit-def $sp, implicit $sp, implicit $a0
+    $d0 = MOV32ri 1
+    CMP32ri $d0, 1, implicit-def $flags
+    JCC %bb.1, 2, implicit $flags
+    JMP %bb.2
+
+  bb.1:
+    successors: %bb.3
+
+    $a1 = LEAri $sp, 256
+    CALLpcrel16 @sink1, csr_bedrock, implicit-def $sp, implicit $sp, implicit $a1
+    JMP %bb.3
+
+  bb.2:
+    successors: %bb.3
+
+    $a2 = LEAri $sp, 256
+    CALLpcrel16 @sink2, csr_bedrock, implicit-def $sp, implicit $sp, implicit $a2
+
+  bb.3:
+    $a0 = LEAri $sp, 256
+    CALLpcrel16 @sink3, csr_bedrock, implicit-def $sp, implicit $sp, implicit $a0
+    $a6 = CLR64r
+    MOV64mr $a6, $sp, 0
+    $a7 = CLR64r
+    MOV64mr $a7, $sp, 8
+    $sp = frame-destroy ADD64ri $sp, 64
+    frame-destroy POPM 49152, implicit-def $sp, implicit $sp, implicit-def $a6, implicit-def $a7
+    RET implicit $sp
+...

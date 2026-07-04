@@ -440,6 +440,7 @@ static std::pair<ELFKind, uint16_t> parseBfdName(StringRef s) {
   return StringSwitch<std::pair<ELFKind, uint16_t>>(s)
       .Case("elf32-i386", {ELF32LEKind, EM_386})
       .Case("elf32-avr", {ELF32LEKind, EM_AVR})
+      .Case("elf64-bedrock", {ELF64LEKind, EM_BEDROCK})
       .Case("elf32-iamcu", {ELF32LEKind, EM_IAMCU})
       .Case("elf32-littlearm", {ELF32LEKind, EM_ARM})
       .Case("elf32-bigarm", {ELF32BEKind, EM_ARM})

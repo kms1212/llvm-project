@@ -675,6 +675,11 @@ arrangeFreeFunctionLikeCall(CodeGenTypes &CGT, CodeGenModule &CGM,
       addExtParameterInfosForCall(paramInfos, proto, numExtraRequiredArgs,
                                   args.size());
 
+  // If we don't have a prototype at all, Bedrock has a target-specific
+  // fixed/optional argument split for its ABI.
+  } else if (CGM.getTriple().getArch() == llvm::Triple::bedrock) {
+    required = CGM.getTargetCodeGenInfo().getNoProtoCallRequiredArgs(
+        args, cast<FunctionNoProtoType>(fnType));
   // If we don't have a prototype at all, but we're supposed to
   // explicitly use the variadic convention for unprototyped calls,
   // treat all of the arguments as required but preserve the nominal

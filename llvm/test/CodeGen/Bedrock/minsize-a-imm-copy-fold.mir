@@ -1,0 +1,67 @@
+# RUN: llc -mtriple=bedrock -start-before=bedrock-push-pop-merge -stop-after=bedrock-push-pop-merge -verify-machineinstrs %s -o - | FileCheck %s
+
+# CHECK-LABEL: name: a_imm_copy_to_d
+# CHECK-NOT:   $a7 = MOV32ri 1
+# CHECK:       $d1 = MOV32ri 4
+# CHECK-NEXT:  $d0 = MOV32ri 1
+# CHECK-NEXT:  RET implicit $sp, implicit $d0, implicit $d1
+
+# CHECK-LABEL: name: and32_mask_to_extzq
+# CHECK:       $a1 = EXTZQ32rr killed $a1, implicit-def $flags
+# CHECK-NEXT:  $d0 = EXTZQ32rr killed $d0, implicit-def $flags
+# CHECK-NEXT:  RET implicit $sp
+
+# CHECK-LABEL: name: add_masked_inc_to_inc32
+# CHECK:       $a1 = INC32r $a1, implicit-def $flags
+# CHECK-NEXT:  $a1 = EXTZQ32rr killed $a1, implicit-def $flags
+# CHECK-NEXT:  RET implicit $sp
+
+--- |
+  target triple = "bedrock"
+
+  define void @a_imm_copy_to_d() #0 {
+    ret void
+  }
+
+  define void @and32_mask_to_extzq() #0 {
+    ret void
+  }
+
+  define void @add_masked_inc_to_inc32() #0 {
+    ret void
+  }
+
+  attributes #0 = { minsize optsize }
+...
+---
+name: a_imm_copy_to_d
+tracksRegLiveness: true
+body: |
+  bb.0:
+    $a7 = MOV32ri 1
+    $d1 = MOV32ri 4
+    $d0 = MOV64rr killed $a7
+    RET implicit $sp, implicit $d0, implicit $d1
+...
+---
+name: and32_mask_to_extzq
+tracksRegLiveness: true
+body: |
+  bb.0:
+    liveins: $a1, $d0
+
+    $a1 = AND64ri killed $a1, 4294967295, implicit-def $flags
+    $d0 = AND64ri killed $d0, 4294967295, implicit-def $flags
+    RET implicit $sp
+...
+---
+name: add_masked_inc_to_inc32
+tracksRegLiveness: true
+body: |
+  bb.0:
+    liveins: $a1
+
+    $a1 = ADD64ri killed $a1, -4294967295, implicit-def $flags
+    $a1 = EXTZQ32rr killed $a1, implicit-def $flags
+    RET implicit $sp
+...

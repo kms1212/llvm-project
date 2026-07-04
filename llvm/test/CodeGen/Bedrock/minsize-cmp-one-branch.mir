@@ -1,0 +1,85 @@
+# RUN: llc -mtriple=bedrock -start-before=bedrock-push-pop-merge -stop-after=bedrock-push-pop-merge -verify-machineinstrs %s -o - | FileCheck %s
+
+# CHECK-LABEL: name: cmp_one_branch
+# CHECK-NOT:   CMP32ri
+# CHECK:       TEST32rr $d0, $d0
+# CHECK-NEXT:  JCC %bb.{{[0-9]+}}, 14
+# CHECK:       TEST32rr $d1, $d1
+# CHECK-NEXT:  JCC %bb.{{[0-9]+}}, 15
+
+# CHECK-LABEL: name: minus_one_cmp_branch
+# CHECK-NOT:   MOV32ri -1
+# CHECK-NOT:   CMP32rr
+# CHECK:       TEST32rr $d6, $d6
+# CHECK-NEXT:  JCC %bb.{{[0-9]+}}, 12
+# CHECK:       TEST32rr $d7, $d7
+# CHECK-NEXT:  JCC %bb.{{[0-9]+}}, 13
+
+--- |
+  target triple = "bedrock"
+
+  define void @cmp_one_branch() #0 {
+    ret void
+  }
+
+  define void @minus_one_cmp_branch() #0 {
+    ret void
+  }
+
+  attributes #0 = { minsize optsize }
+...
+---
+name: cmp_one_branch
+tracksRegLiveness: true
+body: |
+  bb.0:
+    successors: %bb.1, %bb.2
+    liveins: $d0, $d1
+
+    CMP32ri $d0, 1, implicit-def $flags
+    JCC %bb.1, 12, implicit $flags
+    JMP %bb.2
+
+  bb.1:
+    successors: %bb.2, %bb.3
+    liveins: $d1
+
+    CMP32ri $d1, 1, implicit-def $flags
+    JCC %bb.2, 13, implicit $flags
+    JMP %bb.3
+
+  bb.2:
+    RET implicit $sp
+
+  bb.3:
+    RET implicit $sp
+...
+---
+name: minus_one_cmp_branch
+tracksRegLiveness: true
+body: |
+  bb.0:
+    successors: %bb.1, %bb.2
+    liveins: $d6, $d7
+
+    $d0 = MOV32ri -1
+    CMP32rr $d6, $d0, implicit-def $flags
+    JCC %bb.1, 14, implicit $flags
+
+  bb.2:
+    successors: %bb.3, %bb.4
+    liveins: $d7
+
+    $d1 = MOV32ri -1
+    CMP32rr $d7, $d1, implicit-def $flags
+    JCC %bb.3, 15, implicit $flags
+
+  bb.1:
+    RET implicit $sp
+
+  bb.3:
+    RET implicit $sp
+
+  bb.4:
+    RET implicit $sp
+...

@@ -1,0 +1,99 @@
+# RUN: llc -mtriple=bedrock -start-before=bedrock-push-pop-merge -stop-after=bedrock-push-pop-merge -verify-machineinstrs %s -o - | FileCheck %s
+
+# CHECK-LABEL: name: copy_and_test
+# CHECK:       TEST32ri $d7, 15
+# CHECK-NEXT:  JCC %bb.{{[0-9]+}}, {{[0-9]+}}
+# CHECK-NOT:   MOV64rr
+# CHECK-NOT:   AND32ri
+# CHECK-NOT:   TEST32rr
+
+# CHECK-LABEL: name: and_test
+# CHECK:       TEST32ri $d1, 3
+# CHECK-NEXT:  JCC %bb.{{[0-9]+}}, {{[0-9]+}}
+# CHECK-NOT:   AND32ri
+# CHECK-NOT:   TEST32rr
+
+# CHECK-LABEL: name: and_test_value_live
+# CHECK:       $d0 = MOV64rr $d7
+# CHECK-NEXT:  $d0 = AND32ri $d0, 15
+# CHECK-NEXT:  TEST32rr $d0, $d0
+
+--- |
+  target triple = "bedrock"
+
+  define void @copy_and_test() #0 {
+    ret void
+  }
+
+  define void @and_test() #0 {
+    ret void
+  }
+
+  define void @and_test_value_live() #0 {
+    ret void
+  }
+
+  attributes #0 = { minsize optsize }
+...
+---
+name: copy_and_test
+tracksRegLiveness: true
+body: |
+  bb.0:
+    liveins: $d7
+    successors: %bb.1, %bb.2
+
+    $d0 = MOV64rr $d7
+    $d0 = AND32ri $d0, 15, implicit-def $flags
+    TEST32rr $d0, $d0, implicit-def $flags
+    JCC %bb.1, 3, implicit $flags
+    JMP %bb.2
+
+  bb.1:
+    RET implicit $sp
+
+  bb.2:
+    RET implicit $sp
+...
+---
+name: and_test
+tracksRegLiveness: true
+body: |
+  bb.0:
+    liveins: $d1
+    successors: %bb.1, %bb.2
+
+    $d1 = AND32ri $d1, 3, implicit-def $flags
+    TEST32rr $d1, $d1, implicit-def $flags
+    JCC %bb.1, 2, implicit $flags
+    JMP %bb.2
+
+  bb.1:
+    RET implicit $sp
+
+  bb.2:
+    RET implicit $sp
+...
+---
+name: and_test_value_live
+tracksRegLiveness: true
+body: |
+  bb.0:
+    liveins: $d7
+    successors: %bb.1, %bb.2
+
+    $d0 = MOV64rr $d7
+    $d0 = AND32ri $d0, 15, implicit-def $flags
+    TEST32rr $d0, $d0, implicit-def $flags
+    JCC %bb.1, 3, implicit $flags
+    JMP %bb.2
+
+  bb.1:
+    liveins: $d0
+
+    $d1 = MOV32rr $d0
+    RET implicit $sp
+
+  bb.2:
+    RET implicit $sp
+...

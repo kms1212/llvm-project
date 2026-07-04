@@ -1,0 +1,184 @@
+# RUN: llc -mtriple=bedrock -start-before=bedrock-push-pop-merge -stop-after=bedrock-push-pop-merge -verify-machineinstrs %s -o - | FileCheck %s
+
+# CHECK-LABEL: name: areg_alias_copy
+# CHECK-NOT:   $a6 = MOV64rr $a7
+# CHECK:       $a0 = MOV64rr $a7
+# CHECK:       CALLpcrel16 @sink0
+# CHECK:       $a1 = MOV64rr $a7
+# CHECK:       CALLpcrel16 @sink1
+# CHECK:       $a6 = LEAri $sp, 128
+
+# CHECK-LABEL: name: dreg_alias_copy
+# CHECK-NOT:   $d6 = MOV64rr $d7
+# CHECK:       CMP32rr $d0, $d7
+# CHECK:       $d1 = MOV64rr $d7
+
+# CHECK-LABEL: name: dreg_destructive_copy
+# CHECK-NOT:   $d6 = MOV64rr $d2
+# CHECK:       $d2 = ADD32rr $d2, $d2
+# CHECK:       $d1 = XOR32rr $d1, $d2
+
+# CHECK-LABEL: name: short_lea_alias_copy
+# CHECK-NOT:   $a7 = LEAri $a6, 1816
+# CHECK:       $a0 = LEAri $a6, 1816
+# CHECK-NOT:   $a0 = MOV64rr $a7
+# CHECK:       {{CALLpcrel16|JMPWpcrel}} @sink0
+
+# CHECK-LABEL: name: two_lea_alias_copies
+# CHECK-NOT:   $a7 = LEAri $a6, 4256
+# CHECK:       $a0 = LEAri $a6, 4256
+# CHECK:       CALLpcrel16 @sink0
+# CHECK:       $a0 = LEAri $a6, 4256
+# CHECK:       {{CALLpcrel16|JMPWpcrel}} @sink1
+
+# CHECK-LABEL: name: three_lea_alias_copies
+# CHECK:       $a7 = LEAri $a6, 4256
+# CHECK:       $a0 = MOV64rr $a7
+# CHECK:       CALLpcrel16 @sink0
+# CHECK:       $a1 = MOV64rr $a7
+# CHECK:       CALLpcrel16 @sink1
+# CHECK:       $a2 = MOV64rr $a7
+
+# CHECK-LABEL: name: alias_back_copy_before_call
+# CHECK:       $a6 = MOV64rr $a0
+# CHECK-NOT:   $a0 = MOV64rr $a6
+# CHECK:       CALLpcrel16 @sink0
+# CHECK:       $a0 = MOV64rr $a6
+# CHECK-NEXT:  {{CALLpcrel16|JMPWpcrel}} @sink1
+
+--- |
+  target triple = "bedrock"
+
+  declare void @sink0(ptr)
+  declare void @sink1(ptr)
+  declare void @sink2(ptr)
+
+  define void @areg_alias_copy() #0 {
+    ret void
+  }
+
+  define void @dreg_alias_copy() #0 {
+    ret void
+  }
+
+  define void @dreg_destructive_copy() #0 {
+    ret void
+  }
+
+  define void @short_lea_alias_copy() #0 {
+    ret void
+  }
+
+  define void @two_lea_alias_copies() #0 {
+    ret void
+  }
+
+  define void @three_lea_alias_copies() #0 {
+    ret void
+  }
+
+  define void @alias_back_copy_before_call() #0 {
+    ret void
+  }
+
+  attributes #0 = { minsize optsize }
+...
+---
+name: areg_alias_copy
+tracksRegLiveness: true
+body: |
+  bb.0:
+    liveins: $a6, $a7
+
+    frame-setup PUSHM 16384, implicit-def $sp, implicit $sp, implicit killed $a6
+    $a6 = MOV64rr $a7
+    $a0 = MOV64rr $a6
+    CALLpcrel16 @sink0, csr_bedrock, implicit-def $sp, implicit $sp, implicit $a0
+    $a1 = MOV64rr $a6
+    CALLpcrel16 @sink1, csr_bedrock, implicit-def $sp, implicit $sp, implicit $a1
+    $a6 = LEAri $sp, 128
+    frame-destroy POPM 16384, implicit-def $sp, implicit $sp, implicit-def $a6
+    RET implicit $sp
+...
+---
+name: dreg_alias_copy
+tracksRegLiveness: true
+body: |
+  bb.0:
+    liveins: $d0, $d6, $d7
+
+    $d6 = MOV64rr $d7
+    CMP32rr $d0, $d6, implicit-def $flags
+    $d1 = MOV64rr $d6
+    $d6 = CLR64r
+    RET implicit $sp
+...
+---
+name: dreg_destructive_copy
+tracksRegLiveness: true
+body: |
+  bb.0:
+    liveins: $d1, $d2, $d6
+
+    $d6 = MOV64rr $d2
+    $d6 = ADD32rr $d6, $d2
+    $d1 = XOR32rr $d1, $d6
+    RET implicit $sp
+...
+---
+name: short_lea_alias_copy
+tracksRegLiveness: true
+body: |
+  bb.0:
+    liveins: $a6
+
+    $a7 = LEAri $a6, 1816
+    $a0 = MOV64rr $a7
+    CALLpcrel16 @sink0, csr_bedrock, implicit-def $sp, implicit $sp, implicit $a0
+    RET implicit $sp
+...
+---
+name: two_lea_alias_copies
+tracksRegLiveness: true
+body: |
+  bb.0:
+    liveins: $a6
+
+    $a7 = LEAri $a6, 4256
+    $a0 = MOV64rr $a7
+    CALLpcrel16 @sink0, csr_bedrock, implicit-def $sp, implicit $sp, implicit $a0
+    $a0 = MOV64rr $a7
+    CALLpcrel16 @sink1, csr_bedrock, implicit-def $sp, implicit $sp, implicit $a0
+    RET implicit $sp
+...
+---
+name: three_lea_alias_copies
+tracksRegLiveness: true
+body: |
+  bb.0:
+    liveins: $a6
+
+    $a7 = LEAri $a6, 4256
+    $a0 = MOV64rr $a7
+    CALLpcrel16 @sink0, csr_bedrock, implicit-def $sp, implicit $sp, implicit $a0
+    $a1 = MOV64rr $a7
+    CALLpcrel16 @sink1, csr_bedrock, implicit-def $sp, implicit $sp, implicit $a1
+    $a2 = MOV64rr $a7
+    CALLpcrel16 @sink2, csr_bedrock, implicit-def $sp, implicit $sp, implicit $a2
+    RET implicit $sp
+...
+---
+name: alias_back_copy_before_call
+tracksRegLiveness: true
+body: |
+  bb.0:
+    liveins: $a0
+
+    $a6 = MOV64rr $a0
+    $d0 = MOV32ri 1
+    $a0 = MOV64rr $a6
+    CALLpcrel16 @sink0, csr_bedrock, implicit-def $sp, implicit $sp, implicit $a0
+    $a0 = MOV64rr $a6
+    CALLpcrel16 @sink1, csr_bedrock, implicit-def $sp, implicit $sp, implicit $a0
+    RET implicit $sp
+...

@@ -1,0 +1,73 @@
+# RUN: llc -mtriple=bedrock -start-before=bedrock-push-pop-merge -stop-after=bedrock-push-pop-merge -verify-machineinstrs %s -o - | FileCheck %s
+
+# CHECK-LABEL: name: negative_add_sub_compact
+# CHECK:       $d7 = SUB32ri $d7, 19
+# CHECK:       $a2 = SUB64ri $a2, 4
+# CHECK:       $d1 = ADD32ri $d1, 7
+
+# CHECK-LABEL: name: negative_add_before_call
+# CHECK:       $d7 = SUB32ri $d7, 19
+# CHECK-NEXT:  CALLpcrel16 @sink0
+# CHECK-NEXT:  $d0 = MOV32rr $d7
+
+# CHECK-LABEL: name: negative_add_flags_live
+# CHECK:       $d0 = ADD32ri $d0, -19
+# CHECK-NEXT:  JCC %bb.1, 2, implicit $flags
+
+--- |
+  target triple = "bedrock"
+
+  define void @negative_add_sub_compact() #0 {
+    ret void
+  }
+
+  declare void @sink0()
+
+  define void @negative_add_before_call() #0 {
+    ret void
+  }
+
+  define void @negative_add_flags_live() #0 {
+    ret void
+  }
+
+  attributes #0 = { minsize optsize }
+...
+---
+name: negative_add_sub_compact
+tracksRegLiveness: true
+body: |
+  bb.0:
+    liveins: $d7, $a2, $d1
+
+    $d7 = ADD32ri $d7, -19, implicit-def dead $flags
+    $a2 = ADD64ri $a2, -4, implicit-def dead $flags
+    $d1 = SUB32ri $d1, -7, implicit-def dead $flags
+    RET implicit $sp
+...
+---
+name: negative_add_before_call
+tracksRegLiveness: true
+body: |
+  bb.0:
+    liveins: $d7
+
+    $d7 = ADD32ri $d7, -19
+    CALLpcrel16 @sink0, csr_bedrock, implicit-def $sp, implicit $sp
+    $d0 = MOV32rr $d7
+    RET implicit $sp, implicit $d0
+...
+---
+name: negative_add_flags_live
+tracksRegLiveness: true
+body: |
+  bb.0:
+    successors: %bb.1(0x80000000)
+    liveins: $d0
+
+    $d0 = ADD32ri $d0, -19, implicit-def $flags
+    JCC %bb.1, 2, implicit $flags
+
+  bb.1:
+    RET implicit $sp
+...

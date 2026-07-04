@@ -520,6 +520,7 @@ set(LLVM_ALL_TARGETS
   AMDGPU
   ARM
   AVR
+  Bedrock
   BPF
   Hexagon
   Lanai

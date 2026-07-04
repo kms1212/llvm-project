@@ -1,0 +1,204 @@
+# RUN: llc -mtriple=bedrock -start-before=bedrock-push-pop-merge -stop-after=bedrock-push-pop-merge -verify-machineinstrs %s -o - | FileCheck %s
+
+# CHECK-LABEL: name: clr_zero_cmp_jcc
+# CHECK-NOT:   CLR64r
+# CHECK-NOT:   CMP32rr
+# CHECK:       TEST32rr $d5, $d5
+# CHECK-NEXT:  JCC %bb.{{[0-9]+}}, 12
+
+# CHECK-LABEL: name: clr_zero_cmp_movcc
+# CHECK-NOT:   CLR64r
+# CHECK-NOT:   CMP32rr
+# CHECK:       TEST32rr $d1, $d1
+# CHECK-NEXT:  $d0 = MOVCC32rr $d0, $d6, 2
+
+# CHECK-LABEL: name: clr_zero_cmp_lhs_signed
+# CHECK-NOT:   CLR64r
+# CHECK-NOT:   CMP32rr
+# CHECK:       TEST32rr $d5, $d5
+# CHECK-NEXT:  JCC %bb.{{[0-9]+}}, 15
+
+# CHECK-LABEL: name: clr_zero_cmp_live_zero_negative
+# CHECK:       $d1 = CLR64r
+# CHECK-NEXT:  CMP32rr $d5, $d1
+# CHECK-NEXT:  JCC %bb.{{[0-9]+}}, 12
+
+# CHECK-LABEL: name: clr_zero_mem_cmp_rm
+# CHECK-NOT:   CLR64r
+# CHECK-NOT:   CMP32rm
+# CHECK:       CMP32mi 0, $sp, 12
+
+# CHECK-LABEL: name: clr_zero_mem_cmp_mr
+# CHECK-NOT:   CLR64r
+# CHECK-NOT:   CMP32mr
+# CHECK:       CMP32mi 0, $sp, 52
+# CHECK:       $a0 = MOV64rr $a1
+
+# CHECK-LABEL: name: clr_zero_mem_cmp_live_zero_negative
+# CHECK:       $d1 = CLR64r
+# CHECK-NEXT:  CMP32rm $d1, $sp, 28
+
+--- |
+  target triple = "bedrock"
+
+  define void @clr_zero_cmp_jcc() #0 {
+    ret void
+  }
+
+  define void @clr_zero_cmp_movcc() #0 {
+    ret void
+  }
+
+  define void @clr_zero_cmp_lhs_signed() #0 {
+    ret void
+  }
+
+  define void @clr_zero_cmp_live_zero_negative() #0 {
+    ret void
+  }
+
+  define void @clr_zero_mem_cmp_rm() #0 {
+    ret void
+  }
+
+  define void @clr_zero_mem_cmp_mr() #0 {
+    ret void
+  }
+
+  define void @clr_zero_mem_cmp_live_zero_negative() #0 {
+    ret void
+  }
+
+  attributes #0 = { minsize optsize }
+...
+---
+name: clr_zero_cmp_jcc
+tracksRegLiveness: true
+body: |
+  bb.0:
+    successors: %bb.1, %bb.2
+    liveins: $d5
+
+    $d1 = CLR64r
+    CMP32rr $d5, $d1, implicit-def $flags
+    JCC %bb.1, 12, implicit $flags
+    JMP %bb.2
+
+  bb.1:
+    RET implicit $sp
+
+  bb.2:
+    RET implicit $sp
+...
+---
+name: clr_zero_cmp_movcc
+tracksRegLiveness: true
+body: |
+  bb.0:
+    liveins: $d0, $d1, $d6
+
+    $d2 = CLR64r
+    CMP32rr $d1, $d2, implicit-def $flags
+    $d0 = MOVCC32rr $d0, $d6, 2, implicit $flags
+    RET implicit $sp
+...
+---
+name: clr_zero_cmp_lhs_signed
+tracksRegLiveness: true
+body: |
+  bb.0:
+    successors: %bb.1, %bb.2
+    liveins: $d5
+
+    $d1 = CLR64r
+    CMP32rr $d1, $d5, implicit-def $flags
+    JCC %bb.1, 12, implicit $flags
+    JMP %bb.2
+
+  bb.1:
+    RET implicit $sp
+
+  bb.2:
+    RET implicit $sp
+...
+---
+name: clr_zero_cmp_live_zero_negative
+tracksRegLiveness: true
+body: |
+  bb.0:
+    successors: %bb.1, %bb.2
+    liveins: $d0, $d5
+
+    $d1 = CLR64r
+    CMP32rr $d5, $d1, implicit-def $flags
+    JCC %bb.1, 12, implicit $flags
+    JMP %bb.2
+
+  bb.1:
+    liveins: $d1
+
+    $d0 = MOV32rr $d1
+    RET implicit $sp
+
+  bb.2:
+    RET implicit $sp
+...
+---
+name: clr_zero_mem_cmp_rm
+tracksRegLiveness: true
+body: |
+  bb.0:
+    successors: %bb.1, %bb.2
+
+    $d7 = CLR64r
+    CMP32rm $d7, $sp, 12, implicit-def $flags
+    JCC %bb.1, 2, implicit $flags
+    JMP %bb.2
+
+  bb.1:
+    RET implicit $sp
+
+  bb.2:
+    RET implicit $sp
+...
+---
+name: clr_zero_mem_cmp_mr
+tracksRegLiveness: true
+body: |
+  bb.0:
+    successors: %bb.1, %bb.2
+    liveins: $a1
+
+    $d5 = CLR64r
+    CMP32mr $d5, $sp, 52, implicit-def $flags
+    $a0 = MOV64rr $a1
+    JCC %bb.1, 2, implicit $flags
+    JMP %bb.2
+
+  bb.1:
+    RET implicit $sp
+
+  bb.2:
+    RET implicit $sp
+...
+---
+name: clr_zero_mem_cmp_live_zero_negative
+tracksRegLiveness: true
+body: |
+  bb.0:
+    successors: %bb.1, %bb.2
+
+    $d1 = CLR64r
+    CMP32rm $d1, $sp, 28, implicit-def $flags
+    JCC %bb.1, 2, implicit $flags
+    JMP %bb.2
+
+  bb.1:
+    liveins: $d1
+
+    $d0 = MOV32rr $d1
+    RET implicit $sp
+
+  bb.2:
+    RET implicit $sp
+...

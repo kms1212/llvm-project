@@ -1,0 +1,52 @@
+# RUN: llc -mtriple=bedrock -start-before=bedrock-push-pop-merge -stop-after=bedrock-push-pop-merge -verify-machineinstrs %s -o - | FileCheck %s
+
+# CHECK-LABEL: name: imm_mul_fold
+# CHECK-NOT:   MOV32ri 3
+# CHECK:       $d2 = MULU32ri $d2, 3
+# CHECK-NOT:   MOV32ri 2146121005
+# CHECK:       $d0 = MULU32ri $d0, 2146121005
+
+# CHECK-LABEL: name: imm_mul_by_three_to_adds
+# CHECK-NOT:   MOV32ri 3
+# CHECK-NOT:   MULU32rr
+# CHECK:       $d4 = MOV32rr $d3
+# CHECK:       $d4 = ADD32rr $d4, $d3
+# CHECK:       $d4 = ADD32rr $d4, killed $d3
+
+--- |
+  target triple = "bedrock"
+
+  define void @imm_mul_fold() #0 {
+    ret void
+  }
+
+  define void @imm_mul_by_three_to_adds() #0 {
+    ret void
+  }
+
+  attributes #0 = { minsize optsize }
+...
+---
+name: imm_mul_fold
+tracksRegLiveness: true
+body: |
+  bb.0:
+    liveins: $d0, $d2
+
+    $d1 = MOV32ri 3
+    $d2 = MULU32rr $d2, killed $d1
+    $d1 = MOV32ri 2146121005
+    $d0 = MULU32rr $d0, killed $d1
+    RET implicit $sp
+...
+---
+name: imm_mul_by_three_to_adds
+tracksRegLiveness: true
+body: |
+  bb.0:
+    liveins: $d3
+
+    $d4 = MOV32ri 3
+    $d4 = MULU32rr $d4, killed $d3
+    RET implicit $sp
+...

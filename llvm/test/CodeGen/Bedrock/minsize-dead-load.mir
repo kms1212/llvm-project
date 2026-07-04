@@ -1,0 +1,25 @@
+# RUN: llc -mtriple=bedrock -start-before=bedrock-push-pop-merge -stop-after=bedrock-push-pop-merge -verify-machineinstrs %s -o - | FileCheck %s
+
+# CHECK-LABEL: name: dead_plain_load
+# CHECK-NOT:   MOV32rm
+# CHECK:       RET
+
+--- |
+  target triple = "bedrock"
+
+  define void @dead_plain_load() #0 {
+    ret void
+  }
+
+  attributes #0 = { minsize optsize }
+...
+---
+name: dead_plain_load
+tracksRegLiveness: true
+body: |
+  bb.0:
+    liveins: $sp
+
+    dead $d6 = MOV32rm $sp, 52
+    RET implicit $sp
+...
