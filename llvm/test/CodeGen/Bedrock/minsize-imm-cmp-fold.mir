@@ -6,8 +6,7 @@
 # CHECK-NEXT:  $d1 = MOV32ri 7
 # CHECK-NEXT:  CMP32ri $d1, 63
 # CHECK-NEXT:  $d1 = MOV32ri 7
-# CHECK-NEXT:  $d2 = MOV32ri 64
-# CHECK-NEXT:  CMP32rr killed $d1, killed $d2
+# CHECK-NEXT:  CMP32ri $d1, 64
 
 --- |
   target triple = "bedrock"

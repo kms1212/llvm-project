@@ -27,7 +27,9 @@ integer_memory_dest:
 	CMP.B	84, [A0]
 	CMP.B	80, [A0 + 1]
 	CMP.L	7, D3
+	CMP.L	305419896, D1
 	CMP.L	7, [SP + 16]
+	TEST.L	305419896, D1
 	ADD.L	D0, [SP + 16]
 	SUB.L	D0, [SP + 16]
 	AND.L	D0, [SP + 16]
@@ -62,7 +64,9 @@ integer_memory_dest:
 # CHECK: CMP.B{{[[:space:]]+}}84, [A0]
 # CHECK: CMP.B{{[[:space:]]+}}80, [A0 + 1]
 # CHECK: CMP.L{{[[:space:]]+}}7, D3
+# CHECK: CMP.L{{[[:space:]]+}}305419896, D1
 # CHECK: CMP.L{{[[:space:]]+}}7, [SP + 16]
+# CHECK: TEST.L{{[[:space:]]+}}305419896, D1
 # CHECK: ADD.L{{[[:space:]]+}}D0, [SP + 16]
 # CHECK: SUB.L{{[[:space:]]+}}D0, [SP + 16]
 # CHECK: AND.L{{[[:space:]]+}}D0, [SP + 16]
@@ -79,3 +83,5 @@ integer_memory_dest:
 # RAW: 3f 1f 81 0f{{[[:space:]]+}}AND.L{{[[:space:]]+}}15, D1
 # RAW: 3f 1f 82 44{{[[:space:]]+}}OR.L{{[[:space:]]+}}4, D2
 # RAW: 3f 1f 83 c5{{[[:space:]]+}}XOR.L{{[[:space:]]+}}5, D3
+# RAW: 41 26 78 56 34 12{{[[:space:]]+}}CMP.L{{[[:space:]]+}}305419896, D1
+# RAW: 43 26 78 56 34 12{{[[:space:]]+}}TEST.L{{[[:space:]]+}}305419896, D1

@@ -2844,7 +2844,7 @@ static inline unsigned getProfitableCmpImmOpcode(unsigned MovOpcode,
   case Bedrock::CMP16rr:
     return MovOpcode == Bedrock::MOV16ri ? Bedrock::CMP16ri : 0;
   case Bedrock::CMP32rr:
-    if (MovOpcode == Bedrock::MOV32ri && Imm > 0 && fitsImm6(Imm))
+    if (MovOpcode == Bedrock::MOV32ri)
       return Bedrock::CMP32ri;
     return 0;
   case Bedrock::CMP64rr:

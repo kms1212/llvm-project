@@ -2168,9 +2168,15 @@ static DecodeStatus decodeIntBinOrCmp(const bedrock_form_desc *Form,
     size_t PayloadWords = wordsForBits(Bits);
     if (Bits == 0 || PayloadWords == 0 || Cursor + PayloadWords > WordCount)
       return MCDisassembler::Fail;
-    std::optional<MCRegister> Dst = regBySource(Form, Words, "dst");
-    if (!setOpcode(MI, binRIOpcode(Mnemonic, *Suffix)) || !addReg(MI, Dst) ||
-        !addReg(MI, Dst))
+    StringRef TargetSource =
+        (Mnemonic == "CMP" || Mnemonic == "TEST") ? "rhs" : "dst";
+    std::optional<MCRegister> Dst = regBySource(Form, Words, TargetSource);
+    unsigned Opc = Mnemonic == "CMP"    ? cmpRIOpcode(*Suffix)
+                   : Mnemonic == "TEST" ? testRIOpcode(*Suffix)
+                                         : binRIOpcode(Mnemonic, *Suffix);
+    if (!setOpcode(MI, Opc) || !addReg(MI, Dst))
+      return MCDisassembler::Fail;
+    if (Mnemonic != "CMP" && Mnemonic != "TEST" && !addReg(MI, Dst))
       return MCDisassembler::Fail;
     MI.addOperand(MCOperand::createImm(
         signExtend(readPayload(Words, Cursor, PayloadWords), Bits)));

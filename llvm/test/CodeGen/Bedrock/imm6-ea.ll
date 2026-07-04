@@ -132,6 +132,18 @@ f:
   ret i32 0
 }
 
+define i32 @cmp_imm_wide(i32 %x) {
+; CHECK-LABEL: cmp_imm_wide:
+; CHECK: CMP.L{{[[:space:]]+}}70000, D0
+entry:
+  %c = icmp eq i32 %x, 70000
+  br i1 %c, label %t, label %f
+t:
+  ret i32 1
+f:
+  ret i32 0
+}
+
 define i32 @cmp_mem(ptr %p) {
 ; CHECK-LABEL: cmp_mem:
 ; CHECK: CMP.L{{[[:space:]]+}}9, [A0]

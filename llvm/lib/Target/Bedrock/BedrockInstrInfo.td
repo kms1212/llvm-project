@@ -117,6 +117,12 @@ def u6nzimm32 : ImmLeaf<i32, [{
 def u6nzimm64 : ImmLeaf<i64, [{
   return Imm > 0 && Imm < 64 && Imm != 50 && Imm != 51 && Imm != 52;
 }]>;
+def i16nzimm : ImmLeaf<i16, [{
+  return Imm != 0;
+}]>;
+def i32nzimm : ImmLeaf<i32, [{
+  return Imm != 0;
+}]>;
 def u6sel8 : Operand<i8>, ImmLeaf<i8, [{
   return Imm >= 0 && Imm < 64;
 }]>;
@@ -1729,15 +1735,15 @@ def CMP64idx1mr  : CmpIdxMR<"Q", GPR64, idx1addr>;
 def CMP64idx4mr  : CmpIdxMR<"Q", GPR64, idx4addr>;
 def CMP64idx4lmr : CmpIdxMR<"Q", GPR64, idx4laddr>;
 def CMP8ri  : CmpRI<"B", GPR8, u6imm8>;
-def CMP16ri : CmpRI<"W", GPR16, u6imm16>;
-def CMP32ri : CmpRI<"L", GPR32, u6imm32>;
+def CMP16ri : CmpRI<"W", GPR16, i16imm>;
+def CMP32ri : CmpRI<"L", GPR32, i32imm>;
 def CMP64ri : CmpRI<"Q", GPR64, u6imm64>;
 def : Pat<(BedrockCmp GPR8:$lhs, u6nzimm8:$rhs),
           (CMP8ri GPR8:$lhs, u6nzimm8:$rhs)>;
-def : Pat<(BedrockCmp GPR16:$lhs, u6nzimm16:$rhs),
-          (CMP16ri GPR16:$lhs, u6nzimm16:$rhs)>;
-def : Pat<(BedrockCmp GPR32:$lhs, u6nzimm32:$rhs),
-          (CMP32ri GPR32:$lhs, u6nzimm32:$rhs)>;
+def : Pat<(BedrockCmp GPR16:$lhs, i16nzimm:$rhs),
+          (CMP16ri GPR16:$lhs, i16nzimm:$rhs)>;
+def : Pat<(BedrockCmp GPR32:$lhs, i32nzimm:$rhs),
+          (CMP32ri GPR32:$lhs, i32nzimm:$rhs)>;
 def : Pat<(BedrockCmp GPR64:$lhs, u6nzimm64:$rhs),
           (CMP64ri GPR64:$lhs, u6nzimm64:$rhs)>;
 def CMP8mi  : FlagMI<"CMP", "B", u6imm8>;
@@ -1827,8 +1833,8 @@ def TEST64idx1mr  : TestIdxMR<"Q", GPR64, idx1addr>;
 def TEST64idx4mr  : TestIdxMR<"Q", GPR64, idx4addr>;
 def TEST64idx4lmr : TestIdxMR<"Q", GPR64, idx4laddr>;
 def TEST8ri  : TestRI<"B", GPR8, u6imm8>;
-def TEST16ri : TestRI<"W", GPR16, u6imm16>;
-def TEST32ri : TestRI<"L", D32, u6imm32>;
+def TEST16ri : TestRI<"W", GPR16, i16imm>;
+def TEST32ri : TestRI<"L", D32, i32imm>;
 def TEST64ri : TestRI<"Q", GPR64, u6imm64>;
 def TEST8mi  : FlagMI<"TEST", "B", u6imm8>;
 def TEST16mi : FlagMI<"TEST", "W", u6imm16>;
