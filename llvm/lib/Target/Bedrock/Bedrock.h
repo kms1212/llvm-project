@@ -28,12 +28,12 @@ enum class BedrockPeepholeProfile {
 FunctionPass *createBedrockISelDag(BedrockTargetMachine &TM,
                                    CodeGenOptLevel OptLevel);
 FunctionPass *createBedrockBoundBranchPass();
-FunctionPass *createBedrockPushPopMergePass(BedrockPeepholeProfile Profile);
+FunctionPass *createBedrockPeepholePass(BedrockPeepholeProfile Profile);
 
 void initializeBedrockAsmPrinterPass(PassRegistry &);
 void initializeBedrockDAGToDAGISelLegacyPass(PassRegistry &);
 void initializeBedrockBoundBranchPass(PassRegistry &);
-void initializeBedrockPushPopMergePass(PassRegistry &);
+void initializeBedrockPeepholePass(PassRegistry &);
 } // namespace llvm
 
 #endif

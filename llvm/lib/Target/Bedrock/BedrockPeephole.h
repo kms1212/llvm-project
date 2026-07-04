@@ -1,4 +1,4 @@
-//===-- BedrockPushPopMerge.h - Bedrock post-RA peepholes -*- C++ -*-===//
+//===-- BedrockPeephole.h - Bedrock post-RA peepholes -*- C++ -*-===//
 //
 // Part of the LLVM Project, under the Apache License v2.0 with LLVM Exceptions.
 // See https://llvm.org/LICENSE.txt for license information.
@@ -6,8 +6,8 @@
 //
 //===----------------------------------------------------------------------===//
 
-#ifndef LLVM_LIB_TARGET_BEDROCK_BEDROCKPUSHPOPMERGE_H
-#define LLVM_LIB_TARGET_BEDROCK_BEDROCKPUSHPOPMERGE_H
+#ifndef LLVM_LIB_TARGET_BEDROCK_BEDROCKPEEPHOLE_H
+#define LLVM_LIB_TARGET_BEDROCK_BEDROCKPEEPHOLE_H
 
 #include "Bedrock.h"
 #include "BedrockInstrInfo.h"
@@ -34,20 +34,20 @@
 
 using namespace llvm;
 
-#define PASS_NAME "Bedrock PUSHM/POPM formation"
+#define BEDROCK_PEEPHOLE_PASS_NAME "Bedrock post-RA peephole optimizations"
 
-class BedrockPushPopMerge : public MachineFunctionPass {
+class BedrockPeephole : public MachineFunctionPass {
   BedrockPeepholeProfile Profile = BedrockPeepholeProfile::O0;
 
 public:
   static char ID;
 
-  BedrockPushPopMerge(BedrockPeepholeProfile Profile)
+  BedrockPeephole(BedrockPeepholeProfile Profile)
       : MachineFunctionPass(ID), Profile(Profile) {
-    initializeBedrockPushPopMergePass(*PassRegistry::getPassRegistry());
+    initializeBedrockPeepholePass(*PassRegistry::getPassRegistry());
   }
 
-  StringRef getPassName() const override { return PASS_NAME; }
+  StringRef getPassName() const override { return BEDROCK_PEEPHOLE_PASS_NAME; }
 
   bool runOnMachineFunction(MachineFunction &MF) override;
 
@@ -5317,4 +5317,4 @@ findHeaderPredecessorExcluding(MachineBasicBlock &Header,
   return Found;
 }
 
-#endif // LLVM_LIB_TARGET_BEDROCK_BEDROCKPUSHPOPMERGE_H
+#endif // LLVM_LIB_TARGET_BEDROCK_BEDROCKPEEPHOLE_H

@@ -1,4 +1,4 @@
-//===-- BedrockPushPopMerge.cpp - Bedrock post-RA peepholes ------------===//
+//===-- BedrockPeephole.cpp - Bedrock post-RA peepholes ------------===//
 //
 // Part of the LLVM Project, under the Apache License v2.0 with LLVM Exceptions.
 // See https://llvm.org/LICENSE.txt for license information.
@@ -6,16 +6,17 @@
 //
 //===----------------------------------------------------------------------===//
 
-#include "BedrockPushPopMerge.h"
+#include "BedrockPeephole.h"
 #include "llvm/InitializePasses.h"
 
-#define DEBUG_TYPE "bedrock-push-pop-merge"
+#define DEBUG_TYPE "bedrock-peephole"
 
-char BedrockPushPopMerge::ID = 0;
+char BedrockPeephole::ID = 0;
 
-INITIALIZE_PASS(BedrockPushPopMerge, DEBUG_TYPE, PASS_NAME, false, false)
+INITIALIZE_PASS(BedrockPeephole, DEBUG_TYPE, BEDROCK_PEEPHOLE_PASS_NAME, false,
+                false)
 
-bool BedrockPushPopMerge::runOnMachineFunction(MachineFunction &MF) {
+bool BedrockPeephole::runOnMachineFunction(MachineFunction &MF) {
   bool OptNone = MF.getFunction().hasOptNone();
   bool EnableO1 =
       !OptNone && profileAtLeast(Profile, BedrockPeepholeProfile::O1);
@@ -312,6 +313,6 @@ bool BedrockPushPopMerge::runOnMachineFunction(MachineFunction &MF) {
 }
 
 FunctionPass *
-llvm::createBedrockPushPopMergePass(BedrockPeepholeProfile Profile) {
-  return new BedrockPushPopMerge(Profile);
+llvm::createBedrockPeepholePass(BedrockPeepholeProfile Profile) {
+  return new BedrockPeephole(Profile);
 }

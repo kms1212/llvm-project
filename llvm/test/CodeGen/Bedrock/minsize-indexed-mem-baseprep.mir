@@ -1,4 +1,4 @@
-# RUN: llc -mtriple=bedrock -start-before=bedrock-push-pop-merge -stop-after=bedrock-push-pop-merge -verify-machineinstrs %s -o - | FileCheck %s
+# RUN: llc -mtriple=bedrock -start-before=bedrock-peephole -stop-after=bedrock-peephole -verify-machineinstrs %s -o - | FileCheck %s
 
 # CHECK-LABEL: name: indexed_load_after_base_copy
 # CHECK-NOT:   EXTZQ32rr

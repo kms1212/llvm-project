@@ -1,4 +1,4 @@
-//===-- BedrockPushPopMergeLoops.cpp - Bedrock peepholes -----------===//
+//===-- BedrockPeepholeLoops.cpp - Bedrock peepholes -----------===//
 //
 // Part of the LLVM Project, under the Apache License v2.0 with LLVM Exceptions.
 // See https://llvm.org/LICENSE.txt for license information.
@@ -6,9 +6,9 @@
 //
 //===----------------------------------------------------------------------===//
 
-#include "BedrockPushPopMerge.h"
+#include "BedrockPeephole.h"
 
-bool BedrockPushPopMerge::foldCountedBranchShortcuts(
+bool BedrockPeephole::foldCountedBranchShortcuts(
     MachineBasicBlock &MBB, MachineFunction &MF) const {
   bool Changed = false;
   const BedrockInstrInfo &TII =
@@ -101,7 +101,7 @@ bool BedrockPushPopMerge::foldCountedBranchShortcuts(
   return Changed;
 }
 
-bool BedrockPushPopMerge::foldTopTestIncLoopToIJcc(MachineFunction &MF) const {
+bool BedrockPeephole::foldTopTestIncLoopToIJcc(MachineFunction &MF) const {
   bool Changed = false;
   const BedrockInstrInfo &TII =
       *static_cast<const BedrockInstrInfo *>(MF.getSubtarget().getInstrInfo());
@@ -217,7 +217,7 @@ bool BedrockPushPopMerge::foldTopTestIncLoopToIJcc(MachineFunction &MF) const {
   return Changed;
 }
 
-bool BedrockPushPopMerge::foldTopTestCountedLoop(
+bool BedrockPeephole::foldTopTestCountedLoop(
     MachineBasicBlock &Body, MachineFunction &MF,
     const DenseMap<MachineBasicBlock *, uint32_t> &KnownZeroIns) const {
   MachineBasicBlock::iterator JmpI = Body.getLastNonDebugInstr();
@@ -288,7 +288,7 @@ bool BedrockPushPopMerge::foldTopTestCountedLoop(
   return true;
 }
 
-bool BedrockPushPopMerge::foldPositiveCountedLoopPretest(
+bool BedrockPeephole::foldPositiveCountedLoopPretest(
     MachineFunction &MF,
     const DenseMap<MachineBasicBlock *, uint32_t> &KnownZeroIns) const {
   bool Changed = false;
@@ -452,7 +452,7 @@ bool BedrockPushPopMerge::foldPositiveCountedLoopPretest(
   return Changed;
 }
 
-bool BedrockPushPopMerge::foldPositiveCountedLoopHeaderPretest(
+bool BedrockPeephole::foldPositiveCountedLoopHeaderPretest(
     MachineFunction &MF,
     const DenseMap<MachineBasicBlock *, uint32_t> &KnownZeroIns) const {
   bool Changed = false;
@@ -655,7 +655,7 @@ bool BedrockPushPopMerge::foldPositiveCountedLoopHeaderPretest(
   return Changed;
 }
 
-bool BedrockPushPopMerge::foldSMaxCountdownPretest(
+bool BedrockPeephole::foldSMaxCountdownPretest(
     MachineFunction &MF,
     const DenseMap<MachineBasicBlock *, uint32_t> &KnownZeroIns) const {
   bool Changed = false;
@@ -861,7 +861,7 @@ bool BedrockPushPopMerge::foldSMaxCountdownPretest(
   return Changed;
 }
 
-bool BedrockPushPopMerge::foldSMaxPretestZeroReturn(MachineFunction &MF) const {
+bool BedrockPeephole::foldSMaxPretestZeroReturn(MachineFunction &MF) const {
   bool Changed = false;
   const BedrockInstrInfo &TII =
       *static_cast<const BedrockInstrInfo *>(MF.getSubtarget().getInstrInfo());
@@ -966,7 +966,7 @@ bool BedrockPushPopMerge::foldSMaxPretestZeroReturn(MachineFunction &MF) const {
   return Changed;
 }
 
-bool BedrockPushPopMerge::foldSMaxIndexLoopBound(MachineFunction &MF) const {
+bool BedrockPeephole::foldSMaxIndexLoopBound(MachineFunction &MF) const {
   bool Changed = false;
   const TargetRegisterInfo &TRI = *MF.getSubtarget().getRegisterInfo();
 
@@ -1064,7 +1064,7 @@ bool BedrockPushPopMerge::foldSMaxIndexLoopBound(MachineFunction &MF) const {
   return Changed;
 }
 
-bool BedrockPushPopMerge::foldCountedLoopIndexResult(
+bool BedrockPeephole::foldCountedLoopIndexResult(
     MachineFunction &MF,
     const DenseMap<MachineBasicBlock *, uint32_t> &KnownZeroIns) const {
   bool Changed = false;
@@ -1288,7 +1288,7 @@ bool BedrockPushPopMerge::foldCountedLoopIndexResult(
   return Changed;
 }
 
-bool BedrockPushPopMerge::foldNarrowLoopCountCopies(MachineFunction &MF) const {
+bool BedrockPeephole::foldNarrowLoopCountCopies(MachineFunction &MF) const {
   bool Changed = false;
   const BedrockInstrInfo &TII =
       *static_cast<const BedrockInstrInfo *>(MF.getSubtarget().getInstrInfo());
@@ -1313,7 +1313,7 @@ bool BedrockPushPopMerge::foldNarrowLoopCountCopies(MachineFunction &MF) const {
   return Changed;
 }
 
-bool BedrockPushPopMerge::foldSelfZextI32LoopCounts(MachineFunction &MF) const {
+bool BedrockPeephole::foldSelfZextI32LoopCounts(MachineFunction &MF) const {
   bool Changed = false;
   const BedrockInstrInfo &TII =
       *static_cast<const BedrockInstrInfo *>(MF.getSubtarget().getInstrInfo());
@@ -1352,7 +1352,7 @@ bool BedrockPushPopMerge::foldSelfZextI32LoopCounts(MachineFunction &MF) const {
   return Changed;
 }
 
-bool BedrockPushPopMerge::foldMinSizeLoopCounter32(MachineFunction &MF) const {
+bool BedrockPeephole::foldMinSizeLoopCounter32(MachineFunction &MF) const {
   const BedrockInstrInfo &TII =
       *static_cast<const BedrockInstrInfo *>(MF.getSubtarget().getInstrInfo());
   const TargetRegisterInfo &TRI = *MF.getSubtarget().getRegisterInfo();
@@ -1489,7 +1489,7 @@ bool BedrockPushPopMerge::foldMinSizeLoopCounter32(MachineFunction &MF) const {
   return Changed;
 }
 
-bool BedrockPushPopMerge::foldLoopCarriedLoadUpdateCopies(
+bool BedrockPeephole::foldLoopCarriedLoadUpdateCopies(
     MachineBasicBlock &MBB, MachineFunction &MF) const {
   bool Changed = false;
   const BedrockInstrInfo &TII =
@@ -1608,7 +1608,7 @@ bool BedrockPushPopMerge::foldLoopCarriedLoadUpdateCopies(
   return Changed;
 }
 
-bool BedrockPushPopMerge::foldLoopCarriedLoadAddCopies(
+bool BedrockPeephole::foldLoopCarriedLoadAddCopies(
     MachineBasicBlock &MBB, MachineFunction &MF) const {
   bool Changed = false;
   const BedrockInstrInfo &TII =
@@ -1708,7 +1708,7 @@ bool BedrockPushPopMerge::foldLoopCarriedLoadAddCopies(
   return Changed;
 }
 
-bool BedrockPushPopMerge::foldAccumulatorLoopUseInputCount(
+bool BedrockPeephole::foldAccumulatorLoopUseInputCount(
     MachineFunction &MF) const {
   bool Changed = false;
   const BedrockInstrInfo &TII =
@@ -1882,7 +1882,7 @@ bool BedrockPushPopMerge::foldAccumulatorLoopUseInputCount(
   return Changed;
 }
 
-bool BedrockPushPopMerge::foldPositiveConstRepPretests(
+bool BedrockPeephole::foldPositiveConstRepPretests(
     MachineFunction &MF) const {
   bool Changed = false;
   const TargetRegisterInfo &TRI = *MF.getSubtarget().getRegisterInfo();
@@ -1955,7 +1955,7 @@ bool BedrockPushPopMerge::foldPositiveConstRepPretests(
   return Changed;
 }
 
-bool BedrockPushPopMerge::foldAscendingStoreProgressionLoops(
+bool BedrockPeephole::foldAscendingStoreProgressionLoops(
     MachineFunction &MF) const {
   bool Changed = false;
   const BedrockInstrInfo &TII =
@@ -2142,7 +2142,7 @@ bool BedrockPushPopMerge::foldAscendingStoreProgressionLoops(
   return Changed;
 }
 
-bool BedrockPushPopMerge::foldAscendingAddressStoreLoops(
+bool BedrockPeephole::foldAscendingAddressStoreLoops(
     MachineFunction &MF) const {
   bool Changed = false;
   const BedrockInstrInfo &TII =
@@ -2462,7 +2462,7 @@ bool BedrockPushPopMerge::foldAscendingAddressStoreLoops(
   return Changed;
 }
 
-bool BedrockPushPopMerge::foldAscendingConstStoreLoops(
+bool BedrockPeephole::foldAscendingConstStoreLoops(
     MachineFunction &MF) const {
   bool Changed = false;
   const BedrockInstrInfo &TII =
@@ -2690,7 +2690,7 @@ bool BedrockPushPopMerge::foldAscendingConstStoreLoops(
   return Changed;
 }
 
-bool BedrockPushPopMerge::foldAscendingMultiStoreLoops(
+bool BedrockPeephole::foldAscendingMultiStoreLoops(
     MachineFunction &MF) const {
   bool Changed = false;
   const BedrockInstrInfo &TII =
@@ -2922,7 +2922,7 @@ bool BedrockPushPopMerge::foldAscendingMultiStoreLoops(
   return Changed;
 }
 
-bool BedrockPushPopMerge::foldMixedZeroStoreLoops(MachineFunction &MF) const {
+bool BedrockPeephole::foldMixedZeroStoreLoops(MachineFunction &MF) const {
   bool Changed = false;
   const BedrockInstrInfo &TII =
       *static_cast<const BedrockInstrInfo *>(MF.getSubtarget().getInstrInfo());
@@ -3266,7 +3266,7 @@ bool BedrockPushPopMerge::foldMixedZeroStoreLoops(MachineFunction &MF) const {
   return Changed;
 }
 
-bool BedrockPushPopMerge::foldByteZeroOffsetStoreLoops(
+bool BedrockPeephole::foldByteZeroOffsetStoreLoops(
     MachineFunction &MF) const {
   const BedrockInstrInfo &TII =
       *static_cast<const BedrockInstrInfo *>(MF.getSubtarget().getInstrInfo());
@@ -3431,7 +3431,7 @@ bool BedrockPushPopMerge::foldByteZeroOffsetStoreLoops(
   return false;
 }
 
-bool BedrockPushPopMerge::foldByteOffsetStoreLoops(MachineFunction &MF) const {
+bool BedrockPeephole::foldByteOffsetStoreLoops(MachineFunction &MF) const {
   bool Changed = false;
   const BedrockInstrInfo &TII =
       *static_cast<const BedrockInstrInfo *>(MF.getSubtarget().getInstrInfo());
@@ -3622,7 +3622,7 @@ bool BedrockPushPopMerge::foldByteOffsetStoreLoops(MachineFunction &MF) const {
   return Changed;
 }
 
-bool BedrockPushPopMerge::foldSingleInstructionRepLoops(
+bool BedrockPeephole::foldSingleInstructionRepLoops(
     MachineFunction &MF) const {
   bool Changed = false;
   const BedrockInstrInfo &TII =
@@ -3687,7 +3687,7 @@ bool BedrockPushPopMerge::foldSingleInstructionRepLoops(
   return Changed;
 }
 
-bool BedrockPushPopMerge::foldWideZeroFillDjtLoops(MachineFunction &MF) const {
+bool BedrockPeephole::foldWideZeroFillDjtLoops(MachineFunction &MF) const {
   bool Changed = false;
   const BedrockInstrInfo &TII =
       *static_cast<const BedrockInstrInfo *>(MF.getSubtarget().getInstrInfo());
@@ -3782,7 +3782,7 @@ bool BedrockPushPopMerge::foldWideZeroFillDjtLoops(MachineFunction &MF) const {
   return Changed;
 }
 
-bool BedrockPushPopMerge::foldZeroExitRepgTailLoops(MachineFunction &MF) const {
+bool BedrockPeephole::foldZeroExitRepgTailLoops(MachineFunction &MF) const {
   bool Changed = false;
   const BedrockInstrInfo &TII =
       *static_cast<const BedrockInstrInfo *>(MF.getSubtarget().getInstrInfo());
@@ -3868,7 +3868,7 @@ bool BedrockPushPopMerge::foldZeroExitRepgTailLoops(MachineFunction &MF) const {
   return Changed;
 }
 
-bool BedrockPushPopMerge::foldAscendingLoadProgressionLoops(
+bool BedrockPeephole::foldAscendingLoadProgressionLoops(
     MachineFunction &MF) const {
   bool Changed = false;
   const BedrockInstrInfo &TII =
@@ -4053,7 +4053,7 @@ bool BedrockPushPopMerge::foldAscendingLoadProgressionLoops(
   return Changed;
 }
 
-bool BedrockPushPopMerge::foldByteIndexedMemUtilityLoops(
+bool BedrockPeephole::foldByteIndexedMemUtilityLoops(
     MachineFunction &MF) const {
   bool Changed = false;
   const BedrockInstrInfo &TII =
@@ -4399,7 +4399,7 @@ bool BedrockPushPopMerge::foldByteIndexedMemUtilityLoops(
   return Changed;
 }
 
-bool BedrockPushPopMerge::foldScanUntilZeroRepne(MachineFunction &MF) const {
+bool BedrockPeephole::foldScanUntilZeroRepne(MachineFunction &MF) const {
   const BedrockInstrInfo &TII =
       *static_cast<const BedrockInstrInfo *>(MF.getSubtarget().getInstrInfo());
   const TargetRegisterInfo &TRI = *MF.getSubtarget().getRegisterInfo();

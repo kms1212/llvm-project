@@ -1,4 +1,4 @@
-; RUN: llc -mtriple=bedrock -O1 -stop-after=bedrock-push-pop-merge < %s | FileCheck %s
+; RUN: llc -mtriple=bedrock -O1 -stop-after=bedrock-peephole < %s | FileCheck %s
 
 declare i32 @llvm.smax.i32(i32, i32)
 

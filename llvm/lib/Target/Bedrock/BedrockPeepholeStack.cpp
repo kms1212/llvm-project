@@ -1,4 +1,4 @@
-//===-- BedrockPushPopMergeStack.cpp - Bedrock peepholes -----------===//
+//===-- BedrockPeepholeStack.cpp - Bedrock peepholes -----------===//
 //
 // Part of the LLVM Project, under the Apache License v2.0 with LLVM Exceptions.
 // See https://llvm.org/LICENSE.txt for license information.
@@ -6,9 +6,9 @@
 //
 //===----------------------------------------------------------------------===//
 
-#include "BedrockPushPopMerge.h"
+#include "BedrockPeephole.h"
 
-bool BedrockPushPopMerge::foldEntryLiveInStores(MachineFunction &MF) const {
+bool BedrockPeephole::foldEntryLiveInStores(MachineFunction &MF) const {
   if (MF.empty())
     return false;
 
@@ -152,7 +152,7 @@ bool BedrockPushPopMerge::foldEntryLiveInStores(MachineFunction &MF) const {
   return true;
 }
 
-bool BedrockPushPopMerge::foldStackStoreLoadForward(MachineBasicBlock &MBB,
+bool BedrockPeephole::foldStackStoreLoadForward(MachineBasicBlock &MBB,
                                                     MachineFunction &MF) const {
   bool Changed = false;
   const BedrockInstrInfo &TII =
@@ -211,7 +211,7 @@ bool BedrockPushPopMerge::foldStackStoreLoadForward(MachineBasicBlock &MBB,
   return Changed;
 }
 
-bool BedrockPushPopMerge::foldStackPointerCopyMemBase(
+bool BedrockPeephole::foldStackPointerCopyMemBase(
     MachineBasicBlock &MBB, MachineFunction &MF) const {
   bool Changed = false;
   const TargetRegisterInfo &TRI = *MF.getSubtarget().getRegisterInfo();
@@ -253,7 +253,7 @@ bool BedrockPushPopMerge::foldStackPointerCopyMemBase(
   return Changed;
 }
 
-bool BedrockPushPopMerge::foldA6BaseCopyStackSpill(MachineFunction &MF) const {
+bool BedrockPeephole::foldA6BaseCopyStackSpill(MachineFunction &MF) const {
   const BedrockInstrInfo &TII =
       *static_cast<const BedrockInstrInfo *>(MF.getSubtarget().getInstrInfo());
   const TargetRegisterInfo &TRI = *MF.getSubtarget().getRegisterInfo();
@@ -378,7 +378,7 @@ bool BedrockPushPopMerge::foldA6BaseCopyStackSpill(MachineFunction &MF) const {
   return true;
 }
 
-bool BedrockPushPopMerge::foldStackSlotsToARegs(MachineFunction &MF) const {
+bool BedrockPeephole::foldStackSlotsToARegs(MachineFunction &MF) const {
   for (MachineBasicBlock &MBB : MF)
     for (MachineInstr &MI : MBB)
       if (MI.isCall())
@@ -533,7 +533,7 @@ bool BedrockPushPopMerge::foldStackSlotsToARegs(MachineFunction &MF) const {
   return Changed;
 }
 
-bool BedrockPushPopMerge::foldStackReloadFromZextCount(
+bool BedrockPeephole::foldStackReloadFromZextCount(
     MachineFunction &MF) const {
   bool Changed = false;
   const BedrockInstrInfo &TII =
@@ -658,7 +658,7 @@ bool BedrockPushPopMerge::foldStackReloadFromZextCount(
   return Changed;
 }
 
-bool BedrockPushPopMerge::foldStackConstLoads(MachineFunction &MF) const {
+bool BedrockPeephole::foldStackConstLoads(MachineFunction &MF) const {
   SmallVector<StackConstStore, 8> Slots;
   const BedrockInstrInfo &TII =
       *static_cast<const BedrockInstrInfo *>(MF.getSubtarget().getInstrInfo());
@@ -739,7 +739,7 @@ bool BedrockPushPopMerge::foldStackConstLoads(MachineFunction &MF) const {
   return Changed;
 }
 
-bool BedrockPushPopMerge::foldStackZeroCmp(MachineFunction &MF) const {
+bool BedrockPeephole::foldStackZeroCmp(MachineFunction &MF) const {
   SmallVector<StackConstStore, 8> Slots;
   const BedrockInstrInfo &TII =
       *static_cast<const BedrockInstrInfo *>(MF.getSubtarget().getInstrInfo());
@@ -827,7 +827,7 @@ bool BedrockPushPopMerge::foldStackZeroCmp(MachineFunction &MF) const {
   return Changed;
 }
 
-bool BedrockPushPopMerge::foldStackBaseLeaOffsets(MachineBasicBlock &MBB,
+bool BedrockPeephole::foldStackBaseLeaOffsets(MachineBasicBlock &MBB,
                                                   MachineFunction &MF) const {
   struct MemRewrite {
     MachineInstr *MI;
@@ -994,7 +994,7 @@ bool BedrockPushPopMerge::foldStackBaseLeaOffsets(MachineBasicBlock &MBB,
   return Changed;
 }
 
-bool BedrockPushPopMerge::foldStackBaseBiasOriginalUses(
+bool BedrockPeephole::foldStackBaseBiasOriginalUses(
     MachineFunction &MF) const {
   const BedrockInstrInfo &TII =
       *static_cast<const BedrockInstrInfo *>(MF.getSubtarget().getInstrInfo());
@@ -1160,7 +1160,7 @@ bool BedrockPushPopMerge::foldStackBaseBiasOriginalUses(
   return Changed;
 }
 
-bool BedrockPushPopMerge::foldRepeatedStackAddressLeas(
+bool BedrockPeephole::foldRepeatedStackAddressLeas(
     MachineFunction &MF) const {
   struct StackAddressFacts {
     bool Reachable = false;
@@ -1408,7 +1408,7 @@ bool BedrockPushPopMerge::foldRepeatedStackAddressLeas(
   return Changed;
 }
 
-bool BedrockPushPopMerge::foldRepeatedStackAddressLeasWithBorrowedBase(
+bool BedrockPeephole::foldRepeatedStackAddressLeasWithBorrowedBase(
     MachineFunction &MF) const {
   MachineInstr *PushM = nullptr;
   SmallVector<MachineInstr *, 4> PopMs;
@@ -1575,7 +1575,7 @@ bool BedrockPushPopMerge::foldRepeatedStackAddressLeasWithBorrowedBase(
   return Changed;
 }
 
-bool BedrockPushPopMerge::foldRepeatedStackAddressLeasWithScopedBase(
+bool BedrockPeephole::foldRepeatedStackAddressLeasWithScopedBase(
     MachineFunction &MF) const {
   MachineInstr *PushM = nullptr;
   SmallVector<MachineInstr *, 4> PopMs;

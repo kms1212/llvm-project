@@ -1,4 +1,4 @@
-//===-- BedrockPushPopMergeCore.cpp - Bedrock peepholes -----------===//
+//===-- BedrockPeepholeCore.cpp - Bedrock peepholes -----------===//
 //
 // Part of the LLVM Project, under the Apache License v2.0 with LLVM Exceptions.
 // See https://llvm.org/LICENSE.txt for license information.
@@ -6,9 +6,9 @@
 //
 //===----------------------------------------------------------------------===//
 
-#include "BedrockPushPopMerge.h"
+#include "BedrockPeephole.h"
 
-bool BedrockPushPopMerge::foldIdentityMoves(MachineBasicBlock &MBB,
+bool BedrockPeephole::foldIdentityMoves(MachineBasicBlock &MBB,
                                             MachineFunction &MF) const {
   bool Changed = false;
   const TargetRegisterInfo &TRI = *MF.getSubtarget().getRegisterInfo();
@@ -24,7 +24,7 @@ bool BedrockPushPopMerge::foldIdentityMoves(MachineBasicBlock &MBB,
   return Changed;
 }
 
-bool BedrockPushPopMerge::foldArgTruncBitOps(MachineBasicBlock &MBB,
+bool BedrockPeephole::foldArgTruncBitOps(MachineBasicBlock &MBB,
                                              MachineFunction &MF) const {
   bool Changed = false;
   const BedrockInstrInfo &TII =
@@ -122,7 +122,7 @@ bool BedrockPushPopMerge::foldArgTruncBitOps(MachineBasicBlock &MBB,
   return Changed;
 }
 
-bool BedrockPushPopMerge::foldCompactUnary(MachineBasicBlock &MBB,
+bool BedrockPeephole::foldCompactUnary(MachineBasicBlock &MBB,
                                            MachineFunction &MF) const {
   bool Changed = false;
   const BedrockInstrInfo &TII =
@@ -248,7 +248,7 @@ bool BedrockPushPopMerge::foldCompactUnary(MachineBasicBlock &MBB,
   return Changed;
 }
 
-bool BedrockPushPopMerge::foldDecCmpBranch(MachineBasicBlock &MBB,
+bool BedrockPeephole::foldDecCmpBranch(MachineBasicBlock &MBB,
                                            MachineFunction &MF,
                                            uint32_t KnownZeroIn) const {
   bool Changed = false;
@@ -321,7 +321,7 @@ bool BedrockPushPopMerge::foldDecCmpBranch(MachineBasicBlock &MBB,
   return Changed;
 }
 
-bool BedrockPushPopMerge::foldSequentialEqImmCompareChain(
+bool BedrockPeephole::foldSequentialEqImmCompareChain(
     MachineFunction &MF) const {
   if (!MF.getRegInfo().tracksLiveness())
     return false;
@@ -390,7 +390,7 @@ bool BedrockPushPopMerge::foldSequentialEqImmCompareChain(
   return Changed;
 }
 
-bool BedrockPushPopMerge::foldKnownZeroCmp(MachineBasicBlock &MBB,
+bool BedrockPeephole::foldKnownZeroCmp(MachineBasicBlock &MBB,
                                            MachineFunction &MF,
                                            uint32_t KnownZeroIn) const {
   bool Changed = false;
@@ -424,7 +424,7 @@ bool BedrockPushPopMerge::foldKnownZeroCmp(MachineBasicBlock &MBB,
   return Changed;
 }
 
-bool BedrockPushPopMerge::foldEqNeZeroCmpToTest(MachineBasicBlock &MBB,
+bool BedrockPeephole::foldEqNeZeroCmpToTest(MachineBasicBlock &MBB,
                                                 MachineFunction &MF,
                                                 uint32_t KnownZeroIn) const {
   bool Changed = false;
@@ -482,7 +482,7 @@ bool BedrockPushPopMerge::foldEqNeZeroCmpToTest(MachineBasicBlock &MBB,
   return Changed;
 }
 
-bool BedrockPushPopMerge::foldClrZeroCmpToTest(MachineBasicBlock &MBB,
+bool BedrockPeephole::foldClrZeroCmpToTest(MachineBasicBlock &MBB,
                                                MachineFunction &MF) const {
   bool Changed = false;
   const BedrockInstrInfo &TII =
@@ -560,7 +560,7 @@ bool BedrockPushPopMerge::foldClrZeroCmpToTest(MachineBasicBlock &MBB,
   return Changed;
 }
 
-bool BedrockPushPopMerge::foldAndTestToImmTest(MachineBasicBlock &MBB,
+bool BedrockPeephole::foldAndTestToImmTest(MachineBasicBlock &MBB,
                                                MachineFunction &MF) const {
   bool Changed = false;
   const BedrockInstrInfo &TII =
@@ -647,7 +647,7 @@ bool BedrockPushPopMerge::foldAndTestToImmTest(MachineBasicBlock &MBB,
   return Changed;
 }
 
-bool BedrockPushPopMerge::foldDeadClrs(MachineFunction &MF) const {
+bool BedrockPeephole::foldDeadClrs(MachineFunction &MF) const {
   bool Changed = false;
   const TargetRegisterInfo &TRI = *MF.getSubtarget().getRegisterInfo();
 
@@ -690,7 +690,7 @@ bool BedrockPushPopMerge::foldDeadClrs(MachineFunction &MF) const {
   return Changed;
 }
 
-bool BedrockPushPopMerge::foldDeadPlainDefs(MachineFunction &MF) const {
+bool BedrockPeephole::foldDeadPlainDefs(MachineFunction &MF) const {
   bool Changed = false;
   const TargetRegisterInfo &TRI = *MF.getSubtarget().getRegisterInfo();
   bool HasReturnValue = !MF.getFunction().getReturnType()->isVoidTy();
@@ -725,7 +725,7 @@ bool BedrockPushPopMerge::foldDeadPlainDefs(MachineFunction &MF) const {
   return Changed;
 }
 
-bool BedrockPushPopMerge::foldZeroRegCopies(MachineFunction &MF) const {
+bool BedrockPeephole::foldZeroRegCopies(MachineFunction &MF) const {
   bool Changed = false;
   const BedrockInstrInfo &TII =
       *static_cast<const BedrockInstrInfo *>(MF.getSubtarget().getInstrInfo());
@@ -746,7 +746,7 @@ bool BedrockPushPopMerge::foldZeroRegCopies(MachineFunction &MF) const {
   return Changed;
 }
 
-bool BedrockPushPopMerge::foldFallthroughJumps(MachineBasicBlock &MBB,
+bool BedrockPeephole::foldFallthroughJumps(MachineBasicBlock &MBB,
                                                MachineFunction &MF) const {
   MachineBasicBlock::iterator JmpI = MBB.getLastNonDebugInstr();
   if (JmpI == MBB.end() || JmpI->getOpcode() != Bedrock::JMP ||
@@ -791,7 +791,7 @@ bool BedrockPushPopMerge::foldFallthroughJumps(MachineBasicBlock &MBB,
   return true;
 }
 
-bool BedrockPushPopMerge::foldTailCallReturn(MachineBasicBlock &MBB,
+bool BedrockPeephole::foldTailCallReturn(MachineBasicBlock &MBB,
                                              MachineFunction &MF) const {
   bool Changed = false;
   const BedrockInstrInfo &TII =

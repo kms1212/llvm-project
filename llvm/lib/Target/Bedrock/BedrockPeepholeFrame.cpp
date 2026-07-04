@@ -1,4 +1,4 @@
-//===-- BedrockPushPopMergeFrame.cpp - Bedrock peepholes -----------===//
+//===-- BedrockPeepholeFrame.cpp - Bedrock peepholes -----------===//
 //
 // Part of the LLVM Project, under the Apache License v2.0 with LLVM Exceptions.
 // See https://llvm.org/LICENSE.txt for license information.
@@ -6,9 +6,9 @@
 //
 //===----------------------------------------------------------------------===//
 
-#include "BedrockPushPopMerge.h"
+#include "BedrockPeephole.h"
 
-bool BedrockPushPopMerge::foldPrologue(MachineFunction &MF) const {
+bool BedrockPeephole::foldPrologue(MachineFunction &MF) const {
   if (MF.empty())
     return false;
 
@@ -96,7 +96,7 @@ bool BedrockPushPopMerge::foldPrologue(MachineFunction &MF) const {
   return true;
 }
 
-bool BedrockPushPopMerge::foldEpilogue(MachineBasicBlock &MBB,
+bool BedrockPeephole::foldEpilogue(MachineBasicBlock &MBB,
                                        MachineFunction &MF) const {
   MachineBasicBlock::iterator RetI = MBB.getLastNonDebugInstr();
   if (RetI == MBB.end() || RetI->getOpcode() != Bedrock::RET)
@@ -167,7 +167,7 @@ bool BedrockPushPopMerge::foldEpilogue(MachineBasicBlock &MBB,
   return true;
 }
 
-bool BedrockPushPopMerge::foldDeadFrameTopPadding(MachineFunction &MF) const {
+bool BedrockPeephole::foldDeadFrameTopPadding(MachineFunction &MF) const {
   MachineFrameInfo &MFI = MF.getFrameInfo();
   if (MFI.hasVarSizedObjects() || MFI.hasOpaqueSPAdjustment())
     return false;
@@ -264,7 +264,7 @@ bool BedrockPushPopMerge::foldDeadFrameTopPadding(MachineFunction &MF) const {
   return true;
 }
 
-bool BedrockPushPopMerge::foldDeadStackAdjust(MachineFunction &MF) const {
+bool BedrockPeephole::foldDeadStackAdjust(MachineFunction &MF) const {
   SmallVector<MachineInstr *, 2> Subs;
   SmallVector<MachineInstr *, 4> Adds;
   const TargetRegisterInfo &TRI = *MF.getSubtarget().getRegisterInfo();
@@ -326,7 +326,7 @@ bool BedrockPushPopMerge::foldDeadStackAdjust(MachineFunction &MF) const {
   return true;
 }
 
-bool BedrockPushPopMerge::shrinkUnusedPushPopMask(MachineFunction &MF) const {
+bool BedrockPeephole::shrinkUnusedPushPopMask(MachineFunction &MF) const {
   MachineInstr *PushM = nullptr;
   SmallVector<MachineInstr *, 4> PopMs;
   uint16_t Mask = 0;
@@ -366,7 +366,7 @@ bool BedrockPushPopMerge::shrinkUnusedPushPopMask(MachineFunction &MF) const {
   return true;
 }
 
-bool BedrockPushPopMerge::legalizeLargeStackAdjustments(
+bool BedrockPeephole::legalizeLargeStackAdjustments(
     MachineFunction &MF) const {
   bool Changed = false;
   const BedrockInstrInfo &TII =

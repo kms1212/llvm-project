@@ -27,7 +27,7 @@ LLVMInitializeBedrockTarget() {
   initializeBedrockAsmPrinterPass(PR);
   initializeBedrockBoundBranchPass(PR);
   initializeBedrockDAGToDAGISelLegacyPass(PR);
-  initializeBedrockPushPopMergePass(PR);
+  initializeBedrockPeepholePass(PR);
 }
 
 static Reloc::Model getEffectiveRelocModel(std::optional<Reloc::Model> RM) {
@@ -127,5 +127,5 @@ bool BedrockPassConfig::addInstSelector() {
 }
 
 void BedrockPassConfig::addPreEmitPass() {
-  addPass(createBedrockPushPopMergePass(getPeepholeProfile(getOptLevel())));
+  addPass(createBedrockPeepholePass(getPeepholeProfile(getOptLevel())));
 }
