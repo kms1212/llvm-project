@@ -652,6 +652,7 @@ class BinRR<string Mnemonic, string Suffix, RegisterClass RC,
                   [(set RC:$dst, (OpNode RC:$lhs, RC:$rhs))]> {
   let Constraints = "$dst = $lhs";
   let isCommutable = Commutable;
+  let Defs = [FLAGS];
 }
 
 class BinRI<string Mnemonic, string Suffix, RegisterClass RC, Operand ImmOp,
@@ -660,12 +661,14 @@ class BinRI<string Mnemonic, string Suffix, RegisterClass RC, Operand ImmOp,
                   Mnemonic # "." # Suffix # "\t$rhs, $dst",
                   [(set RC:$dst, (OpNode RC:$lhs, imm:$rhs))]> {
   let Constraints = "$dst = $lhs";
+  let Defs = [FLAGS];
 }
 
 class BinRM<string Mnemonic, string Suffix, RegisterClass RC>
     : BedrockInst<(outs RC:$dst), (ins RC:$lhs, memri:$rhs),
                   Mnemonic # "." # Suffix # "\t$rhs, $dst"> {
   let Constraints = "$dst = $lhs";
+  let Defs = [FLAGS];
   let mayLoad = 1;
 }
 
@@ -673,6 +676,7 @@ class BinIdxRM<string Mnemonic, string Suffix, RegisterClass RC, Operand AddrOp>
     : BedrockInst<(outs RC:$dst), (ins RC:$lhs, AddrOp:$rhs),
                   Mnemonic # "." # Suffix # "\t$rhs, $dst"> {
   let Constraints = "$dst = $lhs";
+  let Defs = [FLAGS];
   let mayLoad = 1;
 }
 
@@ -680,6 +684,7 @@ class BinPostRM<string Mnemonic, string Suffix, RegisterClass RC>
     : BedrockInst<(outs RC:$dst), (ins RC:$lhs, mempost:$rhs),
                   Mnemonic # "." # Suffix # "\t$rhs, $dst"> {
   let Constraints = "$dst = $lhs";
+  let Defs = [FLAGS];
   let mayLoad = 1;
 }
 
@@ -708,6 +713,7 @@ class RepCmpPostRM<string Prefix, string Suffix, RegisterClass RHSRC>
 class BinMR<string Mnemonic, string Suffix, RegisterClass RC>
     : BedrockInst<(outs), (ins RC:$src, memri:$dst),
                   Mnemonic # "." # Suffix # "\t$src, $dst"> {
+  let Defs = [FLAGS];
   let mayLoad = 1;
   let mayStore = 1;
 }
@@ -715,6 +721,7 @@ class BinMR<string Mnemonic, string Suffix, RegisterClass RC>
 class BinMI<string Mnemonic, string Suffix, Operand ImmOp>
     : BedrockInst<(outs), (ins ImmOp:$src, memri:$dst),
                   Mnemonic # "." # Suffix # "\t$src, $dst"> {
+  let Defs = [FLAGS];
   let mayLoad = 1;
   let mayStore = 1;
 }
@@ -1026,7 +1033,8 @@ def AND64rr : BinRR<"AND", "Q", GPR64, and, 1>;
 def AND8ri  : BinRI<"AND", "B", GPR8, i8imm, and>;
 def AND16ri : BinRI<"AND", "W", GPR16, i16imm, and>;
 def AND32ri : BinRI<"AND", "L", D32, shortimm32, and>;
-def AND64ri : BinRI<"AND", "Q", GPR64, i64imm, and>;
+def AND64ri : BinRI<"AND", "Q", D64, i64imm, and>;
+def AND64ai : BinRI<"AND", "Q", A64, shortimm64, and>;
 def AND8rm  : BinRM<"AND", "B", GPR8>;
 def AND16rm : BinRM<"AND", "W", GPR16>;
 def AND32rm : BinRM<"AND", "L", D32>;
@@ -1055,7 +1063,8 @@ def OR64rr : BinRR<"OR", "Q", GPR64, or, 1>;
 def OR8ri  : BinRI<"OR", "B", GPR8, i8imm, or>;
 def OR16ri : BinRI<"OR", "W", GPR16, i16imm, or>;
 def OR32ri : BinRI<"OR", "L", D32, shortimm32, or>;
-def OR64ri : BinRI<"OR", "Q", GPR64, i64imm, or>;
+def OR64ri : BinRI<"OR", "Q", D64, i64imm, or>;
+def OR64ai : BinRI<"OR", "Q", A64, shortimm64, or>;
 def OR8rm  : BinRM<"OR", "B", GPR8>;
 def OR16rm : BinRM<"OR", "W", GPR16>;
 def OR32rm : BinRM<"OR", "L", D32>;
@@ -1084,7 +1093,8 @@ def XOR64rr : BinRR<"XOR", "Q", GPR64, xor, 1>;
 def XOR8ri  : BinRI<"XOR", "B", GPR8, i8imm, xor>;
 def XOR16ri : BinRI<"XOR", "W", GPR16, i16imm, xor>;
 def XOR32ri : BinRI<"XOR", "L", D32, shortimm32, xor>;
-def XOR64ri : BinRI<"XOR", "Q", GPR64, i64imm, xor>;
+def XOR64ri : BinRI<"XOR", "Q", D64, i64imm, xor>;
+def XOR64ai : BinRI<"XOR", "Q", A64, shortimm64, xor>;
 def XOR8rm  : BinRM<"XOR", "B", GPR8>;
 def XOR16rm : BinRM<"XOR", "W", GPR16>;
 def XOR32rm : BinRM<"XOR", "L", D32>;

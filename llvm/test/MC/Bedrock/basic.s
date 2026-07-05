@@ -16,6 +16,7 @@ caller:
 	MOV.Q	[SP + 0], D0
 	MOV.Q	D0, [SP + 0]
 	MOV.L	1.W, [SP + 32]
+	LEA	[SP], A1
 	LEA	[SP + 32], A0
 	LEA	[A6 + D2 * 4], A0
 	LEA	[A6 + D2.L * 4], A0
@@ -101,6 +102,7 @@ g:
 # DIS: MOV.L{{[[:space:]]+}}[A0++], A5
 # DIS: REP{{[[:space:]]+}}D2, MOV.L{{[[:space:]]+}}D0, [A1++]
 # DIS: MOV.L{{[[:space:]]+}}1, [SP + 32]
+# DIS: LEA{{[[:space:]]+}}[SP + 0], A1
 # DIS: LEA{{[[:space:]]+}}[SP + 32], A0
 # DIS: LEA{{[[:space:]]+}}[A6 + D2 * 4], A0
 # DIS: LEA{{[[:space:]]+}}[A6 + D2.L * 4], A0

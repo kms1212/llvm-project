@@ -711,6 +711,8 @@ bool BedrockPeephole::foldDeadPlainDefs(MachineFunction &MF) const {
       }
       if (!IsCandidate)
         continue;
+      if (isCalleeSaveRestore(MF, MI))
+        continue;
       if (HasReturnValue && isReturnValueReg(Reg, TRI) &&
           regReachesRetBeforeTouch(I, MBB, Reg, TRI))
         continue;
@@ -844,4 +846,3 @@ bool BedrockPeephole::foldTailCallReturn(MachineBasicBlock &MBB,
 
   return Changed;
 }
-

@@ -61,7 +61,7 @@ body: |
     liveins: $a0, $d0, $d3
 
     $d3 = MOV32idx4lrm $a0, $d3, 0
-    $d0 = ADD32rr $d0, killed $d3
+    $d0 = ADD32rr $d0, killed $d3, implicit-def $flags
     RET implicit $sp
 ...
 ---
@@ -72,7 +72,7 @@ body: |
     liveins: $a0, $d5, $d6
 
     $d4 = MOV32idx4lrm $a0, $d5, 8
-    $d6 = SUB32rr $d6, killed $d4
+    $d6 = SUB32rr $d6, killed $d4, implicit-def $flags
     RET implicit $sp
 ...
 ---

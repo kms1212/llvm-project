@@ -61,11 +61,11 @@ body: |
     liveins: $a0, $d0, $d1, $d2, $d3, $d4
 
     $a1 = MOV64rr $a0
-    $a1 = ADD64rr killed $a1, $d4
+    $a1 = ADD64rr killed $a1, $d4, implicit-def $flags
     MOV8mr $d2, $a1, 12
     MOV32mr $d3, $a1, 8
     MOV64mr $d0, killed $a1, 0
-    $d4 = ADD64ri killed $d4, 16
+    $d4 = ADD64ri killed $d4, 16, implicit-def $flags
     JMP %bb.1
 
   bb.3:
@@ -98,11 +98,11 @@ body: |
     liveins: $a0, $d0, $d1, $d2, $d3, $d4
 
     $a1 = MOV64rr $a0
-    $a1 = ADD64rr killed $a1, $d4
+    $a1 = ADD64rr killed $a1, $d4, implicit-def $flags
     MOV8mr $d2, $a1, 12
     MOV32mr $d3, $a1, 8
     MOV64mr $d0, killed $a1, 0
-    $d4 = ADD64ri killed $d4, 16
+    $d4 = ADD64ri killed $d4, 16, implicit-def $flags
     JMP %bb.1
 
   bb.3:

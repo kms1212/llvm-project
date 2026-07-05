@@ -34,9 +34,9 @@ body: |
     liveins: $d0, $d2
 
     $d1 = MOV32ri 3
-    $d2 = MULU32rr $d2, killed $d1
+    $d2 = MULU32rr $d2, killed $d1, implicit-def $flags
     $d1 = MOV32ri 2146121005
-    $d0 = MULU32rr $d0, killed $d1
+    $d0 = MULU32rr $d0, killed $d1, implicit-def $flags
     RET implicit $sp
 ...
 ---
@@ -47,6 +47,6 @@ body: |
     liveins: $d3
 
     $d4 = MOV32ri 3
-    $d4 = MULU32rr $d4, killed $d3
+    $d4 = MULU32rr $d4, killed $d3, implicit-def $flags
     RET implicit $sp
 ...

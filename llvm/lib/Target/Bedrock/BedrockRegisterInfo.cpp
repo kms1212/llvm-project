@@ -69,6 +69,8 @@ bool BedrockRegisterInfo::eliminateFrameIndex(MachineBasicBlock::iterator II,
                    MI.getOperand(FIOperandNum + 1).getImm();
 
   Register FrameReg = getFrameRegister(MF);
+  if (FrameReg == Bedrock::A7 && !MFI.hasVarSizedObjects())
+    FrameReg = Bedrock::SP;
   if (MI.getOpcode() == Bedrock::ADD64fi) {
     const BedrockInstrInfo &TII = *STI.getInstrInfo();
     Register DstReg = MI.getOperand(0).getReg();

@@ -22,9 +22,9 @@ body: |
   bb.0:
     liveins: $d0, $d1, $d2, $d3
 
-    $d0 = DIVU32ri $d0, 20
-    $d1 = MODU32ri $d1, 20
-    $d2 = DIVS32ri $d2, -7
-    $d3 = MODS32ri $d3, -7
+    $d0 = DIVU32ri $d0, 20, implicit-def $flags
+    $d1 = MODU32ri $d1, 20, implicit-def $flags
+    $d2 = DIVS32ri $d2, -7, implicit-def $flags
+    $d3 = MODS32ri $d3, -7, implicit-def $flags
     RET implicit $sp
 ...

@@ -22,11 +22,11 @@ body: |
   bb.0:
     liveins: $a0, $a6, $d0
 
-    $sp = frame-setup SUB64ri $sp, 24
+    $sp = frame-setup SUB64ri $sp, 24, implicit-def $flags
     MOV64mr killed $a6, $sp, 16
     $a6 = MOV64rr $a0
     MOV32mr $d0, $a0, 0
     $a6 = MOV64rm $sp, 16
-    $sp = frame-destroy ADD64ri $sp, 24
+    $sp = frame-destroy ADD64ri $sp, 24, implicit-def $flags
     RET implicit $sp
 ...

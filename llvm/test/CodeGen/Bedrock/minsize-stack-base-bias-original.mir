@@ -39,7 +39,7 @@ body: |
     $a6 = LEAri $sp, 184
     $a0 = MOV64rr $a6
     CALLpcrel16 @init, csr_bedrock, implicit-def $sp, implicit $sp, implicit $a0
-    $a6 = ADD64ri $a6, 4256
+    $a6 = ADD64ri $a6, 4256, implicit-def $flags
     $a0 = MOV64rr $a6
     CALLpcrel16 @sort0, csr_bedrock, implicit-def $sp, implicit $sp, implicit $a0
     $a1 = LEAri $sp, 184

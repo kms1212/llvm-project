@@ -35,7 +35,7 @@ body: |
     $a0 = LEAri $a7, 24
     $d0 = MOV32ri 16
     $a1 = LEAri $a7, 1776
-    $a7 = ADD64ri $a7, 2916
+    $a7 = ADD64ri $a7, 2916, implicit-def $flags
     $a0 = MOV64rr killed $a7
     RET implicit $sp
 ...

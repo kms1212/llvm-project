@@ -104,7 +104,7 @@ body: |
     successors: %bb.4(0x80000000)
     liveins: $d2
 
-    $d2 = MULU32ri killed $d2, 3
+    $d2 = MULU32ri killed $d2, 3, implicit-def $flags
     JMP %bb.4
 
   bb.4:
@@ -167,7 +167,7 @@ body: |
     successors: %bb.1(0x7c000000), %bb.3(0x04000000)
     liveins: $d1, $d3
 
-    $d1 = ADD64rr $d1, $d3
+    $d1 = ADD64rr $d1, $d3, implicit-def $flags
     $d3 = DEC64r $d3, implicit-def $flags
     JCC %bb.1, 3, implicit $flags
 

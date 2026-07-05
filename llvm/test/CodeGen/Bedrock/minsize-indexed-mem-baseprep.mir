@@ -68,8 +68,16 @@
 # CHECK-NOT:   $a2 = ADD64rr
 # CHECK:       CMP8idx1mr $d3, $a0, $d4, 20
 
+# CHECK-LABEL: name: indexed_scale1_d_base_negative
+# CHECK-NOT:   MOV8idx1rm $d4
+# CHECK:       $a4 = MOV64rr $d4
+# CHECK-NEXT:  $a4 = ADD64rr killed $a4, $d5
+# CHECK-NEXT:  $d6 = MOV8rm killed $a4, 0
+
 --- |
   target triple = "bedrock"
+
+  @FONT = external constant [0 x i8]
 
   define void @indexed_load_after_base_copy() #0 {
     ret void
@@ -112,6 +120,10 @@
   }
 
   define void @indexed_scale1_byte_reg_cmp() #0 {
+    ret void
+  }
+
+  define void @indexed_scale1_d_base_negative() #0 {
     ret void
   }
 
@@ -290,4 +302,20 @@ body: |
     $a2 = ADD64rr killed $a2, $d4, implicit-def dead $flags
     CMP8mr $d3, killed $a2, 20, implicit-def $flags
     RET implicit $sp
+...
+---
+name: indexed_scale1_d_base_negative
+tracksRegLiveness: true
+body: |
+  bb.0:
+    $d4 = MOV32ri 3
+    $d5 = EXTZQ32rr killed $d4, implicit-def dead $flags
+    $d5 = SHL64ri killed $d5, 3, implicit-def dead $flags
+    $d4 = MOV64abs @FONT
+    $d4 = ADD64rr killed $d4, killed $d5, implicit-def dead $flags
+    $d5 = MOV64ri 0
+    $a4 = MOV64rr $d4
+    $a4 = ADD64rr killed $a4, $d5, implicit-def dead $flags
+    $d6 = MOV8rm killed $a4, 0
+    RET implicit $sp, implicit $d6
 ...

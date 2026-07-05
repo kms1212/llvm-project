@@ -2249,7 +2249,8 @@ bool BedrockPeephole::foldLea(MachineBasicBlock &MBB,
 
     if (Shl.getOpcode() == Bedrock::MOV64rr && Shl.getNumOperands() >= 2 &&
         Shl.getOperand(0).isReg() && Shl.getOperand(1).isReg() &&
-        isAReg(Shl.getOperand(0).getReg()) &&
+        (isAReg(Shl.getOperand(0).getReg()) ||
+         isDReg(Shl.getOperand(0).getReg())) &&
         isDReg(Shl.getOperand(1).getReg())) {
       Register Scaled = Shl.getOperand(0).getReg();
       Register Index32 = Shl.getOperand(1).getReg();
@@ -2292,7 +2293,8 @@ bool BedrockPeephole::foldLea(MachineBasicBlock &MBB,
 
     if (Shl.getOpcode() == Bedrock::MOV64rr && Shl.getNumOperands() >= 2 &&
         Shl.getOperand(0).isReg() && Shl.getOperand(1).isReg() &&
-        isAReg(Shl.getOperand(0).getReg()) &&
+        (isAReg(Shl.getOperand(0).getReg()) ||
+         isDReg(Shl.getOperand(0).getReg())) &&
         isDReg(Shl.getOperand(1).getReg())) {
       Register Bias = Shl.getOperand(0).getReg();
       Register Numer = Shl.getOperand(1).getReg();
@@ -2327,6 +2329,28 @@ bool BedrockPeephole::foldLea(MachineBasicBlock &MBB,
             break;
         }
       }
+      auto AddrCopyI = MBB.end();
+      Register AddrFromCopy;
+      if (AddBaseI != MBB.end() && AddBaseI->getNumOperands() >= 3 &&
+          AddBaseI->getOperand(0).isReg()) {
+        Register AddBaseDst = AddBaseI->getOperand(0).getReg();
+        if (isDReg(AddBaseDst) && regsOverlap(TRI, AddBaseDst, Bias)) {
+          for (auto Scan = nextNonDebug(AddBaseI, MBB); Scan != MBB.end();
+               Scan = nextNonDebug(Scan, MBB)) {
+            if (Scan->getOpcode() == Bedrock::MOV64rr &&
+                Scan->getNumOperands() >= 2 && Scan->getOperand(0).isReg() &&
+                Scan->getOperand(1).isReg() &&
+                isAReg(Scan->getOperand(0).getReg()) &&
+                regsOverlap(TRI, Scan->getOperand(1).getReg(), AddBaseDst)) {
+              AddrCopyI = Scan;
+              AddrFromCopy = Scan->getOperand(0).getReg();
+              break;
+            }
+            if (instrTouchesReg(*Scan, AddBaseDst, TRI))
+              break;
+          }
+        }
+      }
 
       if (SarSignI != MBB.end() && ShrBiasI != MBB.end() &&
           AddBiasI != MBB.end() && AndI != MBB.end() && AddBaseI != MBB.end() &&
@@ -2358,7 +2382,9 @@ bool BedrockPeephole::foldLea(MachineBasicBlock &MBB,
           regsOverlap(TRI, AndI->getOperand(0).getReg(), Bias) &&
           regsOverlap(TRI, AndI->getOperand(1).getReg(), Bias) &&
           regsOverlap(TRI, AddBaseI->getOperand(1).getReg(), Bias)) {
-        Register Addr = AddBaseI->getOperand(0).getReg();
+        Register AddBaseDst = AddBaseI->getOperand(0).getReg();
+        bool UsesAddrCopy = AddrCopyI != MBB.end();
+        Register Addr = UsesAddrCopy ? AddrFromCopy : AddBaseDst;
         Register Base = AddBaseI->getOperand(2).getReg();
         bool InterveningClobbersBase = false;
         for (auto Scan = nextNonDebug(AddBiasI, MBB); Scan != AddBaseI;
@@ -2370,18 +2396,58 @@ bool BedrockPeephole::foldLea(MachineBasicBlock &MBB,
             break;
           }
         }
+        bool CopyPathClobbersBase = false;
+        if (UsesAddrCopy) {
+          for (auto Scan = nextNonDebug(AddBaseI, MBB); Scan != AddrCopyI;
+               Scan = nextNonDebug(Scan, MBB)) {
+            if (instrDefinesReg(*Scan, Base, TRI)) {
+              CopyPathClobbersBase = true;
+              break;
+            }
+          }
+        }
         if (isAReg(Addr) && isAReg(Base) && !regsOverlap(TRI, Base, Bias) &&
             !regsOverlap(TRI, Base, Numer) && !InterveningClobbersBase &&
-            (operandIsKill(*AddBiasI, Numer, TRI) ||
+            !CopyPathClobbersBase &&
+            (UsesAddrCopy || operandIsKill(*AddBiasI, Numer, TRI) ||
              regDeadAfter(std::next(AddBiasI), MBB, Numer, TRI)) &&
             (regsOverlap(TRI, Addr, Bias) ||
+             (UsesAddrCopy &&
+              (operandIsKill(*AddrCopyI, Bias, TRI) ||
+               regDeadAfter(std::next(AddrCopyI), MBB, Bias, TRI))) ||
              operandIsKill(*AddBaseI, Bias, TRI) ||
              regDeadAfter(std::next(AddBaseI), MBB, Bias, TRI))) {
-          if (MF.getFunction().hasMinSize()) {
+          if (UsesAddrCopy) {
+            if (MF.getFunction().hasMinSize()) {
+              BuildMI(MBB, SarSignI, AddBiasI->getDebugLoc(),
+                      TII.get(Bedrock::DIVS64ri), Bias)
+                  .addReg(Bias)
+                  .addImm(4);
+            } else {
+              BuildMI(MBB, AndI, AndI->getDebugLoc(),
+                      TII.get(Bedrock::SAR64ri), Bias)
+                  .addReg(Bias)
+                  .addImm(2);
+            }
+            BuildMI(MBB, AddrCopyI, AddBaseI->getDebugLoc(),
+                    TII.get(Bedrock::LEA4), Addr)
+                .addReg(Base)
+                .addReg(Bias);
+            for (auto Scan = nextNonDebug(AddBaseI, MBB); Scan != AddrCopyI;
+                 Scan = nextNonDebug(Scan, MBB)) {
+              for (MachineOperand &MO : Scan->operands())
+                if (operandTouchesReg(MO, Base, TRI) && MO.readsReg())
+                  MO.setIsKill(false);
+            }
+          } else if (MF.getFunction().hasMinSize()) {
             BuildMI(MBB, Shl.getIterator(), AddBiasI->getDebugLoc(),
                     TII.get(Bedrock::DIVS64ri), Numer)
                 .addReg(Numer)
                 .addImm(4);
+            BuildMI(MBB, Shl.getIterator(), AddBaseI->getDebugLoc(),
+                    TII.get(Bedrock::LEA4), Addr)
+                .addReg(Base)
+                .addReg(Numer);
           } else {
             auto FindLocalDRegScratch = [&]() {
               static constexpr MCPhysReg ScratchRegs[] = {
@@ -2426,18 +2492,23 @@ bool BedrockPeephole::foldLea(MachineBasicBlock &MBB,
                     TII.get(Bedrock::SAR64ri), Numer)
                 .addReg(Numer)
                 .addImm(2);
+            BuildMI(MBB, Shl.getIterator(), AddBaseI->getDebugLoc(),
+                    TII.get(Bedrock::LEA4), Addr)
+                .addReg(Base)
+                .addReg(Numer);
           }
-          BuildMI(MBB, Shl.getIterator(), AddBaseI->getDebugLoc(),
-                  TII.get(Bedrock::LEA4), Addr)
-              .addReg(Base)
-              .addReg(Numer);
 
-          Shl.eraseFromParent();
-          SarSignI->eraseFromParent();
-          ShrBiasI->eraseFromParent();
-          AddBiasI->eraseFromParent();
+          if (!UsesAddrCopy || MF.getFunction().hasMinSize()) {
+            SarSignI->eraseFromParent();
+            ShrBiasI->eraseFromParent();
+            AddBiasI->eraseFromParent();
+          }
+          if (!UsesAddrCopy)
+            Shl.eraseFromParent();
           AndI->eraseFromParent();
           AddBaseI->eraseFromParent();
+          if (UsesAddrCopy)
+            AddrCopyI->eraseFromParent();
           I = MBB.begin();
           Changed = true;
           continue;
@@ -3498,20 +3569,64 @@ bool BedrockPeephole::foldIndexedMem(MachineBasicBlock &MBB,
          !regDefDeadOrDeadAfter(AddI, MBB, Bedrock::FLAGS, TRI)))
       return false;
 
-    Register Index = regsOverlap(TRI, AddI->getOperand(1).getReg(), Addr)
-                         ? AddI->getOperand(2).getReg()
-                         : AddI->getOperand(1).getReg();
-    if (!isDReg(Index) || regsOverlap(TRI, Index, Base))
+    Register ScaledIndex = regsOverlap(TRI, AddI->getOperand(1).getReg(), Addr)
+                               ? AddI->getOperand(2).getReg()
+                               : AddI->getOperand(1).getReg();
+    if (!isDReg(ScaledIndex) || regsOverlap(TRI, ScaledIndex, Base))
       return false;
 
-    if (MachineInstr *IndexDef = findLastDefBefore(*ExtI, Index, TRI);
-        IndexDef && IndexDef->getOpcode() == Bedrock::SHL64ri &&
+    Register Index = ScaledIndex;
+    unsigned IndexedScale = 1;
+    bool LongIndex = false;
+    MachineInstr *ScaledShl = nullptr;
+    MachineInstr *ScaledExt = nullptr;
+    MachineInstr *IndexDef = findLastDefBefore(*ExtI, ScaledIndex, TRI);
+    if (IndexDef && IndexDef->getOpcode() == Bedrock::SHL64ri &&
         IndexDef->getNumOperands() >= 3 && IndexDef->getOperand(0).isReg() &&
         IndexDef->getOperand(1).isReg() && IndexDef->getOperand(2).isImm() &&
         IndexDef->getOperand(2).getImm() == 2 &&
-        regsOverlap(TRI, IndexDef->getOperand(0).getReg(), Index) &&
-        regsOverlap(TRI, IndexDef->getOperand(1).getReg(), Index))
-      return false;
+        regsOverlap(TRI, IndexDef->getOperand(0).getReg(), ScaledIndex) &&
+        regsOverlap(TRI, IndexDef->getOperand(1).getReg(), ScaledIndex)) {
+      ScaledShl = IndexDef;
+      ScaledExt = findLastDefBefore(*ScaledShl, ScaledIndex, TRI);
+      if (!ScaledExt || ScaledExt->getParent() != &MBB ||
+          (ScaledExt->getOpcode() != Bedrock::EXTZQ32rr &&
+           ScaledExt->getOpcode() != Bedrock::EXTSQ32rr) ||
+          ScaledExt->getNumOperands() < 2 ||
+          !ScaledExt->getOperand(0).isReg() ||
+          !ScaledExt->getOperand(1).isReg() ||
+          !regsOverlap(TRI, ScaledExt->getOperand(0).getReg(),
+                       ScaledIndex) ||
+          !isDReg(ScaledExt->getOperand(1).getReg()) ||
+          (instrDefinesReg(*ScaledShl, Bedrock::FLAGS, TRI) &&
+           !regDefDeadOrDeadAfter(ScaledShl->getIterator(), MBB,
+                                  Bedrock::FLAGS, TRI)) ||
+          (instrDefinesReg(*ScaledExt, Bedrock::FLAGS, TRI) &&
+           !regDefDeadOrDeadAfter(ScaledExt->getIterator(), MBB,
+                                  Bedrock::FLAGS, TRI)))
+        return false;
+
+      Index = ScaledExt->getOperand(1).getReg();
+      if (regsOverlap(TRI, Index, Base))
+        return false;
+
+      for (auto Scan = nextNonDebug(ScaledExt->getIterator(), MBB);
+           Scan != MBB.end(); Scan = nextNonDebug(Scan, MBB)) {
+        if (&*Scan == ScaledShl || &*Scan == &*ExtI) {
+          continue;
+        }
+        if (&*Scan == &*AddI)
+          break;
+        if (instrUsesReg(*Scan, ScaledIndex, TRI) ||
+            instrDefinesReg(*Scan, Index, TRI))
+          return false;
+      }
+      if (!regUnusedAfterInCFG(nextNonDebug(AddI, MBB), MBB, ScaledIndex, TRI))
+        return false;
+
+      IndexedScale = 4;
+      LongIndex = true;
+    }
 
     struct Scale1IndexedUse {
       MachineInstr *MI = nullptr;
@@ -3554,7 +3669,8 @@ bool BedrockPeephole::foldIndexedMem(MachineBasicBlock &MBB,
         Use.Kind = Scale1IndexedUse::Load;
         Use.Reg = MI.getOperand(0).getReg();
         Use.Offset = MI.getOperand(2).getImm();
-        Use.NewOpcode = getIndexedMemLoadOpcode(MI.getOpcode(), 1, false);
+        Use.NewOpcode =
+            getIndexedMemLoadOpcode(MI.getOpcode(), IndexedScale, LongIndex);
         return Use.NewOpcode != 0;
       case Bedrock::MOV16mr:
       case Bedrock::MOV32mr:
@@ -3566,7 +3682,8 @@ bool BedrockPeephole::foldIndexedMem(MachineBasicBlock &MBB,
         Use.Kind = Scale1IndexedUse::Store;
         Use.Reg = MI.getOperand(0).getReg();
         Use.Offset = MI.getOperand(2).getImm();
-        Use.NewOpcode = getIndexedMemStoreOpcode(MI.getOpcode(), 1, false);
+        Use.NewOpcode =
+            getIndexedMemStoreOpcode(MI.getOpcode(), IndexedScale, LongIndex);
         return Use.NewOpcode != 0;
       case Bedrock::MOV32mm:
         if (MI.getNumOperands() < 4 || !MI.getOperand(0).isReg() ||
@@ -3581,13 +3698,23 @@ bool BedrockPeephole::foldIndexedMem(MachineBasicBlock &MBB,
           Use.Offset = MI.getOperand(1).getImm();
           Use.OtherBase = MI.getOperand(2).getReg();
           Use.OtherOffset = MI.getOperand(3).getImm();
-          Use.NewOpcode = Bedrock::MOV32idx1mm;
+          if (IndexedScale == 1 && !LongIndex)
+            Use.NewOpcode = Bedrock::MOV32idx1mm;
+          else if (IndexedScale == 4 && LongIndex)
+            Use.NewOpcode = Bedrock::MOV32idx4lmm;
+          else
+            return false;
         } else {
           Use.Kind = Scale1IndexedUse::MemToMemDst;
           Use.OtherBase = MI.getOperand(0).getReg();
           Use.OtherOffset = MI.getOperand(1).getImm();
           Use.Offset = MI.getOperand(3).getImm();
-          Use.NewOpcode = Bedrock::MOV32midx1;
+          if (IndexedScale == 1 && !LongIndex)
+            Use.NewOpcode = Bedrock::MOV32midx1;
+          else if (IndexedScale == 4 && LongIndex)
+            Use.NewOpcode = Bedrock::MOV32midx4l;
+          else
+            return false;
         }
         return true;
       case Bedrock::ADD32rm:
@@ -3604,7 +3731,8 @@ bool BedrockPeephole::foldIndexedMem(MachineBasicBlock &MBB,
         Use.Kind = Scale1IndexedUse::BinRM;
         Use.Reg = MI.getOperand(0).getReg();
         Use.Offset = MI.getOperand(3).getImm();
-        Use.NewOpcode = getIndexedMemSourceOpcode(MI.getOpcode(), 1, false);
+        Use.NewOpcode =
+            getIndexedMemSourceOpcode(MI.getOpcode(), IndexedScale, LongIndex);
         return Use.NewOpcode != 0;
       case Bedrock::CMP32rm:
       case Bedrock::CMP8rm:
@@ -3636,7 +3764,7 @@ bool BedrockPeephole::foldIndexedMem(MachineBasicBlock &MBB,
                    : MI.getOpcode() == Bedrock::TEST16rm ? Bedrock::TEST16rr
                    : MI.getOpcode() == Bedrock::TEST32rm ? Bedrock::TEST32rr
                                                          : Bedrock::TEST64rr),
-            1, false, false);
+            IndexedScale, LongIndex, false);
         return Use.NewOpcode != 0;
       case Bedrock::CMP32mr:
       case Bedrock::CMP8mr:
@@ -3668,7 +3796,7 @@ bool BedrockPeephole::foldIndexedMem(MachineBasicBlock &MBB,
                    : MI.getOpcode() == Bedrock::TEST16mr ? Bedrock::TEST16rr
                    : MI.getOpcode() == Bedrock::TEST32mr ? Bedrock::TEST32rr
                                                          : Bedrock::TEST64rr),
-            1, false, true);
+            IndexedScale, LongIndex, true);
         return Use.NewOpcode != 0;
       case Bedrock::CMP8mi:
       case Bedrock::CMP16mi:
@@ -3685,7 +3813,8 @@ bool BedrockPeephole::foldIndexedMem(MachineBasicBlock &MBB,
         Use.Kind = Scale1IndexedUse::ImmFlag;
         Use.Imm = MI.getOperand(0).getImm();
         Use.Offset = MI.getOperand(2).getImm();
-        Use.NewOpcode = getIndexedMemImmFlagOpcode(MI.getOpcode(), 1, false);
+        Use.NewOpcode = getIndexedMemImmFlagOpcode(MI.getOpcode(),
+                                                   IndexedScale, LongIndex);
         return Use.NewOpcode != 0;
       case Bedrock::INC32m:
       case Bedrock::DEC32m:
@@ -3696,8 +3825,16 @@ bool BedrockPeephole::foldIndexedMem(MachineBasicBlock &MBB,
         Use.Kind = MI.getOpcode() == Bedrock::INC32m ? Scale1IndexedUse::Inc
                                                      : Scale1IndexedUse::Dec;
         Use.Offset = MI.getOperand(1).getImm();
-        Use.NewOpcode = MI.getOpcode() == Bedrock::INC32m ? Bedrock::INC32idx1m
-                                                          : Bedrock::DEC32idx1m;
+        if (IndexedScale == 1 && !LongIndex)
+          Use.NewOpcode = MI.getOpcode() == Bedrock::INC32m
+                              ? Bedrock::INC32idx1m
+                              : Bedrock::DEC32idx1m;
+        else if (IndexedScale == 4 && LongIndex)
+          Use.NewOpcode = MI.getOpcode() == Bedrock::INC32m
+                              ? Bedrock::INC32idx4lm
+                              : Bedrock::DEC32idx4lm;
+        else
+          return false;
         return true;
       }
     };
@@ -3748,16 +3885,22 @@ bool BedrockPeephole::foldIndexedMem(MachineBasicBlock &MBB,
           continue;
         }
 
-        if (instrDefinesReg(*Scan, Base, TRI) ||
-            instrDefinesReg(*Scan, Index, TRI))
-          return false;
-
         Scale1IndexedUse Use;
         if (!MatchUse(*Scan, Use))
+          return false;
+        bool DefinesIndex = instrDefinesReg(*Scan, Index, TRI);
+        if (instrDefinesReg(*Scan, Base, TRI) ||
+            (DefinesIndex && Use.Kind != Scale1IndexedUse::Load))
           return false;
         Uses.push_back(Use);
         if (Uses.size() > 4)
           return false;
+        if (DefinesIndex) {
+          auto Next = nextNonDebug(Scan, *Block);
+          if (!regUnusedAfterInCFG(Next, *Block, Addr, TRI))
+            return false;
+          break;
+        }
         ++Scan;
       }
     }
@@ -3837,6 +3980,10 @@ bool BedrockPeephole::foldIndexedMem(MachineBasicBlock &MBB,
       Use.MI->eraseFromParent();
     ExtI->eraseFromParent();
     AddI->eraseFromParent();
+    if (ScaledShl)
+      ScaledShl->eraseFromParent();
+    if (ScaledExt)
+      ScaledExt->eraseFromParent();
     removeRegLiveInsWithoutUses(MF, Addr, TRI);
     return true;
   };
@@ -4065,7 +4212,9 @@ bool BedrockPeephole::foldIndexedMem(MachineBasicBlock &MBB,
       int64_t BaseOffset = 0;
       if (Ext.getOpcode() == Bedrock::LEAri) {
         BaseOffset = Ext.getOperand(2).getImm();
-      } else if (!isAReg(Addr)) {
+      }
+      if (!isAReg(Addr) || !isPtrReg(Base) || Addr == Bedrock::SP ||
+          regsOverlap(TRI, Addr, Base)) {
         ++I;
         continue;
       }
@@ -5423,4 +5572,3 @@ bool BedrockPeephole::foldIndexedAddFromAbsBase(MachineBasicBlock &MBB,
 
   return Changed;
 }
-

@@ -73,9 +73,9 @@ entry:
 define i32 @div4_pointer_lea(ptr %base, ptr %limit, i32 signext %n, i64 %byte_bias) {
 ; CHECK-LABEL: div4_pointer_lea:
 ; CHECK-NOT:   AND.Q -4
-; CHECK:       SAR.Q 2, D1
-; CHECK-NEXT:  LEA [A0 + D1 * 4],
-; CHECK:       LEA [A0 + D1.L * 4],
+; CHECK:       SAR.Q 2, [[DIV:D[0-7]]]
+; CHECK:       LEA [A0 + {{D[0-7]}}.L * 4],
+; CHECK:       LEA [A0 + [[DIV]] * 4],
 ; CHECK:       IJT.Q {{D[0-7]}}, {{D[0-7]}},
 ; CHECK-NOT:   AND.Q -4
 entry:

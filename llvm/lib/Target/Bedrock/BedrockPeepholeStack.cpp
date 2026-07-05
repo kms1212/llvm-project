@@ -174,6 +174,10 @@ bool BedrockPeephole::foldStackStoreLoadForward(MachineBasicBlock &MBB,
       ++I;
       continue;
     }
+    if (isCalleeSaveSpill(MF, Store)) {
+      ++I;
+      continue;
+    }
 
     auto LoadI = nextNonDebug(I, MBB);
     if (LoadI == MBB.end()) {
@@ -188,6 +192,10 @@ bool BedrockPeephole::foldStackStoreLoadForward(MachineBasicBlock &MBB,
         LoadBase != Bedrock::SP || LoadOffset != StoreOffset ||
         getStoreOpcodeForLoad(LoadI->getOpcode()) != Store.getOpcode() ||
         hasOrderedMemOperand(*LoadI)) {
+      ++I;
+      continue;
+    }
+    if (isCalleeSaveRestore(MF, *LoadI)) {
       ++I;
       continue;
     }
@@ -1824,4 +1832,3 @@ bool BedrockPeephole::foldRepeatedStackAddressLeasWithScopedBase(
 
   return Changed;
 }
-

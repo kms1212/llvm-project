@@ -16,7 +16,6 @@
 #include "llvm/ADT/StringExtras.h"
 #include "llvm/ADT/StringRef.h"
 #include "llvm/ADT/StringSwitch.h"
-#include "llvm/ADT/StringSwitch.h"
 #include "llvm/MC/MCAssembler.h"
 #include "llvm/MC/MCContext.h"
 #include "llvm/MC/MCExpr.h"
@@ -321,6 +320,14 @@ static bool isDReg(MCRegister Reg) {
   return Reg >= Bedrock::D0 && Reg <= Bedrock::D7;
 }
 
+static bool isAReg(MCRegister Reg) {
+  return Reg >= Bedrock::A0 && Reg <= Bedrock::A7;
+}
+
+static bool isPtrReg(MCRegister Reg) {
+  return isAReg(Reg) || Reg == Bedrock::SP || Reg == Bedrock::PC;
+}
+
 static bool isFReg(MCRegister Reg) {
   return Reg >= Bedrock::F0 && Reg <= Bedrock::F15;
 }
@@ -560,9 +567,35 @@ static std::string buildRawInstructionLineFromCurrent(
 enum : uint64_t {
   BEDROCK_EA_DREG = 0x00,
   BEDROCK_EA_AREG = 0x08,
+  BEDROCK_EA_INDIRECT = 0x10,
+  BEDROCK_EA_A_DISP16 = 0x18,
+  BEDROCK_EA_A_DISP32 = 0x20,
+  BEDROCK_EA_PC_DISP16 = 0x28,
+  BEDROCK_EA_PC_DISP32 = 0x29,
+  BEDROCK_EA_PC_DISP64 = 0x2a,
+  BEDROCK_EA_SP_DISP16 = 0x2c,
+  BEDROCK_EA_SP_DISP32 = 0x2d,
+  BEDROCK_EA_SP_DISP64 = 0x2e,
+  BEDROCK_EA_ABS32 = 0x30,
+  BEDROCK_EA_ABS64 = 0x31,
   BEDROCK_EA_IMM16 = 0x32,
   BEDROCK_EA_IMM32 = 0x33,
   BEDROCK_EA_IMM64 = 0x34,
+  BEDROCK_EA_S32_INDEXED_EXTENDED = 0x3e,
+  BEDROCK_EA_EXTENDED = 0x3f,
+};
+
+enum : uint16_t {
+  BEDROCK_PREFIX_NOSPEC = 0x01,
+  BEDROCK_PREFIX_SATURATE = 0x02,
+  BEDROCK_PREFIX_NONTEMPORAL = 0x03,
+  BEDROCK_PREFIX_POSTINC = 0x04,
+  BEDROCK_PREFIX_PREINC = 0x05,
+  BEDROCK_PREFIX_POSTDEC = 0x06,
+  BEDROCK_PREFIX_PREDEC = 0x07,
+  BEDROCK_PREFIX_U2C = 0x08,
+  BEDROCK_PREFIX_C2U = 0x09,
+  BEDROCK_PREFIX_U2U = 0x0a,
 };
 
 static const bedrock_field_desc *
@@ -875,8 +908,8 @@ static SMLoc consumeRawInstructionLine(BedrockAsmParser &Parser) {
   return EndLoc;
 }
 
-static bool assembleRawLine(StringRef Line, uint16_t *Words,
-                            size_t &WordCount) {
+static bool assembleRawLine(StringRef Line, uint16_t *Words, size_t &WordCount,
+                            const bedrock_form_desc **OutForm) {
   const bedrock_form_desc *Form = nullptr;
   WordCount = 0;
   int Status = bedrock_assemble_line(Line.str().c_str(), Words,
@@ -886,7 +919,527 @@ static bool assembleRawLine(StringRef Line, uint16_t *Words,
       !compactImmEA6Encoding(Words, WordCount, Form))
     return false;
   setRawDeclaredWords(Words[0], WordCount);
+  if (OutForm)
+    *OutForm = Form;
   return true;
+}
+
+struct SegmentEARewrite {
+  unsigned OperandIndex = 0;
+  uint16_t Descriptor = 0;
+  uint64_t PayloadValue = 0;
+  unsigned PayloadWords = 0;
+};
+
+struct AccessDomainAnnotation {
+  unsigned OperandIndex = 0;
+  char Domain = 0;
+};
+
+struct SpecAsmRewrite {
+  std::string Line;
+  uint16_t PrefixWord = 0;
+  SmallVector<SegmentEARewrite, 4> SegmentEAs;
+  SmallVector<AccessDomainAnnotation, 4> AccessDomains;
+  bool Changed = false;
+};
+
+static bool mergeRawPrefixByte(uint16_t &Word, uint16_t Prefix) {
+  uint16_t Low = Word & 0x00ffu;
+  uint16_t High = (Word >> 8) & 0x00ffu;
+  if (Prefix == 0u || Low == Prefix || High == Prefix)
+    return true;
+  if (Low == 0u) {
+    Word = (Word & 0xff00u) | Prefix;
+    return true;
+  }
+  if (High == 0u) {
+    Word = (Word & 0x00ffu) | uint16_t(Prefix << 8);
+    return true;
+  }
+  return false;
+}
+
+static bool mergeRawPrefixWord(uint16_t &Word, uint16_t PrefixWord) {
+  uint16_t Low = PrefixWord & 0x00ffu;
+  uint16_t High = (PrefixWord >> 8) & 0x00ffu;
+  return mergeRawPrefixByte(Word, Low) && mergeRawPrefixByte(Word, High);
+}
+
+static bool addPrefixWordToRawWords(uint16_t *Words, size_t &WordCount,
+                                    uint16_t PrefixWord) {
+  if (PrefixWord == 0)
+    return true;
+  if (WordCount == 0)
+    return false;
+  if ((Words[0] & BEDROCK_WORD0_PREFIX_BIT) != 0)
+    return mergeRawPrefixWord(Words[1], PrefixWord);
+  if (WordCount + 1 > BEDROCK_MAX_INSTRUCTION_WORDS)
+    return false;
+
+  for (size_t I = WordCount; I > 1; --I)
+    Words[I] = Words[I - 1];
+  Words[1] = PrefixWord;
+  ++WordCount;
+  Words[0] = (Words[0] & ~uint16_t(BEDROCK_WORD0_LENGTH_MASK)) |
+             BEDROCK_WORD0_PREFIX_BIT |
+             uint16_t((WordCount - 1) << 12);
+  return true;
+}
+
+static std::optional<uint16_t> simplePrefixByte(StringRef Token) {
+  return StringSwitch<std::optional<uint16_t>>(Token.upper())
+      .Case("NOSPEC", BEDROCK_PREFIX_NOSPEC)
+      .Case("SATURATE", BEDROCK_PREFIX_SATURATE)
+      .Case("NONTEMPORAL", BEDROCK_PREFIX_NONTEMPORAL)
+      .Default(std::nullopt);
+}
+
+static std::optional<unsigned> segmentCode(StringRef Segment) {
+  return StringSwitch<std::optional<unsigned>>(Segment.upper())
+      .Case("CS", 0)
+      .Case("DS", 1)
+      .Case("SS", 2)
+      .Case("GS0", 3)
+      .Case("GS1", 4)
+      .Case("GS2", 5)
+      .Case("GS3", 6)
+      .Case("GS4", 7)
+      .Default(std::nullopt);
+}
+
+static std::string compactUpper(StringRef Text) {
+  std::string Out;
+  Out.reserve(Text.size());
+  for (char Ch : Text)
+    if (!std::isspace(static_cast<unsigned char>(Ch)))
+      Out.push_back(static_cast<char>(std::toupper(
+          static_cast<unsigned char>(Ch))));
+  return Out;
+}
+
+static bool parseARegPrefix(StringRef Text, unsigned &Reg,
+                            StringRef &Rest) {
+  if (Text.empty() || Text.front() != 'A')
+    return false;
+  size_t Pos = 1;
+  while (Pos < Text.size() &&
+         std::isdigit(static_cast<unsigned char>(Text[Pos])))
+    ++Pos;
+  if (Pos == 1)
+    return false;
+  unsigned Parsed = 0;
+  if (Text.slice(1, Pos).getAsInteger(10, Parsed) || Parsed > 7)
+    return false;
+  Reg = Parsed;
+  Rest = Text.drop_front(Pos);
+  return true;
+}
+
+static bool parseSignedInteger(StringRef Text, int64_t &Value) {
+  if (Text.empty())
+    return false;
+  return !Text.getAsInteger(0, Value);
+}
+
+static bool parseUnsignedInteger(StringRef Text, uint64_t &Value) {
+  if (Text.empty())
+    return false;
+  return !Text.getAsInteger(0, Value);
+}
+
+static void appendSignedDisplacement(raw_ostream &OS, int64_t Value) {
+  if (Value < 0)
+    OS << " - " << uint64_t(-Value);
+  else
+    OS << " + " << uint64_t(Value);
+}
+
+static bool chooseSegmentAbsMode(StringRef Body, uint16_t &Mode,
+                                 uint64_t &PayloadValue,
+                                 unsigned &PayloadWords) {
+  int64_t SignedValue = 0;
+  uint64_t UnsignedValue = 0;
+  if (Body.starts_with("-") || Body.starts_with("+")) {
+    if (!parseSignedInteger(Body, SignedValue))
+      return false;
+    if (SignedValue < INT32_MIN || SignedValue > INT32_MAX)
+      return false;
+    Mode = 0x7u;
+    PayloadValue = uint64_t(SignedValue);
+    PayloadWords = 2;
+    return true;
+  }
+  if (!parseUnsignedInteger(Body, UnsignedValue))
+    return false;
+  if (UnsignedValue <= uint64_t(INT32_MAX)) {
+    Mode = 0x7u;
+    PayloadValue = UnsignedValue;
+    PayloadWords = 2;
+  } else {
+    Mode = 0x8u;
+    PayloadValue = UnsignedValue;
+    PayloadWords = 4;
+  }
+  return true;
+}
+
+static bool tryRewriteSegmentEA(StringRef Content, unsigned OperandIndex,
+                                SpecAsmRewrite &Rewrite,
+                                std::string &Replacement) {
+  std::string CompactStorage = compactUpper(Content);
+  StringRef Compact(CompactStorage);
+  size_t Colon = Compact.find(':');
+  if (Colon == StringRef::npos)
+    return false;
+
+  StringRef SegmentText = Compact.take_front(Colon);
+  std::optional<unsigned> Segment = segmentCode(SegmentText);
+  if (!Segment)
+    return false;
+
+  StringRef Body = Compact.drop_front(Colon + 1);
+  uint16_t UpdatePrefix = 0;
+  if (Body.ends_with("++")) {
+    UpdatePrefix = BEDROCK_PREFIX_POSTINC;
+    Body = Body.drop_back(2);
+  } else if (Body.ends_with("--")) {
+    UpdatePrefix = BEDROCK_PREFIX_POSTDEC;
+    Body = Body.drop_back(2);
+  } else if (Body.starts_with("++")) {
+    UpdatePrefix = BEDROCK_PREFIX_PREINC;
+    Body = Body.drop_front(2);
+  } else if (Body.starts_with("--")) {
+    UpdatePrefix = BEDROCK_PREFIX_PREDEC;
+    Body = Body.drop_front(2);
+  }
+
+  if (Body.contains("*"))
+    return false;
+
+  uint16_t Mode = 0;
+  unsigned BaseReg = 0;
+  uint64_t PayloadValue = 0;
+  unsigned PayloadWords = 0;
+  StringRef Rest;
+  bool IsBaseForm = parseARegPrefix(Body, BaseReg, Rest);
+  if (IsBaseForm) {
+    int64_t Disp = 0;
+    if (Rest.empty()) {
+      Mode = 0x4u;
+    } else {
+      StringRef DispText = Rest;
+      if (DispText.starts_with("+"))
+        DispText = DispText.drop_front();
+      if (!parseSignedInteger(DispText, Disp))
+        return false;
+      if (Disp >= -32768 && Disp <= 32767) {
+        Mode = 0x5u;
+        PayloadWords = 1;
+      } else if (Disp >= INT32_MIN && Disp <= INT32_MAX) {
+        Mode = 0x6u;
+        PayloadWords = 2;
+      } else {
+        return false;
+      }
+      PayloadValue = uint64_t(Disp);
+    }
+  } else if (UpdatePrefix != 0) {
+    return false;
+  } else if (!chooseSegmentAbsMode(Body, Mode, PayloadValue, PayloadWords)) {
+    return false;
+  }
+
+  SegmentEARewrite EA;
+  EA.OperandIndex = OperandIndex;
+  EA.Descriptor = uint16_t((Mode << 11) | (*Segment << 8));
+  if (IsBaseForm)
+    EA.Descriptor |= uint16_t(BaseReg << 5);
+  EA.PayloadValue = PayloadValue;
+  EA.PayloadWords = PayloadWords;
+  Rewrite.SegmentEAs.push_back(EA);
+
+  if (UpdatePrefix != 0) {
+    if (!mergeRawPrefixByte(Rewrite.PrefixWord, UpdatePrefix))
+      return false;
+  }
+
+  SmallString<96> Text;
+  raw_svector_ostream OS(Text);
+  OS << '[' << SegmentText << ":A" << (IsBaseForm ? BaseReg : 0)
+     << " + D0 * 1";
+  if (PayloadWords != 0) {
+    int64_t Placeholder = 0;
+    if (PayloadWords == 1) {
+      Placeholder = int16_t(PayloadValue);
+    } else if (PayloadWords == 2) {
+      int64_t Actual = int32_t(PayloadValue);
+      Placeholder = (Actual >= -32768 && Actual <= 32767) ? 65536 : Actual;
+    } else {
+      Placeholder = 0x100000000ll;
+    }
+    appendSignedDisplacement(OS, Placeholder);
+  }
+  OS << ']';
+  Replacement = std::string(OS.str());
+  Rewrite.Changed = true;
+  return true;
+}
+
+static bool startsAccessDomainAnnotation(StringRef Text, size_t Pos,
+                                         char &Domain, size_t &BracketPos) {
+  if (Pos + 2 > Text.size())
+    return false;
+  char Ch = static_cast<char>(std::toupper(
+      static_cast<unsigned char>(Text[Pos])));
+  if (Ch != 'U' && Ch != 'C')
+    return false;
+  if (Text[Pos + 1] != ':')
+    return false;
+  size_t Scan = Pos + 2;
+  while (Scan < Text.size() &&
+         std::isspace(static_cast<unsigned char>(Text[Scan])))
+    ++Scan;
+  if (Scan >= Text.size() || Text[Scan] != '[')
+    return false;
+  Domain = Ch;
+  BracketPos = Scan;
+  return true;
+}
+
+static void consumeLeadingSimplePrefixes(StringRef &Line,
+                                         SpecAsmRewrite &Rewrite) {
+  for (;;) {
+    Line = Line.ltrim();
+    size_t TokenEnd = 0;
+    while (TokenEnd < Line.size() &&
+           !std::isspace(static_cast<unsigned char>(Line[TokenEnd])))
+      ++TokenEnd;
+    StringRef Token = Line.take_front(TokenEnd);
+    std::optional<uint16_t> Prefix = simplePrefixByte(Token);
+    if (!Prefix)
+      return;
+    if (!mergeRawPrefixByte(Rewrite.PrefixWord, *Prefix))
+      return;
+    Rewrite.Changed = true;
+    Line = Line.drop_front(TokenEnd);
+  }
+}
+
+static bool rewriteSpecAsmLine(StringRef Line, SpecAsmRewrite &Rewrite) {
+  StringRef Rest = Line;
+  consumeLeadingSimplePrefixes(Rest, Rewrite);
+  if (Rest.trim().empty())
+    return false;
+
+  std::string Out;
+  Out.reserve(Rest.size());
+  unsigned OperandIndex = 0;
+  unsigned Depth = 0;
+  for (size_t I = 0; I < Rest.size();) {
+    char Domain = 0;
+    size_t BracketPos = 0;
+    if (Depth == 0 &&
+        startsAccessDomainAnnotation(Rest, I, Domain, BracketPos)) {
+      Rewrite.AccessDomains.push_back({OperandIndex, Domain});
+      Rewrite.Changed = true;
+      I = BracketPos;
+    }
+
+    if (Rest[I] == '[') {
+      size_t End = Rest.find(']', I + 1);
+      if (End == StringRef::npos)
+        return false;
+      std::string Replacement;
+      if (tryRewriteSegmentEA(Rest.slice(I + 1, End), OperandIndex, Rewrite,
+                              Replacement)) {
+        Out += Replacement;
+      } else {
+        Out.append(Rest.data() + I, End - I + 1);
+      }
+      I = End + 1;
+      continue;
+    }
+
+    char Ch = Rest[I++];
+    if (Ch == '[' || Ch == '{' || Ch == '(')
+      ++Depth;
+    else if (Depth != 0 && (Ch == ']' || Ch == '}' || Ch == ')'))
+      --Depth;
+    else if (Depth == 0 && Ch == ',')
+      ++OperandIndex;
+    Out.push_back(Ch);
+  }
+
+  Rewrite.Line = std::move(Out);
+  return Rewrite.Changed;
+}
+
+static unsigned extendedEAPayloadWords(uint16_t Descriptor) {
+  unsigned Mode = (Descriptor >> 11) & 0x1f;
+  switch (Mode) {
+  case 0x1:
+  case 0x5:
+  case 0x9:
+  case 0xc:
+    return 2;
+  case 0x2:
+  case 0x6:
+  case 0x7:
+  case 0xa:
+  case 0xd:
+    return 3;
+  case 0x3:
+  case 0x8:
+  case 0xb:
+  case 0xe:
+    return 5;
+  default:
+    return 1;
+  }
+}
+
+static unsigned eaPayloadWords(uint64_t Value, const uint16_t *Words,
+                               size_t PayloadCursor, size_t WordCount) {
+  if (Value >= BEDROCK_EA_A_DISP16 && Value < BEDROCK_EA_A_DISP32)
+    return 1;
+  if (Value >= BEDROCK_EA_A_DISP32 && Value < BEDROCK_EA_PC_DISP16)
+    return 2;
+  if (Value == BEDROCK_EA_PC_DISP16 || Value == BEDROCK_EA_SP_DISP16)
+    return 1;
+  if (Value == BEDROCK_EA_PC_DISP32 || Value == BEDROCK_EA_SP_DISP32 ||
+      Value == BEDROCK_EA_ABS32 || Value == BEDROCK_EA_IMM32)
+    return 2;
+  if (Value == BEDROCK_EA_PC_DISP64 || Value == BEDROCK_EA_SP_DISP64 ||
+      Value == BEDROCK_EA_ABS64 || Value == BEDROCK_EA_IMM64)
+    return 4;
+  if (Value == BEDROCK_EA_IMM16)
+    return 1;
+  if (Value == BEDROCK_EA_EXTENDED ||
+      Value == BEDROCK_EA_S32_INDEXED_EXTENDED) {
+    if (PayloadCursor >= WordCount)
+      return 0;
+    return extendedEAPayloadWords(Words[PayloadCursor]);
+  }
+  return 0;
+}
+
+static const SegmentEARewrite *
+findSegmentRewrite(ArrayRef<SegmentEARewrite> Rewrites,
+                   unsigned OperandIndex) {
+  for (const SegmentEARewrite &Rewrite : Rewrites)
+    if (Rewrite.OperandIndex == OperandIndex)
+      return &Rewrite;
+  return nullptr;
+}
+
+static bool patchSegmentEAs(uint16_t *Words, size_t WordCount,
+                            const bedrock_form_desc *Form,
+                            ArrayRef<SegmentEARewrite> Rewrites) {
+  if (Rewrites.empty())
+    return true;
+  size_t PayloadCursor = payloadStartWord(Form, Words);
+  for (unsigned OperandIndex = 0; OperandIndex != Form->operand_count;
+       ++OperandIndex) {
+    const bedrock_operand_desc *Operand = bedrock_form_operand(Form, OperandIndex);
+    unsigned PayloadWords = 0;
+    if (Operand && Operand->field_index != BEDROCK_NO_FIELD &&
+        StringRef(Operand->kind).equals_insensitive("EA")) {
+      const bedrock_field_desc *Field = &bedrock_fields[Operand->field_index];
+      PayloadWords = eaPayloadWords(extractFormField(Words, Field), Words,
+                                    PayloadCursor, WordCount);
+    }
+
+    if (const SegmentEARewrite *Rewrite =
+            findSegmentRewrite(Rewrites, OperandIndex)) {
+      if (PayloadWords != Rewrite->PayloadWords + 1 ||
+          PayloadCursor + PayloadWords > WordCount)
+        return false;
+      Words[PayloadCursor] = Rewrite->Descriptor;
+      for (unsigned I = 0; I != Rewrite->PayloadWords; ++I)
+        Words[PayloadCursor + 1 + I] =
+            uint16_t((Rewrite->PayloadValue >> (I * 16)) & 0xffffu);
+    }
+    PayloadCursor += PayloadWords;
+  }
+  return true;
+}
+
+static bool formStoresToEAWithoutReadingDest(const bedrock_form_desc *Form) {
+  StringRef ID(Form->id ? Form->id : "");
+  StringRef Mnemonic(Form->mnemonic ? Form->mnemonic : "");
+  if (!ID.ends_with("_TO_EA"))
+    return false;
+  return Mnemonic == "MOV" || Mnemonic.starts_with("EXT") ||
+         Mnemonic.starts_with("F");
+}
+
+static bool determineAccessPrefix(const bedrock_form_desc *Form,
+                                  ArrayRef<AccessDomainAnnotation> Domains,
+                                  uint16_t &Prefix) {
+  if (Domains.empty())
+    return true;
+
+  bool ReadsUser = false;
+  bool WritesUser = false;
+  for (const AccessDomainAnnotation &Domain : Domains) {
+    if (Domain.Domain != 'U')
+      continue;
+    if (Domain.OperandIndex >= Form->operand_count)
+      return false;
+    const bedrock_operand_desc *Operand =
+        bedrock_form_operand(Form, Domain.OperandIndex);
+    StringRef Role(Operand && Operand->role ? Operand->role : "");
+    bool IsDst = Role.equals_insensitive("dst");
+    if (!IsDst) {
+      ReadsUser = true;
+      continue;
+    }
+    WritesUser = true;
+    if (!formStoresToEAWithoutReadingDest(Form))
+      ReadsUser = true;
+  }
+
+  if (ReadsUser && WritesUser)
+    Prefix = BEDROCK_PREFIX_U2U;
+  else if (ReadsUser)
+    Prefix = BEDROCK_PREFIX_U2C;
+  else if (WritesUser)
+    Prefix = BEDROCK_PREFIX_C2U;
+  return true;
+}
+
+static bool assembleRawLineEnhanced(StringRef Line, uint16_t *Words,
+                                    size_t &WordCount,
+                                    const bedrock_form_desc **OutForm) {
+  if (assembleRawLine(Line, Words, WordCount, OutForm))
+    return true;
+
+  SpecAsmRewrite Rewrite;
+  if (!rewriteSpecAsmLine(Line, Rewrite))
+    return false;
+
+  const bedrock_form_desc *Form = nullptr;
+  if (!assembleRawLine(Rewrite.Line, Words, WordCount, &Form))
+    return false;
+  if (!patchSegmentEAs(Words, WordCount, Form, Rewrite.SegmentEAs))
+    return false;
+
+  uint16_t AccessPrefix = 0;
+  if (!determineAccessPrefix(Form, Rewrite.AccessDomains, AccessPrefix) ||
+      !mergeRawPrefixByte(Rewrite.PrefixWord, AccessPrefix))
+    return false;
+  if (!addPrefixWordToRawWords(Words, WordCount, Rewrite.PrefixWord))
+    return false;
+
+  if (OutForm)
+    *OutForm = Form;
+  return true;
+}
+
+static bool assembleRawLineEnhanced(StringRef Line, uint16_t *Words,
+                                    size_t &WordCount) {
+  return assembleRawLineEnhanced(Line, Words, WordCount, nullptr);
 }
 
 static std::string placeholderText(uint64_t Placeholder) {
@@ -1022,7 +1575,7 @@ static bool assembleRawLineWithReloc(BedrockAsmParser &Parser, StringRef Line,
   Transformed.append(Line.data() + Cursor, Line.size() - Cursor);
 
   size_t WordCount = 0;
-  if (!assembleRawLine(Transformed, Encoding.Words, WordCount))
+  if (!assembleRawLineEnhanced(Transformed, Encoding.Words, WordCount))
     return false;
   Encoding.WordCount = WordCount;
   for (const RawRelocReplacement &Replacement : Replacements)
@@ -1059,8 +1612,24 @@ bool BedrockAsmParser::parseLenInstruction(SMLoc NameLoc,
                                            OperandVector &Operands) {
   const MCExpr *DeclaredExpr = nullptr;
   SMLoc DeclaredEnd;
-  if (getParser().parseExpression(DeclaredExpr, DeclaredEnd))
+  bool HasAngle = parseOptionalToken(AsmToken::Less);
+  if (HasAngle) {
+    if (!getTok().is(AsmToken::Integer))
+      return Error(getTok().getLoc(), "expected LEN word count");
+    DeclaredExpr =
+        MCConstantExpr::create(getTok().getIntVal(), getContext());
+    DeclaredEnd = getTok().getEndLoc();
+    Lex();
+    if (parseOptionalToken(AsmToken::Comma)) {
+      while (!getLexer().is(AsmToken::Greater) &&
+             !tokenEndsStatement(getTok()))
+        Lex();
+    }
+    if (parseToken(AsmToken::Greater, "expected `>' after LEN word count"))
+      return true;
+  } else if (getParser().parseExpression(DeclaredExpr, DeclaredEnd)) {
     return true;
+  }
 
   int64_t DeclaredValue = 0;
   if (!DeclaredExpr->evaluateAsAbsolute(DeclaredValue))
@@ -1079,7 +1648,8 @@ bool BedrockAsmParser::parseLenInstruction(SMLoc NameLoc,
   RawInstructionEncoding RawEncoding;
   std::string RawRelocError;
   if (!assembleRawLineWithReloc(*this, RawLine, RawEncoding, RawRelocError) &&
-      !assembleRawLine(RawLine, RawEncoding.Words, RawEncoding.WordCount)) {
+      !assembleRawLineEnhanced(RawLine, RawEncoding.Words,
+                               RawEncoding.WordCount)) {
     if (!RawRelocError.empty())
       return Error(getTok().getLoc(), RawRelocError);
     return Error(getTok().getLoc(), "cannot assemble Bedrock instruction `" +
@@ -1226,7 +1796,8 @@ bool BedrockAsmParser::parseInstruction(ParseInstructionInfo &Info,
   RawInstructionEncoding RawEncoding;
   std::string RawRelocError;
   if (assembleRawLineWithReloc(*this, RawLine, RawEncoding, RawRelocError) ||
-      assembleRawLine(RawLine, RawEncoding.Words, RawEncoding.WordCount)) {
+      assembleRawLineEnhanced(RawLine, RawEncoding.Words,
+                              RawEncoding.WordCount)) {
     SMLoc EndLoc = consumeRawInstructionLine(*this);
     Operands.push_back(BedrockOperand::createRawLine(
         RawLine, RawEncoding.Words, RawEncoding.WordCount,
@@ -1524,6 +2095,20 @@ static unsigned binRIOpcode(StringRef Mnemonic, char Suffix) {
       .Case("MULU", Suffix == 'L' ? Bedrock::MULU32ri : 0)
       .Case("DIVS", Suffix == 'Q' ? Bedrock::DIVS64ri : 0)
       .Default(0);
+}
+
+static unsigned binRIOpcodeForReg(StringRef Mnemonic, char Suffix,
+                                  MCRegister Dst) {
+  if (Suffix == 'Q' && isAReg(Dst)) {
+    unsigned AOpcode = StringSwitch<unsigned>(Mnemonic)
+                           .Case("AND", Bedrock::AND64ai)
+                           .Case("OR", Bedrock::OR64ai)
+                           .Case("XOR", Bedrock::XOR64ai)
+                           .Default(0);
+    if (AOpcode)
+      return AOpcode;
+  }
+  return binRIOpcode(Mnemonic, Suffix);
 }
 
 static unsigned binRMOpcode(StringRef Mnemonic, char Suffix) {
@@ -2311,12 +2896,9 @@ bool BedrockAsmParser::emitRepgBlock(SMLoc Loc, const BedrockOperand &Block,
   Encoded.resize(Items.size());
   for (size_t I = 0; I != Items.size(); ++I) {
     const bedrock_form_desc *Form = nullptr;
-    int Status = bedrock_assemble_line(Items[I].c_str(), Encoded[I].Words,
-                                       BEDROCK_MAX_INSTRUCTION_WORDS,
-                                       &Encoded[I].WordCount, &Form);
-    if (Status != BEDROCK_OK || Encoded[I].WordCount == 0 ||
-        Form == nullptr ||
-        !compactImmEA6Encoding(Encoded[I].Words, Encoded[I].WordCount, Form))
+    if (!assembleRawLineEnhanced(Items[I], Encoded[I].Words,
+                                 Encoded[I].WordCount, &Form) ||
+        Encoded[I].WordCount == 0 || Form == nullptr)
       return Error(Loc, "cannot assemble REPG instruction `" + Twine(Items[I]) +
                             "`");
 
@@ -2414,6 +2996,14 @@ bool BedrockAsmParser::matchAndEmitInstruction(SMLoc IdLoc, unsigned &Opcode,
     Inst.setOpcode(Opc);
     return emitInst(Inst, IdLoc, Out);
   }
+
+  if (Name == "JMP" && Operands.size() > 1)
+    return Error(IdLoc, "JMP requires an explicit .W or .L size suffix");
+
+  if (Name.starts_with("J") && !Name.contains('.') && Name.size() > 1 &&
+      parseCondCode(Name.drop_front()))
+    return Error(IdLoc, Twine(Name) +
+                            " requires an explicit .W or .L size suffix");
 
   if (Name == "CALL") {
     if (expectOperandCount(*this, IdLoc, Operands, 1))
@@ -2613,6 +3203,19 @@ bool BedrockAsmParser::matchAndEmitInstruction(SMLoc IdLoc, unsigned &Opcode,
   if (expectOperandCount(*this, IdLoc, Operands, 2))
     return true;
 
+  if (Name == "LEA") {
+    const BedrockOperand &Src = operand(Operands, 1);
+    const BedrockOperand &Dst = operand(Operands, 2);
+    if (Src.isMem() && Dst.isReg() && isPtrReg(Src.getMemBaseReg()) &&
+        isAReg(Dst.getReg())) {
+      Inst.setOpcode(Bedrock::LEAri);
+      Inst.addOperand(MCOperand::createReg(Dst.getReg()));
+      addMem(Inst, Src);
+      return emitInst(Inst, IdLoc, Out);
+    }
+    return Error(IdLoc, "invalid LEA operands");
+  }
+
   if (!parseSuffix(Name, "MOV", Suffix)) {
     const BedrockOperand &Src = operand(Operands, 1);
     const BedrockOperand &Dst = operand(Operands, 2);
@@ -2772,7 +3375,9 @@ bool BedrockAsmParser::matchAndEmitInstruction(SMLoc IdLoc, unsigned &Opcode,
       return emitInst(Inst, IdLoc, Out);
     }
 
-    Opc = binRIOpcode(BaseName, Suffix);
+    Opc = Src.isImm() && Dst.isReg()
+              ? binRIOpcodeForReg(BaseName, Suffix, Dst.getReg())
+              : binRIOpcode(BaseName, Suffix);
     if (Opc && Src.isImm() && Dst.isReg()) {
       Inst.setOpcode(Opc);
       Inst.addOperand(MCOperand::createReg(Dst.getReg()));

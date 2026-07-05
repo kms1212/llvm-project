@@ -27,7 +27,7 @@ body: |
     $d0 = EXTZQ32rr killed $d0, implicit-def dead $flags
     $d0 = nuw nsw SHL64ri killed $d0, 2, implicit-def dead $flags
     $a1 = MOV64rr $a0
-    $a1 = nuw ADD64rr killed $a1, killed $d0
+    $a1 = nuw ADD64rr killed $a1, killed $d0, implicit-def $flags
     $d0 = CLR64r
     MOV32mr $d0, killed $a1, 0
     RET implicit $sp, implicit $d0

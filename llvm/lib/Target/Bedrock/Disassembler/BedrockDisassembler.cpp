@@ -55,6 +55,15 @@ enum : uint64_t {
   BEDROCK_EA_EXTENDED = 0x3f,
 };
 
+enum : uint16_t {
+  BEDROCK_PREFIX_NOSPEC = 0x01,
+  BEDROCK_PREFIX_SATURATE = 0x02,
+  BEDROCK_PREFIX_NONTEMPORAL = 0x03,
+  BEDROCK_PREFIX_U2C = 0x08,
+  BEDROCK_PREFIX_C2U = 0x09,
+  BEDROCK_PREFIX_U2U = 0x0a,
+};
+
 struct BedrockEA {
   enum KindTy { Register, Memory, Immediate } Kind;
   MCRegister Reg = Bedrock::NoRegister;
@@ -251,6 +260,10 @@ static MCRegister aReg(uint64_t Index) {
   return Index < 8 ? MCRegister(Bedrock::A0 + Index) : Bedrock::NoRegister;
 }
 
+static bool isAReg(MCRegister Reg) {
+  return Reg >= Bedrock::A0 && Reg <= Bedrock::A7;
+}
+
 static MCRegister fReg(uint64_t Index) {
   return Index < 16 ? MCRegister(Bedrock::F0 + Index) : Bedrock::NoRegister;
 }
@@ -344,6 +357,12 @@ struct PrefixState {
   uint8_t Bytes[2] = {0, 0};
 };
 
+static uint16_t prefixWord(const uint16_t *Words, size_t WordCount) {
+  if (WordCount < 2 || (Words[0] & BEDROCK_WORD0_PREFIX_BIT) == 0)
+    return 0;
+  return Words[1];
+}
+
 static PrefixState getPrefixState(const uint16_t *Words, size_t WordCount) {
   PrefixState State;
   if (WordCount >= 2 && (Words[0] & BEDROCK_WORD0_PREFIX_BIT) != 0) {
@@ -368,6 +387,14 @@ static std::optional<MCRegister> repeatCounterReg(const uint16_t *Words,
 
 static bool prefixIsRepeat(uint8_t Prefix) {
   return Prefix >= 0x80u || (Prefix >= 0x70u && Prefix <= 0x78u);
+}
+
+static bool prefixNeedsEncodedPrint(uint16_t Prefix) {
+  return Prefix == BEDROCK_PREFIX_NOSPEC ||
+         Prefix == BEDROCK_PREFIX_SATURATE ||
+         Prefix == BEDROCK_PREFIX_NONTEMPORAL ||
+         Prefix == BEDROCK_PREFIX_U2C || Prefix == BEDROCK_PREFIX_C2U ||
+         Prefix == BEDROCK_PREFIX_U2U;
 }
 
 static bool isUpdatePrefix(uint8_t Prefix) {
@@ -463,6 +490,7 @@ static bool decodeEA(const uint16_t *Words, size_t WordCount, uint64_t Value,
     MCRegister Base = Bedrock::NoRegister;
     size_t DispWords = 0;
     unsigned DispBits = 0;
+    bool HasIndex = true;
 
     switch (Mode) {
     default:
@@ -484,6 +512,22 @@ static bool decodeEA(const uint16_t *Words, size_t WordCount, uint64_t Value,
       Base = aReg((Desc >> 5) & 0x7);
       DispWords = 4;
       DispBits = 64;
+      break;
+    case 0x4:
+      Base = aReg((Desc >> 5) & 0x7);
+      HasIndex = false;
+      break;
+    case 0x5:
+      Base = aReg((Desc >> 5) & 0x7);
+      HasIndex = false;
+      DispWords = 1;
+      DispBits = 16;
+      break;
+    case 0x6:
+      Base = aReg((Desc >> 5) & 0x7);
+      HasIndex = false;
+      DispWords = 2;
+      DispBits = 32;
       break;
     case 0x9:
     case 0xc:
@@ -510,7 +554,7 @@ static bool decodeEA(const uint16_t *Words, size_t WordCount, uint64_t Value,
 
     EA.Kind = BedrockEA::Memory;
     EA.Reg = Base;
-    EA.Index = dReg(IndexNo);
+    EA.Index = HasIndex ? dReg(IndexNo) : Bedrock::NoRegister;
     EA.Scale = 1u << ScaleCode;
     EA.Signed32Index = Signed32Index;
     EA.Imm = DispWords == 0
@@ -518,7 +562,7 @@ static bool decodeEA(const uint16_t *Words, size_t WordCount, uint64_t Value,
                  : signExtend(readPayload(Words, PayloadCursor, DispWords),
                               DispBits);
     PayloadCursor += DispWords;
-    return EA.Index != Bedrock::NoRegister;
+    return !HasIndex || EA.Index != Bedrock::NoRegister;
   };
 
   if (Value == BEDROCK_EA_EXTENDED)
@@ -566,6 +610,113 @@ decodeEABySource(const bedrock_form_desc *Form, const uint16_t *Words,
   if (!consumeUpdatePrefix(Prefixes, EA))
     return std::nullopt;
   return EA;
+}
+
+static unsigned extendedEAPayloadWords(uint16_t Descriptor) {
+  unsigned Mode = (Descriptor >> 11) & 0x1f;
+  switch (Mode) {
+  case 0x1:
+  case 0x5:
+  case 0x9:
+  case 0xc:
+    return 2;
+  case 0x2:
+  case 0x6:
+  case 0x7:
+  case 0xa:
+  case 0xd:
+    return 3;
+  case 0x3:
+  case 0x8:
+  case 0xb:
+  case 0xe:
+    return 5;
+  default:
+    return 1;
+  }
+}
+
+static bool extendedEANeedsEncodedPrint(uint16_t Descriptor) {
+  unsigned Mode = (Descriptor >> 11) & 0x1f;
+  unsigned Segment = (Descriptor >> 8) & 0x7;
+  if (Mode <= 0x3)
+    return Segment != 1;
+  return Mode >= 0x4 && Mode <= 0x8;
+}
+
+static unsigned eaPayloadWords(uint64_t Value, const uint16_t *Words,
+                               size_t PayloadCursor, size_t WordCount) {
+  if (Value >= BEDROCK_EA_A_DISP16 && Value < BEDROCK_EA_A_DISP32)
+    return 1;
+  if (Value >= BEDROCK_EA_A_DISP32 && Value < BEDROCK_EA_PC_DISP16)
+    return 2;
+  if (Value == BEDROCK_EA_PC_DISP16 || Value == BEDROCK_EA_SP_DISP16)
+    return 1;
+  if (Value == BEDROCK_EA_PC_DISP32 || Value == BEDROCK_EA_SP_DISP32 ||
+      Value == BEDROCK_EA_ABS32 || Value == BEDROCK_EA_IMM32)
+    return 2;
+  if (Value == BEDROCK_EA_PC_DISP64 || Value == BEDROCK_EA_SP_DISP64 ||
+      Value == BEDROCK_EA_ABS64 || Value == BEDROCK_EA_IMM64)
+    return 4;
+  if (Value == BEDROCK_EA_IMM16)
+    return 1;
+  if (Value == BEDROCK_EA_EXTENDED ||
+      Value == BEDROCK_EA_S32_INDEXED_EXTENDED) {
+    if (PayloadCursor >= WordCount)
+      return 0;
+    return extendedEAPayloadWords(Words[PayloadCursor]);
+  }
+  return 0;
+}
+
+static bool instructionNeedsEncodedSpecPrint(const uint16_t *Words,
+                                             size_t WordCount,
+                                             const bedrock_form_desc *Form) {
+  uint16_t PrefixWord = prefixWord(Words, WordCount);
+  for (uint16_t Prefix :
+       {uint16_t(PrefixWord & 0x00ffu), uint16_t(PrefixWord >> 8)}) {
+    if (prefixNeedsEncodedPrint(Prefix))
+      return true;
+  }
+
+  size_t PayloadCursor = payloadStartWord(Form, Words);
+  for (size_t I = 0; I != Form->operand_count; ++I) {
+    const bedrock_operand_desc *Operand = bedrock_form_operand(Form, I);
+    if (!Operand || Operand->field_index == BEDROCK_NO_FIELD)
+      continue;
+    const bedrock_field_desc *Field = &bedrock_fields[Operand->field_index];
+    uint64_t Value = extractField(Words, Field);
+    StringRef Kind(Operand->kind ? Operand->kind : "");
+    StringRef DeclaredKind(Operand->declared_kind ? Operand->declared_kind
+                                                  : "");
+    bool IsEA = Kind.equals_insensitive("EA") ||
+                DeclaredKind.equals_insensitive("EA");
+    if (IsEA) {
+      unsigned PayloadWords =
+          eaPayloadWords(Value, Words, PayloadCursor, WordCount);
+      if (PayloadCursor + PayloadWords > WordCount)
+        return false;
+      if ((Value == BEDROCK_EA_EXTENDED ||
+           Value == BEDROCK_EA_S32_INDEXED_EXTENDED) &&
+          PayloadWords != 0 && PayloadCursor < WordCount &&
+          extendedEANeedsEncodedPrint(Words[PayloadCursor]))
+        return true;
+      PayloadCursor += PayloadWords;
+      continue;
+    }
+
+    unsigned ImmBits = immediateEAPayloadBits(Value);
+    if (ImmBits != 0 &&
+        (StringRef(Field->kind).starts_with("IMM") ||
+         Kind.starts_with_insensitive("IMM") ||
+         DeclaredKind.starts_with_insensitive("IMM"))) {
+      unsigned PayloadWords = wordsForBits(ImmBits);
+      if (PayloadCursor + PayloadWords > WordCount)
+        return false;
+      PayloadCursor += PayloadWords;
+    }
+  }
+  return false;
 }
 
 static unsigned movRROpcode(char Suffix) {
@@ -1020,6 +1171,20 @@ static unsigned binRIOpcode(StringRef Mnemonic, char Suffix) {
                     : Suffix == 'L' ? Bedrock::MINU32ri
                                     : Bedrock::MINU64ri)
       .Default(0);
+}
+
+static unsigned binRIOpcodeForReg(StringRef Mnemonic, char Suffix,
+                                  MCRegister Dst) {
+  if (Suffix == 'Q' && isAReg(Dst)) {
+    unsigned AOpcode = StringSwitch<unsigned>(Mnemonic)
+                           .Case("AND", Bedrock::AND64ai)
+                           .Case("OR", Bedrock::OR64ai)
+                           .Case("XOR", Bedrock::XOR64ai)
+                           .Default(0);
+    if (AOpcode)
+      return AOpcode;
+  }
+  return binRIOpcode(Mnemonic, Suffix);
 }
 
 static unsigned binRMOpcode(StringRef Mnemonic, char Suffix, bool PostInc) {
@@ -2131,8 +2296,8 @@ static DecodeStatus decodeIntBinOrCmp(const bedrock_form_desc *Form,
       return MCDisassembler::Fail;
 
     if (Src->Kind == BedrockEA::Immediate) {
-      if (!setOpcode(MI, binRIOpcode(Mnemonic, 'Q')) || !addReg(MI, Dst) ||
-          !addReg(MI, Dst))
+      if (!setOpcode(MI, binRIOpcodeForReg(Mnemonic, 'Q', *Dst)) ||
+          !addReg(MI, Dst) || !addReg(MI, Dst))
         return MCDisassembler::Fail;
       MI.addOperand(MCOperand::createImm(Src->Imm));
       return MCDisassembler::Success;
@@ -2173,7 +2338,8 @@ static DecodeStatus decodeIntBinOrCmp(const bedrock_form_desc *Form,
     std::optional<MCRegister> Dst = regBySource(Form, Words, TargetSource);
     unsigned Opc = Mnemonic == "CMP"    ? cmpRIOpcode(*Suffix)
                    : Mnemonic == "TEST" ? testRIOpcode(*Suffix)
-                                         : binRIOpcode(Mnemonic, *Suffix);
+                                         : binRIOpcodeForReg(Mnemonic, *Suffix,
+                                                            *Dst);
     if (!setOpcode(MI, Opc) || !addReg(MI, Dst))
       return MCDisassembler::Fail;
     if (Mnemonic != "CMP" && Mnemonic != "TEST" && !addReg(MI, Dst))
@@ -2239,7 +2405,8 @@ static DecodeStatus decodeIntBinOrCmp(const bedrock_form_desc *Form,
     if (Dst != Bedrock::NoRegister) {
       unsigned Opc = Mnemonic == "CMP"    ? cmpRIOpcode(*Suffix)
                      : Mnemonic == "TEST" ? testRIOpcode(*Suffix)
-                                          : binRIOpcode(Mnemonic, *Suffix);
+                                          : binRIOpcodeForReg(Mnemonic, *Suffix,
+                                                             Dst);
       if (!setOpcode(MI, Opc) || !addReg(MI, Dst))
         return MCDisassembler::Fail;
       if (Mnemonic != "CMP" && Mnemonic != "TEST" && !addReg(MI, Dst))
@@ -2280,8 +2447,12 @@ static DecodeStatus decodeIntBinOrCmp(const bedrock_form_desc *Form,
     if (!Src || !Dst)
       return MCDisassembler::Fail;
     if (Src->Kind == BedrockEA::Immediate) {
-      if (!setOpcode(MI, binRIOpcode(Mnemonic, *Suffix)) || !addReg(MI, Dst) ||
-          !addReg(MI, Dst))
+      unsigned Opc = IsFlagBin ? (Mnemonic == "CMP" ? cmpRIOpcode(*Suffix)
+                                                    : testRIOpcode(*Suffix))
+                               : binRIOpcodeForReg(Mnemonic, *Suffix, *Dst);
+      if (!setOpcode(MI, Opc) || !addReg(MI, Dst))
+        return MCDisassembler::Fail;
+      if (!IsFlagBin && !addReg(MI, Dst))
         return MCDisassembler::Fail;
       MI.addOperand(MCOperand::createImm(Src->Imm));
       return MCDisassembler::Success;
@@ -3296,6 +3467,13 @@ DecodeStatus BedrockDisassembler::getInstruction(MCInst &Instr, uint64_t &Size,
     if (!formFitsCandidateWords(CandidateForm, DecodeWords, CandidateWords))
       continue;
 
+    if (instructionNeedsEncodedSpecPrint(DecodeWords, CandidateWords,
+                                         CandidateForm)) {
+      WordCount = CandidateWords;
+      Form = CandidateForm;
+      break;
+    }
+
     MCInst Probe;
     bool NativeOK = decodeNativeInstruction(CandidateForm, DecodeWords,
                                             CandidateWords, Probe) == Success;
@@ -3333,6 +3511,9 @@ DecodeStatus BedrockDisassembler::getInstruction(MCInst &Instr, uint64_t &Size,
     Instr.setFlags(Flags);
     return Status;
   };
+
+  if (instructionNeedsEncodedSpecPrint(Words, WordCount, Form))
+    return DecodeEncoded();
 
   DecodeStatus Status = decodeNativeInstruction(Form, Words, WordCount, Instr);
   if (Status == Success)

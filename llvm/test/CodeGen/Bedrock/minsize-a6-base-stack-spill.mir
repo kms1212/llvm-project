@@ -27,13 +27,13 @@ body: |
   bb.0:
     liveins: $a0, $a6, $d0
 
-    $sp = frame-setup SUB64ri $sp, 24
+    $sp = frame-setup SUB64ri $sp, 24, implicit-def $flags
     MOV64mr $a6, $sp, 8
     $a6 = MOV64rr $a0
     $d1 = MOV32rm $a6, 4
     CALLpcrel16 @callee, csr_bedrock, implicit-def $sp, implicit $sp, implicit $d0, implicit-def $d0
     MOV32mr $d0, $a6, 8
     $a6 = MOV64rm $sp, 8
-    $sp = frame-destroy ADD64ri $sp, 24
+    $sp = frame-destroy ADD64ri $sp, 24, implicit-def $flags
     RET implicit $sp
 ...

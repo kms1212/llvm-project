@@ -6,19 +6,19 @@ define i32 @pointer_integer_mix(ptr %base, ptr %limit, i32 %n,
                                 i64 %byte_bias) minsize optsize {
 ; CHECK-LABEL: pointer_integer_mix:
 ; CHECK:       MOV.Q D0, D2
-; CHECK:       DIVS.Q 4, D1
-; CHECK-NOT:   ADD.Q A2, D1
+; CHECK:       DIVS.Q 4, [[DIV:D[0-7]]]
+; CHECK-NOT:   ADD.Q A2, [[DIV]]
 ; CHECK-NOT:   SAR.Q 63
-; CHECK:       LEA [A0 + D1 * 4], A2
-; CHECK:       LEA [A0 + D2.L * 4], A3
+; CHECK:       LEA [A0 + D2.L * 4], A2
 ; CHECK:       EXTZQ.L D2, D2
+; CHECK:       LEA [A0 + [[DIV]] * 4], A0
 ; CHECK:       CMP.Q D4, D2
 ; CHECK:       JEQ.W
 ; CHECK:       CMP.Q D4, A1
 ; CHECK:       JGE.W
 ; CHECK:       INC.L D0
-; CHECK:       MOV.L [A3++], [[PVAL:D[0-7]]]
-; CHECK:       MOV.L [A2++], D0
+; CHECK:       MOV.L [A2++], [[PVAL:D[0-7]]]
+; CHECK:       MOV.L [A0++], D0
 ; CHECK:       INC.Q D4
 ; CHECK-NOT:   MOV.Q 1
 ; CHECK:       RET

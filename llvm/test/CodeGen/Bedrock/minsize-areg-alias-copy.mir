@@ -121,8 +121,8 @@ body: |
     liveins: $d1, $d2, $d6
 
     $d6 = MOV64rr $d2
-    $d6 = ADD32rr $d6, $d2
-    $d1 = XOR32rr $d1, $d6
+    $d6 = ADD32rr $d6, $d2, implicit-def $flags
+    $d1 = XOR32rr $d1, $d6, implicit-def $flags
     RET implicit $sp
 ...
 ---

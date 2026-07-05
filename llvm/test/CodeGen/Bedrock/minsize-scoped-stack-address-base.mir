@@ -37,7 +37,7 @@ body: |
     liveins: $a6, $a7
 
     frame-setup PUSHM 49152, implicit-def $sp, implicit $sp, implicit killed $a6, implicit killed $a7
-    $sp = frame-setup SUB64ri $sp, 64
+    $sp = frame-setup SUB64ri $sp, 64, implicit-def $flags
     $a0 = LEAri $sp, 256
     CALLpcrel16 @sink0, csr_bedrock, implicit-def $sp, implicit $sp, implicit $a0
     $d0 = MOV32ri 1
@@ -65,7 +65,7 @@ body: |
     MOV64mr $a6, $sp, 0
     $a7 = CLR64r
     MOV64mr $a7, $sp, 8
-    $sp = frame-destroy ADD64ri $sp, 64
+    $sp = frame-destroy ADD64ri $sp, 64, implicit-def $flags
     frame-destroy POPM 49152, implicit-def $sp, implicit $sp, implicit-def $a6, implicit-def $a7
     RET implicit $sp
 ...

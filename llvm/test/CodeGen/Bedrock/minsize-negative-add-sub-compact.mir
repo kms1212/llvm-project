@@ -52,7 +52,7 @@ body: |
   bb.0:
     liveins: $d7
 
-    $d7 = ADD32ri $d7, -19
+    $d7 = ADD32ri $d7, -19, implicit-def $flags
     CALLpcrel16 @sink0, csr_bedrock, implicit-def $sp, implicit $sp
     $d0 = MOV32rr $d7
     RET implicit $sp, implicit $d0

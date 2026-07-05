@@ -222,6 +222,10 @@ static inline bool isAReg(Register Reg) {
   return Reg >= Bedrock::A0 && Reg <= Bedrock::A7;
 }
 
+static inline bool isPtrReg(Register Reg) {
+  return isAReg(Reg) || Reg == Bedrock::SP || Reg == Bedrock::PC;
+}
+
 static inline bool isFReg(Register Reg) {
   return Reg >= Bedrock::F0 && Reg <= Bedrock::F15;
 }
@@ -1036,6 +1040,36 @@ static inline bool isCalleeSaveLoad(const MachineInstr &MI, Register &Reg,
   Reg = MI.getOperand(0).getReg();
   Offset = MI.getOperand(2).getImm();
   return getMaskBit(Reg).has_value();
+}
+
+static inline bool isCalleeSaveSlotAccess(const MachineFunction &MF,
+                                          Register Reg, int64_t Offset) {
+  const MachineFrameInfo &MFI = MF.getFrameInfo();
+  for (const CalleeSavedInfo &CSI : MFI.getCalleeSavedInfo()) {
+    if (CSI.getReg().id() != Reg.id())
+      continue;
+    int64_t SlotOffset =
+        MFI.getObjectOffset(CSI.getFrameIdx()) + MFI.getStackSize();
+    if (Offset == SlotOffset)
+      return true;
+  }
+  return false;
+}
+
+static inline bool isCalleeSaveSpill(const MachineFunction &MF,
+                                     const MachineInstr &MI) {
+  Register Reg;
+  int64_t Offset = 0;
+  return isCalleeSaveStore(MI, Reg, Offset) &&
+         isCalleeSaveSlotAccess(MF, Reg, Offset);
+}
+
+static inline bool isCalleeSaveRestore(const MachineFunction &MF,
+                                       const MachineInstr &MI) {
+  Register Reg;
+  int64_t Offset = 0;
+  return isCalleeSaveLoad(MI, Reg, Offset) &&
+         isCalleeSaveSlotAccess(MF, Reg, Offset);
 }
 
 static inline bool isCalleeSaveFStore(const MachineInstr &MI, Register &Reg,
@@ -1875,6 +1909,7 @@ static inline unsigned getMemDestImmBinOpcode(unsigned RegOpcode) {
   case Bedrock::AND32ri:
     return Bedrock::AND32mi;
   case Bedrock::AND64ri:
+  case Bedrock::AND64ai:
     return Bedrock::AND64mi;
   case Bedrock::OR8ri:
     return Bedrock::OR8mi;
@@ -1883,6 +1918,7 @@ static inline unsigned getMemDestImmBinOpcode(unsigned RegOpcode) {
   case Bedrock::OR32ri:
     return Bedrock::OR32mi;
   case Bedrock::OR64ri:
+  case Bedrock::OR64ai:
     return Bedrock::OR64mi;
   case Bedrock::XOR8ri:
     return Bedrock::XOR8mi;
@@ -1891,6 +1927,7 @@ static inline unsigned getMemDestImmBinOpcode(unsigned RegOpcode) {
   case Bedrock::XOR32ri:
     return Bedrock::XOR32mi;
   case Bedrock::XOR64ri:
+  case Bedrock::XOR64ai:
     return Bedrock::XOR64mi;
   }
 }
@@ -2219,6 +2256,7 @@ static inline unsigned getMemTestOpcodeForAndImm(unsigned AndOpcode) {
   case Bedrock::AND32ri:
     return Bedrock::TEST32mi;
   case Bedrock::AND64ri:
+  case Bedrock::AND64ai:
     return Bedrock::TEST64mi;
   }
 }
@@ -2234,6 +2272,7 @@ static inline unsigned getRegTestOpcodeForAndImm(unsigned AndOpcode) {
   case Bedrock::AND32ri:
     return Bedrock::TEST32ri;
   case Bedrock::AND64ri:
+  case Bedrock::AND64ai:
     return Bedrock::TEST64ri;
   }
 }
@@ -2249,6 +2288,7 @@ static inline bool cmpZeroOpcodeMatchesAndImm(unsigned CmpOpcode, unsigned AndOp
   case Bedrock::AND32ri:
     return CmpOpcode == Bedrock::CMP32ri;
   case Bedrock::AND64ri:
+  case Bedrock::AND64ai:
     return CmpOpcode == Bedrock::CMP64ri;
   }
 }
@@ -2264,6 +2304,7 @@ static inline bool cmpRROpcodeMatchesAndImm(unsigned CmpOpcode, unsigned AndOpco
   case Bedrock::AND32ri:
     return CmpOpcode == Bedrock::CMP32rr;
   case Bedrock::AND64ri:
+  case Bedrock::AND64ai:
     return CmpOpcode == Bedrock::CMP64rr;
   }
 }
@@ -2280,6 +2321,7 @@ static inline bool testSelfOpcodeMatchesAndImm(unsigned TestOpcode,
   case Bedrock::AND32ri:
     return TestOpcode == Bedrock::TEST32rr;
   case Bedrock::AND64ri:
+  case Bedrock::AND64ai:
     return TestOpcode == Bedrock::TEST64rr;
   }
 }
@@ -2422,7 +2464,9 @@ static inline bool binOpcodeMatchesLoad(unsigned BinOpcode, unsigned LoadOpcode)
            BinOpcode == Bedrock::AND64rr || BinOpcode == Bedrock::OR64rr ||
            BinOpcode == Bedrock::XOR64rr || BinOpcode == Bedrock::ADD64ri ||
            BinOpcode == Bedrock::SUB64ri || BinOpcode == Bedrock::AND64ri ||
-           BinOpcode == Bedrock::OR64ri || BinOpcode == Bedrock::XOR64ri;
+           BinOpcode == Bedrock::OR64ri || BinOpcode == Bedrock::XOR64ri ||
+           BinOpcode == Bedrock::AND64ai || BinOpcode == Bedrock::OR64ai ||
+           BinOpcode == Bedrock::XOR64ai;
   }
 }
 
