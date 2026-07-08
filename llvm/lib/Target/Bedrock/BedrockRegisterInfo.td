@@ -1,0 +1,59 @@
+//===-- BedrockRegisterInfo.td - Bedrock register defs -----*- tablegen -*-===//
+//
+// Part of the LLVM Project, under the Apache License v2.0 with LLVM Exceptions.
+// See https://llvm.org/LICENSE.txt for license information.
+// SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
+//
+//===----------------------------------------------------------------------===//
+
+class BedrockReg<bits<4> enc, int dwarf, string name, list<string> alt = []>
+    : Register<name> {
+  let Namespace = "Bedrock";
+  let HWEncoding{3-0} = enc;
+  let AltNames = alt;
+  let DwarfNumbers = [dwarf];
+}
+
+class BedrockGPR<bits<4> enc, string name> : BedrockReg<enc, enc, name>;
+class BedrockFPR<bits<4> enc, int dwarf, string name>
+    : BedrockReg<enc, dwarf, name>;
+
+def R0  : BedrockGPR<0,  "r0">;
+def R1  : BedrockGPR<1,  "r1">;
+def R2  : BedrockGPR<2,  "r2">;
+def R3  : BedrockGPR<3,  "r3">;
+def R4  : BedrockGPR<4,  "r4">;
+def R5  : BedrockGPR<5,  "r5">;
+def R6  : BedrockGPR<6,  "r6">;
+def R7  : BedrockGPR<7,  "r7">;
+def R8  : BedrockGPR<8,  "r8">;
+def R9  : BedrockGPR<9,  "r9">;
+def R10 : BedrockGPR<10, "r10">;
+def R11 : BedrockGPR<11, "r11">;
+def R12 : BedrockGPR<12, "r12">;
+def R13 : BedrockGPR<13, "r13">;
+def R14 : BedrockGPR<14, "r14">;
+def R15 : BedrockGPR<15, "r15">;
+
+def F0  : BedrockFPR<0,  16, "f0">;
+def F1  : BedrockFPR<1,  17, "f1">;
+def F2  : BedrockFPR<2,  18, "f2">;
+def F3  : BedrockFPR<3,  19, "f3">;
+def F4  : BedrockFPR<4,  20, "f4">;
+def F5  : BedrockFPR<5,  21, "f5">;
+def F6  : BedrockFPR<6,  22, "f6">;
+def F7  : BedrockFPR<7,  23, "f7">;
+def F8  : BedrockFPR<8,  24, "f8">;
+def F9  : BedrockFPR<9,  25, "f9">;
+def F10 : BedrockFPR<10, 26, "f10">;
+def F11 : BedrockFPR<11, 27, "f11">;
+def F12 : BedrockFPR<12, 28, "f12">;
+def F13 : BedrockFPR<13, 29, "f13">;
+def F14 : BedrockFPR<14, 30, "f14">;
+def F15 : BedrockFPR<15, 31, "f15">;
+
+def GPR64 : RegisterClass<"Bedrock", [i64], 64, (sequence "R%u", 0, 15)> {
+  let DecoderMethod = "DecodeGPR64RegisterClass";
+}
+
+def FPR64 : RegisterClass<"Bedrock", [f64], 64, (sequence "F%u", 0, 15)>;

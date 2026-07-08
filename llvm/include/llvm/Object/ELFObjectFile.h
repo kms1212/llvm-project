@@ -1353,6 +1353,8 @@ StringRef ELFObjectFile<ELFT>::getFileFormatName() const {
       return "elf64-ve";
     case ELF::EM_LOONGARCH:
       return "elf64-loongarch";
+    case ELF::EM_BEDROCK:
+      return "elf64-bedrock";
     default:
       return "elf64-unknown";
     }
@@ -1438,6 +1440,8 @@ template <class ELFT> Triple::ArchType ELFObjectFile<ELFT>::getArch() const {
 
   case ELF::EM_BPF:
     return IsLittleEndian ? Triple::bpfel : Triple::bpfeb;
+  case ELF::EM_BEDROCK:
+    return Triple::bedrock;
 
   case ELF::EM_VE:
     return Triple::ve;

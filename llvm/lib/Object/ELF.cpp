@@ -148,6 +148,13 @@ StringRef llvm::object::getELFRelocationTypeName(uint32_t Machine,
       break;
     }
     break;
+  case ELF::EM_BEDROCK:
+    switch (Type) {
+#include "llvm/BinaryFormat/ELFRelocs/Bedrock.def"
+    default:
+      break;
+    }
+    break;
   case ELF::EM_MSP430:
     switch (Type) {
 #include "llvm/BinaryFormat/ELFRelocs/MSP430.def"
@@ -246,6 +253,8 @@ uint32_t llvm::object::getELFRelativeRelocationType(uint32_t Machine) {
     break;
   case ELF::EM_BPF:
     break;
+  case ELF::EM_BEDROCK:
+    return ELF::R_BEDROCK_RELATIVE;
   case ELF::EM_LOONGARCH:
     return ELF::R_LARCH_RELATIVE;
   default:

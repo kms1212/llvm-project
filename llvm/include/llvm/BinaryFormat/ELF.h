@@ -325,6 +325,7 @@ enum {
   EM_VE = 251,            // NEC SX-Aurora VE
   EM_CSKY = 252,          // C-SKY 32-bit processor
   EM_LOONGARCH = 258,     // LoongArch
+  EM_BEDROCK = 0xffb0,    // Bedrock
 };
 
 // Object file classes.
@@ -990,6 +991,11 @@ enum : unsigned {
 // ELF Relocation types for BPF
 enum {
 #include "ELFRelocs/BPF.def"
+};
+
+// ELF Relocation types for Bedrock
+enum {
+#include "ELFRelocs/Bedrock.def"
 };
 
 // ELF Relocation types for M68k
