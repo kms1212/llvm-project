@@ -1,0 +1,96 @@
+# RUN: llc -mtriple=bedrock -start-before=bedrock-peephole -stop-after=bedrock-peephole -verify-machineinstrs %s -o - | FileCheck %s
+
+# CHECK-LABEL: name: small_a_imm
+# CHECK:       $a6 = CLR64r
+# CHECK-NEXT:  $a6 = ADD64ri $a6, 44
+# CHECK-NOT:   MOV64ri 44
+
+# CHECK-LABEL: name: keep_a_imm_when_flags_live
+# CHECK:       $a6 = MOV64ri 44
+# CHECK-NEXT:  JCC %bb.1, 2, implicit $flags
+
+# CHECK-LABEL: name: large_a_imm_from_d_scratch
+# CHECK:       [[TMP:\$d[0-5]]] = MOV32ri 98368
+# CHECK-NEXT:  $a0 = MOV64rr [[TMP]]
+# CHECK-NOT:   MOV64ri 98368
+
+# CHECK-LABEL: name: large_a_imm_loop_scratch
+# CHECK:       [[TMP:\$d[0-5]]] = MOV32ri 34808
+# CHECK-NEXT:  $a1 = MOV64rr [[TMP]]
+# CHECK-NOT:   MOV64ri 34808
+
+--- |
+  target triple = "bedrock"
+
+  define i64 @small_a_imm() #0 {
+    ret i64 44
+  }
+
+  define i64 @keep_a_imm_when_flags_live() #0 {
+    ret i64 44
+  }
+
+  define ptr @large_a_imm_from_d_scratch() #0 {
+    ret ptr null
+  }
+
+  define ptr @large_a_imm_loop_scratch() #0 {
+    ret ptr null
+  }
+
+  attributes #0 = { nounwind }
+...
+---
+name: small_a_imm
+tracksRegLiveness: true
+body: |
+  bb.0:
+    $a6 = MOV64ri 44
+    RET implicit $a6, implicit $sp
+...
+---
+name: keep_a_imm_when_flags_live
+tracksRegLiveness: true
+body: |
+  bb.0:
+    successors: %bb.1
+
+    $a6 = MOV64ri 44
+    JCC %bb.1, 2, implicit $flags
+
+  bb.1:
+    liveins: $a6
+
+    RET implicit $a6, implicit $sp
+...
+---
+name: large_a_imm_from_d_scratch
+tracksRegLiveness: true
+body: |
+  bb.0:
+    $a0 = MOV64ri 98368
+    RET implicit $a0, implicit $sp
+...
+---
+name: large_a_imm_loop_scratch
+tracksRegLiveness: true
+body: |
+  bb.0:
+    successors: %bb.1
+
+    $a1 = MOV64ri 34808
+    JMP %bb.1
+
+  bb.1:
+    successors: %bb.2, %bb.1
+    liveins: $a1
+
+    CMP64ri $a1, 0, implicit-def $flags
+    JCC %bb.2, 2, implicit $flags
+    JMP %bb.1
+
+  bb.2:
+    liveins: $a1
+
+    RET implicit $a1, implicit $sp
+...

@@ -1,0 +1,86 @@
+# RUN: llc -mtriple=bedrock -start-before=bedrock-peephole -stop-after=bedrock-peephole -verify-machineinstrs %s -o - | FileCheck %s
+
+# CHECK-LABEL: name: cmp_imm_indexed_load
+# CHECK:       CMP32idx4mi 7, $a0, $d1, 12
+# CHECK-NOT:   MOV32idx4rm
+# CHECK-NOT:   CMP32ri
+
+# CHECK-LABEL: name: cmp_imm_indexed_byte_load
+# CHECK:       CMP8idx4mi 7, $a0, $d1, 12
+# CHECK-NOT:   MOV8idx4rm
+# CHECK-NOT:   CMP8ri
+
+# CHECK-LABEL: name: cmp_reg_indexed_byte_load
+# CHECK:       CMP8idx1mr $d4, $sp, $d0, 20
+# CHECK-NOT:   MOV8idx1rm
+# CHECK-NOT:   CMP8rr
+
+# CHECK-LABEL: name: live_loaded_value_negative
+# CHECK:       $d0 = MOV32idx4rm $a0, $d1, 12
+# CHECK:       CMP32ri $d0, 7
+# CHECK:       $d2 = MOV32rr killed $d0
+
+--- |
+  target triple = "bedrock"
+
+  define void @cmp_imm_indexed_load() {
+    ret void
+  }
+
+  define void @cmp_imm_indexed_byte_load() {
+    ret void
+  }
+
+  define void @cmp_reg_indexed_byte_load() {
+    ret void
+  }
+
+  define void @live_loaded_value_negative() {
+    ret void
+  }
+...
+---
+name: cmp_imm_indexed_load
+tracksRegLiveness: true
+body: |
+  bb.0:
+    liveins: $a0, $d1
+
+    $d0 = MOV32idx4rm $a0, $d1, 12 :: (load (s32))
+    CMP32ri killed $d0, 7, implicit-def $flags
+    RET implicit $sp
+...
+---
+name: cmp_imm_indexed_byte_load
+tracksRegLiveness: true
+body: |
+  bb.0:
+    liveins: $a0, $d1
+
+    $d0 = MOV8idx4rm $a0, $d1, 12 :: (load (s8))
+    CMP8ri killed $d0, 7, implicit-def $flags
+    RET implicit $sp
+...
+---
+name: cmp_reg_indexed_byte_load
+tracksRegLiveness: true
+body: |
+  bb.0:
+    liveins: $d0, $d4
+
+    $d6 = MOV8idx1rm $sp, $d0, 20 :: (load (s8))
+    CMP8rr killed $d6, $d4, implicit-def $flags
+    RET implicit $sp
+...
+---
+name: live_loaded_value_negative
+tracksRegLiveness: true
+body: |
+  bb.0:
+    liveins: $a0, $d1
+
+    $d0 = MOV32idx4rm $a0, $d1, 12 :: (load (s32))
+    CMP32ri $d0, 7, implicit-def $flags
+    $d2 = MOV32rr killed $d0
+    RET implicit $sp
+...

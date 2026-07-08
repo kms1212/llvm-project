@@ -50,8 +50,7 @@ entry:
 
 define i64 @load_global() {
 ; CHECK-LABEL: load_global:
-; CHECK:       MOV.Q g@ABS64, A0
-; CHECK-NEXT:  MOV.Q [A0], D0
+; CHECK:       MOV.Q [g@ABS64], D0
 ; CHECK-NEXT:  RET
 entry:
   %v = load i64, ptr @g, align 8
@@ -92,6 +91,38 @@ define i64 @shl_var(i64 %a, i64 %b) {
 entry:
   %s = shl i64 %a, %b
   ret i64 %s
+}
+
+declare i64 @llvm.fshl.i64(i64, i64, i64)
+declare i32 @llvm.fshr.i32(i32, i32, i32)
+
+define i32 @rotl5(i32 %a) {
+; CHECK-LABEL: rotl5:
+; CHECK:       ROL.L 5, D0
+; CHECK-NEXT:  RET
+entry:
+  %shl = shl i32 %a, 5
+  %shr = lshr i32 %a, 27
+  %r = or i32 %shl, %shr
+  ret i32 %r
+}
+
+define i64 @rotl_var(i64 %a, i64 %b) {
+; CHECK-LABEL: rotl_var:
+; CHECK:       ROL.Q D1, D0
+; CHECK-NEXT:  RET
+entry:
+  %r = call i64 @llvm.fshl.i64(i64 %a, i64 %a, i64 %b)
+  ret i64 %r
+}
+
+define i32 @rotr_var32(i32 %a, i32 %b) {
+; CHECK-LABEL: rotr_var32:
+; CHECK:       ROR.L D1, D0
+; CHECK-NEXT:  RET
+entry:
+  %r = call i32 @llvm.fshr.i32(i32 %a, i32 %a, i32 %b)
+  ret i32 %r
 }
 
 define i32 @lshr_var32(i32 %a, i32 %b) {
@@ -193,8 +224,7 @@ entry:
 
 define zeroext i1 @load_bool(ptr %p) {
 ; CHECK-LABEL: load_bool:
-; CHECK:       MOV.B [A0], D0
-; CHECK-NEXT:  EXTZL.B D0, D0
+; CHECK:       EXTZL.B [A0], D0
 ; CHECK-NEXT:  RET
 entry:
   %v = load i1, ptr %p, align 1
@@ -203,8 +233,7 @@ entry:
 
 define i32 @zextload8(ptr %p) {
 ; CHECK-LABEL: zextload8:
-; CHECK:       MOV.B [A0], D0
-; CHECK-NEXT:  EXTZL.B D0, D0
+; CHECK:       EXTZL.B [A0], D0
 ; CHECK-NEXT:  RET
 entry:
   %v = load i8, ptr %p, align 1
@@ -214,8 +243,7 @@ entry:
 
 define i64 @sextload16(ptr %p) {
 ; CHECK-LABEL: sextload16:
-; CHECK:       MOV.W [A0], D0
-; CHECK-NEXT:  EXTSQ.W D0, D0
+; CHECK:       EXTSQ.W [A0], D0
 ; CHECK-NEXT:  RET
 entry:
   %v = load i16, ptr %p, align 2
@@ -244,8 +272,7 @@ entry:
 
 define double @fp_const() {
 ; CHECK-LABEL: fp_const:
-; CHECK:       MOV.Q {{.*}}@ABS64, A0
-; CHECK-NEXT:  FMOV.D [A0], F0
+; CHECK:       FMOV.D [{{.*}}@ABS64], F0
 ; CHECK-NEXT:  RET
 entry:
   ret double 0x3ff3c083126e978d

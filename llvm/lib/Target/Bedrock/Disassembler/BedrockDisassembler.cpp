@@ -317,6 +317,11 @@ static bool addReg(MCInst &MI, MCRegister Reg) {
 }
 
 static void addMem(MCInst &MI, MCRegister Base, int64_t Offset) {
+  if (!Base.isValid() || Base.id() == Bedrock::NoRegister) {
+    MI.addOperand(MCOperand::createImm(Offset));
+    MI.addOperand(MCOperand::createImm(0));
+    return;
+  }
   MI.addOperand(MCOperand::createReg(Base));
   MI.addOperand(MCOperand::createImm(Offset));
 }
@@ -330,6 +335,12 @@ static bool isPostInc(const BedrockEA &EA) {
 }
 
 static void addMaybePostMem(MCInst &MI, const BedrockEA &EA) {
+  if (!hasUpdate(EA) &&
+      (!EA.Reg.isValid() || EA.Reg.id() == Bedrock::NoRegister)) {
+    MI.addOperand(MCOperand::createImm(EA.Imm));
+    MI.addOperand(MCOperand::createImm(0));
+    return;
+  }
   MI.addOperand(MCOperand::createReg(EA.Reg));
   if (!hasUpdate(EA))
     MI.addOperand(MCOperand::createImm(EA.Imm));
@@ -478,6 +489,21 @@ static bool decodeEA(const uint16_t *Words, size_t WordCount, uint64_t Value,
     return DecodeDisp(Bedrock::SP, 2, 32);
   if (Value == BEDROCK_EA_SP_DISP64)
     return DecodeDisp(Bedrock::SP, 4, 64);
+
+  auto DecodeAbs = [&](size_t WordsToRead, unsigned Bits) -> bool {
+    if (PayloadCursor + WordsToRead > WordCount)
+      return false;
+    EA.Kind = BedrockEA::Memory;
+    EA.Reg = Bedrock::NoRegister;
+    EA.Imm = signExtend(readPayload(Words, PayloadCursor, WordsToRead), Bits);
+    PayloadCursor += WordsToRead;
+    return true;
+  };
+
+  if (Value == BEDROCK_EA_ABS32)
+    return DecodeAbs(2, 32);
+  if (Value == BEDROCK_EA_ABS64)
+    return DecodeAbs(4, 64);
 
   auto DecodeIndexed = [&](bool Signed32Index) -> bool {
     if (PayloadCursor >= WordCount)
@@ -1665,6 +1691,14 @@ static unsigned shiftRIOpcode(StringRef Mnemonic, char Suffix) {
                    : Suffix == 'W' ? Bedrock::SAR16ri
                    : Suffix == 'L' ? Bedrock::SAR32ri
                                    : Bedrock::SAR64ri)
+      .Case("ROL", Suffix == 'B'   ? Bedrock::ROL8ri
+                   : Suffix == 'W' ? Bedrock::ROL16ri
+                   : Suffix == 'L' ? Bedrock::ROL32ri
+                                   : Bedrock::ROL64ri)
+      .Case("ROR", Suffix == 'B'   ? Bedrock::ROR8ri
+                   : Suffix == 'W' ? Bedrock::ROR16ri
+                   : Suffix == 'L' ? Bedrock::ROR32ri
+                                   : Bedrock::ROR64ri)
       .Default(0);
 }
 
@@ -1682,6 +1716,14 @@ static unsigned shiftRROpcode(StringRef Mnemonic, char Suffix) {
                    : Suffix == 'W' ? Bedrock::SAR16rr
                    : Suffix == 'L' ? Bedrock::SAR32rr
                                    : Bedrock::SAR64rr)
+      .Case("ROL", Suffix == 'B'   ? Bedrock::ROL8rr
+                   : Suffix == 'W' ? Bedrock::ROL16rr
+                   : Suffix == 'L' ? Bedrock::ROL32rr
+                                   : Bedrock::ROL64rr)
+      .Case("ROR", Suffix == 'B'   ? Bedrock::ROR8rr
+                   : Suffix == 'W' ? Bedrock::ROR16rr
+                   : Suffix == 'L' ? Bedrock::ROR32rr
+                                   : Bedrock::ROR64rr)
       .Default(0);
 }
 
@@ -1699,6 +1741,14 @@ static unsigned shiftMIOpcode(StringRef Mnemonic, char Suffix) {
                    : Suffix == 'W' ? Bedrock::SAR16mi
                    : Suffix == 'L' ? Bedrock::SAR32mi
                                    : Bedrock::SAR64mi)
+      .Case("ROL", Suffix == 'B'   ? Bedrock::ROL8mi
+                   : Suffix == 'W' ? Bedrock::ROL16mi
+                   : Suffix == 'L' ? Bedrock::ROL32mi
+                                   : Bedrock::ROL64mi)
+      .Case("ROR", Suffix == 'B'   ? Bedrock::ROR8mi
+                   : Suffix == 'W' ? Bedrock::ROR16mi
+                   : Suffix == 'L' ? Bedrock::ROR32mi
+                                   : Bedrock::ROR64mi)
       .Default(0);
 }
 
@@ -1716,6 +1766,14 @@ static unsigned shiftMROpcode(StringRef Mnemonic, char Suffix) {
                    : Suffix == 'W' ? Bedrock::SAR16mr
                    : Suffix == 'L' ? Bedrock::SAR32mr
                                    : Bedrock::SAR64mr)
+      .Case("ROL", Suffix == 'B'   ? Bedrock::ROL8mr
+                   : Suffix == 'W' ? Bedrock::ROL16mr
+                   : Suffix == 'L' ? Bedrock::ROL32mr
+                                   : Bedrock::ROL64mr)
+      .Case("ROR", Suffix == 'B'   ? Bedrock::ROR8mr
+                   : Suffix == 'W' ? Bedrock::ROR16mr
+                   : Suffix == 'L' ? Bedrock::ROR32mr
+                                   : Bedrock::ROR64mr)
       .Default(0);
 }
 
@@ -1812,6 +1870,22 @@ static unsigned fmovRMOpcode(char Suffix) {
 static unsigned fmovMROpcode(char Suffix) {
   return Suffix == 'S'   ? Bedrock::FMOV32mr
          : Suffix == 'D' ? Bedrock::FMOV64mr
+                         : 0;
+}
+
+static unsigned fmovIndexedRMOpcode(char Suffix, const BedrockEA &EA) {
+  if (!EA.Signed32Index || EA.Scale != 8)
+    return 0;
+  return Suffix == 'S'   ? Bedrock::FMOV32idx8lrm
+         : Suffix == 'D' ? Bedrock::FMOV64idx8lrm
+                         : 0;
+}
+
+static unsigned fmovIndexedMROpcode(char Suffix, const BedrockEA &EA) {
+  if (!EA.Signed32Index || EA.Scale != 8)
+    return 0;
+  return Suffix == 'S'   ? Bedrock::FMOV32idx8lmr
+         : Suffix == 'D' ? Bedrock::FMOV64idx8lmr
                          : 0;
 }
 
@@ -2316,11 +2390,34 @@ static DecodeStatus decodeIntBinOrCmp(const bedrock_form_desc *Form,
     std::optional<BedrockEA> LHS =
         decodeEABySource(Form, Words, WordCount, "lhs", Cursor);
     std::optional<MCRegister> RHS = regBySource(Form, Words, "rhs");
-    if (!LHS || LHS->Kind != BedrockEA::Register ||
-        !setOpcode(MI, Bedrock::CMP64rr) || !addReg(MI, RHS) ||
-        !addReg(MI, LHS->Reg))
+    if (!LHS || !RHS)
       return MCDisassembler::Fail;
-    return MCDisassembler::Success;
+    if (LHS->Kind == BedrockEA::Immediate) {
+      if (!setOpcode(MI, Bedrock::CMP64ri) || !addReg(MI, RHS))
+        return MCDisassembler::Fail;
+      MI.addOperand(MCOperand::createImm(LHS->Imm));
+      return MCDisassembler::Success;
+    }
+    if (LHS->Kind == BedrockEA::Register) {
+      if (!setOpcode(MI, Bedrock::CMP64rr) || !addReg(MI, RHS) ||
+          !addReg(MI, LHS->Reg))
+        return MCDisassembler::Fail;
+      return MCDisassembler::Success;
+    }
+    if (LHS->Kind == BedrockEA::Memory && !hasUpdate(*LHS)) {
+      if (isIndexedEA(*LHS)) {
+        unsigned Opc = flagIndexedRMOpcode("CMP", *LHS, 'Q');
+        if (!setOpcode(MI, Opc) || !addReg(MI, RHS) ||
+            !addIndexedMem(MI, *LHS))
+          return MCDisassembler::Fail;
+        return MCDisassembler::Success;
+      }
+      if (!setOpcode(MI, Bedrock::CMP64rm) || !addReg(MI, RHS))
+        return MCDisassembler::Fail;
+      addMem(MI, LHS->Reg, LHS->Imm);
+      return MCDisassembler::Success;
+    }
+    return MCDisassembler::Fail;
   }
 
   std::optional<char> Suffix = sizeSuffix(Form, Words);
@@ -2330,9 +2427,10 @@ static DecodeStatus decodeIntBinOrCmp(const bedrock_form_desc *Form,
   if (ID.ends_with("IMM_TO_D") && !findFieldBySource(Form, "imm")) {
     size_t Cursor = payloadStartWord(Form, Words);
     unsigned Bits = bitsForSizeSuffix(*Suffix);
-    size_t PayloadWords = wordsForBits(Bits);
-    if (Bits == 0 || PayloadWords == 0 || Cursor + PayloadWords > WordCount)
+    if (Bits == 0 || Cursor >= WordCount)
       return MCDisassembler::Fail;
+    size_t PayloadWords = WordCount - Cursor;
+    unsigned PayloadBits = unsigned(PayloadWords * 16);
     StringRef TargetSource =
         (Mnemonic == "CMP" || Mnemonic == "TEST") ? "rhs" : "dst";
     std::optional<MCRegister> Dst = regBySource(Form, Words, TargetSource);
@@ -2344,8 +2442,10 @@ static DecodeStatus decodeIntBinOrCmp(const bedrock_form_desc *Form,
       return MCDisassembler::Fail;
     if (Mnemonic != "CMP" && Mnemonic != "TEST" && !addReg(MI, Dst))
       return MCDisassembler::Fail;
-    MI.addOperand(MCOperand::createImm(
-        signExtend(readPayload(Words, Cursor, PayloadWords), Bits)));
+    uint64_t Payload = readPayload(Words, Cursor, PayloadWords);
+    MI.addOperand(MCOperand::createImm(PayloadBits == Bits
+                                           ? signExtend(Payload, Bits)
+                                           : int64_t(Payload)));
     return MCDisassembler::Success;
   }
 
@@ -3062,20 +3162,34 @@ static DecodeStatus decodeFloat(const bedrock_form_desc *Form,
       std::optional<BedrockEA> Src =
           decodeEABySource(Form, Words, WordCount, "src", Cursor);
       if (!Src || Src->Kind != BedrockEA::Memory ||
-          !setOpcode(MI, fmovRMOpcode(*Suffix)) ||
           !addReg(MI, regBySource(Form, Words, "dst")))
         return MCDisassembler::Fail;
-      addMem(MI, Src->Reg, Src->Imm);
+      if (isIndexedEA(*Src)) {
+        if (!setOpcode(MI, fmovIndexedRMOpcode(*Suffix, *Src)) ||
+            !addIndexedMem(MI, *Src))
+          return MCDisassembler::Fail;
+      } else {
+        if (!setOpcode(MI, fmovRMOpcode(*Suffix)))
+          return MCDisassembler::Fail;
+        addMem(MI, Src->Reg, Src->Imm);
+      }
       return MCDisassembler::Success;
     }
     if (ID.contains("F_TO_EA")) {
       std::optional<BedrockEA> Dst =
           decodeEABySource(Form, Words, WordCount, "dst", Cursor);
       if (!Dst || Dst->Kind != BedrockEA::Memory ||
-          !setOpcode(MI, fmovMROpcode(*Suffix)) ||
           !addReg(MI, regBySource(Form, Words, "src")))
         return MCDisassembler::Fail;
-      addMem(MI, Dst->Reg, Dst->Imm);
+      if (isIndexedEA(*Dst)) {
+        if (!setOpcode(MI, fmovIndexedMROpcode(*Suffix, *Dst)) ||
+            !addIndexedMem(MI, *Dst))
+          return MCDisassembler::Fail;
+      } else {
+        if (!setOpcode(MI, fmovMROpcode(*Suffix)))
+          return MCDisassembler::Fail;
+        addMem(MI, Dst->Reg, Dst->Imm);
+      }
       return MCDisassembler::Success;
     }
   }
@@ -3318,6 +3432,23 @@ static bool formFitsCandidateWords(const bedrock_form_desc *Form,
   return payloadStartWord(Form, Words) <= WordCount;
 }
 
+static bool shouldKeepDeclaredImmPayload(const bedrock_form_desc *Form,
+                                         const uint16_t *Words,
+                                         size_t CandidateWords,
+                                         size_t DeclaredWordCount) {
+  if (CandidateWords >= DeclaredWordCount)
+    return false;
+  StringRef ID(Form->id);
+  if (!ID.ends_with("IMM_TO_D") || findFieldBySource(Form, "imm"))
+    return false;
+  if (sizeSuffix(Form, Words) != 'L')
+    return false;
+  for (size_t I = CandidateWords; I != DeclaredWordCount; ++I)
+    if (Words[I] != 0)
+      return true;
+  return false;
+}
+
 static DecodeStatus decodeNativeInstruction(const bedrock_form_desc *Form,
                                             const uint16_t *Words,
                                             size_t WordCount, MCInst &Instr) {
@@ -3376,7 +3507,8 @@ static DecodeStatus decodeNativeInstruction(const bedrock_form_desc *Form,
     Status = decodeIntBinOrCmp(Form, Words, WordCount, Instr);
   else if (isExtMnemonic(Mnemonic))
     Status = decodeExt(Form, Words, WordCount, Instr);
-  else if (Mnemonic == "SHL" || Mnemonic == "SHR" || Mnemonic == "SAR")
+  else if (Mnemonic == "SHL" || Mnemonic == "SHR" || Mnemonic == "SAR" ||
+           Mnemonic == "ROL" || Mnemonic == "ROR")
     Status = decodeShift(Form, Words, WordCount, Instr);
   else if (Mnemonic.starts_with("FETCH") || Mnemonic == "CMPXCHG")
     Status = decodeAtomic(Form, Words, WordCount, Instr);
@@ -3478,6 +3610,9 @@ DecodeStatus BedrockDisassembler::getInstruction(MCInst &Instr, uint64_t &Size,
     bool NativeOK = decodeNativeInstruction(CandidateForm, DecodeWords,
                                             CandidateWords, Probe) == Success;
     if (NativeOK) {
+      if (shouldKeepDeclaredImmPayload(CandidateForm, Words, CandidateWords,
+                                       DeclaredWordCount))
+        continue;
       WordCount = CandidateWords;
       Form = CandidateForm;
       break;

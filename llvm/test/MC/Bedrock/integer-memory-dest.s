@@ -80,8 +80,8 @@ integer_memory_dest:
 
 # RAW: 3e 1f 90 7f{{[[:space:]]+}}ADD.L{{[[:space:]]+}}63, [A0]
 # RAW: 3e 1f 80 01{{[[:space:]]+}}ADC.L{{[[:space:]]+}}1, D0
-# RAW: 3f 1f 81 0f{{[[:space:]]+}}AND.L{{[[:space:]]+}}15, D1
-# RAW: 3f 1f 82 44{{[[:space:]]+}}OR.L{{[[:space:]]+}}4, D2
-# RAW: 3f 1f 83 c5{{[[:space:]]+}}XOR.L{{[[:space:]]+}}5, D3
+# RAW: 19 10 0f 00{{[[:space:]]+}}AND.L{{[[:space:]]+}}15, D1
+# RAW: ea 1e 04 00{{[[:space:]]+}}OR.L{{[[:space:]]+}}4, D2
+# RAW: fb 1e 05 00{{[[:space:]]+}}XOR.L{{[[:space:]]+}}5, D3
 # RAW: 41 26 78 56 34 12{{[[:space:]]+}}CMP.L{{[[:space:]]+}}305419896, D1
 # RAW: 43 26 78 56 34 12{{[[:space:]]+}}TEST.L{{[[:space:]]+}}305419896, D1

@@ -1,0 +1,49 @@
+# RUN: llc -mtriple=bedrock -start-before=bedrock-peephole -stop-after=bedrock-peephole -verify-machineinstrs %s -o - | FileCheck %s
+
+# CHECK-LABEL: name: stack_byte_store_scale1
+# CHECK-NOT:   LEAri
+# CHECK-NOT:   ADD64rr
+# CHECK:       MOV8idx1mr $d1, $sp, $d0, 24
+
+# CHECK-LABEL: name: live_addr_negative
+# CHECK:       $a0 = LEAri $sp, 24
+# CHECK:       $a0 = ADD64rr killed $a0, $d0
+# CHECK:       MOV8mr killed $d1, $a0, 0
+# CHECK:       $a1 = MOV64rr killed $a0
+
+--- |
+  target triple = "bedrock"
+
+  define void @stack_byte_store_scale1() {
+    ret void
+  }
+
+  define void @live_addr_negative() {
+    ret void
+  }
+...
+---
+name: stack_byte_store_scale1
+tracksRegLiveness: true
+body: |
+  bb.0:
+    liveins: $d0, $d1
+
+    $a0 = LEAri $sp, 24
+    $a0 = ADD64rr killed $a0, $d0, implicit-def dead $flags
+    MOV8mr killed $d1, killed $a0, 0 :: (store (s8))
+    RET implicit $sp
+...
+---
+name: live_addr_negative
+tracksRegLiveness: true
+body: |
+  bb.0:
+    liveins: $d0, $d1
+
+    $a0 = LEAri $sp, 24
+    $a0 = ADD64rr killed $a0, $d0, implicit-def dead $flags
+    MOV8mr killed $d1, $a0, 0 :: (store (s8))
+    $a1 = MOV64rr killed $a0
+    RET implicit $sp
+...

@@ -6,7 +6,8 @@ declare void @syscall_put(i64)
 define void @br_cg_001_syscall_pack(i64 %value) {
 ; CHECK-LABEL: br_cg_001_syscall_pack:
 ; CHECK:       AND.Q 255, D0
-; CHECK-NEXT:  OR.Q 12884901888, D0
+; CHECK-NEXT:  BSET.Q 32, D0
+; CHECK-NEXT:  BSET.Q 33, D0
 ; CHECK-NEXT:  JMP.W syscall_put@WORD_PCREL16
 entry:
   %masked = and i64 %value, 255

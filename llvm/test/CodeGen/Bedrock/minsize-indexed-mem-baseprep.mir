@@ -4,13 +4,13 @@
 # CHECK-NOT:   EXTZQ32rr
 # CHECK-NOT:   SHL64ri
 # CHECK-NOT:   $a3 = MOV64rr $a0
-# CHECK:       $d0 = MOV32idx4lrm $a0, killed $d1, 0
+# CHECK:       $d0 = MOV32idx4lrm $a0, $d1, 0
 
 # CHECK-LABEL: name: indexed_store_after_base_copy
 # CHECK-NOT:   EXTZQ32rr
 # CHECK-NOT:   SHL64ri
 # CHECK-NOT:   $a3 = MOV64rr $a0
-# CHECK:       MOV32idx4lmr $d2, $a0, killed $d1, 0
+# CHECK:       MOV32idx4lmr killed $d2, $a0, $d1, 0
 
 # CHECK-LABEL: name: indexed_load_from_areg_index
 # CHECK-NOT:   EXTZQ32rr
@@ -31,11 +31,11 @@
 # CHECK-NEXT:  MOV32idx4lmr killed $d3, $a0, killed $d4, 0
 
 # CHECK-LABEL: name: indexed_load_keeps_scaled_index
-# CHECK:       $a7 = EXTZQ32rr $d1
-# CHECK-NEXT:  $a7 = SHL64ri killed $a7, 2
+# CHECK-NOT:   EXTZQ32rr
+# CHECK-NOT:   SHL64ri
 # CHECK-NOT:   $a3 = MOV64rr $a0
 # CHECK:       $d1 = MOV32idx4lrm $a0, $d1, 0
-# CHECK:       $a7 = ADD64rr killed $a7, killed $a1
+# CHECK-NOT:   ADD64rr
 
 # CHECK-LABEL: name: indexed_load_from_live_scaled_areg
 # CHECK:       $a6 = EXTZQ32rr $d7
@@ -68,11 +68,33 @@
 # CHECK-NOT:   $a2 = ADD64rr
 # CHECK:       CMP8idx1mr $d3, $a0, $d4, 20
 
+# CHECK-LABEL: name: indexed_scale1_ext_areg_load
+# CHECK-NOT:   $a0 = EXTZQ32rr
+# CHECK-NOT:   $a0 = ADD64rr
+# CHECK:       $d1 = EXTZQ32rr killed $d6
+# CHECK-NEXT:  $d0 = MOV8idx1rm $a6, killed $d1, 0
+
+# CHECK-LABEL: name: indexed_scale1_ext_areg_store
+# CHECK-NOT:   $a0 = EXTZQ32rr
+# CHECK-NOT:   $a0 = ADD64rr
+# CHECK:       $d0 = EXTZQ32rr killed $d1
+# CHECK-NEXT:  MOV8idx1mr killed $d2, $a6, killed $d0, 0
+
+# CHECK-LABEL: name: indexed_scale1_d_index_store
+# CHECK-NOT:   $a0 = MOV64rr $d5
+# CHECK-NOT:   $a0 = ADD64rr
+# CHECK:       MOV8idx1mr $d0, $a6, $d5, 0
+
 # CHECK-LABEL: name: indexed_scale1_d_base_negative
 # CHECK-NOT:   MOV8idx1rm $d4
 # CHECK:       $a4 = MOV64rr $d4
 # CHECK-NEXT:  $a4 = ADD64rr killed $a4, $d5
 # CHECK-NEXT:  $d6 = MOV8rm killed $a4, 0
+
+# CHECK-LABEL: name: indexed_scale1_d_base_non_size
+# CHECK-NOT:   MOV8idx1rm $d4
+# CHECK:       $a4 = MOV64rr $d4
+# CHECK-NEXT:  $d6 = MOV8idx1rm $a4, $d5, 0
 
 --- |
   target triple = "bedrock"
@@ -123,7 +145,23 @@
     ret void
   }
 
+  define void @indexed_scale1_ext_areg_load() #0 {
+    ret void
+  }
+
+  define void @indexed_scale1_ext_areg_store() #0 {
+    ret void
+  }
+
+  define void @indexed_scale1_d_index_store() #0 {
+    ret void
+  }
+
   define void @indexed_scale1_d_base_negative() #0 {
+    ret void
+  }
+
+  define void @indexed_scale1_d_base_non_size() {
     ret void
   }
 
@@ -304,7 +342,59 @@ body: |
     RET implicit $sp
 ...
 ---
+name: indexed_scale1_ext_areg_load
+tracksRegLiveness: true
+body: |
+  bb.0:
+    liveins: $a6, $d6
+
+    $a0 = EXTZQ32rr killed $d6, implicit-def dead $flags
+    $a0 = ADD64rr killed $a0, $a6, implicit-def dead $flags
+    $d0 = MOV8rm killed $a0, 0
+    RET implicit $sp
+...
+---
+name: indexed_scale1_ext_areg_store
+tracksRegLiveness: true
+body: |
+  bb.0:
+    liveins: $a6, $d1, $d2
+
+    $a0 = EXTZQ32rr killed $d1, implicit-def dead $flags
+    $a0 = ADD64rr killed $a0, $a6, implicit-def dead $flags
+    MOV8mr killed $d2, killed $a0, 0
+    RET implicit $sp
+...
+---
+name: indexed_scale1_d_index_store
+tracksRegLiveness: true
+body: |
+  bb.0:
+    liveins: $a6, $d0, $d5
+
+    $a0 = MOV64rr $d5
+    $a0 = ADD64rr killed $a0, $a6, implicit-def dead $flags
+    MOV8mr killed $d0, killed $a0, 0
+    RET implicit $sp
+...
+---
 name: indexed_scale1_d_base_negative
+tracksRegLiveness: true
+body: |
+  bb.0:
+    $d4 = MOV32ri 3
+    $d5 = EXTZQ32rr killed $d4, implicit-def dead $flags
+    $d5 = SHL64ri killed $d5, 3, implicit-def dead $flags
+    $d4 = MOV64abs @FONT
+    $d4 = ADD64rr killed $d4, killed $d5, implicit-def dead $flags
+    $d5 = MOV64ri 0
+    $a4 = MOV64rr $d4
+    $a4 = ADD64rr killed $a4, $d5, implicit-def dead $flags
+    $d6 = MOV8rm killed $a4, 0
+    RET implicit $sp, implicit $d6
+...
+---
+name: indexed_scale1_d_base_non_size
 tracksRegLiveness: true
 body: |
   bb.0:

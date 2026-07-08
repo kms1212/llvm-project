@@ -1,0 +1,124 @@
+# RUN: llc -mtriple=bedrock -start-before=bedrock-peephole -stop-after=bedrock-peephole -verify-machineinstrs %s -o - | FileCheck %s
+
+# CHECK-LABEL: name: imm32_high_or_imm
+# CHECK:       $d0 = MOV64ri 60129542144
+# CHECK-NEXT:  $d0 = OR32imm $d0, @payload
+# CHECK-NOT:   EXTZQ32rr
+# CHECK-NOT:   OR64ri
+
+# CHECK-LABEL: name: imm32_high_or_reg
+# CHECK:       $d1 = MOV64ri 60129542144
+# CHECK:       $d0 = MOV64rr $d1
+# CHECK-NEXT:  $d0 = OR32imm $d0, @payload
+# CHECK-NOT:   EXTZQ32rr
+# CHECK-NOT:   OR64rr $d0, $d1
+
+# CHECK-LABEL: name: keep_flags_live_high_or
+# CHECK:       $d0 = MOV32imm @payload
+# CHECK-NEXT:  $d0 = EXTZQ32rr $d0
+# CHECK-NEXT:  $d0 = OR64ri $d0, 60129542144
+# CHECK-NEXT:  JCC %bb.1, 1
+
+# CHECK-LABEL: name: keep_same_high_reg
+# CHECK:       $d0 = MOV32imm @payload
+# CHECK-NEXT:  $d0 = EXTZQ32rr $d0
+# CHECK-NEXT:  $d0 = OR64rr $d0, $d0
+# CHECK-NOT:   OR32imm
+
+# CHECK-LABEL: name: keep_reused_high_copy
+# CHECK:       $d1 = MOV64ri 60129542144
+# CHECK-NEXT:  $d0 = MOV64rr $d1
+# CHECK-NEXT:  $d0 = OR32imm $d0, @payload
+# CHECK:       $d0 = MOV64rr $d1
+# CHECK-NEXT:  $d0 = OR32imm $d0, @payload2
+# CHECK-NOT:   $d1 = OR32imm $d1
+
+--- |
+  target triple = "bedrock"
+
+  @payload = external global i8
+  @payload2 = external global i8
+
+  define i64 @imm32_high_or_imm() #0 {
+    ret i64 0
+  }
+
+  define i64 @imm32_high_or_reg() #0 {
+    ret i64 0
+  }
+
+  define i64 @keep_flags_live_high_or() #0 {
+    ret i64 0
+  }
+
+  define i64 @keep_same_high_reg() #0 {
+    ret i64 0
+  }
+
+  define void @keep_reused_high_copy() #0 {
+    ret void
+  }
+
+  attributes #0 = { nounwind minsize optsize }
+...
+---
+name: imm32_high_or_imm
+tracksRegLiveness: true
+body: |
+  bb.0:
+    $d0 = MOV32imm @payload
+    $d0 = EXTZQ32rr $d0, implicit-def dead $flags
+    $d0 = OR64ri $d0, 60129542144, implicit-def dead $flags
+    RET implicit $d0, implicit $sp
+...
+---
+name: imm32_high_or_reg
+tracksRegLiveness: true
+body: |
+  bb.0:
+    $d1 = MOV64ri 60129542144
+    $d0 = MOV32imm @payload
+    $d0 = EXTZQ32rr $d0, implicit-def dead $flags
+    $d0 = OR64rr $d0, $d1, implicit-def dead $flags
+    RET implicit $d0, implicit $sp
+...
+---
+name: keep_flags_live_high_or
+tracksRegLiveness: true
+body: |
+  bb.0:
+    successors: %bb.1
+    $d0 = MOV32imm @payload
+    $d0 = EXTZQ32rr $d0, implicit-def dead $flags
+    $d0 = OR64ri $d0, 60129542144, implicit-def $flags
+    JCC %bb.1, 1, implicit $flags
+
+  bb.1:
+    liveins: $d0
+
+    RET implicit $d0, implicit $sp
+...
+---
+name: keep_same_high_reg
+tracksRegLiveness: true
+body: |
+  bb.0:
+    $d0 = MOV32imm @payload
+    $d0 = EXTZQ32rr $d0, implicit-def dead $flags
+    $d0 = OR64rr $d0, $d0, implicit-def dead $flags
+    RET implicit $d0, implicit $sp
+...
+---
+name: keep_reused_high_copy
+tracksRegLiveness: true
+body: |
+  bb.0:
+    $d1 = MOV64ri 60129542144
+    $d0 = MOV64rr $d1
+    $d0 = OR32imm $d0, @payload, implicit-def dead $flags
+    MOV64mr killed $d0, $sp, 0
+    $d0 = MOV64rr $d1
+    $d0 = OR32imm $d0, @payload2, implicit-def dead $flags
+    MOV64mr killed $d0, $sp, 8
+    RET implicit $sp
+...

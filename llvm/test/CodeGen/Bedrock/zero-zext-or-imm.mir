@@ -1,0 +1,133 @@
+# RUN: llc -mtriple=bedrock -start-before=bedrock-peephole -stop-after=bedrock-peephole -verify-machineinstrs %s -o - | FileCheck %s
+
+# CHECK-LABEL: name: zero_zext_or_imm
+# CHECK:       $d0 = MOV64ri 60129542144
+# CHECK-NOT:   EXTZQ32rr
+# CHECK-NOT:   OR64ri
+
+# CHECK-LABEL: name: keep_when_or_flags_live
+# CHECK:       $d0 = CLR64r
+# CHECK-NEXT:  $d0 = OR64ri $d0, 60129542144
+# CHECK-NEXT:  $d1 = MOVCC64rr $d1, $d2, 2, implicit $flags
+
+# CHECK-LABEL: name: zero_zext_or_reg
+# CHECK:       MOV64mr $d1, $sp, 0
+# CHECK-NOT:   EXTZQ32rr
+# CHECK-NOT:   OR64rr
+
+# CHECK-LABEL: name: zero32_zext_or_reg
+# CHECK:       MOV64mr $d1, $sp, 0
+# CHECK-NOT:   MOV32ri 0
+# CHECK-NOT:   EXTZQ32rr
+# CHECK-NOT:   OR64rr
+
+# CHECK-LABEL: name: zero_zext_to_clr
+# CHECK:       $d0 = CLR64r
+# CHECK-NOT:   MOV64ri 0
+# CHECK-NOT:   EXTZQ32rr
+
+# CHECK-LABEL: name: zero32_zext_to_clr_optnone
+# CHECK:       $d0 = CLR64r
+# CHECK-NOT:   MOV32ri 0
+# CHECK-NOT:   EXTZQ32rr
+
+--- |
+  target triple = "bedrock"
+
+  define void @zero_zext_or_imm() #0 {
+    ret void
+  }
+
+  define void @keep_when_or_flags_live() #0 {
+    ret void
+  }
+
+  define void @zero_zext_or_reg() #0 {
+    ret void
+  }
+
+  define void @zero32_zext_or_reg() #0 {
+    ret void
+  }
+
+  define void @zero_zext_to_clr() #0 {
+    ret void
+  }
+
+  define void @zero32_zext_to_clr_optnone() #1 {
+    ret void
+  }
+
+  attributes #0 = { nounwind minsize optsize }
+  attributes #1 = { noinline nounwind optnone }
+...
+---
+name: zero_zext_or_imm
+tracksRegLiveness: true
+body: |
+  bb.0:
+    $d0 = MOV64ri 0
+    $d0 = EXTZQ32rr $d0, implicit-def dead $flags
+    $d0 = OR64ri $d0, 60129542144, implicit-def dead $flags
+    MOV64mr killed $d0, $sp, 0
+    RET implicit $sp
+...
+---
+name: keep_when_or_flags_live
+tracksRegLiveness: true
+body: |
+  bb.0:
+    liveins: $d1, $d2
+
+    $d0 = MOV64ri 0
+    $d0 = EXTZQ32rr $d0, implicit-def dead $flags
+    $d0 = OR64ri $d0, 60129542144, implicit-def $flags
+    $d1 = MOVCC64rr $d1, $d2, 2, implicit $flags
+    RET implicit $d0, implicit $d1, implicit $sp
+...
+---
+name: zero_zext_or_reg
+tracksRegLiveness: true
+body: |
+  bb.0:
+    liveins: $d1
+
+    $d0 = MOV64ri 0
+    $d0 = EXTZQ32rr $d0, implicit-def dead $flags
+    $d0 = OR64rr $d0, killed $d1, implicit-def dead $flags
+    MOV64mr killed $d0, $sp, 0
+    RET implicit $sp
+...
+---
+name: zero32_zext_or_reg
+tracksRegLiveness: true
+body: |
+  bb.0:
+    liveins: $d1
+
+    $d0 = MOV32ri 0
+    $d0 = EXTZQ32rr $d0, implicit-def dead $flags
+    $d0 = OR64rr $d0, killed $d1, implicit-def dead $flags
+    MOV64mr killed $d0, $sp, 0
+    RET implicit $sp
+...
+---
+name: zero_zext_to_clr
+tracksRegLiveness: true
+body: |
+  bb.0:
+    $d0 = MOV64ri 0
+    $d0 = EXTZQ32rr $d0, implicit-def dead $flags
+    MOV64mr killed $d0, $sp, 0
+    RET implicit $sp
+...
+---
+name: zero32_zext_to_clr_optnone
+tracksRegLiveness: true
+body: |
+  bb.0:
+    $d0 = MOV32ri 0
+    $d0 = EXTZQ32rr $d0, implicit-def dead $flags
+    MOV64mr killed $d0, $sp, 0
+    RET implicit $sp
+...

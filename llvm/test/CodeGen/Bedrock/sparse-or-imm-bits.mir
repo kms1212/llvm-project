@@ -1,0 +1,68 @@
+# RUN: llc -mtriple=bedrock -start-before=bedrock-peephole -stop-after=bedrock-peephole -verify-machineinstrs %s -o - | FileCheck %s
+
+# CHECK-LABEL: name: sparse_or64_to_bset
+# CHECK:       BSET64ri $d0, 34
+# CHECK-NEXT:  BSET64ri $d0, 35
+# CHECK-NOT:   OR64ri
+
+# CHECK-LABEL: name: sparse_or32_to_bset
+# CHECK:       BSET32ri $d1, 31
+# CHECK-NOT:   OR32ri
+
+# CHECK-LABEL: name: keep_or_when_flags_live
+# CHECK:       $d0 = OR64ri $d0, 51539607552
+# CHECK-NEXT:  JCC %bb.1, 2, implicit $flags
+
+--- |
+  target triple = "bedrock"
+
+  define i64 @sparse_or64_to_bset(i64 %x) #0 {
+    ret i64 %x
+  }
+
+  define i32 @sparse_or32_to_bset(i32 %x) #0 {
+    ret i32 %x
+  }
+
+  define i64 @keep_or_when_flags_live(i64 %x) #0 {
+    ret i64 %x
+  }
+
+  attributes #0 = { nounwind }
+...
+---
+name: sparse_or64_to_bset
+tracksRegLiveness: true
+body: |
+  bb.0:
+    liveins: $d0
+
+    $d0 = OR64ri $d0, 51539607552, implicit-def $flags
+    RET implicit $d0, implicit $sp
+...
+---
+name: sparse_or32_to_bset
+tracksRegLiveness: true
+body: |
+  bb.0:
+    liveins: $d1
+
+    $d1 = OR32ri $d1, -2147483648, implicit-def $flags
+    RET implicit $d1, implicit $sp
+...
+---
+name: keep_or_when_flags_live
+tracksRegLiveness: true
+body: |
+  bb.0:
+    successors: %bb.1
+    liveins: $d0
+
+    $d0 = OR64ri $d0, 51539607552, implicit-def $flags
+    JCC %bb.1, 2, implicit $flags
+
+  bb.1:
+    liveins: $d0
+
+    RET implicit $d0, implicit $sp
+...

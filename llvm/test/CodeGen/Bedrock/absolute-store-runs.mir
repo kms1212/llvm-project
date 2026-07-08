@@ -1,0 +1,137 @@
+# RUN: llc -mtriple=bedrock -start-before=bedrock-peephole -stop-after=bedrock-peephole -verify-machineinstrs %s -o - | FileCheck %s
+
+# CHECK-LABEL: name: absolute_qword_store_run
+# CHECK:       $a0 = MOV64abs @object + 8
+# CHECK-NEXT:  MOV64postmr $a6, $a0
+# CHECK-NEXT:  MOV64postmr $a6, $a0
+# CHECK-NEXT:  MOV64postmr $a6, $a0
+# CHECK-NOT:   MOV64abs @object + 24
+# CHECK-NOT:   MOV64mr $a6
+
+# CHECK-LABEL: name: absolute_store_run_keeps_short_runs
+# CHECK:       $a0 = MOV64abs @object + 16
+# CHECK-NEXT:  MOV64mr $a6, killed $a0, 0
+# CHECK-NEXT:  $a0 = MOV64abs @object + 8
+# CHECK-NEXT:  MOV64mr $a6, killed $a0, 0
+
+# CHECK-LABEL: name: absolute_qword_load_run
+# CHECK:       $a1 = MOV64abs @object + 40
+# CHECK-NEXT:  $d5 = MOV64rm $a1, 0
+# CHECK-NEXT:  $d4 = MOV64rm $a1, -8
+# CHECK-NEXT:  $d3 = MOV64rm $a1, -16
+# CHECK-NOT:   MOV64abs @object + 32
+
+# CHECK-LABEL: name: absolute_load_run_keeps_short_runs
+# CHECK:       $a1 = MOV64abs @object + 16
+# CHECK-NEXT:  $d1 = MOV64rm killed $a1, 0
+# CHECK-NEXT:  $a1 = MOV64abs @object + 8
+# CHECK-NEXT:  $d2 = MOV64rm killed $a1, 0
+
+# CHECK-LABEL: name: absolute_dest_store_run_with_gaps
+# CHECK:       $d0 = MOV64rm $a0, 0
+# CHECK-NEXT:  $a1 = MOV64abs @object + 64
+# CHECK-NEXT:  MOV64mr $d0, $a1, 0
+# CHECK-NEXT:  $d0 = MOV64rm $a0, 8
+# CHECK-NEXT:  MOV64mr $d0, $a1, 8
+# CHECK-NEXT:  MOV64mm $a0, 16, $a1, 16
+# CHECK-NEXT:  $a1 = MOV64abs @other
+# CHECK-NOT:   MOV64abs @object + 72
+
+--- |
+  target triple = "bedrock"
+
+  @object = external global [4 x i64]
+  @other = external global i64
+
+  define void @absolute_qword_store_run() #0 {
+    ret void
+  }
+
+  define void @absolute_store_run_keeps_short_runs() #0 {
+    ret void
+  }
+
+  define void @absolute_qword_load_run() #0 {
+    ret void
+  }
+
+  define void @absolute_load_run_keeps_short_runs() #0 {
+    ret void
+  }
+
+  define void @absolute_dest_store_run_with_gaps() #0 {
+    ret void
+  }
+
+  attributes #0 = { nounwind }
+...
+---
+name: absolute_qword_store_run
+tracksRegLiveness: true
+body: |
+  bb.0:
+    liveins: $a6
+
+    $a0 = MOV64abs @object + 24
+    MOV64mr $a6, killed $a0, 0 :: (store (s64) into `ptr getelementptr inbounds nuw (i8, ptr @object, i64 24)`)
+    $a0 = MOV64abs @object + 16
+    MOV64mr $a6, killed $a0, 0 :: (store (s64) into `ptr getelementptr inbounds nuw (i8, ptr @object, i64 16)`)
+    $a0 = MOV64abs @object + 8
+    MOV64mr $a6, killed $a0, 0 :: (store (s64) into `ptr getelementptr inbounds nuw (i8, ptr @object, i64 8)`)
+    RET implicit $sp
+...
+---
+name: absolute_store_run_keeps_short_runs
+tracksRegLiveness: true
+body: |
+  bb.0:
+    liveins: $a6
+
+    $a0 = MOV64abs @object + 16
+    MOV64mr $a6, killed $a0, 0
+    $a0 = MOV64abs @object + 8
+    MOV64mr $a6, killed $a0, 0
+    RET implicit $sp
+...
+---
+name: absolute_qword_load_run
+tracksRegLiveness: true
+body: |
+  bb.0:
+    $a1 = MOV64abs @object + 40
+    $d5 = MOV64rm killed $a1, 0 :: (load (s64) from `ptr getelementptr inbounds nuw (i8, ptr @object, i64 40)`)
+    $a1 = MOV64abs @object + 32
+    $d4 = MOV64rm killed $a1, 0 :: (load (s64) from `ptr getelementptr inbounds nuw (i8, ptr @object, i64 32)`)
+    $a1 = MOV64abs @object + 24
+    $d3 = MOV64rm killed $a1, 0 :: (load (s64) from `ptr getelementptr inbounds nuw (i8, ptr @object, i64 24)`)
+    RET implicit $d5, implicit $d4, implicit $d3, implicit $sp
+...
+---
+name: absolute_load_run_keeps_short_runs
+tracksRegLiveness: true
+body: |
+  bb.0:
+    $a1 = MOV64abs @object + 16
+    $d1 = MOV64rm killed $a1, 0
+    $a1 = MOV64abs @object + 8
+    $d2 = MOV64rm killed $a1, 0
+    RET implicit $d1, implicit $d2, implicit $sp
+...
+---
+name: absolute_dest_store_run_with_gaps
+tracksRegLiveness: true
+body: |
+  bb.0:
+    liveins: $a0
+
+    $d0 = MOV64rm $a0, 0
+    $a1 = MOV64abs @object + 64
+    MOV64mr $d0, killed $a1, 0
+    $d0 = MOV64rm $a0, 8
+    $a1 = MOV64abs @object + 72
+    MOV64mr $d0, killed $a1, 0
+    $a1 = MOV64abs @object + 80
+    MOV64mm $a0, 16, killed $a1, 0
+    $a1 = MOV64abs @other
+    RET implicit $a1, implicit $sp
+...

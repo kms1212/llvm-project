@@ -1,0 +1,115 @@
+# RUN: llc -mtriple=bedrock -start-before=bedrock-peephole -stop-after=bedrock-peephole -verify-machineinstrs %s -o - | FileCheck %s
+
+# CHECK-LABEL: name: stack_address_reload_cache
+# CHECK:       frame-setup PUSHM 49152
+# CHECK:       $a0 = LEAri $sp, 32
+# CHECK-NEXT:  $a6 = MOV64rr $a0
+# CHECK:       $a1 = LEAri $sp, 28
+# CHECK-NEXT:  $a7 = MOV64rr $a1
+# CHECK:       $a0 = MOV64rr $a6
+# CHECK-NEXT:  $a1 = MOV64rr $a7
+# CHECK:       frame-destroy POPM 49152
+# CHECK-NOT:   MOV64rm $sp, 8
+# CHECK-NOT:   MOV64rm $sp, 16
+
+# CHECK-LABEL: name: stack_address_reload_cache_reject_non_address_load
+# CHECK-NOT:   PUSHM 49152
+# CHECK:       MOV64mr $a0, $sp, 8
+# CHECK:       $d2 = MOV64rr $a0
+
+# CHECK-LABEL: name: stack_incoming_address_reload_cache
+# CHECK:       frame-setup PUSHM 49152
+# CHECK:       $a7 = MOV64rr $a0
+# CHECK:       $a6 = MOV64rr $a1
+# CHECK:       $a0 = MOV64rr $a7
+# CHECK-NEXT:  $a1 = MOV64rr $a6
+# CHECK:       frame-destroy POPM 49152
+# CHECK-NOT:   MOV64rm $sp, 16
+# CHECK-NOT:   MOV64rm $sp, 24
+
+--- |
+  target triple = "bedrock"
+
+  declare void @callee(ptr, i64, ptr)
+
+  define void @stack_address_reload_cache() #0 {
+    ret void
+  }
+
+  define void @stack_address_reload_cache_reject_non_address_load() #0 {
+    ret void
+  }
+
+  define void @stack_incoming_address_reload_cache() #0 {
+    ret void
+  }
+
+  attributes #0 = { noinline nounwind optnone }
+...
+---
+name: stack_address_reload_cache
+tracksRegLiveness: true
+body: |
+  bb.0:
+    $sp = frame-setup SUB64ri $sp, 40, implicit-def $flags
+    $a0 = LEAri $sp, 32
+    MOV64mr $a0, $sp, 8
+    $d0 = MOV64ri 1000000000
+    $a1 = LEAri $sp, 28
+    MOV64mr $a1, $sp, 16
+    CALLpcrel16 @callee, csr_bedrock, implicit-def $sp, implicit $sp, implicit killed $a0, implicit killed $d0, implicit killed $a1
+    $a0 = MOV64rm $sp, 8
+    $a1 = MOV64rm $sp, 16
+    $d0 = MOV64ri 100000000
+    CALLpcrel16 @callee, csr_bedrock, implicit-def $sp, implicit $sp, implicit killed $a0, implicit killed $d0, implicit killed $a1
+    $a0 = MOV64rm $sp, 8
+    $a1 = MOV64rm $sp, 16
+    $d0 = MOV64ri 10000000
+    CALLpcrel16 @callee, csr_bedrock, implicit-def $sp, implicit $sp, implicit killed $a0, implicit killed $d0, implicit killed $a1
+    $a0 = MOV64rm $sp, 8
+    $a1 = MOV64rm $sp, 16
+    $d0 = MOV64ri 1000000
+    CALLpcrel16 @callee, csr_bedrock, implicit-def $sp, implicit $sp, implicit killed $a0, implicit killed $d0, implicit killed $a1
+    $a0 = MOV64rm $sp, 8
+    $a1 = MOV64rm $sp, 16
+    $d0 = MOV64ri 100000
+    CALLpcrel16 @callee, csr_bedrock, implicit-def $sp, implicit $sp, implicit killed $a0, implicit killed $d0, implicit killed $a1
+    $sp = frame-destroy ADD64ri $sp, 40, implicit-def $flags
+    RET implicit $sp
+...
+---
+name: stack_address_reload_cache_reject_non_address_load
+tracksRegLiveness: true
+body: |
+  bb.0:
+    $sp = frame-setup SUB64ri $sp, 24, implicit-def $flags
+    $a0 = LEAri $sp, 16
+    MOV64mr $a0, $sp, 8
+    $d2 = MOV64rm $sp, 8
+    $sp = frame-destroy ADD64ri $sp, 24, implicit-def $flags
+    RET implicit $sp
+...
+---
+name: stack_incoming_address_reload_cache
+tracksRegLiveness: true
+body: |
+  bb.0:
+    liveins: $a0, $a1
+    $sp = frame-setup SUB64ri $sp, 40, implicit-def $flags
+    MOV64mr killed $a0, $sp, 24
+    MOV64mr killed $a1, $sp, 16
+    $a0 = MOV64rm $sp, 24
+    $a1 = MOV64rm $sp, 16
+    $d0 = MOV64ri 100
+    CALLpcrel16 @callee, csr_bedrock, implicit-def $sp, implicit $sp, implicit killed $a0, implicit killed $d0, implicit killed $a1
+    $a0 = MOV64rm $sp, 24
+    $a1 = MOV64rm $sp, 16
+    $d0 = MOV64ri 10
+    CALLpcrel16 @callee, csr_bedrock, implicit-def $sp, implicit $sp, implicit killed $a0, implicit killed $d0, implicit killed $a1
+    $a0 = MOV64rm $sp, 24
+    $a1 = MOV64rm $sp, 16
+    $d0 = MOV64ri 1
+    CALLpcrel16 @callee, csr_bedrock, implicit-def $sp, implicit $sp, implicit killed $a0, implicit killed $d0, implicit killed $a1
+    $sp = frame-destroy ADD64ri $sp, 40, implicit-def $flags
+    RET implicit $sp
+...

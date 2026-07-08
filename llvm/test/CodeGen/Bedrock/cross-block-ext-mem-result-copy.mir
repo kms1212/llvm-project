@@ -1,0 +1,53 @@
+# RUN: llc -mtriple=bedrock -start-before=bedrock-peephole -stop-after=bedrock-peephole -verify-machineinstrs %s -o - | FileCheck %s
+
+# CHECK-LABEL: name: cross_block_ext_mem_result_copy
+# CHECK: bb.0:
+# CHECK: $d2 = EXTZL8rm killed $a7, 0
+
+# CHECK-LABEL: bb.1:
+# CHECK: liveins: {{.*}}$d2{{.*}}
+# CHECK-NOT: $a7
+# CHECK: CMP64ri $a6, 8
+
+# CHECK-LABEL: bb.2:
+# CHECK: liveins: {{.*}}$d2{{.*}}
+# CHECK-NOT: MOV64rr
+# CHECK: $d2 = SHL32rr killed $d2, killed $d0
+
+--- |
+  target triple = "bedrock"
+
+  define void @cross_block_ext_mem_result_copy() {
+    ret void
+  }
+...
+---
+name: cross_block_ext_mem_result_copy
+tracksRegLiveness: true
+body: |
+  bb.0:
+    successors: %bb.1(0x80000000)
+    liveins: $a0, $a6
+
+    $a7 = MOV64rr killed $a0
+    $a7 = EXTZL8rm killed $a7, 0, implicit-def dead $flags
+    JMP %bb.1
+
+  bb.1:
+    successors: %bb.2(0x7c000000), %bb.3(0x04000000)
+    liveins: $a6, $a7
+
+    CMP64ri $a6, 8, implicit-def $flags
+    JCC %bb.3, 2, implicit $flags
+    JMP %bb.2
+
+  bb.2:
+    liveins: $a7
+
+    $d0 = MOV8ri 1
+    $d2 = MOV64rr killed $a7
+    $d2 = SHL32rr killed $d2, killed $d0, implicit-def dead $flags
+    RET implicit $sp
+
+  bb.3:
+    RET implicit $sp

@@ -541,6 +541,251 @@ bool BedrockPeephole::foldStackSlotsToARegs(MachineFunction &MF) const {
   return Changed;
 }
 
+bool BedrockPeephole::foldStackAddressReloadsAcrossCalls(
+    MachineFunction &MF) const {
+  if (MF.empty() || MF.getFrameInfo().hasOpaqueSPAdjustment())
+    return false;
+
+  const BedrockInstrInfo &TII =
+      *static_cast<const BedrockInstrInfo *>(MF.getSubtarget().getInstrInfo());
+  const TargetRegisterInfo &TRI = *MF.getSubtarget().getRegisterInfo();
+  BitVector Reserved = TRI.getReservedRegs(MF);
+
+  struct StackAddressSlot {
+    int64_t SlotOffset = 0;
+    int64_t AddressOffset = 0;
+    MachineInstr *Lea = nullptr;
+    MachineInstr *Store = nullptr;
+    Register InitSrc;
+    SmallVector<MachineInstr *, 16> Loads;
+    Register Cache;
+  };
+
+  DenseMap<int64_t, StackAddressSlot> Slots;
+  SmallPtrSet<MachineInstr *, 16> InitStores;
+
+  MachineBasicBlock &Entry = MF.front();
+  for (auto I = Entry.begin(); I != Entry.end(); ++I) {
+    MachineInstr &Lea = *I;
+    if (Lea.isDebugInstr() || Lea.getOpcode() != Bedrock::LEAri ||
+        Lea.getNumOperands() < 3 || !Lea.getOperand(0).isReg() ||
+        !Lea.getOperand(1).isReg() || !Lea.getOperand(2).isImm() ||
+        Lea.getOperand(1).getReg() != Bedrock::SP)
+      continue;
+
+    auto StoreI = nextNonDebug(I, Entry);
+    if (StoreI == Entry.end())
+      continue;
+
+    Register Src;
+    Register Base;
+    int64_t SlotOffset = 0;
+    if (StoreI->getOpcode() != Bedrock::MOV64mr ||
+        !isMemStore(*StoreI, Src, Base, SlotOffset) || Base != Bedrock::SP ||
+        !regsOverlap(TRI, Src, Lea.getOperand(0).getReg()) ||
+        hasOrderedMemOperand(*StoreI))
+      continue;
+
+    StackAddressSlot &Slot = Slots[SlotOffset];
+    if (Slot.Store)
+      Slot.Store = nullptr;
+    else {
+      Slot.SlotOffset = SlotOffset;
+      Slot.AddressOffset = Lea.getOperand(2).getImm();
+      Slot.Lea = &Lea;
+      Slot.Store = &*StoreI;
+      Slot.InitSrc = Lea.getOperand(0).getReg();
+      InitStores.insert(&*StoreI);
+    }
+  }
+
+  for (MachineInstr &MI : Entry) {
+    if (MI.isDebugInstr() || InitStores.contains(&MI))
+      continue;
+
+    Register Src;
+    Register Base;
+    int64_t SlotOffset = 0;
+    if (MI.getOpcode() != Bedrock::MOV64mr ||
+        !isMemStore(MI, Src, Base, SlotOffset) || Base != Bedrock::SP ||
+        !isAReg(Src) || hasOrderedMemOperand(MI))
+      continue;
+
+    StackAddressSlot &Slot = Slots[SlotOffset];
+    if (Slot.Store)
+      Slot.Store = nullptr;
+    else {
+      Slot.SlotOffset = SlotOffset;
+      Slot.Store = &MI;
+      Slot.InitSrc = Src;
+      InitStores.insert(&MI);
+    }
+  }
+
+  for (auto It = Slots.begin(); It != Slots.end();) {
+    if (!It->second.Store) {
+      auto Erase = It++;
+      Slots.erase(Erase);
+    } else {
+      ++It;
+    }
+  }
+  if (Slots.empty())
+    return false;
+
+  SmallPtrSet<MachineInstr *, 16> LoadSet;
+  DenseSet<int64_t> BadSlots;
+  for (MachineBasicBlock &MBB : MF) {
+    for (MachineInstr &MI : MBB) {
+      if (MI.isDebugInstr())
+        continue;
+
+      Register Reg;
+      Register Base;
+      int64_t Offset = 0;
+      bool IsLoad = isMemLoad(MI, Reg, Base, Offset);
+      bool IsStore = isMemStore(MI, Reg, Base, Offset);
+      if (!IsLoad && !IsStore)
+        continue;
+      if (Base != Bedrock::SP || !Slots.count(Offset))
+        continue;
+
+      if (IsStore) {
+        if (!InitStores.contains(&MI))
+          BadSlots.insert(Offset);
+        continue;
+      }
+
+      if (MI.getOpcode() == Bedrock::MOV64rm && isAReg(Reg) &&
+          !hasOrderedMemOperand(MI)) {
+        Slots[Offset].Loads.push_back(&MI);
+        LoadSet.insert(&MI);
+      } else {
+        BadSlots.insert(Offset);
+      }
+    }
+  }
+
+  SmallVector<StackAddressSlot *, 4> Candidates;
+  for (auto &Entry : Slots) {
+    StackAddressSlot &Slot = Entry.second;
+    if (BadSlots.contains(Slot.SlotOffset) || Slot.Loads.size() < 3)
+      continue;
+    Candidates.push_back(&Slot);
+  }
+  if (Candidates.empty())
+    return false;
+
+  llvm::sort(Candidates, [](const StackAddressSlot *LHS,
+                            const StackAddressSlot *RHS) {
+    if (LHS->Loads.size() != RHS->Loads.size())
+      return LHS->Loads.size() > RHS->Loads.size();
+    return LHS->SlotOffset < RHS->SlotOffset;
+  });
+
+  SmallVector<Register, 2> FreeCaches;
+  for (Register Reg = Bedrock::A6; Reg <= Bedrock::A7;
+       Reg = Register(Reg + 1)) {
+    if (!Reserved.test(Reg) && !physRegUsedInFunction(MF, Reg, TRI))
+      FreeCaches.push_back(Reg);
+  }
+  if (FreeCaches.empty())
+    return false;
+
+  MachineInstr *PushM = nullptr;
+  SmallVector<MachineInstr *, 4> PopMs;
+  uint16_t PushPopMask = 0;
+  bool HasPushPop = collectConsistentPushPopMask(MF, PushM, PopMs, PushPopMask);
+
+  bool HasRet = false;
+  for (MachineBasicBlock &MBB : MF)
+    for (MachineInstr &MI : MBB)
+      if (!MI.isDebugInstr() && MI.getOpcode() == Bedrock::RET)
+        HasRet = true;
+  if (!HasPushPop && !HasRet)
+    return false;
+
+  SmallVector<StackAddressSlot *, 2> Selected;
+  uint16_t AddedMask = 0;
+  for (StackAddressSlot *Slot : Candidates) {
+    if (Selected.size() >= FreeCaches.size())
+      break;
+    Register Cache = FreeCaches[Selected.size()];
+    unsigned Bit = *getMaskBit(Cache);
+    unsigned SaveCost = (PushPopMask & (uint16_t(1) << Bit)) == 0 ? 4 : 0;
+    unsigned Savings = 4 + unsigned(Slot->Loads.size()) * 2;
+    if (Savings <= SaveCost)
+      continue;
+    Slot->Cache = Cache;
+    Selected.push_back(Slot);
+    if ((PushPopMask & (uint16_t(1) << Bit)) == 0)
+      AddedMask |= uint16_t(1) << Bit;
+  }
+  if (Selected.empty())
+    return false;
+
+  for (StackAddressSlot *Slot : Selected) {
+    MachineInstr &Store = *Slot->Store;
+    MachineBasicBlock::iterator Insert =
+        Slot->Lea ? std::next(Slot->Lea->getIterator()) : Store.getIterator();
+    DebugLoc DL = Slot->Lea ? Slot->Lea->getDebugLoc() : Store.getDebugLoc();
+    BuildMI(*Store.getParent(), Insert, DL, TII.get(Bedrock::MOV64rr),
+            Slot->Cache)
+        .addReg(Slot->InitSrc);
+    Store.eraseFromParent();
+
+    for (MachineInstr *Load : Slot->Loads) {
+      MachineBasicBlock &MBB = *Load->getParent();
+      Register Dst = Load->getOperand(0).getReg();
+      BuildMI(MBB, Load->getIterator(), Load->getDebugLoc(),
+              TII.get(Bedrock::MOV64rr), Dst)
+          .addReg(Slot->Cache);
+      Load->eraseFromParent();
+    }
+  }
+
+  for (MachineBasicBlock &MBB : MF)
+    if (&MBB != &MF.front())
+      for (StackAddressSlot *Slot : Selected)
+        if (!MBB.isLiveIn(Slot->Cache))
+          MBB.addLiveIn(Slot->Cache);
+
+  if (AddedMask != 0) {
+    if (HasPushPop) {
+      assert(PushM && "consistent PUSHM/POPM set without PUSHM");
+      extendPushPopMask(MF, *PushM, PopMs, PushPopMask, AddedMask);
+    } else {
+      MachineBasicBlock::iterator Insert = Entry.begin();
+      while (Insert != Entry.end() && Insert->isDebugInstr())
+        ++Insert;
+      DebugLoc DL = Insert != Entry.end() ? Insert->getDebugLoc() : DebugLoc();
+      MachineInstrBuilder Push =
+          buildPushForMask(Entry, Insert, DL, TII, AddedMask);
+      Push.setMIFlag(MachineInstr::FrameSetup);
+
+      for (MachineBasicBlock &MBB : MF) {
+        for (auto I = MBB.begin(); I != MBB.end(); ++I) {
+          if (I->isDebugInstr() || I->getOpcode() != Bedrock::RET)
+            continue;
+          MachineInstrBuilder Pop =
+              buildPopForMask(MBB, I, I->getDebugLoc(), TII, AddedMask);
+          Pop.setMIFlag(MachineInstr::FrameDestroy);
+        }
+      }
+    }
+
+    for (unsigned Bit = 0; Bit != 16; ++Bit) {
+      if ((AddedMask & (uint16_t(1) << Bit)) == 0)
+        continue;
+      Register Reg = getRegForMaskBit(Bit);
+      if (!MF.front().isLiveIn(Reg))
+        MF.front().addLiveIn(Reg);
+    }
+  }
+
+  return true;
+}
+
 bool BedrockPeephole::foldStackReloadFromZextCount(
     MachineFunction &MF) const {
   bool Changed = false;
@@ -713,14 +958,29 @@ bool BedrockPeephole::foldStackConstLoads(MachineFunction &MF) const {
         break;
     }
 
-    if (Invalid || Loads.empty() ||
+    if (Invalid ||
         stackRangeUsedOutsideSet(MF, Slot.Offset, Slot.Size, Ignored, TRI))
       continue;
+
+    if (Loads.empty()) {
+      bool ConstDefDead = operandIsKill(*Slot.Store, Slot.Reg, TRI) ||
+                          regDeadAfter(std::next(Slot.Store->getIterator()),
+                                       *Slot.MBB, Slot.Reg, TRI);
+      Slot.Store->eraseFromParent();
+      if (ConstDefDead)
+        Slot.ImmDef->eraseFromParent();
+      Changed = true;
+      continue;
+    }
 
     for (MachineInstr *Load : Loads) {
       MachineBasicBlock &MBB = *Load->getParent();
       Register Dst = Load->getOperand(0).getReg();
-      if (Slot.Value == 0 && isIntReg(Dst)) {
+      if (Slot.IsAbsSymbol) {
+        BuildMI(MBB, Load->getIterator(), Load->getDebugLoc(),
+                TII.get(Bedrock::MOV64abs), Dst)
+            .add(Slot.ImmDef->getOperand(1));
+      } else if (Slot.Value == 0 && isIntReg(Dst)) {
         BuildMI(MBB, Load->getIterator(), Load->getDebugLoc(),
                 TII.get(Bedrock::CLR64r), Dst);
       } else if (Slot.Size == 4) {
@@ -757,7 +1017,8 @@ bool BedrockPeephole::foldStackZeroCmp(MachineFunction &MF) const {
 
   bool Changed = false;
   for (StackConstStore &Slot : Slots) {
-    if (!Slot.Store || Slot.Value != 0 || (Slot.Size != 4 && Slot.Size != 8))
+    if (!Slot.Store || Slot.IsAbsSymbol || Slot.Value != 0 ||
+        (Slot.Size != 4 && Slot.Size != 8))
       continue;
 
     struct Replacement {
@@ -1421,7 +1682,13 @@ bool BedrockPeephole::foldRepeatedStackAddressLeasWithBorrowedBase(
   MachineInstr *PushM = nullptr;
   SmallVector<MachineInstr *, 4> PopMs;
   uint16_t PushPopMask = 0;
-  if (!collectConsistentPushPopMask(MF, PushM, PopMs, PushPopMask))
+  bool HasPushPop = collectConsistentPushPopMask(MF, PushM, PopMs, PushPopMask);
+  bool HasRet = false;
+  for (MachineBasicBlock &MBB : MF)
+    for (MachineInstr &MI : MBB)
+      if (!MI.isDebugInstr() && MI.getOpcode() == Bedrock::RET)
+        HasRet = true;
+  if (!HasPushPop && !HasRet)
     return false;
 
   const BedrockInstrInfo &TII =
@@ -1570,7 +1837,29 @@ bool BedrockPeephole::foldRepeatedStackAddressLeasWithBorrowedBase(
   }
 
   if (AddedMask != 0) {
-    extendPushPopMask(MF, *PushM, PopMs, PushPopMask, AddedMask);
+    if (HasPushPop) {
+      assert(PushM && "consistent PUSHM/POPM set without PUSHM");
+      extendPushPopMask(MF, *PushM, PopMs, PushPopMask, AddedMask);
+    } else {
+      MachineBasicBlock::iterator PushInsert = Entry.begin();
+      while (PushInsert != Entry.end() && PushInsert->isDebugInstr())
+        ++PushInsert;
+      DebugLoc DL =
+          PushInsert != Entry.end() ? PushInsert->getDebugLoc() : DebugLoc();
+      MachineInstrBuilder Push =
+          buildPushForMask(Entry, PushInsert, DL, TII, AddedMask);
+      Push.setMIFlag(MachineInstr::FrameSetup);
+
+      for (MachineBasicBlock &MBB : MF) {
+        for (auto I = MBB.begin(); I != MBB.end(); ++I) {
+          if (I->isDebugInstr() || I->getOpcode() != Bedrock::RET)
+            continue;
+          MachineInstrBuilder Pop =
+              buildPopForMask(MBB, I, I->getDebugLoc(), TII, AddedMask);
+          Pop.setMIFlag(MachineInstr::FrameDestroy);
+        }
+      }
+    }
     for (unsigned Bit = 0; Bit != 16; ++Bit) {
       if ((AddedMask & (uint16_t(1) << Bit)) == 0)
         continue;

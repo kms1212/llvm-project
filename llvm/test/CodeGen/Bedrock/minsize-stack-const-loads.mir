@@ -19,8 +19,15 @@
 # CHECK-NEXT:  JCC %bb.{{[0-9]+}}, 2
 # CHECK-NOT:   CMP64rr $d6, $d0
 
+# CHECK-LABEL: name: stack_abs_symbol_load_to_a
+# CHECK-NOT:   MOV64mr {{.*}}$sp, 24
+# CHECK-NOT:   MOV64rm $sp, 24
+# CHECK:       $a0 = MOV64abs @g
+
 --- |
   target triple = "bedrock"
+
+  @g = external global i8
 
   define void @stack_const_i64_load_to_a() #0 {
     ret void
@@ -31,6 +38,10 @@
   }
 
   define void @stack_zero_cmp_to_test() #0 {
+    ret void
+  }
+
+  define void @stack_abs_symbol_load_to_a() #0 {
     ret void
   }
 
@@ -86,4 +97,14 @@ body: |
 
   bb.2:
     RET implicit $sp
+...
+---
+name: stack_abs_symbol_load_to_a
+tracksRegLiveness: true
+body: |
+  bb.0:
+    $d0 = MOV64abs @g
+    MOV64mr killed $d0, $sp, 24
+    $a0 = MOV64rm $sp, 24
+    RET implicit $sp, implicit $a0
 ...

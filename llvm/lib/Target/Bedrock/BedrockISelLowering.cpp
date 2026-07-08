@@ -314,8 +314,8 @@ BedrockTargetLowering::BedrockTargetLowering(const TargetMachine &TM,
     setOperationAction(ISD::SETCC, VT, Expand);
     setOperationAction(ISD::SELECT, VT, Expand);
     setOperationAction(ISD::SELECT_CC, VT, Custom);
-    setOperationAction(ISD::ROTL, VT, Expand);
-    setOperationAction(ISD::ROTR, VT, Expand);
+    setOperationAction(ISD::ROTL, VT, Legal);
+    setOperationAction(ISD::ROTR, VT, Legal);
     setOperationAction(ISD::CTPOP, VT, Legal);
     setOperationAction(ISD::CTLZ, VT, Legal);
     setOperationAction(ISD::CTLZ_ZERO_UNDEF, VT, Legal);
@@ -403,13 +403,13 @@ BedrockTargetLowering::BedrockTargetLowering(const TargetMachine &TM,
       if (MemVT.bitsGE(VT))
         continue;
       setLoadExtAction(ISD::EXTLOAD, VT, MemVT, Expand);
-      setLoadExtAction(ISD::SEXTLOAD, VT, MemVT, Expand);
-      setLoadExtAction(ISD::ZEXTLOAD, VT, MemVT, Expand);
+      setLoadExtAction(ISD::SEXTLOAD, VT, MemVT, Legal);
+      setLoadExtAction(ISD::ZEXTLOAD, VT, MemVT, Legal);
     }
   }
   setLoadExtAction(ISD::EXTLOAD, MVT::i64, MVT::i32, Expand);
-  setLoadExtAction(ISD::SEXTLOAD, MVT::i64, MVT::i32, Expand);
-  setLoadExtAction(ISD::ZEXTLOAD, MVT::i64, MVT::i32, Expand);
+  setLoadExtAction(ISD::SEXTLOAD, MVT::i64, MVT::i32, Legal);
+  setLoadExtAction(ISD::ZEXTLOAD, MVT::i64, MVT::i32, Legal);
 
   setOperationAction(ISD::DYNAMIC_STACKALLOC, PtrVT, Expand);
   setOperationAction(ISD::BR_JT, MVT::Other, Expand);
@@ -442,6 +442,25 @@ bool BedrockTargetLowering::allowsMisalignedMemoryAccesses(
   if (Fast)
     *Fast = 1;
   return true;
+}
+
+bool BedrockTargetLowering::isLegalAddressingMode(const DataLayout &DL,
+                                                  const AddrMode &AM, Type *Ty,
+                                                  unsigned AS,
+                                                  Instruction *I) const {
+  if (AS != 0 || AM.BaseGV || AM.ScalableOffset)
+    return false;
+  if (!isInt<32>(AM.BaseOffs))
+    return false;
+
+  if (Ty && !Ty->isVoidTy() && !Ty->isIntegerTy() && !Ty->isFloatingPointTy() &&
+      !Ty->isPointerTy())
+    return false;
+
+  if (AM.Scale == 0)
+    return AM.HasBaseReg;
+
+  return AM.HasBaseReg && AM.Scale == 4;
 }
 
 const char *BedrockTargetLowering::getTargetNodeName(unsigned Opcode) const {

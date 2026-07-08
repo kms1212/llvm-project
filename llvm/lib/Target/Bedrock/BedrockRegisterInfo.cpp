@@ -65,8 +65,14 @@ bool BedrockRegisterInfo::eliminateFrameIndex(MachineBasicBlock::iterator II,
   const MachineFrameInfo &MFI = MF.getFrameInfo();
 
   int FrameIndex = MI.getOperand(FIOperandNum).getIndex();
+  unsigned OffsetOperandNum = FIOperandNum + 1;
+  while (OffsetOperandNum < MI.getNumOperands() &&
+         !MI.getOperand(OffsetOperandNum).isImm())
+    ++OffsetOperandNum;
+  assert(OffsetOperandNum < MI.getNumOperands() &&
+         "frame-index operand without an immediate offset");
   int64_t Offset = MFI.getObjectOffset(FrameIndex) + MFI.getStackSize() + SPAdj +
-                   MI.getOperand(FIOperandNum + 1).getImm();
+                   MI.getOperand(OffsetOperandNum).getImm();
 
   Register FrameReg = getFrameRegister(MF);
   if (FrameReg == Bedrock::A7 && !MFI.hasVarSizedObjects())
@@ -87,7 +93,7 @@ bool BedrockRegisterInfo::eliminateFrameIndex(MachineBasicBlock::iterator II,
   }
 
   MI.getOperand(FIOperandNum).ChangeToRegister(FrameReg, false);
-  MI.getOperand(FIOperandNum + 1).ChangeToImmediate(Offset);
+  MI.getOperand(OffsetOperandNum).ChangeToImmediate(Offset);
   return false;
 }
 

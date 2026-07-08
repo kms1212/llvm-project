@@ -1,0 +1,89 @@
+# RUN: llc -mtriple=bedrock -start-before=bedrock-peephole -stop-after=bedrock-peephole -verify-machineinstrs %s -o - | FileCheck %s
+
+# CHECK-LABEL: name: shifted_idx1_to_idx4l_load
+# CHECK:       EXTZQ8rr
+# CHECK-NOT:   SHL64ri
+# CHECK:       $d6 = MOV32idx4lrm $sp, killed $d0, 64
+
+# CHECK-LABEL: name: shifted_idx1_to_idx4l_store
+# CHECK:       EXTZQ8rr
+# CHECK-NOT:   SHL64ri
+# CHECK:       MOV32idx4lmr killed $d6, $sp, killed $d0, 64
+
+# CHECK-LABEL: name: shifted_midx1_to_midx4l_store
+# CHECK:       EXTZQ8rr
+# CHECK-NOT:   SHL64ri
+# CHECK:       MOV32midx4l $a7, 0, $sp, killed $d0, 64
+
+# CHECK-LABEL: name: shifted_idx1_live_negative
+# CHECK:       SHL64ri
+# CHECK:       MOV32idx1rm
+
+--- |
+  target triple = "bedrock"
+
+  define void @shifted_idx1_to_idx4l_load() {
+    ret void
+  }
+
+  define void @shifted_idx1_to_idx4l_store() {
+    ret void
+  }
+
+  define void @shifted_midx1_to_midx4l_store() {
+    ret void
+  }
+
+  define void @shifted_idx1_live_negative() {
+    ret void
+  }
+...
+---
+name: shifted_idx1_to_idx4l_load
+tracksRegLiveness: true
+body: |
+  bb.0:
+    liveins: $d2
+
+    $d0 = EXTZQ8rr killed $d2, implicit-def dead $flags
+    $d0 = SHL64ri killed $d0, 2, implicit-def dead $flags
+    $d6 = MOV32idx1rm $sp, killed $d0, 64
+    RET implicit $sp
+...
+---
+name: shifted_idx1_to_idx4l_store
+tracksRegLiveness: true
+body: |
+  bb.0:
+    liveins: $d2, $d6
+
+    $d0 = EXTZQ8rr killed $d2, implicit-def dead $flags
+    $d0 = SHL64ri killed $d0, 2, implicit-def dead $flags
+    MOV32idx1mr killed $d6, $sp, killed $d0, 64
+    RET implicit $sp
+...
+---
+name: shifted_midx1_to_midx4l_store
+tracksRegLiveness: true
+body: |
+  bb.0:
+    liveins: $a7, $d2
+
+    $d0 = EXTZQ8rr killed $d2, implicit-def dead $flags
+    $d0 = SHL64ri killed $d0, 2, implicit-def dead $flags
+    MOV32midx1 $a7, 0, $sp, killed $d0, 64
+    RET implicit $sp
+...
+---
+name: shifted_idx1_live_negative
+tracksRegLiveness: true
+body: |
+  bb.0:
+    liveins: $d2
+
+    $d0 = EXTZQ8rr killed $d2, implicit-def dead $flags
+    $d0 = SHL64ri $d0, 2, implicit-def dead $flags
+    $d6 = MOV32idx1rm $sp, $d0, 64
+    $d1 = MOV64rr killed $d0
+    RET implicit $sp
+...

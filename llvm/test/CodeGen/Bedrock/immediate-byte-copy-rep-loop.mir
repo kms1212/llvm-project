@@ -1,0 +1,59 @@
+# RUN: llc -mtriple=bedrock -start-before=bedrock-peephole -stop-after=bedrock-peephole -verify-machineinstrs %s -o - | FileCheck %s
+
+# CHECK-LABEL: name: immediate_byte_copy_rep_loop
+# CHECK:         [[DST:\$a[0-7]]] = LEAri $sp, 12
+# CHECK-NEXT:    [[SRC:\$a[0-7]]] = MOV64rr $d1
+# CHECK-NEXT:    $d0 = MOV64ri 12
+# CHECK-NEXT:    $d0 = REPMOV8mmpostboth64 $d0, [[SRC]], 4, [[DST]], 4
+# CHECK-NOT:     CMP64ri
+# CHECK-NOT:     MOV8mm
+
+--- |
+  target triple = "bedrock"
+
+  @src = external constant [12 x i8]
+
+  define void @immediate_byte_copy_rep_loop() #0 {
+    ret void
+  }
+
+  attributes #0 = { minsize optsize }
+...
+---
+name: immediate_byte_copy_rep_loop
+tracksRegLiveness: true
+body: |
+  bb.0:
+    successors: %bb.1
+
+    $d0 = CLR64r
+    $d1 = MOV64abs @src
+
+  bb.1:
+    successors: %bb.2, %bb.3
+    liveins: $d0, $d1
+
+    CMP64ri $d0, 12, implicit-def $flags
+    JCC %bb.2, 2, implicit $flags
+
+  bb.3:
+    successors: %bb.1
+    liveins: $d0, $d1
+
+    $a0 = LEAri $sp, 12
+    $a0 = ADD64rr killed $a0, $d0, implicit-def dead $flags
+    $a1 = MOV64rr $d0
+    $a1 = ADD64rr killed $a1, $d1, implicit-def dead $flags
+    MOV8mm $a1, 0, $a0, 0 :: (load (s8) from @src), (store (s8))
+    $d0 = INC64r $d0, implicit-def $flags
+    JMP %bb.1
+
+  bb.2:
+    $d0 = MOV64ri 1
+    $d1 = CLR64r
+    $d2 = MOV64rr $sp
+    $d2 = ADD64ri $d2, 12, implicit-def $flags
+    $d2 = INC64r $d2, implicit-def $flags
+    $d3 = MOV64ri -1
+    RET implicit $sp
+...

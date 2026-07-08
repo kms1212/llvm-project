@@ -1,0 +1,104 @@
+# RUN: llc -mtriple=bedrock -start-before=bedrock-peephole -stop-after=bedrock-peephole -verify-machineinstrs %s -o - | FileCheck %s
+
+# CHECK-LABEL: name: and_zext
+# CHECK:       $d0 = EXTZQ8rr $d0
+# CHECK-NOT:   AND64ri
+# CHECK-NOT:   EXTZQ32rr
+
+# CHECK-LABEL: name: keep_when_and_flags_live
+# CHECK:       $d0 = AND32ri $d0, 255
+# CHECK-NEXT:  $d1 = MOVCC32rr $d1, $d2, 2, implicit $flags
+# CHECK:       $d0 = EXTZQ32rr $d0
+
+# CHECK-LABEL: name: keep_negative_mask
+# CHECK:       $d0 = AND32ri $d0, -1
+# CHECK-NEXT:  $d0 = EXTZQ32rr $d0
+
+# CHECK-LABEL: name: direct_word_mask
+# CHECK:       $d0 = EXTZQ16rr $d0
+# CHECK-NOT:   AND64ri
+
+# CHECK-LABEL: name: keep_direct_byte_mask_when_flags_live
+# CHECK:       $d0 = AND64ri $d0, 255
+# CHECK-NEXT:  $d1 = MOVCC32rr $d1, $d2, 2, implicit $flags
+
+--- |
+  target triple = "bedrock"
+
+  define i64 @and_zext(i32 %x) #0 {
+    ret i64 0
+  }
+
+  define i64 @keep_when_and_flags_live(i32 %x) #0 {
+    ret i64 0
+  }
+
+  define i64 @keep_negative_mask(i32 %x) #0 {
+    ret i64 0
+  }
+
+  define i64 @direct_word_mask(i64 %x) #0 {
+    ret i64 0
+  }
+
+  define i64 @keep_direct_byte_mask_when_flags_live(i64 %x) #0 {
+    ret i64 0
+  }
+
+  attributes #0 = { nounwind minsize optsize }
+...
+---
+name: and_zext
+tracksRegLiveness: true
+body: |
+  bb.0:
+    liveins: $d0
+
+    $d0 = AND32ri $d0, 255, implicit-def dead $flags
+    $d0 = EXTZQ32rr $d0, implicit-def dead $flags
+    RET implicit $d0, implicit $sp
+...
+---
+name: keep_when_and_flags_live
+tracksRegLiveness: true
+body: |
+  bb.0:
+    liveins: $d0, $d1, $d2
+
+    $d0 = AND32ri $d0, 255, implicit-def $flags
+    $d1 = MOVCC32rr $d1, $d2, 2, implicit $flags
+    $d0 = EXTZQ32rr $d0, implicit-def dead $flags
+    RET implicit $d0, implicit $d1, implicit $sp
+...
+---
+name: keep_negative_mask
+tracksRegLiveness: true
+body: |
+  bb.0:
+    liveins: $d0
+
+    $d0 = AND32ri $d0, -1, implicit-def dead $flags
+    $d0 = EXTZQ32rr $d0, implicit-def dead $flags
+    RET implicit $d0, implicit $sp
+...
+---
+name: direct_word_mask
+tracksRegLiveness: true
+body: |
+  bb.0:
+    liveins: $d0
+
+    $d0 = AND64ri $d0, 65535, implicit-def dead $flags
+    RET implicit $d0, implicit $sp
+...
+---
+name: keep_direct_byte_mask_when_flags_live
+tracksRegLiveness: true
+body: |
+  bb.0:
+    liveins: $d0, $d1, $d2
+
+    $d0 = AND64ri $d0, 255, implicit-def $flags
+    $d1 = MOVCC32rr $d1, $d2, 2, implicit $flags
+    RET implicit $d0, implicit $d1, implicit $sp
+...

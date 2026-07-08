@@ -87,6 +87,9 @@ def memory_order : Operand<i8> {
 def abssymbol : Operand<iPTR> {
   let PrintMethod = "printAbs64Operand";
 }
+def imm32symbol : Operand<i32> {
+  let PrintMethod = "printImm32Operand";
+}
 def shortimm32 : Operand<i32> {
   let PrintMethod = "printShortImmOperand";
 }
@@ -138,6 +141,10 @@ def memri : Operand<iPTR> {
   let PrintMethod = "printMemOperand";
 }
 
+def absmem64 : Operand<iPTR> {
+  let PrintMethod = "printAbs64MemOperand";
+}
+
 def mempost : Operand<iPTR> {
   let MIOperandInfo = (ops PTR64:$base);
   let PrintMethod = "printPostIncMemOperand";
@@ -179,6 +186,8 @@ def idx8laddr : Operand<iPTR> {
 }
 
 def addr : ComplexPattern<iPTR, 2, "selectAddr", [frameindex], []>;
+def idx4 : ComplexPattern<iPTR, 3, "selectIdx4Addr", [frameindex], []>;
+def idx8 : ComplexPattern<iPTR, 3, "selectIdx8Addr", [frameindex], []>;
 
 class BedrockInst<dag Outs, dag Ins, string Asm, list<dag> Pat = []>
     : Instruction {
@@ -225,6 +234,7 @@ multiclass MovRR<string Suffix, RegisterClass RC> {
 }
 
 multiclass MovRI<string Suffix, RegisterClass RC, Operand ImmOp> {
+  let isReMaterializable = 1, isAsCheapAsAMove = 1, isMoveImm = 1 in
   def ri : BedrockInst<(outs RC:$dst), (ins ImmOp:$imm),
                        "MOV." # Suffix # "\t$imm, $dst",
                        [(set RC:$dst, imm:$imm)]>;
@@ -269,6 +279,30 @@ multiclass MovMM<string Suffix> {
   def mmpostboth : BedrockInst<(outs), (ins mempost:$src, mempost:$dst),
                                "MOV." # Suffix # "\t$src, $dst">;
   }
+}
+
+multiclass MovAbsRM<string Suffix, RegisterClass RC> {
+  let mayLoad = 1 in
+  def absrm : BedrockInst<(outs RC:$dst), (ins absmem64:$addr),
+                          "MOV." # Suffix # "\t$addr, $dst">;
+}
+
+multiclass MovAbsMR<string Suffix, RegisterClass RC> {
+  let mayStore = 1 in
+  def absmr : BedrockInst<(outs), (ins RC:$src, absmem64:$addr),
+                          "MOV." # Suffix # "\t$src, $addr">;
+}
+
+multiclass MovAbsMI<string Suffix, Operand ImmOp> {
+  let mayStore = 1 in
+  def absmi : BedrockInst<(outs), (ins ImmOp:$src, absmem64:$addr),
+                          "MOV." # Suffix # "\t$src, $addr">;
+}
+
+multiclass MovAbsMM<string Suffix> {
+  let mayLoad = 1, mayStore = 1 in
+  def mabs : BedrockInst<(outs), (ins memri:$src, absmem64:$dst),
+                         "MOV." # Suffix # "\t$src, $dst">;
 }
 
 class MovCCRR<string Suffix, RegisterClass RC>
@@ -368,8 +402,14 @@ defm MOV16 : MovRI<"W", GPR16, i16imm>;
 defm MOV32 : MovRI<"L", GPR32, shortimm32>;
 defm MOV64 : MovRI<"Q", GPR64, shortimm64>;
 
+def MOV32imm : BedrockInst<(outs D32:$dst), (ins imm32symbol:$imm),
+                           "MOV.L\t$imm, $dst">;
+let isReMaterializable = 1 in
 def MOV64abs : BedrockInst<(outs GPR64:$dst), (ins abssymbol:$imm),
                            "MOV.Q\t$imm, $dst">;
+let mayStore = 1 in
+def MOV64symmr : BedrockInst<(outs), (ins abssymbol:$src, memri:$addr),
+                             "MOV.Q\t$src, $addr">;
 
 defm MOV8  : MovRM<"B", GPR8, load>;
 defm MOV16 : MovRM<"W", GPR16, load>;
@@ -400,16 +440,34 @@ defm MOV8  : MovMM<"B">;
 defm MOV16 : MovMM<"W">;
 defm MOV32 : MovMM<"L">;
 defm MOV64 : MovMM<"Q">;
+defm MOV8  : MovAbsRM<"B", GPR8>;
+defm MOV16 : MovAbsRM<"W", GPR16>;
+defm MOV32 : MovAbsRM<"L", GPR32>;
+defm MOV64 : MovAbsRM<"Q", GPR64>;
+defm MOV8  : MovAbsMR<"B", GPR8>;
+defm MOV16 : MovAbsMR<"W", GPR16>;
+defm MOV32 : MovAbsMR<"L", GPR32>;
+defm MOV64 : MovAbsMR<"Q", GPR64>;
+defm MOV8  : MovAbsMI<"B", i8imm>;
+defm MOV16 : MovAbsMI<"W", i16imm>;
+defm MOV32 : MovAbsMI<"L", shortimm32>;
+defm MOV64 : MovAbsMI<"Q", shortimm64>;
+defm MOV8  : MovAbsMM<"B">;
+defm MOV16 : MovAbsMM<"W">;
+defm MOV32 : MovAbsMM<"L">;
+defm MOV64 : MovAbsMM<"Q">;
 
-class MovIdxRM<string Suffix, RegisterClass RC, Operand AddrOp>
+class MovIdxRM<string Suffix, RegisterClass RC, Operand AddrOp,
+               list<dag> Pat = []>
     : BedrockInst<(outs RC:$dst), (ins AddrOp:$addr),
-                  "MOV." # Suffix # "\t$addr, $dst"> {
+                  "MOV." # Suffix # "\t$addr, $dst", Pat> {
   let mayLoad = 1;
 }
 
-class MovIdxMR<string Suffix, RegisterClass RC, Operand AddrOp>
+class MovIdxMR<string Suffix, RegisterClass RC, Operand AddrOp,
+               list<dag> Pat = []>
     : BedrockInst<(outs), (ins RC:$src, AddrOp:$addr),
-                  "MOV." # Suffix # "\t$src, $addr"> {
+                  "MOV." # Suffix # "\t$src, $addr", Pat> {
   let mayStore = 1;
 }
 
@@ -438,26 +496,34 @@ def REPMOV32postmr : RepMovPostMR<"REP", "L", GPR32>;
 
 def MOV8idx1rm   : MovIdxRM<"B", GPR8, idx1addr>;
 def MOV8idx1mr   : MovIdxMR<"B", GPR8, idx1addr>;
-def MOV8idx4rm   : MovIdxRM<"B", GPR8, idx4addr>;
-def MOV8idx4mr   : MovIdxMR<"B", GPR8, idx4addr>;
+def MOV8idx4rm   : MovIdxRM<"B", GPR8, idx4addr,
+                             [(set GPR8:$dst, (load idx4:$addr))]>;
+def MOV8idx4mr   : MovIdxMR<"B", GPR8, idx4addr,
+                             [(store GPR8:$src, idx4:$addr)]>;
 def MOV8idx4lrm  : MovIdxRM<"B", GPR8, idx4laddr>;
 def MOV8idx4lmr  : MovIdxMR<"B", GPR8, idx4laddr>;
 def MOV16idx1rm  : MovIdxRM<"W", GPR16, idx1addr>;
 def MOV16idx1mr  : MovIdxMR<"W", GPR16, idx1addr>;
-def MOV16idx4rm  : MovIdxRM<"W", GPR16, idx4addr>;
-def MOV16idx4mr  : MovIdxMR<"W", GPR16, idx4addr>;
+def MOV16idx4rm  : MovIdxRM<"W", GPR16, idx4addr,
+                             [(set GPR16:$dst, (load idx4:$addr))]>;
+def MOV16idx4mr  : MovIdxMR<"W", GPR16, idx4addr,
+                             [(store GPR16:$src, idx4:$addr)]>;
 def MOV16idx4lrm : MovIdxRM<"W", GPR16, idx4laddr>;
 def MOV16idx4lmr : MovIdxMR<"W", GPR16, idx4laddr>;
 def MOV32idx1rm  : MovIdxRM<"L", GPR32, idx1addr>;
 def MOV32idx1mr  : MovIdxMR<"L", GPR32, idx1addr>;
-def MOV32idx4rm  : MovIdxRM<"L", GPR32, idx4addr>;
-def MOV32idx4mr  : MovIdxMR<"L", GPR32, idx4addr>;
+def MOV32idx4rm  : MovIdxRM<"L", GPR32, idx4addr,
+                             [(set GPR32:$dst, (load idx4:$addr))]>;
+def MOV32idx4mr  : MovIdxMR<"L", GPR32, idx4addr,
+                             [(store GPR32:$src, idx4:$addr)]>;
 def MOV32idx4lrm : MovIdxRM<"L", GPR32, idx4laddr>;
 def MOV32idx4lmr : MovIdxMR<"L", GPR32, idx4laddr>;
 def MOV64idx1rm  : MovIdxRM<"Q", GPR64, idx1addr>;
 def MOV64idx1mr  : MovIdxMR<"Q", GPR64, idx1addr>;
-def MOV64idx4rm  : MovIdxRM<"Q", GPR64, idx4addr>;
-def MOV64idx4mr  : MovIdxMR<"Q", GPR64, idx4addr>;
+def MOV64idx4rm  : MovIdxRM<"Q", GPR64, idx4addr,
+                             [(set GPR64:$dst, (load idx4:$addr))]>;
+def MOV64idx4mr  : MovIdxMR<"Q", GPR64, idx4addr,
+                             [(store GPR64:$src, idx4:$addr)]>;
 def MOV64idx4lrm : MovIdxRM<"Q", GPR64, idx4laddr>;
 def MOV64idx4lmr : MovIdxMR<"Q", GPR64, idx4laddr>;
 let mayLoad = 1, mayStore = 1 in {
@@ -502,6 +568,14 @@ class IncDecM<string Mnemonic, string Suffix>
   let Defs = [FLAGS];
 }
 
+class IncDecAbsM<string Mnemonic, string Suffix>
+    : BedrockInst<(outs), (ins absmem64:$dst),
+                  Mnemonic # "." # Suffix # "\t$dst"> {
+  let mayLoad = 1;
+  let mayStore = 1;
+  let Defs = [FLAGS];
+}
+
 class IncDecIdxM<string Mnemonic, string Suffix, Operand AddrOp>
     : BedrockInst<(outs), (ins AddrOp:$dst),
                   Mnemonic # "." # Suffix # "\t$dst"> {
@@ -518,6 +592,10 @@ def INC8m  : IncDecM<"INC", "B">;
 def INC16m : IncDecM<"INC", "W">;
 def INC32m : IncDecM<"INC", "L">;
 def INC64m : IncDecM<"INC", "Q">;
+def INC8absm  : IncDecAbsM<"INC", "B">;
+def INC16absm : IncDecAbsM<"INC", "W">;
+def INC32absm : IncDecAbsM<"INC", "L">;
+def INC64absm : IncDecAbsM<"INC", "Q">;
 def INC32idx1m  : IncDecIdxM<"INC", "L", idx1addr>;
 def INC32idx4m  : IncDecIdxM<"INC", "L", idx4addr>;
 def INC32idx4lm : IncDecIdxM<"INC", "L", idx4laddr>;
@@ -530,6 +608,10 @@ def DEC8m  : IncDecM<"DEC", "B">;
 def DEC16m : IncDecM<"DEC", "W">;
 def DEC32m : IncDecM<"DEC", "L">;
 def DEC64m : IncDecM<"DEC", "Q">;
+def DEC8absm  : IncDecAbsM<"DEC", "B">;
+def DEC16absm : IncDecAbsM<"DEC", "W">;
+def DEC32absm : IncDecAbsM<"DEC", "L">;
+def DEC64absm : IncDecAbsM<"DEC", "Q">;
 def DEC32idx1m  : IncDecIdxM<"DEC", "L", idx1addr>;
 def DEC32idx4m  : IncDecIdxM<"DEC", "L", idx4addr>;
 def DEC32idx4lm : IncDecIdxM<"DEC", "L", idx4laddr>;
@@ -604,6 +686,34 @@ multiclass FMovMR<string Suffix, RegisterClass RC> {
                        [(store RC:$src, addr:$addr)]>;
 }
 
+class FMovIdxRM<string Suffix, RegisterClass RC, Operand AddrOp,
+                PatFrag LoadOp, ComplexPattern AddrPat>
+    : BedrockInst<(outs RC:$dst), (ins AddrOp:$addr),
+                  "FMOV." # Suffix # "\t$addr, $dst",
+                  [(set RC:$dst, (LoadOp AddrPat:$addr))]> {
+  let mayLoad = 1;
+}
+
+class FMovIdxMR<string Suffix, RegisterClass RC, Operand AddrOp,
+                ComplexPattern AddrPat>
+    : BedrockInst<(outs), (ins RC:$src, AddrOp:$addr),
+                  "FMOV." # Suffix # "\t$src, $addr",
+                  [(store RC:$src, AddrPat:$addr)]> {
+  let mayStore = 1;
+}
+
+multiclass FMovAbsRM<string Suffix, RegisterClass RC> {
+  let mayLoad = 1 in
+  def absrm : BedrockInst<(outs RC:$dst), (ins absmem64:$addr),
+                          "FMOV." # Suffix # "\t$addr, $dst">;
+}
+
+multiclass FMovAbsMR<string Suffix, RegisterClass RC> {
+  let mayStore = 1 in
+  def absmr : BedrockInst<(outs), (ins RC:$src, absmem64:$addr),
+                          "FMOV." # Suffix # "\t$src, $addr">;
+}
+
 class FMovCCRR<string Suffix, RegisterClass RC>
     : BedrockInst<(outs RC:$dst),
                   (ins RC:$dst_in, RC:$src, bedrockcc:$cond),
@@ -637,6 +747,17 @@ defm FMOV64 : FMovRM<"D", F64, load>;
 
 defm FMOV32 : FMovMR<"S", F32>;
 defm FMOV64 : FMovMR<"D", F64>;
+
+def FMOV32idx8lrm : FMovIdxRM<"S", F32, idx8laddr, load, idx8>;
+def FMOV64idx8lrm : FMovIdxRM<"D", F64, idx8laddr, load, idx8>;
+def FMOV32idx8lmr : FMovIdxMR<"S", F32, idx8laddr, idx8>;
+def FMOV64idx8lmr : FMovIdxMR<"D", F64, idx8laddr, idx8>;
+
+defm FMOV32 : FMovAbsRM<"S", F32>;
+defm FMOV64 : FMovAbsRM<"D", F64>;
+
+defm FMOV32 : FMovAbsMR<"S", F32>;
+defm FMOV64 : FMovAbsMR<"D", F64>;
 
 def FMOVCC32rr : FMovCCRR<"S", F32>;
 def FMOVCC64rr : FMovCCRR<"D", F64>;
@@ -917,6 +1038,26 @@ def SAR16rr : ShiftRR<"SAR", "W", GPR16, sra>;
 def SAR32rr : ShiftRR<"SAR", "L", GPR32, sra>;
 def SAR64rr : ShiftRR<"SAR", "Q", GPR64, sra>;
 
+def ROL8ri  : ShiftRI<"ROL", "B", GPR8, u6sel8, rotl>;
+def ROL16ri : ShiftRI<"ROL", "W", GPR16, u6sel8, rotl>;
+def ROL32ri : ShiftRI<"ROL", "L", GPR32, u6sel8, rotl>;
+def ROL64ri : ShiftRI<"ROL", "Q", GPR64, u6sel8, rotl>;
+
+def ROR8ri  : ShiftRI<"ROR", "B", GPR8, u6sel8, rotr>;
+def ROR16ri : ShiftRI<"ROR", "W", GPR16, u6sel8, rotr>;
+def ROR32ri : ShiftRI<"ROR", "L", GPR32, u6sel8, rotr>;
+def ROR64ri : ShiftRI<"ROR", "Q", GPR64, u6sel8, rotr>;
+
+def ROL8rr  : ShiftRR<"ROL", "B", GPR8, rotl>;
+def ROL16rr : ShiftRR<"ROL", "W", GPR16, rotl>;
+def ROL32rr : ShiftRR<"ROL", "L", GPR32, rotl>;
+def ROL64rr : ShiftRR<"ROL", "Q", GPR64, rotl>;
+
+def ROR8rr  : ShiftRR<"ROR", "B", GPR8, rotr>;
+def ROR16rr : ShiftRR<"ROR", "W", GPR16, rotr>;
+def ROR32rr : ShiftRR<"ROR", "L", GPR32, rotr>;
+def ROR64rr : ShiftRR<"ROR", "Q", GPR64, rotr>;
+
 def SHL8mi  : ShiftMI<"SHL", "B", u6sel8>;
 def SHL16mi : ShiftMI<"SHL", "W", u6sel8>;
 def SHL32mi : ShiftMI<"SHL", "L", u6sel8>;
@@ -929,6 +1070,14 @@ def SAR8mi  : ShiftMI<"SAR", "B", u6sel8>;
 def SAR16mi : ShiftMI<"SAR", "W", u6sel8>;
 def SAR32mi : ShiftMI<"SAR", "L", u6sel8>;
 def SAR64mi : ShiftMI<"SAR", "Q", u6sel8>;
+def ROL8mi  : ShiftMI<"ROL", "B", u6sel8>;
+def ROL16mi : ShiftMI<"ROL", "W", u6sel8>;
+def ROL32mi : ShiftMI<"ROL", "L", u6sel8>;
+def ROL64mi : ShiftMI<"ROL", "Q", u6sel8>;
+def ROR8mi  : ShiftMI<"ROR", "B", u6sel8>;
+def ROR16mi : ShiftMI<"ROR", "W", u6sel8>;
+def ROR32mi : ShiftMI<"ROR", "L", u6sel8>;
+def ROR64mi : ShiftMI<"ROR", "Q", u6sel8>;
 
 def SHL8mr  : ShiftMR<"SHL", "B">;
 def SHL16mr : ShiftMR<"SHL", "W">;
@@ -942,6 +1091,14 @@ def SAR8mr  : ShiftMR<"SAR", "B">;
 def SAR16mr : ShiftMR<"SAR", "W">;
 def SAR32mr : ShiftMR<"SAR", "L">;
 def SAR64mr : ShiftMR<"SAR", "Q">;
+def ROL8mr  : ShiftMR<"ROL", "B">;
+def ROL16mr : ShiftMR<"ROL", "W">;
+def ROL32mr : ShiftMR<"ROL", "L">;
+def ROL64mr : ShiftMR<"ROL", "Q">;
+def ROR8mr  : ShiftMR<"ROR", "B">;
+def ROR16mr : ShiftMR<"ROR", "W">;
+def ROR32mr : ShiftMR<"ROR", "L">;
+def ROR64mr : ShiftMR<"ROR", "Q">;
 
 class ExtRR<string Mnemonic, string Suffix, RegisterClass DstRC,
             RegisterClass SrcRC, SDPatternOperator OpNode>
@@ -951,9 +1108,10 @@ class ExtRR<string Mnemonic, string Suffix, RegisterClass DstRC,
   let Defs = [FLAGS];
 }
 
-class ExtRM<string Mnemonic, string Suffix, RegisterClass DstRC>
+class ExtRM<string Mnemonic, string Suffix, RegisterClass DstRC,
+            list<dag> Pat = []>
     : BedrockInst<(outs DstRC:$dst), (ins memri:$addr),
-                  Mnemonic # "." # Suffix # "\t$addr, $dst"> {
+                  Mnemonic # "." # Suffix # "\t$addr, $dst", Pat> {
   let mayLoad = 1;
   let Defs = [FLAGS];
 }
@@ -965,46 +1123,92 @@ class ExtMR<string Mnemonic, string Suffix, RegisterClass SrcRC>
   let Defs = [FLAGS];
 }
 
+class ExtAbsRM<string Mnemonic, string Suffix, RegisterClass DstRC>
+    : BedrockInst<(outs DstRC:$dst), (ins absmem64:$addr),
+                  Mnemonic # "." # Suffix # "\t$addr, $dst"> {
+  let mayLoad = 1;
+  let Defs = [FLAGS];
+}
+
+class ExtAbsMR<string Mnemonic, string Suffix, RegisterClass SrcRC>
+    : BedrockInst<(outs), (ins SrcRC:$src, absmem64:$addr),
+                  Mnemonic # "." # Suffix # "\t$src, $addr"> {
+  let mayStore = 1;
+  let Defs = [FLAGS];
+}
+
 def EXTZQ8rr  : ExtRR<"EXTZQ", "B", GPR64, GPR8, zext>;
 def EXTZQ16rr : ExtRR<"EXTZQ", "W", GPR64, GPR16, zext>;
 def EXTZQ32rr : ExtRR<"EXTZQ", "L", GPR64, GPR32, zext>;
-def EXTZQ8rm  : ExtRM<"EXTZQ", "B", GPR64>;
-def EXTZQ16rm : ExtRM<"EXTZQ", "W", GPR64>;
-def EXTZQ32rm : ExtRM<"EXTZQ", "L", GPR64>;
+def EXTZQ8rm  : ExtRM<"EXTZQ", "B", GPR64,
+                       [(set GPR64:$dst, (i64 (zextloadi8 addr:$addr)))]>;
+def EXTZQ16rm : ExtRM<"EXTZQ", "W", GPR64,
+                       [(set GPR64:$dst, (i64 (zextloadi16 addr:$addr)))]>;
+def EXTZQ32rm : ExtRM<"EXTZQ", "L", GPR64,
+                       [(set GPR64:$dst, (i64 (zextloadi32 addr:$addr)))]>;
 def EXTZQ8mr  : ExtMR<"EXTZQ", "B", GPR8>;
 def EXTZQ16mr : ExtMR<"EXTZQ", "W", GPR16>;
 def EXTZQ32mr : ExtMR<"EXTZQ", "L", GPR32>;
+def EXTZQ8absrm  : ExtAbsRM<"EXTZQ", "B", GPR64>;
+def EXTZQ16absrm : ExtAbsRM<"EXTZQ", "W", GPR64>;
+def EXTZQ32absrm : ExtAbsRM<"EXTZQ", "L", GPR64>;
+def EXTZQ8absmr  : ExtAbsMR<"EXTZQ", "B", GPR8>;
+def EXTZQ16absmr : ExtAbsMR<"EXTZQ", "W", GPR16>;
+def EXTZQ32absmr : ExtAbsMR<"EXTZQ", "L", GPR32>;
 
 def EXTSQ8rr  : ExtRR<"EXTSQ", "B", GPR64, GPR8, sext>;
 def EXTSQ16rr : ExtRR<"EXTSQ", "W", GPR64, GPR16, sext>;
 def EXTSQ32rr : ExtRR<"EXTSQ", "L", GPR64, GPR32, sext>;
-def EXTSQ8rm  : ExtRM<"EXTSQ", "B", GPR64>;
-def EXTSQ16rm : ExtRM<"EXTSQ", "W", GPR64>;
-def EXTSQ32rm : ExtRM<"EXTSQ", "L", GPR64>;
+def EXTSQ8rm  : ExtRM<"EXTSQ", "B", GPR64,
+                       [(set GPR64:$dst, (i64 (sextloadi8 addr:$addr)))]>;
+def EXTSQ16rm : ExtRM<"EXTSQ", "W", GPR64,
+                       [(set GPR64:$dst, (i64 (sextloadi16 addr:$addr)))]>;
+def EXTSQ32rm : ExtRM<"EXTSQ", "L", GPR64,
+                       [(set GPR64:$dst, (i64 (sextloadi32 addr:$addr)))]>;
 def EXTSQ8mr  : ExtMR<"EXTSQ", "B", GPR8>;
 def EXTSQ16mr : ExtMR<"EXTSQ", "W", GPR16>;
 def EXTSQ32mr : ExtMR<"EXTSQ", "L", GPR32>;
+def EXTSQ8absrm  : ExtAbsRM<"EXTSQ", "B", GPR64>;
+def EXTSQ16absrm : ExtAbsRM<"EXTSQ", "W", GPR64>;
+def EXTSQ32absrm : ExtAbsRM<"EXTSQ", "L", GPR64>;
+def EXTSQ8absmr  : ExtAbsMR<"EXTSQ", "B", GPR8>;
+def EXTSQ16absmr : ExtAbsMR<"EXTSQ", "W", GPR16>;
+def EXTSQ32absmr : ExtAbsMR<"EXTSQ", "L", GPR32>;
 
 def EXTZL8rr  : ExtRR<"EXTZL", "B", GPR32, GPR8, zext>;
 def EXTZL16rr : ExtRR<"EXTZL", "W", GPR32, GPR16, zext>;
-def EXTZL8rm  : ExtRM<"EXTZL", "B", GPR32>;
-def EXTZL16rm : ExtRM<"EXTZL", "W", GPR32>;
+def EXTZL8rm  : ExtRM<"EXTZL", "B", GPR32,
+                       [(set GPR32:$dst, (i32 (zextloadi8 addr:$addr)))]>;
+def EXTZL16rm : ExtRM<"EXTZL", "W", GPR32,
+                       [(set GPR32:$dst, (i32 (zextloadi16 addr:$addr)))]>;
 def EXTZL8mr  : ExtMR<"EXTZL", "B", GPR8>;
 def EXTZL16mr : ExtMR<"EXTZL", "W", GPR16>;
+def EXTZL8absrm  : ExtAbsRM<"EXTZL", "B", GPR32>;
+def EXTZL16absrm : ExtAbsRM<"EXTZL", "W", GPR32>;
+def EXTZL8absmr  : ExtAbsMR<"EXTZL", "B", GPR8>;
+def EXTZL16absmr : ExtAbsMR<"EXTZL", "W", GPR16>;
 
 def EXTSL8rr  : ExtRR<"EXTSL", "B", GPR32, GPR8, sext>;
 def EXTSL16rr : ExtRR<"EXTSL", "W", GPR32, GPR16, sext>;
-def EXTSL8rm  : ExtRM<"EXTSL", "B", GPR32>;
-def EXTSL16rm : ExtRM<"EXTSL", "W", GPR32>;
+def EXTSL8rm  : ExtRM<"EXTSL", "B", GPR32,
+                       [(set GPR32:$dst, (i32 (sextloadi8 addr:$addr)))]>;
+def EXTSL16rm : ExtRM<"EXTSL", "W", GPR32,
+                       [(set GPR32:$dst, (i32 (sextloadi16 addr:$addr)))]>;
 def EXTSL8mr  : ExtMR<"EXTSL", "B", GPR8>;
 def EXTSL16mr : ExtMR<"EXTSL", "W", GPR16>;
+def EXTSL8absrm  : ExtAbsRM<"EXTSL", "B", GPR32>;
+def EXTSL16absrm : ExtAbsRM<"EXTSL", "W", GPR32>;
+def EXTSL8absmr  : ExtAbsMR<"EXTSL", "B", GPR8>;
+def EXTSL16absmr : ExtAbsMR<"EXTSL", "W", GPR16>;
 
 def EXTZW8rr : ExtRR<"EXTZW", "B", GPR16, GPR8, zext>;
-def EXTZW8rm : ExtRM<"EXTZW", "B", GPR16>;
+def EXTZW8rm : ExtRM<"EXTZW", "B", GPR16,
+                      [(set GPR16:$dst, (i16 (zextloadi8 addr:$addr)))]>;
 def EXTZW8mr : ExtMR<"EXTZW", "B", GPR8>;
 
 def EXTSW8rr : ExtRR<"EXTSW", "B", GPR16, GPR8, sext>;
-def EXTSW8rm : ExtRM<"EXTSW", "B", GPR16>;
+def EXTSW8rm : ExtRM<"EXTSW", "B", GPR16,
+                      [(set GPR16:$dst, (i16 (sextloadi8 addr:$addr)))]>;
 def EXTSW8mr : ExtMR<"EXTSW", "B", GPR8>;
 
 def : Pat<(i32 (anyext GPR8:$src)), (EXTZL8rr GPR8:$src)>;
@@ -1065,6 +1269,11 @@ def OR16ri : BinRI<"OR", "W", GPR16, i16imm, or>;
 def OR32ri : BinRI<"OR", "L", D32, shortimm32, or>;
 def OR64ri : BinRI<"OR", "Q", D64, i64imm, or>;
 def OR64ai : BinRI<"OR", "Q", A64, shortimm64, or>;
+def OR32imm : BedrockInst<(outs D32:$dst), (ins D32:$lhs, imm32symbol:$rhs),
+                          "OR.L\t$rhs, $dst"> {
+  let Constraints = "$dst = $lhs";
+  let Defs = [FLAGS];
+}
 def OR8rm  : BinRM<"OR", "B", GPR8>;
 def OR16rm : BinRM<"OR", "W", GPR16>;
 def OR32rm : BinRM<"OR", "L", D32>;
@@ -1717,6 +1926,13 @@ class FlagIdxMI<string Mnemonic, string Suffix, Operand ImmOp, Operand AddrOp>
   let mayLoad = 1;
 }
 
+class FlagAbsMI<string Mnemonic, string Suffix, Operand ImmOp>
+    : BedrockInst<(outs), (ins ImmOp:$src, absmem64:$dst),
+                  Mnemonic # "." # Suffix # "\t$src, $dst"> {
+  let Defs = [FLAGS];
+  let mayLoad = 1;
+}
+
 defm CMP8  : CmpRR<"B", GPR8>;
 defm CMP16 : CmpRR<"W", GPR16>;
 defm CMP32 : CmpRRDstD<"L", GPR32>;
@@ -1769,6 +1985,10 @@ def CMP8mi  : FlagMI<"CMP", "B", u6imm8>;
 def CMP16mi : FlagMI<"CMP", "W", u6imm16>;
 def CMP32mi : FlagMI<"CMP", "L", u6imm32>;
 def CMP64mi : FlagMI<"CMP", "Q", u6imm64>;
+def CMP8absmi  : FlagAbsMI<"CMP", "B", u6imm8>;
+def CMP16absmi : FlagAbsMI<"CMP", "W", u6imm16>;
+def CMP32absmi : FlagAbsMI<"CMP", "L", u6imm32>;
+def CMP64absmi : FlagAbsMI<"CMP", "Q", u6imm64>;
 def CMP8idx1mi   : FlagIdxMI<"CMP", "B", u6imm8, idx1addr>;
 def CMP8idx4mi   : FlagIdxMI<"CMP", "B", u6imm8, idx4addr>;
 def CMP8idx4lmi  : FlagIdxMI<"CMP", "B", u6imm8, idx4laddr>;
@@ -1859,6 +2079,10 @@ def TEST8mi  : FlagMI<"TEST", "B", u6imm8>;
 def TEST16mi : FlagMI<"TEST", "W", u6imm16>;
 def TEST32mi : FlagMI<"TEST", "L", u6imm32>;
 def TEST64mi : FlagMI<"TEST", "Q", u6imm64>;
+def TEST8absmi  : FlagAbsMI<"TEST", "B", u6imm8>;
+def TEST16absmi : FlagAbsMI<"TEST", "W", u6imm16>;
+def TEST32absmi : FlagAbsMI<"TEST", "L", u6imm32>;
+def TEST64absmi : FlagAbsMI<"TEST", "Q", u6imm64>;
 def TEST8idx1mi   : FlagIdxMI<"TEST", "B", u6imm8, idx1addr>;
 def TEST8idx4mi   : FlagIdxMI<"TEST", "B", u6imm8, idx4addr>;
 def TEST8idx4lmi  : FlagIdxMI<"TEST", "B", u6imm8, idx4laddr>;

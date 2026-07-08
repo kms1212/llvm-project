@@ -1,0 +1,213 @@
+# RUN: llc -mtriple=bedrock -start-before=bedrock-peephole -stop-after=bedrock-peephole -verify-machineinstrs %s -o - | FileCheck %s
+
+# CHECK-LABEL: name: abs_base_nearby_offset
+# CHECK:       $a0 = MOV64abs @g
+# CHECK:       MOV64mr killed $d0, $a0, 0
+# CHECK-NEXT:  $a0 = ADD64ri $a0, 8, implicit-def $flags
+# CHECK-NEXT:  MOV64mr killed $d1, killed $a0, 0
+# CHECK-NOT:   MOV64abs @g + 8
+
+# CHECK-LABEL: name: abs_base_nearby_negative_offset
+# CHECK:       $a0 = MOV64abs @g + 16
+# CHECK:       MOV64mr killed $d0, $a0, 0
+# CHECK-NEXT:  $a0 = ADD64ri $a0, -8, implicit-def $flags
+# CHECK-NEXT:  MOV64mr killed $d1, killed $a0, 0
+# CHECK-NOT:   MOV64abs @g + 8
+
+# CHECK-LABEL: name: abs_base_nearby_offset_after_add
+# CHECK:       $a0 = MOV64abs @g + 80
+# CHECK:       MOV8postmr $d0, $a0
+# CHECK:       MOV8mr killed $d1, $a0, 0
+# CHECK:       $a0 = ADD64ri $a0, 1, implicit-def $flags
+# CHECK-NEXT:  MOV8mr killed $d2, killed $a0, 0
+# CHECK-NOT:   MOV64abs @g + 82
+
+# CHECK-LABEL: name: abs_indexed_address_run
+# CHECK:       $a0 = MOV64abs @g - 28
+# CHECK-NEXT:  $a0 = ADD64rr $a0, $d0, implicit-def dead $flags
+# CHECK-NEXT:  $a1 = MOV64rr $a0
+# CHECK-NEXT:  $a1 = ADD64ri $a1, 12, implicit-def $flags
+# CHECK-NEXT:  $a2 = MOV64rr $a0
+# CHECK-NEXT:  $a2 = ADD64ri $a2, 4, implicit-def $flags
+# CHECK-NOT:   MOV64abs @g - 16
+# CHECK-NOT:   MOV64abs @g - 24
+
+# CHECK-LABEL: name: abs_base_nearby_offset_reject_postinc
+# CHECK:       MOV64absmr killed $d0, @g
+# CHECK:       $a0 = MOV64abs @g + 8
+# CHECK:       REPMOV32postmr
+# CHECK-NOT:   ADD64ri $a0, 8
+
+# CHECK-LABEL: name: abs_base_nearby_offset_reject_large_delta
+# CHECK:       MOV64absmr killed $d0, @g
+# CHECK:       MOV64absmr killed $d1, @g + 152
+# CHECK-NOT:   ADD64ri $a0, 152
+
+# CHECK-LABEL: name: abs_base_nearby_offset_reject_symbol
+# CHECK:       MOV64absmr killed $d0, @g
+# CHECK:       MOV64absmr killed $d1, @h
+# CHECK-NOT:   ADD64ri $a0, 8
+
+# CHECK-LABEL: name: abs_base_nearby_offset_flags_live
+# CHECK:       CMP32ri $d2, 1
+# CHECK:       MOV64absmr killed $d0, @g
+# CHECK:       MOV64absmr killed $d1, @g + 8
+# CHECK-NOT:   ADD64ri $a0, 8
+
+--- |
+  target triple = "bedrock"
+
+  @g = external global i64
+  @h = external global i64
+
+  define void @abs_base_nearby_offset() #0 {
+    ret void
+  }
+
+  define void @abs_base_nearby_negative_offset() #0 {
+    ret void
+  }
+
+  define void @abs_base_nearby_offset_after_add() #0 {
+    ret void
+  }
+
+  define void @abs_indexed_address_run() #0 {
+    ret void
+  }
+
+  define void @abs_base_nearby_offset_reject_postinc() #0 {
+    ret void
+  }
+
+  define void @abs_base_nearby_offset_reject_large_delta() #0 {
+    ret void
+  }
+
+  define void @abs_base_nearby_offset_reject_symbol() #0 {
+    ret void
+  }
+
+  define void @abs_base_nearby_offset_flags_live() #0 {
+    ret void
+  }
+
+  attributes #0 = { minsize optsize }
+...
+---
+name: abs_base_nearby_offset
+tracksRegLiveness: true
+body: |
+  bb.0:
+    liveins: $d0, $d1
+
+    $a0 = MOV64abs @g
+    MOV64mr killed $d0, killed $a0, 0
+    $a0 = MOV64abs @g + 8
+    MOV64mr killed $d1, killed $a0, 0
+    RET implicit $sp
+...
+---
+name: abs_base_nearby_negative_offset
+tracksRegLiveness: true
+body: |
+  bb.0:
+    liveins: $d0, $d1
+
+    $a0 = MOV64abs @g + 16
+    MOV64mr killed $d0, killed $a0, 0
+    $a0 = MOV64abs @g + 8
+    MOV64mr killed $d1, killed $a0, 0
+    RET implicit $sp
+...
+---
+name: abs_base_nearby_offset_after_add
+tracksRegLiveness: true
+body: |
+  bb.0:
+    liveins: $d0, $d1, $d2
+
+    $a0 = MOV64abs @g + 80
+    MOV8mr killed $d0, $a0, 0
+    $a0 = ADD64ri $a0, 1, implicit-def dead $flags
+    MOV8mr killed $d1, $a0, 0
+    $a0 = MOV64abs @g + 82
+    MOV8mr killed $d2, killed $a0, 0
+    RET implicit $sp
+...
+---
+name: abs_indexed_address_run
+tracksRegLiveness: true
+body: |
+  bb.0:
+    liveins: $d0
+
+    $a0 = MOV64abs @g - 28
+    $a0 = ADD64rr killed $a0, $d0, implicit-def dead $flags
+    $a1 = MOV64abs @g - 16
+    $a1 = ADD64rr killed $a1, $d0, implicit-def dead $flags
+    $a2 = MOV64abs @g - 24
+    $a2 = ADD64rr killed $a2, killed $d0, implicit-def dead $flags
+    RET implicit $sp, implicit $a0, implicit $a1, implicit $a2
+...
+---
+name: abs_base_nearby_offset_reject_postinc
+tracksRegLiveness: true
+body: |
+  bb.0:
+    liveins: $d0, $a6
+
+    $a0 = MOV64abs @g
+    MOV64mr killed $d0, killed $a0, 0
+    $a0 = MOV64abs @g + 8
+    $d1 = MOV32ri 38
+    $d1 = REPMOV32postmr $d1, $a6, killed $a0, 4, implicit-def $flags
+    RET implicit $sp
+...
+---
+name: abs_base_nearby_offset_reject_large_delta
+tracksRegLiveness: true
+body: |
+  bb.0:
+    liveins: $d0, $d1
+
+    $a0 = MOV64abs @g
+    MOV64mr killed $d0, killed $a0, 0
+    $a0 = MOV64abs @g + 152
+    MOV64mr killed $d1, killed $a0, 0
+    RET implicit $sp
+...
+---
+name: abs_base_nearby_offset_reject_symbol
+tracksRegLiveness: true
+body: |
+  bb.0:
+    liveins: $d0, $d1
+
+    $a0 = MOV64abs @g
+    MOV64mr killed $d0, killed $a0, 0
+    $a0 = MOV64abs @h
+    MOV64mr killed $d1, killed $a0, 0
+    RET implicit $sp
+...
+---
+name: abs_base_nearby_offset_flags_live
+tracksRegLiveness: true
+body: |
+  bb.0:
+    successors: %bb.1, %bb.2
+    liveins: $d0, $d1, $d2
+
+    CMP32ri $d2, 1, implicit-def $flags
+    $a0 = MOV64abs @g
+    MOV64mr killed $d0, killed $a0, 0
+    $a0 = MOV64abs @g + 8
+    MOV64mr killed $d1, killed $a0, 0
+    JCC %bb.1, 2, implicit $flags
+
+  bb.2:
+    RET implicit $sp
+
+  bb.1:
+    RET implicit $sp
+...

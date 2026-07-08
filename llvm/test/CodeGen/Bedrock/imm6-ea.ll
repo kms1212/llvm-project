@@ -9,7 +9,7 @@ define i32 @add_reg_small(i32 %x) {
 ; CHECK: ADD.L{{[[:space:]]+}}12, D0
 ; CHECK: RET
 ; OBJ-LABEL: <add_reg_small>:
-; OBJ: 3e 1f 80 4c{{[[:space:]]+}}ADD.L{{[[:space:]]+}}12, D0
+; OBJ: 00 16 0c 00{{[[:space:]]+}}ADD.L{{[[:space:]]+}}12, D0
 entry:
   %r = add i32 %x, 12
   ret i32 %r

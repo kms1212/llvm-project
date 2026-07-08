@@ -1,0 +1,388 @@
+# RUN: llc -mtriple=bedrock -start-before=bedrock-peephole -stop-after=bedrock-peephole -verify-machineinstrs %s -o - | FileCheck %s
+# RUN: llc -mtriple=bedrock -start-before=bedrock-peephole -filetype=obj %s -o %t.o
+# RUN: llvm-readobj -r %t.o | FileCheck %s --check-prefix=RELOC
+
+# RELOC: R_BEDROCK_ABS64 g
+
+# CHECK-LABEL: name: abs_load
+# CHECK:       $d1 = MOV64absrm @g + 8
+# CHECK-NOT:   MOV64abs @g
+# CHECK-NOT:   MOV64rm
+
+# CHECK-LABEL: name: abs_ext_load
+# CHECK:       $d1 = EXTZL8absrm @g + 4
+# CHECK-NOT:   MOV64abs @g
+# CHECK-NOT:   EXTZL8rm
+
+# CHECK-LABEL: name: abs_store
+# CHECK:       MOV8absmr killed $d0, @g + 3
+# CHECK-NOT:   MOV64abs @g
+# CHECK-NOT:   MOV8mr
+
+# CHECK-LABEL: name: fp_abs_load
+# CHECK:       $f0 = FMOV64absrm @g
+# CHECK-NOT:   MOV64abs @g
+# CHECK-NOT:   FMOV64rm
+
+# CHECK-LABEL: name: fp_abs_store
+# CHECK:       FMOV64absmr killed $f0, @g + 8
+# CHECK-NOT:   MOV64abs @g
+# CHECK-NOT:   FMOV64mr
+
+# CHECK-LABEL: name: abs_mem_to_abs_dest
+# CHECK:       MOV64mabs $sp, 16, @g
+# CHECK-NOT:   MOV64abs @g
+# CHECK-NOT:   MOV64mm
+
+# CHECK-LABEL: name: abs_dest_after_load
+# CHECK:       MOV64mabs $a6, 24, @g + 8
+# CHECK-NOT:   MOV64abs @g
+# CHECK-NOT:   MOV64rm
+# CHECK-NOT:   MOV64absmr
+
+# CHECK-LABEL: name: abs_inc
+# CHECK:       INC32absm @g + 12
+# CHECK-NOT:   MOV64abs @g
+# CHECK-NOT:   INC32m
+
+# CHECK-LABEL: name: abs_cmp_imm
+# CHECK:       CMP32absmi 1, @g
+# CHECK-NOT:   MOV64abs @g
+# CHECK-NOT:   CMP32mi 1
+
+# CHECK-LABEL: name: keep_address_value_store
+# CHECK:       $a0 = MOV64abs @g
+# CHECK-NEXT:  MOV64absmr killed $a0, @sink
+# CHECK-NOT:   MOV64mabs
+
+# CHECK-LABEL: name: abs_symbol_store_value
+# CHECK:       MOV64symmr @g, $a0, 16
+# CHECK-NOT:   MOV64abs @g
+# CHECK-NOT:   MOV64mr
+
+# CHECK-LABEL: name: abs_symbol_imm_store
+# CHECK:       MOV32absmi 7, @g + 4
+# CHECK-NOT:   MOV64abs @g
+# CHECK-NOT:   MOV32mi 7
+
+# CHECK-LABEL: name: keep_large_symbol_imm_store
+# CHECK:       $a0 = MOV64abs @g
+# CHECK-NEXT:  MOV64mi 2147483648, killed $a0, 0
+# CHECK-NOT:   MOV64absmi 2147483648, @g
+
+# CHECK-LABEL: name: keep_symbol_store_overlapping_base
+# CHECK:       $a0 = MOV64abs @g
+# CHECK-NEXT:  MOV64mr killed $a0, $a0, 0
+# CHECK-NOT:   MOV64symmr
+
+# CHECK-LABEL: name: keep_live_base
+# CHECK:       $a0 = MOV64abs @g
+# CHECK-NEXT:  $d0 = MOV64rm $a0, 0
+# CHECK-NEXT:  MOV64mr $a0, $sp, 8
+
+# CHECK-LABEL: name: imm_abs_store
+# CHECK:       MOV64absmi 42, 32768
+# CHECK-NOT:   MOV32ri 32768
+# CHECK-NOT:   MOV64rr
+
+# CHECK-LABEL: name: imm_abs_load_offset
+# CHECK:       $d1 = MOV64absrm 32772
+# CHECK-NOT:   MOV32ri 32768
+# CHECK-NOT:   MOV64rr
+
+# CHECK-LABEL: name: imm_abs_inc
+# CHECK:       INC32absm 32776
+# CHECK-NOT:   MOV32ri 32768
+# CHECK-NOT:   MOV64rr
+
+# CHECK-LABEL: name: imm_abs_test
+# CHECK:       TEST64absmi 1, 32784
+# CHECK-NOT:   MOV32ri 32768
+# CHECK-NOT:   MOV64rr
+
+# CHECK-LABEL: name: keep_imm_address_value_store
+# CHECK:       $d0 = MOV64ri 32768
+# CHECK-NEXT:  $a0 = MOV64rr $d0
+# CHECK-NEXT:  MOV64mr killed $d0, killed $a0, 0
+
+--- |
+  target triple = "bedrock"
+
+  @g = external global i64
+  @sink = external global i64
+
+  define void @abs_load() #0 {
+    ret void
+  }
+
+  define void @abs_ext_load() #0 {
+    ret void
+  }
+
+  define void @abs_store() #0 {
+    ret void
+  }
+
+  define void @fp_abs_load() #0 {
+    ret void
+  }
+
+  define void @fp_abs_store() #0 {
+    ret void
+  }
+
+  define void @abs_mem_to_abs_dest() #0 {
+    ret void
+  }
+
+  define void @abs_dest_after_load() #0 {
+    ret void
+  }
+
+  define void @abs_inc() #0 {
+    ret void
+  }
+
+  define void @abs_cmp_imm() #0 {
+    ret void
+  }
+
+  define void @keep_address_value_store() #0 {
+    ret void
+  }
+
+  define void @abs_symbol_store_value() #0 {
+    ret void
+  }
+
+  define void @abs_symbol_imm_store() #0 {
+    ret void
+  }
+
+  define void @keep_large_symbol_imm_store() #0 {
+    ret void
+  }
+
+  define void @keep_symbol_store_overlapping_base() #0 {
+    ret void
+  }
+
+  define void @keep_live_base() #0 {
+    ret void
+  }
+
+  define void @imm_abs_store() #0 {
+    ret void
+  }
+
+  define void @imm_abs_load_offset() #0 {
+    ret void
+  }
+
+  define void @imm_abs_inc() #0 {
+    ret void
+  }
+
+  define void @imm_abs_test() #0 {
+    ret void
+  }
+
+  define void @keep_imm_address_value_store() #0 {
+    ret void
+  }
+
+  attributes #0 = { minsize optsize }
+...
+---
+name: abs_load
+tracksRegLiveness: true
+body: |
+  bb.0:
+    $a0 = MOV64abs @g
+    $d1 = MOV64rm killed $a0, 8 :: (load (s64) from @g)
+    RET implicit $sp, implicit $d1
+...
+---
+name: abs_ext_load
+tracksRegLiveness: true
+body: |
+  bb.0:
+    $a0 = MOV64abs @g
+    $d1 = EXTZL8rm killed $a0, 4, implicit-def dead $flags :: (load (s8) from @g)
+    RET implicit $sp
+...
+---
+name: abs_store
+tracksRegLiveness: true
+body: |
+  bb.0:
+    liveins: $d0
+    $a0 = MOV64abs @g
+    MOV8mr killed $d0, killed $a0, 3 :: (store (s8) into @g)
+    RET implicit $sp
+...
+---
+name: fp_abs_load
+tracksRegLiveness: true
+body: |
+  bb.0:
+    $a0 = MOV64abs @g
+    $f0 = FMOV64rm killed $a0, 0 :: (load (s64) from @g)
+    RET implicit $sp, implicit $f0
+...
+---
+name: fp_abs_store
+tracksRegLiveness: true
+body: |
+  bb.0:
+    liveins: $f0
+    $a0 = MOV64abs @g
+    FMOV64mr killed $f0, killed $a0, 8 :: (store (s64) into @g)
+    RET implicit $sp
+...
+---
+name: abs_mem_to_abs_dest
+tracksRegLiveness: true
+body: |
+  bb.0:
+    $a0 = MOV64abs @g
+    MOV64mm $sp, 16, killed $a0, 0
+    RET implicit $sp
+...
+---
+name: abs_dest_after_load
+tracksRegLiveness: true
+body: |
+  bb.0:
+    liveins: $a6
+    $d0 = MOV64rm $a6, 24 :: (load (s64))
+    $a0 = MOV64abs @g
+    MOV64mr killed $d0, killed $a0, 8 :: (store (s64) into @g)
+    RET implicit $sp
+...
+---
+name: abs_inc
+tracksRegLiveness: true
+body: |
+  bb.0:
+    $a0 = MOV64abs @g
+    INC32m killed $a0, 12, implicit-def dead $flags
+    RET implicit $sp
+...
+---
+name: abs_cmp_imm
+tracksRegLiveness: true
+body: |
+  bb.0:
+    $a0 = MOV64abs @g
+    CMP32mi 1, killed $a0, 0, implicit-def dead $flags
+    RET implicit $sp
+...
+---
+name: keep_address_value_store
+tracksRegLiveness: true
+body: |
+  bb.0:
+    $a0 = MOV64abs @g
+    $a1 = MOV64abs @sink
+    MOV64mr killed $a0, killed $a1, 0 :: (store (s64) into @sink)
+    RET implicit $sp
+...
+---
+name: abs_symbol_store_value
+tracksRegLiveness: true
+body: |
+  bb.0:
+    liveins: $a0
+    $d0 = MOV64abs @g
+    MOV64mr killed $d0, $a0, 16 :: (store (s64))
+    RET implicit $sp
+...
+---
+name: abs_symbol_imm_store
+tracksRegLiveness: true
+body: |
+  bb.0:
+    $a0 = MOV64abs @g
+    MOV32mi 7, killed $a0, 4 :: (store (s32))
+    RET implicit $sp
+...
+---
+name: keep_large_symbol_imm_store
+tracksRegLiveness: true
+body: |
+  bb.0:
+    $a0 = MOV64abs @g
+    MOV64mi 2147483648, killed $a0, 0 :: (store (s64))
+    RET implicit $sp
+...
+---
+name: keep_symbol_store_overlapping_base
+tracksRegLiveness: true
+body: |
+  bb.0:
+    $a0 = MOV64abs @g
+    MOV64mr killed $a0, $a0, 0 :: (store (s64))
+    RET implicit $sp
+...
+---
+name: keep_live_base
+tracksRegLiveness: true
+body: |
+  bb.0:
+    $a0 = MOV64abs @g
+    $d0 = MOV64rm $a0, 0
+    MOV64mr $a0, $sp, 8
+    RET implicit $sp, implicit $d0
+...
+---
+name: imm_abs_store
+tracksRegLiveness: true
+body: |
+  bb.0:
+    $d0 = MOV32ri 32768
+    $a0 = MOV64rr killed $d0
+    $d0 = MOV64ri 42
+    MOV64mr killed $d0, killed $a0, 0
+    RET implicit $sp
+...
+---
+name: imm_abs_load_offset
+tracksRegLiveness: true
+body: |
+  bb.0:
+    $d0 = MOV32ri 32768
+    $a0 = MOV64rr killed $d0
+    $d1 = MOV64rm killed $a0, 4 :: (load (s64))
+    RET implicit $sp, implicit $d1
+...
+---
+name: imm_abs_inc
+tracksRegLiveness: true
+body: |
+  bb.0:
+    $d0 = MOV32ri 32768
+    $a0 = MOV64rr killed $d0
+    INC32m killed $a0, 8, implicit-def dead $flags
+    RET implicit $sp
+...
+---
+name: imm_abs_test
+tracksRegLiveness: true
+body: |
+  bb.0:
+    $d0 = MOV32ri 32768
+    $a0 = MOV64rr killed $d0
+    TEST64mi 1, killed $a0, 16, implicit-def dead $flags
+    RET implicit $sp
+...
+---
+name: keep_imm_address_value_store
+tracksRegLiveness: true
+body: |
+  bb.0:
+    $d0 = MOV64ri 32768
+    $a0 = MOV64rr $d0
+    MOV64mr killed $d0, killed $a0, 0
+    RET implicit $sp
+...

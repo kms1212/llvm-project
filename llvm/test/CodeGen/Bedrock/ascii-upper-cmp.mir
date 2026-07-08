@@ -1,0 +1,180 @@
+# RUN: llc -mtriple=bedrock -start-before=bedrock-peephole -stop-after=bedrock-peephole -verify-machineinstrs %s -o - | FileCheck %s
+
+# CHECK-LABEL: name: ascii_upper_cmp
+# CHECK:       $d0 = OR8ri $d0, 32
+# CHECK-NEXT:  CMP8ri $d0, 100
+# CHECK-NOT:   MOVCC8rr
+
+# CHECK-LABEL: name: keep_when_selected_char_live
+# CHECK:       MOVCC8rr
+# CHECK:       CMP8ri $d0, 68
+# CHECK:       $d3 = MOV64rr $d0
+
+# CHECK-LABEL: name: ascii_upper_cmp_const_reg
+# CHECK:       $d0 = OR8ri $d0, 32
+# CHECK-NEXT:  CMP8ri $d0, 115
+# CHECK-NOT:   MOV8ri 83
+# CHECK-NOT:   MOVCC8rr
+
+# CHECK-LABEL: name: ascii_upper_cmp_reused_const_reg
+# CHECK:       $d0 = OR8ri $d0, 32
+# CHECK-NEXT:  $d3 = MOV8ri 77
+# CHECK-NEXT:  CMP8ri $d0, 109
+# CHECK-NEXT:  $d4 = MOV64rr $d3
+# CHECK-NOT:   MOVCC8rr
+
+# CHECK-LABEL: name: ascii_upper_cmp_stack_const_pred
+# CHECK:       MOV8mi 83, $sp, 8
+# CHECK:       $d0 = OR8ri $d0, 32
+# CHECK-NEXT:  CMP8ri $d0, 115
+# CHECK-NOT:   MOVCC8rr
+
+# CHECK-LABEL: name: ascii_upper_cmp_reg_const_pred
+# CHECK:       $d0 = OR8ri $d0, 32
+# CHECK-NEXT:  CMP8ri $d0, 109
+# CHECK-NOT:   MOV8ri 77
+# CHECK-NOT:   MOVCC8rr
+
+--- |
+  target triple = "bedrock"
+
+  define i8 @ascii_upper_cmp(i8 %x) #0 {
+    ret i8 %x
+  }
+
+  define i8 @keep_when_selected_char_live(i8 %x) #0 {
+    ret i8 %x
+  }
+
+  define i8 @ascii_upper_cmp_const_reg(i8 %x) #0 {
+    ret i8 %x
+  }
+
+  define i8 @ascii_upper_cmp_reused_const_reg(i8 %x) #0 {
+    ret i8 %x
+  }
+
+  define i8 @ascii_upper_cmp_stack_const_pred(i8 %x) #0 {
+    ret i8 %x
+  }
+
+  define i8 @ascii_upper_cmp_reg_const_pred(i8 %x) #0 {
+    ret i8 %x
+  }
+
+  attributes #0 = { nounwind }
+...
+---
+name: ascii_upper_cmp
+tracksRegLiveness: true
+body: |
+  bb.0:
+    liveins: $d0
+
+    $d1 = MOV64rr $d0
+    $d1 = ADD8ri $d1, -97, implicit-def dead $flags
+    $d2 = MOV64rr $d0
+    $d2 = ADD8ri $d2, -32, implicit-def dead $flags
+    CMP8ri $d1, 26, implicit-def $flags
+    $d0 = MOVCC8rr $d0, $d2, 4, implicit $flags
+    CMP8ri $d0, 68, implicit-def dead $flags
+    RET implicit $sp
+...
+---
+name: keep_when_selected_char_live
+tracksRegLiveness: true
+body: |
+  bb.0:
+    liveins: $d0
+
+    $d1 = MOV64rr $d0
+    $d1 = ADD8ri $d1, -97, implicit-def dead $flags
+    $d2 = MOV64rr $d0
+    $d2 = ADD8ri $d2, -32, implicit-def dead $flags
+    CMP8ri $d1, 26, implicit-def $flags
+    $d0 = MOVCC8rr $d0, $d2, 4, implicit $flags
+    CMP8ri $d0, 68, implicit-def dead $flags
+    $d3 = MOV64rr $d0
+    RET implicit $d3, implicit $sp
+...
+---
+name: ascii_upper_cmp_const_reg
+tracksRegLiveness: true
+body: |
+  bb.0:
+    liveins: $d0
+
+    $d1 = MOV64rr $d0
+    $d1 = ADD8ri $d1, -97, implicit-def dead $flags
+    $d2 = MOV64rr $d0
+    $d2 = ADD8ri $d2, -32, implicit-def dead $flags
+    CMP8ri $d1, 26, implicit-def $flags
+    $d0 = MOVCC8rr $d0, $d2, 4, implicit $flags
+    $d3 = MOV8ri 83
+    CMP8rr $d0, $d3, implicit-def dead $flags
+    RET implicit $sp
+...
+---
+name: ascii_upper_cmp_reused_const_reg
+tracksRegLiveness: true
+body: |
+  bb.0:
+    liveins: $d0
+
+    $d1 = MOV64rr $d0
+    $d1 = ADD8ri $d1, -97, implicit-def dead $flags
+    $d2 = MOV64rr $d0
+    $d2 = ADD8ri $d2, -32, implicit-def dead $flags
+    CMP8ri $d1, 26, implicit-def $flags
+    $d0 = MOVCC8rr $d0, $d2, 4, implicit $flags
+    $d3 = MOV8ri 77
+    CMP8rr $d0, $d3, implicit-def dead $flags
+    $d4 = MOV64rr $d3
+    RET implicit $d4, implicit $sp
+...
+---
+name: ascii_upper_cmp_stack_const_pred
+tracksRegLiveness: true
+body: |
+  bb.0:
+    successors: %bb.1
+    liveins: $d0
+
+    MOV8mi 83, $sp, 8
+    JMP %bb.1
+
+  bb.1:
+    liveins: $d0
+
+    $d1 = MOV64rr $d0
+    $d1 = ADD8ri $d1, -97, implicit-def dead $flags
+    $d2 = MOV64rr $d0
+    $d2 = ADD8ri $d2, -32, implicit-def dead $flags
+    CMP8ri $d1, 26, implicit-def $flags
+    $d0 = MOVCC8rr $d0, $d2, 4, implicit $flags
+    CMP8rm $d0, $sp, 8, implicit-def dead $flags
+    RET implicit $sp
+...
+---
+name: ascii_upper_cmp_reg_const_pred
+tracksRegLiveness: true
+body: |
+  bb.0:
+    successors: %bb.1
+    liveins: $d0
+
+    $d3 = MOV8ri 77
+    JMP %bb.1
+
+  bb.1:
+    liveins: $d0, $d3
+
+    $d1 = MOV64rr $d0
+    $d1 = ADD8ri $d1, -97, implicit-def dead $flags
+    $d2 = MOV64rr $d0
+    $d2 = ADD8ri $d2, -32, implicit-def dead $flags
+    CMP8ri $d1, 26, implicit-def $flags
+    $d0 = MOVCC8rr $d0, $d2, 4, implicit $flags
+    CMP8rr $d0, $d3, implicit-def dead $flags
+    RET implicit $sp
+...

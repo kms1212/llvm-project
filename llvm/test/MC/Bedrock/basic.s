@@ -81,6 +81,9 @@ caller:
 	SHL.Q	D1, D0
 	SHL.Q	63, [A0]
 	SHR.L	D1, [A0]
+	ROL.Q	D1, D0
+	ROL.Q	63, [A0]
+	ROR.L	D1, [A0]
 	CMP.B	D2, D1
 	CMP.Q	D1, A7
 	CMP.Q	A2, D5
@@ -155,6 +158,9 @@ g:
 # DIS: SHL.Q{{[[:space:]]+}}D1, D0
 # DIS: SHL.Q{{[[:space:]]+}}63, [A0]
 # DIS: SHR.L{{[[:space:]]+}}D1, [A0]
+# DIS: ROL.Q{{[[:space:]]+}}D1, D0
+# DIS: ROL.Q{{[[:space:]]+}}63, [A0]
+# DIS: ROR.L{{[[:space:]]+}}D1, [A0]
 # DIS: CMP.B{{[[:space:]]+}}D2, D1
 # DIS: CMP.Q{{[[:space:]]+}}D1, A7
 # DIS: CMP.Q{{[[:space:]]+}}A2, D5

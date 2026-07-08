@@ -61,6 +61,7 @@ private:
                                   MachineFunction &MF) const;
   bool foldTopTestIncLoopToIJcc(MachineFunction &MF) const;
   bool foldSequentialEqImmCompareChain(MachineFunction &MF) const;
+  bool foldStackSpillCompareChain(MachineFunction &MF) const;
   bool foldKnownZeroCmp(MachineBasicBlock &MBB, MachineFunction &MF,
                         uint32_t KnownZeroIn) const;
   bool foldEqNeZeroCmpToTest(MachineBasicBlock &MBB, MachineFunction &MF,
@@ -110,6 +111,7 @@ private:
   bool foldKnownZeroByteStoreToBSet(MachineBasicBlock &MBB,
                                     MachineFunction &MF) const;
   bool foldIndexedZeroStore(MachineBasicBlock &MBB, MachineFunction &MF) const;
+  bool foldLoadExt(MachineBasicBlock &MBB, MachineFunction &MF) const;
   bool foldByteLoadTestZeroBranch(MachineBasicBlock &MBB,
                                   MachineFunction &MF) const;
   bool foldByteLoadKnownZeroCmpBranch(MachineBasicBlock &MBB,
@@ -118,11 +120,23 @@ private:
   bool foldImmCmp(MachineBasicBlock &MBB, MachineFunction &MF) const;
   bool foldCmpOneBranch(MachineBasicBlock &MBB, MachineFunction &MF) const;
   bool foldImmMul(MachineBasicBlock &MBB, MachineFunction &MF) const;
+  bool foldAsciiUpperCmp(MachineBasicBlock &MBB, MachineFunction &MF) const;
+  bool foldSparseOrImmBits(MachineBasicBlock &MBB, MachineFunction &MF) const;
+  bool foldAndZextToAnd64(MachineBasicBlock &MBB, MachineFunction &MF) const;
+  bool foldZeroZextOrImm(MachineBasicBlock &MBB, MachineFunction &MF) const;
+  bool foldAbsZextToMov32Imm(MachineBasicBlock &MBB,
+                             MachineFunction &MF) const;
+  bool foldSymbolicImm32HighOr(MachineBasicBlock &MBB,
+                               MachineFunction &MF) const;
+  bool foldRepeatedOrImmMaterialization(MachineBasicBlock &MBB,
+                                        MachineFunction &MF) const;
   bool foldImmStore(MachineBasicBlock &MBB, MachineFunction &MF) const;
   bool foldSmallMov64Imm(MachineBasicBlock &MBB, MachineFunction &MF) const;
   bool foldClrStore(MachineBasicBlock &MBB, MachineFunction &MF) const;
   bool foldAImmCopyToDImm(MachineBasicBlock &MBB, MachineFunction &MF) const;
+  bool foldDImmCopyToAImm(MachineBasicBlock &MBB, MachineFunction &MF) const;
   bool foldMemCopy(MachineBasicBlock &MBB, MachineFunction &MF) const;
+  bool foldCopyStoreForward(MachineBasicBlock &MBB, MachineFunction &MF) const;
   bool foldEntryLiveInStores(MachineFunction &MF) const;
   bool foldStackStoreLoadForward(MachineBasicBlock &MBB,
                                  MachineFunction &MF) const;
@@ -133,6 +147,7 @@ private:
   bool foldStackConstLoads(MachineFunction &MF) const;
   bool foldStackZeroCmp(MachineFunction &MF) const;
   bool foldStackSlotsToARegs(MachineFunction &MF) const;
+  bool foldStackAddressReloadsAcrossCalls(MachineFunction &MF) const;
   bool foldSmallConstMultiply(MachineFunction &MF) const;
   bool foldMinSizeDivmodConstAccumulate(MachineFunction &MF) const;
   bool foldDeadFrameTopPadding(MachineFunction &MF) const;
@@ -147,6 +162,7 @@ private:
   bool foldRegMAddAccumulator(MachineBasicBlock &MBB,
                               MachineFunction &MF) const;
   bool foldProductChainMAdd(MachineBasicBlock &MBB, MachineFunction &MF) const;
+  bool foldNegatedStepStoreUpdateLoops(MachineFunction &MF) const;
   bool foldShiftedBSet(MachineBasicBlock &MBB, MachineFunction &MF) const;
   bool shrinkUnusedPushPopMask(MachineFunction &MF) const;
   bool foldDivMod(MachineBasicBlock &MBB, MachineFunction &MF) const;
@@ -164,13 +180,33 @@ private:
                                MachineFunction &MF) const;
   bool foldARegAliasCopies(MachineBasicBlock &MBB, MachineFunction &MF) const;
   bool foldAliasBackCopies(MachineBasicBlock &MBB, MachineFunction &MF) const;
-  bool foldDRegCopyCoalescing(MachineBasicBlock &MBB,
-                              MachineFunction &MF) const;
+  bool foldCrossBlockExtMemResultCopies(MachineFunction &MF) const;
+  bool foldRegCopyCoalescing(MachineBasicBlock &MBB,
+                             MachineFunction &MF) const;
   bool foldIndexedMem(MachineBasicBlock &MBB, MachineFunction &MF) const;
   bool foldIndexedMemFromDataBase(MachineBasicBlock &MBB,
                                   MachineFunction &MF) const;
   bool foldIndexedAddFromAbsBase(MachineBasicBlock &MBB,
                                  MachineFunction &MF) const;
+  bool foldAbsoluteStoreRuns(MachineBasicBlock &MBB, MachineFunction &MF) const;
+  bool foldAbsoluteLoadRuns(MachineBasicBlock &MBB, MachineFunction &MF) const;
+  bool foldAbsoluteDestStoreRuns(MachineBasicBlock &MBB,
+                                 MachineFunction &MF) const;
+  bool foldAbsBaseToNearbyOffset(MachineBasicBlock &MBB,
+                                 MachineFunction &MF) const;
+  bool foldAbsMemoryOps(MachineBasicBlock &MBB, MachineFunction &MF) const;
+  bool foldDirectAbsMemoryRuns(MachineBasicBlock &MBB,
+                               MachineFunction &MF) const;
+  bool foldDirectAbsMemoryGlobalBases(MachineFunction &MF) const;
+  bool foldImmAbsMemoryOps(MachineBasicBlock &MBB, MachineFunction &MF) const;
+  bool foldAbsIndexedAddressRuns(MachineBasicBlock &MBB,
+                                 MachineFunction &MF) const;
+  bool foldStridedImmQwordStores(MachineBasicBlock &MBB,
+                                 MachineFunction &MF) const;
+  bool foldPostIncQwordZeroStoreRuns(MachineBasicBlock &MBB,
+                                     MachineFunction &MF) const;
+  bool foldOffsetQwordZeroStoreRuns(MachineBasicBlock &MBB,
+                                    MachineFunction &MF) const;
   bool foldSum(MachineBasicBlock &MBB, MachineFunction &MF) const;
   bool foldSumReturnCopy(MachineBasicBlock &MBB, MachineFunction &MF) const;
   bool foldSignedClampReturn(MachineBasicBlock &MBB, MachineFunction &MF) const;
@@ -178,6 +214,7 @@ private:
   bool foldMinSizeA32ToCalleeSavedDRegs(MachineFunction &MF) const;
   bool foldSingleInstructionRepLoops(MachineFunction &MF) const;
   bool foldByteIndexedMemUtilityLoops(MachineFunction &MF) const;
+  bool foldImmediateByteCopyRepLoops(MachineFunction &MF) const;
   bool foldWideZeroFillDjtLoops(MachineFunction &MF) const;
   bool foldPositiveConstRepPretests(MachineFunction &MF) const;
   bool foldZeroExitRepgTailLoops(MachineFunction &MF) const;
@@ -295,6 +332,11 @@ static inline MachineBasicBlock::iterator prevNonDebug(MachineBasicBlock::iterat
 
 static inline bool regsOverlap(const TargetRegisterInfo &TRI, Register A, Register B) {
   return A.isValid() && B.isValid() && TRI.regsOverlap(A, B);
+}
+
+static inline bool isAbsTargetOperand(const MachineOperand &MO) {
+  return MO.isGlobal() || MO.isSymbol() || MO.isMCSymbol() || MO.isCPI() ||
+         MO.isBlockAddress();
 }
 
 static inline bool operandTouchesReg(const MachineOperand &MO, Register Reg,
@@ -1879,6 +1921,14 @@ static inline unsigned getMemDestBinOpcode(unsigned RegOpcode) {
     return Bedrock::XOR32mr;
   case Bedrock::XOR64rr:
     return Bedrock::XOR64mr;
+  case Bedrock::MULU8rr:
+    return Bedrock::MULU8mr;
+  case Bedrock::MULU16rr:
+    return Bedrock::MULU16mr;
+  case Bedrock::MULU32rr:
+    return Bedrock::MULU32mr;
+  case Bedrock::MULU64rr:
+    return Bedrock::MULU64mr;
   }
 }
 
@@ -1983,6 +2033,30 @@ static inline bool flagImmOpcodeMatchesLoad(unsigned FlagOpcode, unsigned LoadOp
   case Bedrock::MOV32rm:
     return FlagOpcode == Bedrock::CMP32ri || FlagOpcode == Bedrock::TEST32ri;
   case Bedrock::MOV64rm:
+    return FlagOpcode == Bedrock::CMP64ri || FlagOpcode == Bedrock::TEST64ri;
+  }
+}
+
+static inline bool flagImmOpcodeMatchesIndexedLoad(unsigned FlagOpcode,
+                                                   unsigned LoadOpcode) {
+  switch (LoadOpcode) {
+  default:
+    return false;
+  case Bedrock::MOV8idx1rm:
+  case Bedrock::MOV8idx4rm:
+  case Bedrock::MOV8idx4lrm:
+    return FlagOpcode == Bedrock::CMP8ri || FlagOpcode == Bedrock::TEST8ri;
+  case Bedrock::MOV16idx1rm:
+  case Bedrock::MOV16idx4rm:
+  case Bedrock::MOV16idx4lrm:
+    return FlagOpcode == Bedrock::CMP16ri || FlagOpcode == Bedrock::TEST16ri;
+  case Bedrock::MOV32idx1rm:
+  case Bedrock::MOV32idx4rm:
+  case Bedrock::MOV32idx4lrm:
+    return FlagOpcode == Bedrock::CMP32ri || FlagOpcode == Bedrock::TEST32ri;
+  case Bedrock::MOV64idx1rm:
+  case Bedrock::MOV64idx4rm:
+  case Bedrock::MOV64idx4lrm:
     return FlagOpcode == Bedrock::CMP64ri || FlagOpcode == Bedrock::TEST64ri;
   }
 }
@@ -2172,6 +2246,29 @@ static inline unsigned getIndexedMemStoreOpcode(unsigned StoreOpcode, unsigned S
     }
   }
   return 0;
+}
+
+static inline unsigned getScale4LongOpcodeForScale1Indexed(unsigned Opcode) {
+  switch (Opcode) {
+  default:
+    return 0;
+  case Bedrock::MOV8idx1rm:
+    return Bedrock::MOV8idx4lrm;
+  case Bedrock::MOV16idx1rm:
+    return Bedrock::MOV16idx4lrm;
+  case Bedrock::MOV32idx1rm:
+    return Bedrock::MOV32idx4lrm;
+  case Bedrock::MOV64idx1rm:
+    return Bedrock::MOV64idx4lrm;
+  case Bedrock::MOV8idx1mr:
+    return Bedrock::MOV8idx4lmr;
+  case Bedrock::MOV16idx1mr:
+    return Bedrock::MOV16idx4lmr;
+  case Bedrock::MOV32idx1mr:
+    return Bedrock::MOV32idx4lmr;
+  case Bedrock::MOV64idx1mr:
+    return Bedrock::MOV64idx4lmr;
+  }
 }
 
 static inline unsigned getIndexedMemImmFlagOpcode(unsigned FlagOpcode, unsigned Scale,
@@ -2433,6 +2530,10 @@ static inline bool isCommutableBinOpcode(unsigned Opcode) {
   case Bedrock::XOR16rr:
   case Bedrock::XOR32rr:
   case Bedrock::XOR64rr:
+  case Bedrock::MULU8rr:
+  case Bedrock::MULU16rr:
+  case Bedrock::MULU32rr:
+  case Bedrock::MULU64rr:
     return true;
   }
 }
@@ -2444,25 +2545,29 @@ static inline bool binOpcodeMatchesLoad(unsigned BinOpcode, unsigned LoadOpcode)
   case Bedrock::MOV8rm:
     return BinOpcode == Bedrock::ADD8rr || BinOpcode == Bedrock::SUB8rr ||
            BinOpcode == Bedrock::AND8rr || BinOpcode == Bedrock::OR8rr ||
-           BinOpcode == Bedrock::XOR8rr || BinOpcode == Bedrock::ADD8ri ||
+           BinOpcode == Bedrock::XOR8rr || BinOpcode == Bedrock::MULU8rr ||
+           BinOpcode == Bedrock::ADD8ri ||
            BinOpcode == Bedrock::SUB8ri || BinOpcode == Bedrock::AND8ri ||
            BinOpcode == Bedrock::OR8ri || BinOpcode == Bedrock::XOR8ri;
   case Bedrock::MOV16rm:
     return BinOpcode == Bedrock::ADD16rr || BinOpcode == Bedrock::SUB16rr ||
            BinOpcode == Bedrock::AND16rr || BinOpcode == Bedrock::OR16rr ||
-           BinOpcode == Bedrock::XOR16rr || BinOpcode == Bedrock::ADD16ri ||
+           BinOpcode == Bedrock::XOR16rr || BinOpcode == Bedrock::MULU16rr ||
+           BinOpcode == Bedrock::ADD16ri ||
            BinOpcode == Bedrock::SUB16ri || BinOpcode == Bedrock::AND16ri ||
            BinOpcode == Bedrock::OR16ri || BinOpcode == Bedrock::XOR16ri;
   case Bedrock::MOV32rm:
     return BinOpcode == Bedrock::ADD32rr || BinOpcode == Bedrock::SUB32rr ||
            BinOpcode == Bedrock::AND32rr || BinOpcode == Bedrock::OR32rr ||
-           BinOpcode == Bedrock::XOR32rr || BinOpcode == Bedrock::ADD32ri ||
+           BinOpcode == Bedrock::XOR32rr || BinOpcode == Bedrock::MULU32rr ||
+           BinOpcode == Bedrock::ADD32ri ||
            BinOpcode == Bedrock::SUB32ri || BinOpcode == Bedrock::AND32ri ||
            BinOpcode == Bedrock::OR32ri || BinOpcode == Bedrock::XOR32ri;
   case Bedrock::MOV64rm:
     return BinOpcode == Bedrock::ADD64rr || BinOpcode == Bedrock::SUB64rr ||
            BinOpcode == Bedrock::AND64rr || BinOpcode == Bedrock::OR64rr ||
-           BinOpcode == Bedrock::XOR64rr || BinOpcode == Bedrock::ADD64ri ||
+           BinOpcode == Bedrock::XOR64rr || BinOpcode == Bedrock::MULU64rr ||
+           BinOpcode == Bedrock::ADD64ri ||
            BinOpcode == Bedrock::SUB64ri || BinOpcode == Bedrock::AND64ri ||
            BinOpcode == Bedrock::OR64ri || BinOpcode == Bedrock::XOR64ri ||
            BinOpcode == Bedrock::AND64ai || BinOpcode == Bedrock::OR64ai ||
@@ -2610,15 +2715,24 @@ static inline bool isIndexedMemLoad(const MachineInstr &MI, Register &Dst,
   switch (MI.getOpcode()) {
   default:
     return false;
+  case Bedrock::MOV8idx1rm:
+  case Bedrock::MOV16idx1rm:
   case Bedrock::MOV32idx1rm:
+  case Bedrock::MOV64idx1rm:
     Scale = 1;
     LongIndex = false;
     break;
+  case Bedrock::MOV8idx4rm:
+  case Bedrock::MOV16idx4rm:
   case Bedrock::MOV32idx4rm:
+  case Bedrock::MOV64idx4rm:
     Scale = 4;
     LongIndex = false;
     break;
+  case Bedrock::MOV8idx4lrm:
+  case Bedrock::MOV16idx4lrm:
   case Bedrock::MOV32idx4lrm:
+  case Bedrock::MOV64idx4lrm:
     Scale = 4;
     LongIndex = true;
     break;
@@ -2906,6 +3020,7 @@ struct StackConstStore {
   int64_t Offset = 0;
   int64_t Value = 0;
   unsigned Size = 4;
+  bool IsAbsSymbol = false;
 };
 
 struct StackConstMulReplacement {
@@ -3222,6 +3337,21 @@ static inline Register findScratchDRegAt(MachineBasicBlock::iterator Insert,
   return Register();
 }
 
+static inline Register findScratchARegAt(MachineBasicBlock::iterator Insert,
+                                  MachineBasicBlock &MBB,
+                                  const TargetRegisterInfo &TRI,
+                                  Register AvoidA = Register(),
+                                  Register AvoidB = Register()) {
+  for (Register Reg = Bedrock::A0; Reg <= Bedrock::A7;
+       Reg = Register(Reg + 1)) {
+    if (regsOverlap(TRI, Reg, AvoidA) || regsOverlap(TRI, Reg, AvoidB))
+      continue;
+    if (regDeadAfterInCFG(Insert, MBB, Reg, TRI))
+      return Reg;
+  }
+  return Register();
+}
+
 static inline bool
 canPromoteStackSlotToAReg(MachineFunction &MF, int64_t Offset,
                           const SmallVectorImpl<MachineInstr *> &Accesses,
@@ -3371,9 +3501,17 @@ static inline void collectStackConstStores(MachineFunction &MF,
       unsigned ConstSize = 4;
       bool IsConstDef = isMov32Imm(ImmDef, Reg, Value);
       bool IsZeroRegDef = false;
+      bool IsAbsSymbol = false;
       if (!IsConstDef && isMov64Imm(ImmDef, Reg, Value)) {
         ConstSize = 8;
         IsConstDef = true;
+      }
+      if (!IsConstDef && ImmDef.getOpcode() == Bedrock::MOV64abs &&
+          ImmDef.getNumOperands() >= 2 && ImmDef.getOperand(0).isReg()) {
+        Reg = ImmDef.getOperand(0).getReg();
+        ConstSize = 8;
+        IsConstDef = true;
+        IsAbsSymbol = true;
       }
       if (!IsConstDef && ImmDef.getOpcode() == Bedrock::CLR64r &&
           ImmDef.getNumOperands() >= 1 && ImmDef.getOperand(0).isReg()) {
@@ -3421,6 +3559,7 @@ static inline void collectStackConstStores(MachineFunction &MF,
       Slot.Offset = Offset;
       Slot.Value = Value;
       Slot.Size = StoreSize;
+      Slot.IsAbsSymbol = IsAbsSymbol;
       Slots.push_back(Slot);
     }
   }
@@ -3443,6 +3582,9 @@ static inline bool isReplaceableStackConstMul(const StackConstStore &Slot,
                                        StackConstMulReplacement &Replacement,
                                        bool UseImmediateMul,
                                        const TargetRegisterInfo &TRI) {
+  if (Slot.IsAbsSymbol)
+    return false;
+
   if (MI.getOpcode() == Bedrock::MULU32rm) {
     if (!UseImmediateMul || hasOrderedMemOperand(MI) ||
         !stackConstStoreAvailableAtUse(Slot, MI) || MI.getNumOperands() < 4 ||
@@ -4201,6 +4343,28 @@ static inline unsigned getTestOpcodeForCmp(unsigned Opcode) {
   }
 }
 
+static inline bool isLegalSelfTestReg(unsigned TestOpcode, Register Reg) {
+  switch (TestOpcode) {
+  default:
+    return false;
+  case Bedrock::TEST8rr:
+  case Bedrock::TEST16rr:
+  case Bedrock::TEST32rr:
+  case Bedrock::TEST64rr:
+    return isDReg(Reg);
+  }
+}
+
+static inline unsigned getCmpZeroImmOpcodeForSelfTest(unsigned TestOpcode,
+                                               Register Reg) {
+  switch (TestOpcode) {
+  default:
+    return 0;
+  case Bedrock::TEST64rr:
+    return isAReg(Reg) ? Bedrock::CMP64ri : 0;
+  }
+}
+
 static inline Register preferredKnownZeroReg(uint32_t KnownZero,
                                       const MachineBasicBlock &MBB,
                                       Register Current,
@@ -4430,11 +4594,18 @@ static inline bool isReturnValueReg(Register Reg, const TargetRegisterInfo &TRI)
          regsOverlap(TRI, Reg, Bedrock::F0);
 }
 
+static inline bool implicitOperandsOnlyDefineFlags(const MachineInstr &MI) {
+  for (const MachineOperand &MO : MI.implicit_operands())
+    if (!MO.isReg() || !MO.isDef() || MO.getReg() != Bedrock::FLAGS)
+      return false;
+  return true;
+}
+
 static inline bool isPlainDeadDefCandidate(const MachineInstr &MI, Register &Reg) {
   if (MI.getDesc().mayLoad() || MI.getDesc().mayStore() ||
       MI.getDesc().hasUnmodeledSideEffects() || MI.isTerminator() ||
       MI.isCall() || MI.isReturn() || MI.getNumExplicitDefs() != 1 ||
-      !MI.implicit_operands().empty())
+      !implicitOperandsOnlyDefineFlags(MI))
     return false;
 
   const MachineOperand &Def = MI.getOperand(0);
@@ -4453,6 +4624,22 @@ static inline bool isPlainDeadDefCandidate(const MachineInstr &MI, Register &Reg
   case Bedrock::MOV16ri:
   case Bedrock::MOV32ri:
   case Bedrock::MOV64ri:
+  case Bedrock::ADD32rr:
+  case Bedrock::ADD64rr:
+  case Bedrock::ADD32ri:
+  case Bedrock::ADD64ri:
+  case Bedrock::SHL32ri:
+  case Bedrock::SHL64ri:
+  case Bedrock::EXTZQ8rr:
+  case Bedrock::EXTZQ16rr:
+  case Bedrock::EXTZQ32rr:
+  case Bedrock::EXTSQ8rr:
+  case Bedrock::EXTSQ16rr:
+  case Bedrock::EXTSQ32rr:
+  case Bedrock::EXTZL8rr:
+  case Bedrock::EXTZL16rr:
+  case Bedrock::EXTSL8rr:
+  case Bedrock::EXTSL16rr:
   case Bedrock::LEAri:
   case Bedrock::LEA4:
   case Bedrock::LEA4L:

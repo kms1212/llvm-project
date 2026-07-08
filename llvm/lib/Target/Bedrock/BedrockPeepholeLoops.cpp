@@ -4053,6 +4053,258 @@ bool BedrockPeephole::foldAscendingLoadProgressionLoops(
   return Changed;
 }
 
+bool BedrockPeephole::foldImmediateByteCopyRepLoops(MachineFunction &MF) const {
+  bool Changed = false;
+  const BedrockInstrInfo &TII =
+      *static_cast<const BedrockInstrInfo *>(MF.getSubtarget().getInstrInfo());
+  const TargetRegisterInfo &TRI = *MF.getSubtarget().getRegisterInfo();
+
+  auto CollectInstrs = [](MachineBasicBlock &MBB,
+                          SmallVectorImpl<MachineInstr *> &Instrs) {
+    Instrs.clear();
+    for (MachineInstr &MI : MBB)
+      if (!MI.isDebugInstr())
+        Instrs.push_back(&MI);
+  };
+
+  auto MatchJmp = [](MachineInstr &MI, MachineBasicBlock *Target) {
+    return MI.getOpcode() == Bedrock::JMP && MI.getNumOperands() >= 1 &&
+           MI.getOperand(0).isMBB() && MI.getOperand(0).getMBB() == Target;
+  };
+
+  auto MatchAddIndex = [&](MachineInstr &MI, Register Temp, Register Index) {
+    return MI.getOpcode() == Bedrock::ADD64rr && MI.getNumOperands() >= 3 &&
+           MI.getOperand(0).isReg() && MI.getOperand(1).isReg() &&
+           MI.getOperand(2).isReg() &&
+           regsOverlap(TRI, MI.getOperand(0).getReg(), Temp) &&
+           regsOverlap(TRI, MI.getOperand(1).getReg(), Temp) &&
+           regsOverlap(TRI, MI.getOperand(2).getReg(), Index) &&
+           regDefDeadOrDeadAfter(MI.getIterator(), *MI.getParent(),
+                                 Bedrock::FLAGS, TRI);
+  };
+
+  auto MatchAddBase = [&](MachineInstr &MI, Register Temp, Register &Base) {
+    if (MI.getOpcode() != Bedrock::ADD64rr || MI.getNumOperands() < 3 ||
+        !MI.getOperand(0).isReg() || !MI.getOperand(1).isReg() ||
+        !MI.getOperand(2).isReg() ||
+        !regsOverlap(TRI, MI.getOperand(0).getReg(), Temp) ||
+        !regsOverlap(TRI, MI.getOperand(1).getReg(), Temp) ||
+        !regDefDeadOrDeadAfter(MI.getIterator(), *MI.getParent(),
+                               Bedrock::FLAGS, TRI))
+      return false;
+    Base = MI.getOperand(2).getReg();
+    return true;
+  };
+
+  auto MatchIncOne = [&](MachineInstr &MI, Register Index) {
+    if (MI.getNumOperands() < 2 || !MI.getOperand(0).isReg() ||
+        !MI.getOperand(1).isReg() ||
+        !regsOverlap(TRI, MI.getOperand(0).getReg(), Index) ||
+        !regsOverlap(TRI, MI.getOperand(1).getReg(), Index))
+      return false;
+    if (MI.getOpcode() == Bedrock::INC64r)
+      return true;
+    return MI.getOpcode() == Bedrock::ADD64ri && MI.getNumOperands() >= 3 &&
+           MI.getOperand(2).isImm() && MI.getOperand(2).getImm() == 1;
+  };
+
+  auto FindScratchA = [&](MachineBasicBlock &Header, MachineBasicBlock &Body,
+                          Register AvoidA,
+                          Register AvoidB = Register()) {
+    for (Register Reg = Bedrock::A0; Reg <= Bedrock::A7;
+         Reg = Register(Reg + 1)) {
+      if (Reg == Bedrock::SP || regsOverlap(TRI, Reg, AvoidA) ||
+          regsOverlap(TRI, Reg, AvoidB))
+        continue;
+
+      bool TouchedInLoop = false;
+      for (MachineInstr &MI : Header)
+        if (!MI.isDebugInstr() && instrTouchesReg(MI, Reg, TRI)) {
+          TouchedInLoop = true;
+          break;
+        }
+      if (TouchedInLoop)
+        continue;
+      for (MachineInstr &MI : Body)
+        if (!MI.isDebugInstr() && instrTouchesReg(MI, Reg, TRI)) {
+          TouchedInLoop = true;
+          break;
+        }
+      if (TouchedInLoop)
+        continue;
+
+      bool UsedOutsideLoop = false;
+      for (MachineBasicBlock &MBB : MF) {
+        if (&MBB == &Header || &MBB == &Body)
+          continue;
+        for (MachineInstr &MI : MBB) {
+          if (MI.isDebugInstr())
+            continue;
+          if (instrUsesReg(MI, Reg, TRI)) {
+            UsedOutsideLoop = true;
+            break;
+          }
+        }
+        if (UsedOutsideLoop)
+          break;
+      }
+      if (!UsedOutsideLoop)
+        return Reg;
+    }
+    return Register();
+  };
+
+  SmallVector<MachineBasicBlock *, 8> Headers;
+  for (MachineBasicBlock &MBB : MF)
+    Headers.push_back(&MBB);
+
+  SmallVector<MachineInstr *, 8> HeaderInstrs;
+  SmallVector<MachineInstr *, 8> BodyInstrs;
+  for (MachineBasicBlock *Header : Headers) {
+    if (!Header || Header->getParent() != &MF)
+      continue;
+
+    CollectInstrs(*Header, HeaderInstrs);
+    if (HeaderInstrs.size() != 2)
+      continue;
+
+    MachineInstr *CmpI = HeaderInstrs[0];
+    MachineInstr *BranchI = HeaderInstrs[1];
+    if (CmpI->getOpcode() != Bedrock::CMP64ri || CmpI->getNumOperands() < 2 ||
+        !CmpI->getOperand(0).isReg() || !CmpI->getOperand(1).isImm() ||
+        BranchI->getOpcode() != Bedrock::JCC || BranchI->getNumOperands() < 2 ||
+        !BranchI->getOperand(0).isMBB())
+      continue;
+
+    std::optional<int64_t> BranchCC = getCondCodeImm(BranchI->getOperand(1));
+    if (!BranchCC || *BranchCC != BedrockCC::EQ)
+      continue;
+
+    Register IndexReg = CmpI->getOperand(0).getReg();
+    int64_t Count = CmpI->getOperand(1).getImm();
+    if (!isDReg(IndexReg) || Count <= 0)
+      continue;
+
+    MachineInstr *IndexZeroDef =
+        findLastConstDefBefore(*CmpI, IndexReg, 0, TRI);
+    if (!IndexZeroDef)
+      continue;
+
+    MachineBasicBlock *Exit = BranchI->getOperand(0).getMBB();
+    MachineBasicBlock *Body = nullptr;
+    for (MachineBasicBlock *Succ : Header->successors()) {
+      if (Succ == Exit)
+        continue;
+      if (Body) {
+        Body = nullptr;
+        break;
+      }
+      Body = Succ;
+    }
+    if (!Body || Body == Header || Body == Exit || !Header->isSuccessor(Exit) ||
+        !Header->isSuccessor(Body) || !Body->isSuccessor(Header) ||
+        Body->pred_size() != 1)
+      continue;
+
+    CollectInstrs(*Body, BodyInstrs);
+    if (BodyInstrs.size() != 7 || !MatchJmp(*BodyInstrs[6], Header))
+      continue;
+
+    MachineInstr *DstBaseI = BodyInstrs[0];
+    MachineInstr *DstAddI = BodyInstrs[1];
+    MachineInstr *SrcBaseI = BodyInstrs[2];
+    MachineInstr *SrcAddI = BodyInstrs[3];
+    MachineInstr *CopyI = BodyInstrs[4];
+    MachineInstr *IncI = BodyInstrs[5];
+
+    if (DstBaseI->getOpcode() != Bedrock::LEAri ||
+        DstBaseI->getNumOperands() < 3 || !DstBaseI->getOperand(0).isReg() ||
+        !DstBaseI->getOperand(1).isReg() || !DstBaseI->getOperand(2).isImm() ||
+        SrcBaseI->getOpcode() != Bedrock::MOV64rr ||
+        SrcBaseI->getNumOperands() < 2 || !SrcBaseI->getOperand(0).isReg() ||
+        !SrcBaseI->getOperand(1).isReg())
+      continue;
+
+    Register DstTmp = DstBaseI->getOperand(0).getReg();
+    Register DstBase = DstBaseI->getOperand(1).getReg();
+    int64_t DstOffset = DstBaseI->getOperand(2).getImm();
+    Register SrcTmp = SrcBaseI->getOperand(0).getReg();
+    Register SrcBase;
+    if (!isAReg(DstTmp) || !isAReg(SrcTmp) ||
+        DstBase != Bedrock::SP ||
+        regsOverlap(TRI, DstTmp, SrcTmp) ||
+        regsOverlap(TRI, DstTmp, IndexReg) ||
+        regsOverlap(TRI, SrcTmp, IndexReg) ||
+        !regsOverlap(TRI, SrcBaseI->getOperand(1).getReg(), IndexReg) ||
+        !MatchAddIndex(*DstAddI, DstTmp, IndexReg) ||
+        !MatchAddBase(*SrcAddI, SrcTmp, SrcBase) ||
+        !MatchIncOne(*IncI, IndexReg) || hasOrderedMemOperand(*CopyI) ||
+        CopyI->getOpcode() != Bedrock::MOV8mm || CopyI->getNumOperands() < 4 ||
+        !CopyI->getOperand(0).isReg() || !CopyI->getOperand(1).isImm() ||
+        CopyI->getOperand(1).getImm() != 0 ||
+        !CopyI->getOperand(2).isReg() || !CopyI->getOperand(3).isImm() ||
+        CopyI->getOperand(3).getImm() != 0 ||
+        !regsOverlap(TRI, CopyI->getOperand(0).getReg(), SrcTmp) ||
+        !regsOverlap(TRI, CopyI->getOperand(2).getReg(), DstTmp))
+      continue;
+
+    Register RepDst = FindScratchA(*Header, *Body, SrcBase);
+    Register RepSrc =
+        RepDst == Register()
+            ? Register()
+            : FindScratchA(*Header, *Body, SrcBase, RepDst);
+    if (RepDst == Register() || RepSrc == Register())
+      continue;
+
+    SmallPtrSet<MachineBasicBlock *, 8> Visiting;
+    if (!regDeadFromBlockStartInCFG(*Exit, IndexReg, TRI, Visiting))
+      continue;
+    Visiting.clear();
+    if (!regDeadFromBlockStartInCFG(*Exit, Bedrock::FLAGS, TRI, Visiting))
+      continue;
+
+    DebugLoc DL = CmpI->getDebugLoc();
+    BuildMI(*Header, CmpI, DL, TII.get(Bedrock::LEAri), RepDst)
+        .addReg(DstBase)
+        .addImm(DstOffset);
+    BuildMI(*Header, CmpI, DL, TII.get(Bedrock::MOV64rr), RepSrc)
+        .addReg(SrcBase);
+    BuildMI(*Header, CmpI, DL, TII.get(Bedrock::MOV64ri), IndexReg)
+        .addImm(Count);
+    MachineInstrBuilder Rep =
+        BuildMI(*Header, CmpI, DL, TII.get(Bedrock::REPMOV8mmpostboth64),
+                IndexReg)
+            .addReg(IndexReg)
+            .addReg(RepSrc)
+            .addImm(Bedrock::UpdatePostInc)
+            .addReg(RepDst)
+            .addImm(Bedrock::UpdatePostInc);
+    Rep.cloneMemRefs(*CopyI);
+
+    CmpI->eraseFromParent();
+    BranchI->eraseFromParent();
+    IndexZeroDef->eraseFromParent();
+
+    removeAllSuccessors(*Header);
+    Header->addSuccessor(Exit);
+
+    eraseAllNonDebugInstrs(*Body);
+    removeAllSuccessors(*Body);
+    Body->eraseFromParent();
+
+    MachineFunction::iterator Next = std::next(Header->getIterator());
+    if (Next == MF.end() || &*Next != Exit)
+      BuildMI(*Header, Header->end(), DL, TII.get(Bedrock::JMP)).addMBB(Exit);
+
+    removeRegLiveInsWithoutUses(MF, IndexReg, TRI);
+    removeRegLiveInsWithoutUses(MF, RepDst, TRI);
+    removeRegLiveInsWithoutUses(MF, RepSrc, TRI);
+    Changed = true;
+  }
+
+  return Changed;
+}
+
 bool BedrockPeephole::foldByteIndexedMemUtilityLoops(
     MachineFunction &MF) const {
   bool Changed = false;
@@ -4609,4 +4861,3 @@ bool BedrockPeephole::foldScanUntilZeroRepne(MachineFunction &MF) const {
 
   return false;
 }
-

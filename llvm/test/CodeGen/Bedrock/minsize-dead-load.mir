@@ -4,10 +4,28 @@
 # CHECK-NOT:   MOV32rm
 # CHECK:       RET
 
+# CHECK-LABEL: name: dead_ext_add_chain
+# CHECK-NOT:   EXTZQ32rr
+# CHECK-NOT:   ADD64rr
+# CHECK:       RET
+
+# CHECK-LABEL: name: keep_dead_result_live_flags
+# CHECK:       $a0 = EXTZQ32rr $d6
+# CHECK-NEXT:  $a0 = ADD64rr killed $a0, $a6
+# CHECK-NEXT:  JCC
+
 --- |
   target triple = "bedrock"
 
   define void @dead_plain_load() #0 {
+    ret void
+  }
+
+  define void @dead_ext_add_chain() #0 {
+    ret void
+  }
+
+  define void @keep_dead_result_live_flags() #0 {
     ret void
   }
 
@@ -21,5 +39,35 @@ body: |
     liveins: $sp
 
     dead $d6 = MOV32rm $sp, 52
+    RET implicit $sp
+...
+---
+name: dead_ext_add_chain
+tracksRegLiveness: true
+body: |
+  bb.0:
+    liveins: $a6, $d6
+
+    $a0 = EXTZQ32rr $d6, implicit-def dead $flags
+    $a0 = ADD64rr killed $a0, $a6, implicit-def dead $flags
+    RET implicit $sp
+...
+---
+name: keep_dead_result_live_flags
+tracksRegLiveness: true
+body: |
+  bb.0:
+    successors: %bb.1, %bb.2
+    liveins: $a6, $d6
+
+    $a0 = EXTZQ32rr $d6, implicit-def dead $flags
+    $a0 = ADD64rr killed $a0, $a6, implicit-def $flags
+    JCC %bb.1, 2, implicit $flags
+    JMP %bb.2
+
+  bb.1:
+    RET implicit $sp
+
+  bb.2:
     RET implicit $sp
 ...

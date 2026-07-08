@@ -1275,6 +1275,17 @@ void BedrockInstPrinter::printMemOperand(const MCInst *MI, unsigned OpNo,
   OS << ']';
 }
 
+void BedrockInstPrinter::printAbs64MemOperand(const MCInst *MI, unsigned OpNo,
+                                              raw_ostream &OS) {
+  const MCOperand &Op = MI->getOperand(OpNo);
+  OS << '[';
+  if (Op.isExpr())
+    printRelocOperand(Op.getExpr(), "ABS64", OS);
+  else
+    printOperand(MI, OpNo, OS);
+  OS << ']';
+}
+
 void BedrockInstPrinter::printPostIncMemOperand(const MCInst *MI, unsigned OpNo,
                                                 raw_ostream &OS) {
   const MCOperand &Base = MI->getOperand(OpNo);
@@ -1505,6 +1516,16 @@ void BedrockInstPrinter::printAbs64Operand(const MCInst *MI, unsigned OpNo,
   const MCOperand &Op = MI->getOperand(OpNo);
   if (Op.isExpr()) {
     printRelocOperand(Op.getExpr(), "ABS64", OS);
+    return;
+  }
+  printOperand(MI, OpNo, OS);
+}
+
+void BedrockInstPrinter::printImm32Operand(const MCInst *MI, unsigned OpNo,
+                                           raw_ostream &OS) {
+  const MCOperand &Op = MI->getOperand(OpNo);
+  if (Op.isExpr()) {
+    printRelocOperand(Op.getExpr(), "IMM32", OS);
     return;
   }
   printOperand(MI, OpNo, OS);

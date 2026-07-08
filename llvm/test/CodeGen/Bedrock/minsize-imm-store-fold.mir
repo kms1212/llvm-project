@@ -5,10 +5,46 @@
 # CHECK:       MOV16mi 20564, $a6, 0
 # CHECK:       MOV16mi 1234, $sp, 8
 
+# CHECK-LABEL: name: wide_imm_store_fold
+# CHECK-NOT:   MOV32mr
+# CHECK-NOT:   MOV64mr
+# CHECK:       MOV32mi 32768, $a6, 4
+# CHECK:       MOV64mi 15859715, $a6, 8
+
+# CHECK-LABEL: name: live_imm_reg_negative
+# CHECK:       $d0 = MOV32ri 99
+# CHECK-NEXT:  MOV32mr $d0, $a6, 0
+# CHECK-NEXT:  $d1 = MOV32rr killed $d0
+# CHECK-NOT:   MOV32mi 99, $a6, 0
+
+# CHECK-LABEL: name: zero_imm_store_negative
+# CHECK:       CLRm $a6, 8
+# CHECK-NOT:   MOV64mi 0, $a6, 8
+
+# CHECK-LABEL: name: volatile_imm_store_fold
+# CHECK-NOT:   MOV8mr
+# CHECK:       MOV8mi 1, $a6, 0 :: (volatile store (s8))
+
 --- |
   target triple = "bedrock"
 
   define void @imm16_store_fold() #0 {
+    ret void
+  }
+
+  define void @wide_imm_store_fold() #0 {
+    ret void
+  }
+
+  define void @live_imm_reg_negative() #0 {
+    ret void
+  }
+
+  define void @zero_imm_store_negative() #0 {
+    ret void
+  }
+
+  define void @volatile_imm_store_fold() #0 {
     ret void
   }
 
@@ -25,5 +61,52 @@ body: |
     MOV16mr killed $d0, $a6, 0
     $d1 = MOV16ri 1234
     MOV16mr killed $d1, $sp, 8
+    RET implicit $sp
+...
+---
+name: wide_imm_store_fold
+tracksRegLiveness: true
+body: |
+  bb.0:
+    liveins: $a6
+
+    $d0 = MOV32ri 32768
+    MOV32mr killed $d0, $a6, 4
+    $d1 = MOV64ri 15859715
+    MOV64mr killed $d1, $a6, 8
+    RET implicit $sp
+...
+---
+name: live_imm_reg_negative
+tracksRegLiveness: true
+body: |
+  bb.0:
+    liveins: $a6
+
+    $d0 = MOV32ri 99
+    MOV32mr $d0, $a6, 0
+    $d1 = MOV32rr killed $d0
+    RET implicit $sp, implicit $d1
+...
+---
+name: zero_imm_store_negative
+tracksRegLiveness: true
+body: |
+  bb.0:
+    liveins: $a6
+
+    $d0 = MOV64ri 0
+    MOV64mr killed $d0, $a6, 8
+    RET implicit $sp
+...
+---
+name: volatile_imm_store_fold
+tracksRegLiveness: true
+body: |
+  bb.0:
+    liveins: $a6
+
+    $d0 = MOV8ri 1
+    MOV8mr killed $d0, $a6, 0 :: (volatile store (s8))
     RET implicit $sp
 ...

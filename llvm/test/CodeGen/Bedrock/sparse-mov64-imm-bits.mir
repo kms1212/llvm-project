@@ -1,0 +1,131 @@
+# RUN: llc -mtriple=bedrock -start-before=bedrock-peephole -stop-after=bedrock-peephole -verify-machineinstrs %s -o - | FileCheck %s
+
+# CHECK-LABEL: name: sparse_high_mov
+# CHECK-NOT:   MOV64ri 8589934592
+# CHECK:       $d0 = CLR64r
+# CHECK:       $d0 = BSET64ri $d0, 33
+
+# CHECK-LABEL: name: sparse_high_low_mov
+# CHECK-NOT:   MOV64ri 4294967306
+# CHECK:       $d0 = MOV64ri 10
+# CHECK:       $d0 = BSET64ri $d0, 32
+
+# CHECK-LABEL: name: high_shift_mov
+# CHECK-NOT:   MOV64ri 21474836480
+# CHECK:       $d0 = MOV64ri 5
+# CHECK:       $d0 = SHL64ri $d0, 32
+
+# CHECK-LABEL: name: sparse_high_a_negative
+# CHECK:       $a0 = MOV64ri 8589934592
+
+# CHECK-LABEL: name: sparse_high_flags_live_negative
+# CHECK:       $d0 = MOV64ri 8589934592
+# CHECK:       JCC
+
+# CHECK-LABEL: name: high_or_uses_scratch
+# CHECK-NOT:   OR64ri $d0, 60129542144
+# CHECK:       $d1 = MOV64ri 14
+# CHECK-NEXT:  $d1 = SHL64ri $d1, 32
+# CHECK-NEXT:  $d0 = OR64rr $d0, killed $d1
+
+# CHECK-LABEL: name: high_or_no_scratch_negative
+# CHECK:       $d0 = OR64ri $d0, 60129542144
+
+--- |
+  target triple = "bedrock"
+
+  define void @sparse_high_mov() {
+    ret void
+  }
+
+  define void @sparse_high_low_mov() {
+    ret void
+  }
+
+  define void @high_shift_mov() {
+    ret void
+  }
+
+  define void @sparse_high_a_negative() {
+    ret void
+  }
+
+  define void @sparse_high_flags_live_negative() {
+    ret void
+  }
+
+  define void @high_or_uses_scratch() {
+    ret void
+  }
+
+  define void @high_or_no_scratch_negative() {
+    ret void
+  }
+...
+---
+name: sparse_high_mov
+tracksRegLiveness: true
+body: |
+  bb.0:
+    $d0 = MOV64ri 8589934592
+    RET implicit $d0, implicit $sp
+...
+---
+name: sparse_high_low_mov
+tracksRegLiveness: true
+body: |
+  bb.0:
+    $d0 = MOV64ri 4294967306
+    RET implicit $d0, implicit $sp
+...
+---
+name: high_shift_mov
+tracksRegLiveness: true
+body: |
+  bb.0:
+    $d0 = MOV64ri 21474836480
+    RET implicit $d0, implicit $sp
+...
+---
+name: sparse_high_a_negative
+tracksRegLiveness: true
+body: |
+  bb.0:
+    $a0 = MOV64ri 8589934592
+    RET implicit $a0, implicit $sp
+...
+---
+name: sparse_high_flags_live_negative
+tracksRegLiveness: true
+body: |
+  bb.0:
+    successors: %bb.1
+
+    $d0 = MOV64ri 8589934592
+    JCC %bb.1, 1, implicit $flags
+
+  bb.1:
+    liveins: $d0
+
+    RET implicit $d0, implicit $sp
+...
+---
+name: high_or_uses_scratch
+tracksRegLiveness: true
+body: |
+  bb.0:
+    liveins: $d0
+
+    $d0 = OR64ri $d0, 60129542144, implicit-def dead $flags
+    RET implicit $d0, implicit $sp
+...
+---
+name: high_or_no_scratch_negative
+tracksRegLiveness: true
+body: |
+  bb.0:
+    liveins: $d0, $d1, $d2, $d3, $d4, $d5
+
+    $d0 = OR64ri $d0, 60129542144, implicit-def dead $flags
+    RET implicit $d0, implicit $d1, implicit $d2, implicit $d3, implicit $d4, implicit $d5, implicit $sp
+...

@@ -29,6 +29,7 @@ public:
   void printOperand(const MCInst *MI, unsigned OpNo, raw_ostream &OS);
   void printShortImmOperand(const MCInst *MI, unsigned OpNo, raw_ostream &OS);
   void printMemOperand(const MCInst *MI, unsigned OpNo, raw_ostream &OS);
+  void printAbs64MemOperand(const MCInst *MI, unsigned OpNo, raw_ostream &OS);
   void printPostIncMemOperand(const MCInst *MI, unsigned OpNo, raw_ostream &OS);
   void printUpdateMemOperand(const MCInst *MI, unsigned OpNo, raw_ostream &OS);
   void printLeaScale4Operand(const MCInst *MI, unsigned OpNo, raw_ostream &OS);
@@ -47,6 +48,7 @@ public:
   void printRegMask16(const MCInst *MI, unsigned OpNo, raw_ostream &OS);
   void printFRegMask16(const MCInst *MI, unsigned OpNo, raw_ostream &OS);
   void printMemoryOrder(const MCInst *MI, unsigned OpNo, raw_ostream &OS);
+  void printImm32Operand(const MCInst *MI, unsigned OpNo, raw_ostream &OS);
   void printAbs64Operand(const MCInst *MI, unsigned OpNo, raw_ostream &OS);
   void printEncodedInst(const MCInst *MI, raw_ostream &OS);
 

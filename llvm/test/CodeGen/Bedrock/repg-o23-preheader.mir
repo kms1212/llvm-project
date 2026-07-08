@@ -1,0 +1,175 @@
+# RUN: llc -mtriple=bedrock -O1 %s -o - | FileCheck %s --check-prefix=O1
+# RUN: llc -mtriple=bedrock -O2 %s -o - | FileCheck %s --check-prefix=O2
+# RUN: llc -mtriple=bedrock -O3 %s -o - | FileCheck %s --check-prefix=O3
+# RUN: llc -mtriple=bedrock -O2 -filetype=obj %s -o %t.o
+# RUN: llvm-objdump -d %t.o | FileCheck %s --check-prefix=DIS
+
+# O1-LABEL: repg_preheader_pair_linear:
+# O1:       DJT.L
+# O1-NOT:   REPG
+
+# O2-LABEL: repg_preheader_pair_linear:
+# O2:       TEST.L [[COUNT:D[0-7]]], [[COUNT]]
+# O2-NEXT:  JEQ.W
+# O2:       MOV.Q D1, D3
+# O2:       REPG [[COUNT]], {
+# O2:         MOV.L [A1++], D5
+# O2:         MOV.L [A0++], A3
+# O2:         MOV.L D1, [A2++]
+# O2:       }
+# O2-NOT:   DJT.
+
+# O3-LABEL: repg_preheader_pair_linear:
+# O3:       MOV.Q D1, D3
+# O3:       REPG [[COUNT:D[0-7]]], {
+# O3:         MOV.L [A1++], D5
+# O3:         MOV.L [A0++], A3
+# O3:         MOV.L D1, [A2++]
+# O3:       }
+
+# O2-LABEL: repg_preheader_tail_copy:
+# O2:       REPG [[TAILCOUNT:D[0-7]]], {
+# O2:         MOV.L [A0++], D1
+# O2:         MOV.Q D1, D4
+# O2:       }
+# O2-NOT:   JNE.W
+
+# O3-LABEL: repg_preheader_tail_copy:
+# O3:       REPG [[TAILCOUNT:D[0-7]]], {
+# O3:         MOV.L [A0++], D1
+# O3:         MOV.Q D1, D4
+# O3:       }
+
+# DIS-LABEL: <repg_preheader_pair_linear>:
+# DIS:       REPG
+# DIS:       ENDG
+# DIS-LABEL: <repg_preheader_tail_copy>:
+# DIS:       REPG
+# DIS:       ENDG
+
+--- |
+  target triple = "bedrock"
+
+  define i32 @repg_preheader_pair_linear(i32 %n, ptr %a, ptr %b, ptr %c,
+                                         i32 %bias) {
+  entry:
+    br i1 true, label %while.body.preheader, label %while.end
+
+  while.body.preheader:
+    br label %while.body
+
+  while.body:
+    br i1 true, label %while.body, label %while.end.loopexit
+
+  while.end.loopexit:
+    br label %while.end
+
+  while.end:
+    ret i32 0
+  }
+
+  define i32 @repg_preheader_tail_copy(i32 %n, ptr %a, i32 %seed) {
+  entry2:
+    br i1 true, label %while.body.preheader2, label %while.end2
+
+  while.body.preheader2:
+    br label %while.body2
+
+  while.body2:
+    br i1 true, label %while.body2, label %while.end2
+
+  while.end2:
+    ret i32 0
+  }
+...
+---
+name: repg_preheader_pair_linear
+tracksRegLiveness: true
+body: |
+  bb.0.entry:
+    successors: %bb.4(0x30000000), %bb.1(0x50000000)
+    liveins: $a0, $a1, $a2, $d0, $d1
+
+    $d2 = MOV32rr $d0
+    $d0 = CLR64r
+    TEST32rr $d2, $d2, implicit-def $flags
+    JCC %bb.4, 2, implicit $flags
+
+  bb.1.while.body.preheader:
+    successors: %bb.2(0x80000000)
+    liveins: $a0, $a1, $a2, $d1, $d2
+
+    $d3 = MOV64rr $d1
+
+  bb.2.while.body:
+    successors: %bb.3(0x04000000), %bb.2(0x7c000000)
+    liveins: $a0, $a1, $a2, $d1, $d2, $d3, $d4
+
+    $d0 = MOV64rr killed $d1
+    $d5 = MOV32postrm $a1
+    $a3 = MOV32postrm $a0
+    $d1 = MOV64rr $a3
+    $d1 = ADD32rr killed $d1, $d5, implicit-def dead $flags
+    $d1 = ADD32rr killed $d1, $d3, implicit-def dead $flags
+    MOV32postmr $d1, $a2
+    $d1 = ADD32rr killed $d1, $d0, implicit-def dead $flags
+    $d3 = ADD32ri killed $d3, 3, implicit-def dead $flags
+    $d2 = DJCC32r $d2, %bb.2, 0
+
+  bb.3.while.end.loopexit:
+    successors: %bb.4(0x80000000)
+    liveins: $a3, $d0, $d3, $d5
+
+    $d0 = ADD32rr killed $d0, killed $a3, implicit-def dead $flags
+    $d0 = ADD32rr killed $d0, killed $d5, implicit-def dead $flags
+    $d0 = ADD32rr killed $d0, $d3, implicit-def dead $flags
+    $d0 = SUB32ri killed $d0, 3, implicit-def dead $flags
+    $d0 = XOR32rr killed $d0, killed $d3, implicit-def dead $flags
+
+  bb.4.while.end:
+    liveins: $d0
+
+    RET implicit $sp, implicit $d0
+...
+---
+name: repg_preheader_tail_copy
+tracksRegLiveness: true
+body: |
+  bb.0.entry2:
+    successors: %bb.3(0x30000000), %bb.1(0x50000000)
+    liveins: $a0, $d0, $d1
+
+    TEST32rr $d0, $d0, implicit-def $flags
+    JCC %bb.3, 2, implicit $flags
+
+  bb.1.while.body.preheader2:
+    successors: %bb.2(0x80000000)
+    liveins: $a0, $d0, $d1
+
+    $d3 = MOV32ri 3
+    $d4 = MOV64rr killed $d1
+
+  bb.2.while.body2:
+    successors: %bb.3(0x04000000), %bb.2(0x7c000000)
+    liveins: $a0, $d0, $d3, $d4
+
+    $d1 = MOV32postrm $a0
+    $d5 = MOV64rr $d1
+    $d5 = MULU32rr killed $d5, $d3, implicit-def dead $flags
+    $d5 = ADD32rr killed $d5, killed $d4, implicit-def dead $flags
+    $d4 = MOV64rr $d5
+    $d4 = SHR32ri killed $d4, 27, implicit-def dead $flags
+    $d5 = SHL32ri killed $d5, 5, implicit-def dead $flags
+    $d5 = OR32rr killed $d5, killed $d4, implicit-def dead $flags
+    $d1 = SHR32ri killed $d1, 7, implicit-def dead $flags
+    $d1 = XOR32rr killed $d1, killed $d5, implicit-def dead $flags
+    $d0 = DEC32r $d0, implicit-def $flags
+    $d4 = MOV64rr $d1
+    JCC %bb.2, 3, implicit $flags
+
+  bb.3.while.end2:
+    liveins: $d1
+
+    $d0 = MOV64rr killed $d1
+    RET implicit $sp, implicit $d0
+...

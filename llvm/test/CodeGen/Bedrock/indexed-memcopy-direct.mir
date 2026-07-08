@@ -1,0 +1,67 @@
+# RUN: llc -mtriple=bedrock -start-before=bedrock-peephole -stop-after=bedrock-peephole -verify-machineinstrs %s -o - | FileCheck %s
+
+# CHECK-LABEL: name: indexed_load_to_plain_store
+# CHECK:       MOV32idx4mm $a0, $d1, 12, $sp, 20
+# CHECK-NOT:   MOV32idx4rm
+# CHECK-NOT:   MOV32mr
+
+# CHECK-LABEL: name: plain_load_to_indexed_store
+# CHECK:       MOV32midx4 $a6, 8, $sp, $d0, 48
+# CHECK-NOT:   MOV32rm
+# CHECK-NOT:   MOV32idx4mr
+
+# CHECK-LABEL: name: keep_when_tmp_is_index
+# CHECK:       $d0 = MOV32rm $a6, 0
+# CHECK-NEXT:  MOV32idx4mr killed $d0, $sp, $d0, 48
+# CHECK-NOT:   MOV32midx4
+
+--- |
+  target triple = "bedrock"
+
+  define void @indexed_load_to_plain_store() #0 {
+    ret void
+  }
+
+  define void @plain_load_to_indexed_store() #0 {
+    ret void
+  }
+
+  define void @keep_when_tmp_is_index() #0 {
+    ret void
+  }
+
+  attributes #0 = { minsize optsize }
+...
+---
+name: indexed_load_to_plain_store
+tracksRegLiveness: true
+body: |
+  bb.0:
+    liveins: $a0, $d1
+
+    $d2 = MOV32idx4rm $a0, $d1, 12
+    MOV32mr killed $d2, $sp, 20
+    RET implicit $sp
+...
+---
+name: plain_load_to_indexed_store
+tracksRegLiveness: true
+body: |
+  bb.0:
+    liveins: $a6, $d0
+
+    $d1 = MOV32rm $a6, 8
+    MOV32idx4mr killed $d1, $sp, $d0, 48
+    RET implicit $sp
+...
+---
+name: keep_when_tmp_is_index
+tracksRegLiveness: true
+body: |
+  bb.0:
+    liveins: $a6
+
+    $d0 = MOV32rm $a6, 0
+    MOV32idx4mr killed $d0, $sp, $d0, 48
+    RET implicit $sp
+...

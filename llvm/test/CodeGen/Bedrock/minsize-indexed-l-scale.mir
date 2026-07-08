@@ -1,7 +1,7 @@
 # RUN: llc -mtriple=bedrock -start-before=bedrock-peephole -stop-after=bedrock-peephole -verify-machineinstrs %s -o - | FileCheck %s
 
 # CHECK-LABEL: name: indexed_l_scale_from_scaled_d
-# CHECK:       $d2 = MOV32idx4lrm $sp, $d1, 16
+# CHECK:       $d2 = MOV32idx4lrm $sp, $d0, 16
 # CHECK-NOT:   EXTZQ32rr
 # CHECK-NOT:   SHL64ri
 # CHECK-NOT:   MOV32idx1rm

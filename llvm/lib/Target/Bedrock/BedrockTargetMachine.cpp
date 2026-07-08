@@ -10,7 +10,9 @@
 
 #include "Bedrock.h"
 #include "BedrockMachineFunctionInfo.h"
+#include "BedrockTargetTransformInfo.h"
 #include "TargetInfo/BedrockTargetInfo.h"
+#include "llvm/Analysis/TargetTransformInfo.h"
 #include "llvm/CodeGen/Passes.h"
 #include "llvm/CodeGen/TargetLoweringObjectFileImpl.h"
 #include "llvm/CodeGen/TargetPassConfig.h"
@@ -85,6 +87,11 @@ BedrockTargetMachine::getSubtargetImpl(const Function &F) const {
   if (!I)
     I = std::make_unique<BedrockSubtarget>(TargetTriple, CPU, FS, *this);
   return I.get();
+}
+
+TargetTransformInfo
+BedrockTargetMachine::getTargetTransformInfo(const Function &F) const {
+  return TargetTransformInfo(std::make_unique<BedrockTTIImpl>(this, F));
 }
 
 MachineFunctionInfo *BedrockTargetMachine::createMachineFunctionInfo(

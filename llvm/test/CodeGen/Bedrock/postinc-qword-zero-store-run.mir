@@ -1,0 +1,200 @@
+# RUN: llc -mtriple=bedrock -start-before=bedrock-peephole -stop-after=bedrock-peephole -verify-machineinstrs %s -o - | FileCheck %s
+
+# CHECK-LABEL: name: postinc_qword_zero_store_run
+# CHECK:       $d0 = MOV32ri 6
+# CHECK-NEXT:  $d0 = REPMOV32postmr $d0, $a6, $a0, 4
+# CHECK-NOT:   MOV64postmr
+
+# CHECK-LABEL: name: postinc_qword_zero_store_run_keeps_short_runs
+# CHECK:       MOV64postmr $a6, $a0
+# CHECK-NEXT:  MOV64postmr $a6, $a0
+# CHECK-NOT:   REPMOV32postmr
+
+# CHECK-LABEL: name: postinc_qword_zero_store_run_keeps_live_flags
+# CHECK:       MOV64postmr $a6, $a0
+# CHECK-NEXT:  MOV64postmr $a6, $a0
+# CHECK-NEXT:  MOV64postmr $a6, $a0
+# CHECK-NOT:   REPMOV32postmr
+
+# CHECK-LABEL: name: offset_qword_zero_store_run_with_lea_alias
+# CHECK:       $a1 = LEAri $a0, 4096
+# CHECK-NEXT:  $a1 = ADD64ri $a1, -8
+# CHECK-NEXT:  $d1 = MOV32ri 6
+# CHECK-NEXT:  $d1 = REPMOV32postmr $d1, $d0, $a1, 4
+# CHECK-NOT:   MOV64mr
+
+# CHECK-LABEL: name: offset_qword_zero_store_run_preserves_live_base
+# CHECK:       $a1 = LEAri $a0, 8
+# CHECK-NEXT:  $d1 = MOV32ri 6
+# CHECK-NEXT:  $d1 = REPMOV32postmr $d1, $d0, $a1, 4
+# CHECK-NEXT:  MOV64mr $d2, $a0, 0
+# CHECK-NOT:   MOV64mr $d0, $a0, 8
+
+# CHECK-LABEL: name: offset_qword_zero_store_run_descending
+# CHECK:       $a1 = LEAri $a0, 8
+# CHECK-NEXT:  $d1 = MOV32ri 6
+# CHECK-NEXT:  $d1 = REPMOV32postmr $d1, $d0, $a1, 4
+# CHECK-NEXT:  MOV64mr $d2, $a0, 0
+# CHECK-NOT:   MOV64mr $d0, $a0, 24
+
+# CHECK-LABEL: name: offset_qword_zero_store_run_sp_base
+# CHECK:       $a0 = LEAri $sp, 40
+# CHECK-NEXT:  $d1 = MOV32ri 6
+# CHECK-NEXT:  $d1 = REPMOV32postmr $d1, $d0, $a0, 4
+# CHECK-NOT:   MOV64mr $d0, $sp, 40
+
+# CHECK-LABEL: name: offset_qword_zero_store_run_keeps_live_flags
+# CHECK:       MOV64mr $d0, $a0, 0
+# CHECK-NEXT:  MOV64mr $d0, $a0, 8
+# CHECK-NEXT:  MOV64mr $d0, $a0, 16
+# CHECK-NOT:   REPMOV32postmr
+
+--- |
+  target triple = "bedrock"
+
+  define void @postinc_qword_zero_store_run() #0 {
+    ret void
+  }
+
+  define void @postinc_qword_zero_store_run_keeps_short_runs() #0 {
+    ret void
+  }
+
+  define void @postinc_qword_zero_store_run_keeps_live_flags() #0 {
+    ret void
+  }
+
+  define void @offset_qword_zero_store_run_with_lea_alias() #0 {
+    ret void
+  }
+
+  define void @offset_qword_zero_store_run_preserves_live_base() #0 {
+    ret void
+  }
+
+  define void @offset_qword_zero_store_run_descending() #0 {
+    ret void
+  }
+
+  define void @offset_qword_zero_store_run_sp_base() #0 {
+    ret void
+  }
+
+  define void @offset_qword_zero_store_run_keeps_live_flags() #0 {
+    ret void
+  }
+
+  attributes #0 = { minsize optsize }
+...
+---
+name: postinc_qword_zero_store_run
+tracksRegLiveness: true
+body: |
+  bb.0:
+    liveins: $a0
+
+    $a6 = CLR64r
+    MOV64postmr $a6, $a0
+    MOV64postmr $a6, $a0
+    MOV64postmr $a6, $a0
+    RET implicit $sp
+...
+---
+name: postinc_qword_zero_store_run_keeps_short_runs
+tracksRegLiveness: true
+body: |
+  bb.0:
+    liveins: $a0
+
+    $a6 = CLR64r
+    MOV64postmr $a6, $a0
+    MOV64postmr $a6, $a0
+    RET implicit $sp
+...
+---
+name: postinc_qword_zero_store_run_keeps_live_flags
+tracksRegLiveness: true
+body: |
+  bb.0:
+    liveins: $a0, $flags
+
+    $a6 = CLR64r
+    MOV64postmr $a6, $a0
+    MOV64postmr $a6, $a0
+    MOV64postmr $a6, $a0
+    JCC %bb.1, 0, implicit $flags
+
+  bb.1:
+    RET implicit $sp
+...
+---
+name: offset_qword_zero_store_run_with_lea_alias
+tracksRegLiveness: true
+body: |
+  bb.0:
+    liveins: $a0
+
+    $d0 = CLR64r
+    $a1 = LEAri $a0, 4096
+    MOV64mr $d0, $a1, -8
+    MOV64mr $d0, $a0, 4096
+    MOV64mr $d0, killed $a1, 8
+    RET implicit $sp
+...
+---
+name: offset_qword_zero_store_run_preserves_live_base
+tracksRegLiveness: true
+body: |
+  bb.0:
+    liveins: $a0, $d2
+
+    $d0 = CLR64r
+    MOV64mr $d0, $a0, 8
+    MOV64mr $d0, $a0, 16
+    MOV64mr $d0, $a0, 24
+    MOV64mr $d2, $a0, 0
+    RET implicit $sp
+...
+---
+name: offset_qword_zero_store_run_descending
+tracksRegLiveness: true
+body: |
+  bb.0:
+    liveins: $a0, $d2
+
+    $d0 = CLR64r
+    MOV64mr $d0, $a0, 24
+    MOV64mr $d0, $a0, 16
+    MOV64mr $d0, $a0, 8
+    MOV64mr $d2, $a0, 0
+    RET implicit $sp
+...
+---
+name: offset_qword_zero_store_run_sp_base
+tracksRegLiveness: true
+body: |
+  bb.0:
+    $d0 = CLR64r
+    $d2 = MOV64rr $d0
+    MOV64mr $d0, $sp, 32
+    MOV64mr $d0, $sp, 40
+    MOV64mr $d0, $sp, 48
+    MOV64mr $d0, $sp, 56
+    RET implicit $sp
+...
+---
+name: offset_qword_zero_store_run_keeps_live_flags
+tracksRegLiveness: true
+body: |
+  bb.0:
+    liveins: $a0, $flags
+
+    $d0 = CLR64r
+    MOV64mr $d0, $a0, 0
+    MOV64mr $d0, $a0, 8
+    MOV64mr $d0, $a0, 16
+    JCC %bb.1, 0, implicit $flags
+
+  bb.1:
+    RET implicit $sp
+...

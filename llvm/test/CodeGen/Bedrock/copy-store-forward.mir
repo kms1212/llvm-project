@@ -1,0 +1,117 @@
+# RUN: llc -mtriple=bedrock -start-before=bedrock-peephole -stop-after=bedrock-peephole -verify-machineinstrs %s -o - | FileCheck %s
+
+# CHECK-LABEL: name: copy_store_forward
+# CHECK:       MOV64mr $a6, $sp, 16
+# CHECK-NOT:   MOV64rr $a6
+
+# CHECK-LABEL: name: copy_store_forward_32
+# CHECK:       MOV32mr $d2, $sp, 12
+# CHECK-NOT:   MOV32rr $d2
+
+# CHECK-LABEL: name: copy_store_forward_64_to_32
+# CHECK:       MOV32mr $d2, $sp, 20
+# CHECK-NOT:   MOV64rr $d0
+
+# CHECK-LABEL: name: volatile_copy_store_forward
+# CHECK:       MOV8mr $d1, $a0, 0 :: (volatile store (s8))
+# CHECK-NOT:   MOV8rr $d1
+
+# CHECK-LABEL: name: keep_copy_when_used_as_base
+# CHECK:       $a0 = MOV64rr killed $a6
+# CHECK-NEXT:  MOV64mr killed $a0, killed $a0, 0
+
+# CHECK-LABEL: name: keep_live_copy
+# CHECK:       $a0 = MOV64rr killed $a6
+# CHECK-NEXT:  MOV64mr $a0, $sp, 8
+# CHECK-NEXT:  MOV64mr killed $a0, $sp, 16
+
+--- |
+  target triple = "bedrock"
+
+  define void @copy_store_forward() #0 {
+    ret void
+  }
+
+  define void @copy_store_forward_32() #0 {
+    ret void
+  }
+
+  define void @copy_store_forward_64_to_32() #0 {
+    ret void
+  }
+
+  define void @volatile_copy_store_forward() #0 {
+    ret void
+  }
+
+  define void @keep_copy_when_used_as_base() #0 {
+    ret void
+  }
+
+  define void @keep_live_copy() #0 {
+    ret void
+  }
+
+  attributes #0 = { noinline nounwind optnone }
+...
+---
+name: copy_store_forward
+tracksRegLiveness: true
+body: |
+  bb.0:
+    liveins: $a6
+    $a0 = MOV64rr killed $a6
+    MOV64mr killed $a0, $sp, 16
+    RET implicit $sp
+...
+---
+name: copy_store_forward_32
+tracksRegLiveness: true
+body: |
+  bb.0:
+    liveins: $d2
+    $d0 = MOV32rr killed $d2
+    MOV32mr killed $d0, $sp, 12
+    RET implicit $sp
+...
+---
+name: copy_store_forward_64_to_32
+tracksRegLiveness: true
+body: |
+  bb.0:
+    liveins: $d2
+    $d0 = MOV64rr killed $d2
+    MOV32mr killed $d0, $sp, 20
+    RET implicit $sp
+...
+---
+name: volatile_copy_store_forward
+tracksRegLiveness: true
+body: |
+  bb.0:
+    liveins: $a0, $d1
+    $d0 = MOV8rr killed $d1
+    MOV8mr killed $d0, $a0, 0 :: (volatile store (s8))
+    RET implicit $sp
+...
+---
+name: keep_copy_when_used_as_base
+tracksRegLiveness: true
+body: |
+  bb.0:
+    liveins: $a6
+    $a0 = MOV64rr killed $a6
+    MOV64mr killed $a0, killed $a0, 0
+    RET implicit $sp
+...
+---
+name: keep_live_copy
+tracksRegLiveness: true
+body: |
+  bb.0:
+    liveins: $a6
+    $a0 = MOV64rr killed $a6
+    MOV64mr $a0, $sp, 8
+    MOV64mr killed $a0, $sp, 16
+    RET implicit $sp
+...

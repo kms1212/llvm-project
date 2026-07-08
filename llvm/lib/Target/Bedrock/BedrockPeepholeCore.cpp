@@ -122,6 +122,47 @@ bool BedrockPeephole::foldArgTruncBitOps(MachineBasicBlock &MBB,
   return Changed;
 }
 
+static bool isRegRegExtOpcode(unsigned Opcode) {
+  switch (Opcode) {
+  default:
+    return false;
+  case Bedrock::EXTZQ8rr:
+  case Bedrock::EXTZQ16rr:
+  case Bedrock::EXTZQ32rr:
+  case Bedrock::EXTSQ8rr:
+  case Bedrock::EXTSQ16rr:
+  case Bedrock::EXTSQ32rr:
+  case Bedrock::EXTZL8rr:
+  case Bedrock::EXTZL16rr:
+  case Bedrock::EXTSL8rr:
+  case Bedrock::EXTSL16rr:
+  case Bedrock::EXTZW8rr:
+  case Bedrock::EXTSW8rr:
+    return true;
+  }
+}
+
+static bool canUseRegAsExtSource(unsigned Opcode, Register Reg) {
+  if (isDReg(Reg))
+    return true;
+
+  switch (Opcode) {
+  default:
+    return false;
+  case Bedrock::EXTZQ32rr:
+  case Bedrock::EXTSQ32rr:
+    return isAReg(Reg);
+  }
+}
+
+static unsigned countHighBits(uint64_t Imm) {
+  unsigned Count = 0;
+  for (unsigned Bit = 32; Bit != 64; ++Bit)
+    if ((Imm & (uint64_t(1) << Bit)) != 0)
+      ++Count;
+  return Count;
+}
+
 bool BedrockPeephole::foldCompactUnary(MachineBasicBlock &MBB,
                                            MachineFunction &MF) const {
   bool Changed = false;
@@ -137,10 +178,60 @@ bool BedrockPeephole::foldCompactUnary(MachineBasicBlock &MBB,
     switch (MI.getOpcode()) {
     default:
       break;
+    case Bedrock::MOV64ri:
+      if (MI.getNumOperands() >= 2 && MI.getOperand(0).isReg() &&
+          MI.getOperand(1).isImm() && isDReg(MI.getOperand(0).getReg())) {
+        Register Dst = MI.getOperand(0).getReg();
+        uint64_t Imm = static_cast<uint64_t>(MI.getOperand(1).getImm());
+        uint64_t Low = Imm & 0xffffffffULL;
+        unsigned HighBits = countHighBits(Imm);
+        unsigned SeedBytes = Low == 0 ? 2 : 4;
+        if ((Imm >> 32) != 0 && Low <= 0xffff && HighBits != 0 &&
+            SeedBytes + HighBits * 4 < 10 &&
+            regDeadAfterInCFG(std::next(MI.getIterator()), MBB,
+                              Bedrock::FLAGS, TRI)) {
+          if (Low == 0) {
+            BuildMI(MBB, MI.getIterator(), MI.getDebugLoc(),
+                    TII.get(Bedrock::CLR64r), Dst);
+          } else {
+            BuildMI(MBB, MI.getIterator(), MI.getDebugLoc(),
+                    TII.get(Bedrock::MOV64ri), Dst)
+                .addImm(Low);
+          }
+          for (unsigned Bit = 32; Bit != 64; ++Bit) {
+            if ((Imm & (uint64_t(1) << Bit)) == 0)
+              continue;
+            BuildMI(MBB, MI.getIterator(), MI.getDebugLoc(),
+                    TII.get(Bedrock::BSET64ri), Dst)
+                .addReg(Dst)
+                .addImm(Bit);
+          }
+          MI.eraseFromParent();
+          I = MBB.begin();
+          Changed = true;
+          continue;
+        }
+        uint64_t High = Imm >> 32;
+        if (Low == 0 && High != 0 && High <= 0xffff &&
+            regDeadAfterInCFG(std::next(MI.getIterator()), MBB,
+                              Bedrock::FLAGS, TRI)) {
+          BuildMI(MBB, MI.getIterator(), MI.getDebugLoc(),
+                  TII.get(Bedrock::MOV64ri), Dst)
+              .addImm(High);
+          BuildMI(MBB, MI.getIterator(), MI.getDebugLoc(),
+                  TII.get(Bedrock::SHL64ri), Dst)
+              .addReg(Dst)
+              .addImm(32);
+          MI.eraseFromParent();
+          I = MBB.begin();
+          Changed = true;
+          continue;
+        }
+      }
+      [[fallthrough]];
     case Bedrock::MOV8ri:
     case Bedrock::MOV16ri:
     case Bedrock::MOV32ri:
-    case Bedrock::MOV64ri:
       if (MI.getNumOperands() >= 2 && MI.getOperand(0).isReg() &&
           MI.getOperand(1).isImm() && MI.getOperand(1).getImm() == 0) {
         Register Dst = MI.getOperand(0).getReg();
@@ -156,20 +247,84 @@ bool BedrockPeephole::foldCompactUnary(MachineBasicBlock &MBB,
     case Bedrock::AND64ri:
       if (MI.getNumOperands() >= 3 && MI.getOperand(0).isReg() &&
           MI.getOperand(1).isReg() && MI.getOperand(2).isImm() &&
-          uint64_t(MI.getOperand(2).getImm()) == 0xffffffffULL &&
           regsOverlap(TRI, MI.getOperand(0).getReg(),
                       MI.getOperand(1).getReg())) {
         Register Dst = MI.getOperand(0).getReg();
         Register Src = MI.getOperand(1).getReg();
-        BuildMI(MBB, MI.getIterator(), MI.getDebugLoc(),
-                TII.get(Bedrock::EXTZQ32rr), Dst)
-            .addReg(Src, getKillRegState(operandIsKill(MI, Src, TRI)));
+        uint64_t Mask = MI.getOperand(2).getImm();
+        unsigned ExtOpcode = 0;
+        if (Mask == 0xffULL &&
+            regDefDeadOrDeadAfterInCFG(MI.getIterator(), MBB, Bedrock::FLAGS,
+                                       TRI))
+          ExtOpcode = Bedrock::EXTZQ8rr;
+        else if (Mask == 0xffffULL &&
+                 regDefDeadOrDeadAfterInCFG(MI.getIterator(), MBB,
+                                            Bedrock::FLAGS, TRI))
+          ExtOpcode = Bedrock::EXTZQ16rr;
+        else if (Mask == 0xffffffffULL)
+          ExtOpcode = Bedrock::EXTZQ32rr;
+        if (ExtOpcode) {
+          BuildMI(MBB, MI.getIterator(), MI.getDebugLoc(), TII.get(ExtOpcode),
+                  Dst)
+              .addReg(Src, getKillRegState(operandIsKill(MI, Src, TRI)));
+          MI.eraseFromParent();
+          I = MBB.begin();
+          Changed = true;
+          continue;
+        }
+      }
+      break;
+    }
+
+    if (MI.getOpcode() == Bedrock::MOV64rr && MI.getNumOperands() >= 2 &&
+        MI.getOperand(0).isReg() && MI.getOperand(1).isReg()) {
+      Register CopyDst = MI.getOperand(0).getReg();
+      Register CopySrc = MI.getOperand(1).getReg();
+      auto ExtI = nextNonDebug(MI.getIterator(), MBB);
+      if (ExtI != MBB.end() && isRegRegExtOpcode(ExtI->getOpcode()) &&
+          ExtI->getNumOperands() >= 2 && ExtI->getOperand(0).isReg() &&
+          ExtI->getOperand(1).isReg() &&
+          regsOverlap(TRI, ExtI->getOperand(1).getReg(), CopyDst) &&
+          canUseRegAsExtSource(ExtI->getOpcode(), CopySrc) &&
+          (regsOverlap(TRI, ExtI->getOperand(0).getReg(), CopyDst) ||
+           operandIsKill(*ExtI, CopyDst, TRI) ||
+           regUnusedAfterInCFG(std::next(ExtI), MBB, CopyDst, TRI))) {
+        MachineInstrBuilder MIB =
+            BuildMI(MBB, MI.getIterator(), ExtI->getDebugLoc(),
+                    TII.get(ExtI->getOpcode()), ExtI->getOperand(0).getReg())
+                .addReg(CopySrc,
+                        getKillRegState(operandIsKill(MI, CopySrc, TRI)));
+        MIB.setMIFlags(MI.getFlags() | ExtI->getFlags());
         MI.eraseFromParent();
+        ExtI->eraseFromParent();
         I = MBB.begin();
         Changed = true;
         continue;
       }
-      break;
+    }
+
+    if (MI.getOpcode() == Bedrock::SHR64ri && MI.getNumOperands() >= 3 &&
+        MI.getOperand(0).isReg() && MI.getOperand(1).isReg() &&
+        MI.getOperand(2).isImm() && MI.getOperand(2).getImm() >= 32 &&
+        regsOverlap(TRI, MI.getOperand(0).getReg(),
+                    MI.getOperand(1).getReg()) &&
+        isDReg(MI.getOperand(0).getReg())) {
+      Register Reg = MI.getOperand(0).getReg();
+      auto AndI = nextNonDebug(MI.getIterator(), MBB);
+      if (AndI != MBB.end() && AndI->getOpcode() == Bedrock::AND64ri &&
+          AndI->getNumOperands() >= 3 && AndI->getOperand(0).isReg() &&
+          AndI->getOperand(1).isReg() && AndI->getOperand(2).isImm() &&
+          regsOverlap(TRI, AndI->getOperand(0).getReg(), Reg) &&
+          regsOverlap(TRI, AndI->getOperand(1).getReg(), Reg) &&
+          uint64_t(AndI->getOperand(2).getImm()) <= 0xffffffffULL &&
+          regDefDeadOrDeadAfterInCFG(AndI, MBB, Bedrock::FLAGS, TRI)) {
+        AndI->setDesc(TII.get(Bedrock::AND32ri));
+        AndI->getOperand(2).setImm(
+            uint64_t(AndI->getOperand(2).getImm()) & 0xffffffffULL);
+        I = MBB.begin();
+        Changed = true;
+        continue;
+      }
     }
 
     if (MI.getNumOperands() >= 3 && MI.getOperand(0).isReg() &&
@@ -177,6 +332,7 @@ bool BedrockPeephole::foldCompactUnary(MachineBasicBlock &MBB,
       Register Dst = MI.getOperand(0).getReg();
       Register Src = MI.getOperand(1).getReg();
       int64_t Imm = MI.getOperand(2).getImm();
+      auto ExtI = nextNonDebug(MI.getIterator(), MBB);
       if (Imm <= -2 && Imm >= -63 && regsOverlap(TRI, Dst, Src) &&
           regDefDeadOrClobberedAfter(MI.getIterator(), MBB, Bedrock::FLAGS,
                                      TRI)) {
@@ -205,9 +361,26 @@ bool BedrockPeephole::foldCompactUnary(MachineBasicBlock &MBB,
         }
       }
       if (MI.getOpcode() == Bedrock::ADD64ri &&
+          (uint64_t(Imm) & 0xffffffffULL) == 0 &&
+          regsOverlap(TRI, Dst, Src) &&
+          ExtI != MBB.end() && ExtI->getOpcode() == Bedrock::EXTZQ32rr &&
+          ExtI->getNumOperands() >= 2 && ExtI->getOperand(0).isReg() &&
+          ExtI->getOperand(1).isReg() &&
+          regsOverlap(TRI, ExtI->getOperand(0).getReg(), Dst) &&
+          regsOverlap(TRI, ExtI->getOperand(1).getReg(), Dst) &&
+          canUseRegAsExtSource(ExtI->getOpcode(), Src)) {
+        BuildMI(MBB, MI.getIterator(), ExtI->getDebugLoc(),
+                TII.get(Bedrock::EXTZQ32rr), Dst)
+            .addReg(Src, getKillRegState(operandIsKill(MI, Src, TRI)));
+        MI.eraseFromParent();
+        ExtI->eraseFromParent();
+        I = MBB.begin();
+        Changed = true;
+        continue;
+      }
+      if (MI.getOpcode() == Bedrock::ADD64ri &&
           uint64_t(Imm) == 0xffffffff00000001ULL &&
           regsOverlap(TRI, Dst, Src)) {
-        auto ExtI = nextNonDebug(MI.getIterator(), MBB);
         if (ExtI != MBB.end() && ExtI->getOpcode() == Bedrock::EXTZQ32rr &&
             ExtI->getNumOperands() >= 2 && ExtI->getOperand(0).isReg() &&
             ExtI->getOperand(1).isReg() &&
@@ -390,6 +563,137 @@ bool BedrockPeephole::foldSequentialEqImmCompareChain(
   return Changed;
 }
 
+bool BedrockPeephole::foldStackSpillCompareChain(MachineFunction &MF) const {
+  if (!MF.getRegInfo().tracksLiveness())
+    return false;
+
+  bool Changed = false;
+  const BedrockInstrInfo &TII =
+      *static_cast<const BedrockInstrInfo *>(MF.getSubtarget().getInstrInfo());
+  const TargetRegisterInfo &TRI = *MF.getSubtarget().getRegisterInfo();
+
+  struct StackCmpBlock {
+    MachineBasicBlock *MBB = nullptr;
+    MachineInstr *Cmp = nullptr;
+    MachineBasicBlock *Fallthrough = nullptr;
+    int64_t Imm = 0;
+  };
+
+  auto MatchStackCmpBlock = [&](MachineBasicBlock &MBB, int64_t Offset,
+                                StackCmpBlock &Out) {
+    MachineBasicBlock::iterator BranchI = MBB.getLastNonDebugInstr();
+    if (BranchI == MBB.end() || BranchI->getOpcode() != Bedrock::JCC ||
+        BranchI->getNumOperands() < 2 || !BranchI->getOperand(0).isMBB())
+      return false;
+
+    std::optional<int64_t> CC = getCondCodeImm(BranchI->getOperand(1));
+    if (!CC || *CC != BedrockCC::EQ)
+      return false;
+
+    MachineBasicBlock::iterator CmpI = prevNonDebug(BranchI, MBB);
+    if (CmpI == MBB.end() || CmpI->getOpcode() != Bedrock::CMP32mi ||
+        CmpI->getNumOperands() < 3 || !CmpI->getOperand(0).isImm() ||
+        !CmpI->getOperand(1).isReg() || !CmpI->getOperand(2).isImm() ||
+        CmpI->getOperand(1).getReg() != Bedrock::SP ||
+        CmpI->getOperand(2).getImm() != Offset)
+      return false;
+    if (!fitsImm6(CmpI->getOperand(0).getImm()))
+      return false;
+
+    MachineFunction::iterator Next = std::next(MBB.getIterator());
+    if (Next == MBB.getParent()->end())
+      return false;
+    MachineBasicBlock *Fallthrough = &*Next;
+    if (!MBB.isSuccessor(Fallthrough))
+      return false;
+
+    MachineBasicBlock::iterator FirstI = MBB.begin();
+    while (FirstI != MBB.end() && FirstI->isDebugInstr())
+      ++FirstI;
+    if (FirstI == MBB.end() || &*FirstI != &*CmpI)
+      return false;
+
+    Out.MBB = &MBB;
+    Out.Cmp = &*CmpI;
+    Out.Fallthrough = Fallthrough;
+    Out.Imm = CmpI->getOperand(0).getImm();
+    return true;
+  };
+
+  SmallVector<MachineBasicBlock *, 16> Blocks;
+  for (MachineBasicBlock &MBB : MF)
+    Blocks.push_back(&MBB);
+
+  for (MachineBasicBlock *Start : Blocks) {
+    if (!Start || Start->getParent() != &MF)
+      continue;
+
+    MachineBasicBlock::iterator BranchI = Start->getLastNonDebugInstr();
+    if (BranchI == Start->end() || BranchI->getOpcode() != Bedrock::JCC)
+      continue;
+    MachineFunction::iterator Next = std::next(Start->getIterator());
+    if (Next == MF.end() || !Start->isSuccessor(&*Next))
+      continue;
+
+    MachineInstr *Store = nullptr;
+    Register Src;
+    int64_t Offset = 0;
+    bool Failed = false;
+    for (auto I = Start->begin(); I != BranchI; ++I) {
+      if (I->isDebugInstr())
+        continue;
+      Register StoreSrc;
+      Register StoreBase;
+      int64_t StoreOffset = 0;
+      if (isMemStore(*I, StoreSrc, StoreBase, StoreOffset) &&
+          I->getOpcode() == Bedrock::MOV32mr && StoreBase == Bedrock::SP) {
+        Store = &*I;
+        Src = StoreSrc;
+        Offset = StoreOffset;
+        continue;
+      }
+      if (Store) {
+        if (instrDefinesReg(*I, Src, TRI) ||
+            instrHasRegMaskForReg(*I, Src, TRI) ||
+            instrHasSPMemOffset(*I, Offset, TRI)) {
+          Failed = true;
+          break;
+        }
+      }
+    }
+    if (Failed || !Store || !isDReg(Src))
+      continue;
+
+    SmallVector<StackCmpBlock, 8> Chain;
+    MachineBasicBlock *Cur = &*Next;
+    while (Cur && Cur->getParent() == &MF) {
+      StackCmpBlock Item;
+      if (!MatchStackCmpBlock(*Cur, Offset, Item))
+        break;
+      Chain.push_back(Item);
+      Cur = Item.Fallthrough;
+    }
+    if (Chain.size() < 2)
+      continue;
+
+    Store->getOperand(0).setIsKill(false);
+    for (StackCmpBlock &Item : Chain) {
+      MachineBasicBlock &MBB = *Item.MBB;
+      if (!MBB.isLiveIn(Src))
+        MBB.addLiveIn(Src);
+      MachineInstr &Cmp = *Item.Cmp;
+      BuildMI(MBB, Cmp.getIterator(), Cmp.getDebugLoc(),
+              TII.get(Bedrock::CMP32ri))
+          .addReg(Src)
+          .addImm(Item.Imm);
+      Cmp.eraseFromParent();
+    }
+    Changed = true;
+  }
+
+  return Changed;
+}
+
 bool BedrockPeephole::foldKnownZeroCmp(MachineBasicBlock &MBB,
                                            MachineFunction &MF,
                                            uint32_t KnownZeroIn) const {
@@ -465,14 +769,21 @@ bool BedrockPeephole::foldEqNeZeroCmpToTest(MachineBasicBlock &MBB,
       continue;
     }
     Register Tested = LHSZero ? RHS : LHS;
-    if (!isDReg(Tested)) {
+    unsigned CmpZeroOpcode = getCmpZeroImmOpcodeForSelfTest(TestOpcode, Tested);
+    bool UseSelfTest = isLegalSelfTestReg(TestOpcode, Tested);
+    if (!UseSelfTest && CmpZeroOpcode == 0) {
       transferKnownZero(MI, KnownZero, TRI);
       ++I;
       continue;
     }
-    BuildMI(MBB, MI.getIterator(), MI.getDebugLoc(), TII.get(TestOpcode))
-        .addReg(Tested)
-        .addReg(Tested);
+    if (UseSelfTest)
+      BuildMI(MBB, MI.getIterator(), MI.getDebugLoc(), TII.get(TestOpcode))
+          .addReg(Tested)
+          .addReg(Tested);
+    else
+      BuildMI(MBB, MI.getIterator(), MI.getDebugLoc(), TII.get(CmpZeroOpcode))
+          .addReg(Tested)
+          .addImm(0);
     MI.eraseFromParent();
     I = MBB.begin();
     KnownZero = KnownZeroIn;
@@ -503,6 +814,15 @@ bool BedrockPeephole::foldClrZeroCmpToTest(MachineBasicBlock &MBB,
     }
 
     auto CmpI = nextNonDebug(I, MBB);
+    while (CmpI != MBB.end() && getTestOpcodeForCmp(CmpI->getOpcode()) == 0) {
+      if (CmpI->isCall() || CmpI->isTerminator() ||
+          instrTouchesReg(*CmpI, ZeroReg, TRI) ||
+          instrTouchesReg(*CmpI, Bedrock::FLAGS, TRI)) {
+        CmpI = MBB.end();
+        break;
+      }
+      CmpI = nextNonDebug(CmpI, MBB);
+    }
     unsigned TestOpcode =
         CmpI == MBB.end() ? 0 : getTestOpcodeForCmp(CmpI->getOpcode());
     if (TestOpcode == 0 || CmpI->getNumOperands() < 2 ||
@@ -521,7 +841,9 @@ bool BedrockPeephole::foldClrZeroCmpToTest(MachineBasicBlock &MBB,
     }
 
     Register Tested = ZeroIsLHS ? RHS : LHS;
-    if (!isDReg(Tested)) {
+    unsigned CmpZeroOpcode = getCmpZeroImmOpcodeForSelfTest(TestOpcode, Tested);
+    bool UseSelfTest = isLegalSelfTestReg(TestOpcode, Tested);
+    if (!UseSelfTest && CmpZeroOpcode == 0) {
       ++I;
       continue;
     }
@@ -547,9 +869,15 @@ bool BedrockPeephole::foldClrZeroCmpToTest(MachineBasicBlock &MBB,
       continue;
     }
 
-    BuildMI(MBB, CmpI->getIterator(), CmpI->getDebugLoc(), TII.get(TestOpcode))
-        .addReg(Tested)
-        .addReg(Tested);
+    if (UseSelfTest)
+      BuildMI(MBB, CmpI->getIterator(), CmpI->getDebugLoc(), TII.get(TestOpcode))
+          .addReg(Tested)
+          .addReg(Tested);
+    else
+      BuildMI(MBB, CmpI->getIterator(), CmpI->getDebugLoc(),
+              TII.get(CmpZeroOpcode))
+          .addReg(Tested)
+          .addImm(0);
     setCondCodeImm(*CondOp, *NewCC);
     CmpI->eraseFromParent();
     Clr.eraseFromParent();
@@ -711,6 +1039,10 @@ bool BedrockPeephole::foldDeadPlainDefs(MachineFunction &MF) const {
       }
       if (!IsCandidate)
         continue;
+      if (instrDefinesReg(MI, Bedrock::FLAGS, TRI) &&
+          !regDefDeadOrDeadAfterInCFG(MI.getIterator(), MBB, Bedrock::FLAGS,
+                                      TRI))
+        continue;
       if (isCalleeSaveRestore(MF, MI))
         continue;
       if (HasReturnValue && isReturnValueReg(Reg, TRI) &&
@@ -755,6 +1087,20 @@ bool BedrockPeephole::foldFallthroughJumps(MachineBasicBlock &MBB,
       JmpI->getNumOperands() == 0 || !JmpI->getOperand(0).isMBB())
     return false;
 
+  auto EnsureBranchSuccessors = [&]() {
+    for (MachineInstr &MI : MBB) {
+      if (!MI.isBranch())
+        continue;
+      for (MachineOperand &MO : MI.operands()) {
+        if (!MO.isMBB())
+          continue;
+        MachineBasicBlock *Target = MO.getMBB();
+        if (Target && Target->getParent() == &MF && !MBB.isSuccessor(Target))
+          MBB.addSuccessor(Target);
+      }
+    }
+  };
+
   MachineFunction::iterator Next = std::next(MBB.getIterator());
   if (Next == MF.end())
     return false;
@@ -770,9 +1116,9 @@ bool BedrockPeephole::foldFallthroughJumps(MachineBasicBlock &MBB,
     BuildMI(MBB, JmpI, JmpI->getDebugLoc(),
             MF.getSubtarget().getInstrInfo()->get(Bedrock::RET));
     JmpI->eraseFromParent();
-    SmallVector<MachineBasicBlock *, 4> Succs(MBB.successors());
-    for (MachineBasicBlock *Succ : Succs)
-      MBB.removeSuccessor(Succ);
+    while (MBB.isSuccessor(JmpTarget))
+      MBB.removeSuccessor(JmpTarget);
+    EnsureBranchSuccessors();
     return true;
   }
 
@@ -790,6 +1136,10 @@ bool BedrockPeephole::foldFallthroughJumps(MachineBasicBlock &MBB,
   BranchI->getOperand(0).setMBB(JmpTarget);
   setCondCodeImm(BranchI->getOperand(1), *InverseCC);
   JmpI->eraseFromParent();
+  if (!MBB.isSuccessor(NextMBB))
+    MBB.addSuccessor(NextMBB);
+  if (!MBB.isSuccessor(JmpTarget))
+    MBB.addSuccessor(JmpTarget);
   return true;
 }
 

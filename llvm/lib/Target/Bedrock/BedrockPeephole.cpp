@@ -32,8 +32,10 @@ bool BedrockPeephole::runOnMachineFunction(MachineFunction &MF) {
   SmallVector<MachineBasicBlock *, 8> Blocks;
   for (MachineBasicBlock &MBB : MF)
     Blocks.push_back(&MBB);
-  if (EnableO2OrSize)
+  if (EnableO2OrSize) {
     Changed |= foldStackZeroCmp(MF);
+    Changed |= foldStackConstLoads(MF);
+  }
   bool EnableSizeSum =
       !OptNone && (profileAtLeast(Profile, BedrockPeepholeProfile::O3) ||
                    MF.getFunction().hasMinSize());
@@ -42,6 +44,7 @@ bool BedrockPeephole::runOnMachineFunction(MachineFunction &MF) {
     if (EnableO1)
       Changed |= foldArgTruncBitOps(*MBB, MF);
     Changed |= foldMemCopy(*MBB, MF);
+    Changed |= foldCopyStoreForward(*MBB, MF);
     Changed |= foldStackPointerCopyMemBase(*MBB, MF);
     if (EnableO1)
       Changed |= foldLoadOp(*MBB, MF);
@@ -54,13 +57,32 @@ bool BedrockPeephole::runOnMachineFunction(MachineFunction &MF) {
     Changed |= foldMemoryImmFlagOp(*MBB, MF);
     if (EnableO1)
       Changed |= foldAndTestToImmTest(*MBB, MF);
+    if (EnableO2OrSize)
+      Changed |= foldLoadExt(*MBB, MF);
     Changed |= foldImmCmp(*MBB, MF);
     if (EnableO1)
       Changed |= foldCmpOneBranch(*MBB, MF);
     Changed |= foldImmMul(*MBB, MF);
+    if (EnableO2OrSize)
+      Changed |= foldAsciiUpperCmp(*MBB, MF);
+    if (EnableO2OrSize)
+      Changed |= foldSparseOrImmBits(*MBB, MF);
+    if (EnableO2OrSize)
+      Changed |= foldAndZextToAnd64(*MBB, MF);
+    if (!OptNone)
+      Changed |= foldAbsZextToMov32Imm(*MBB, MF);
+    Changed |= foldZeroZextOrImm(*MBB, MF);
+    if (EnableO2OrSize) {
+      Changed |= foldRepeatedOrImmMaterialization(*MBB, MF);
+      Changed |= foldSymbolicImm32HighOr(*MBB, MF);
+      Changed |= foldZeroZextOrImm(*MBB, MF);
+    }
+    if (EnableO2OrSize)
+      Changed |= foldSmallMov64Imm(*MBB, MF);
     Changed |= foldImmStore(*MBB, MF);
     Changed |= foldPostInc(*MBB, MF);
     Changed |= foldCompactUnary(*MBB, MF);
+    Changed |= foldClrZeroCmpToTest(*MBB, MF);
     if (!OptNone && MF.getFunction().hasMinSize())
       Changed |= foldAImmCopyToDImm(*MBB, MF);
     Changed |= foldClrStore(*MBB, MF);
@@ -147,13 +169,13 @@ bool BedrockPeephole::runOnMachineFunction(MachineFunction &MF) {
       Changed |= foldEqNeZeroCmpToTest(*MBB, MF,
                                        EnableO1 ? KnownZeroIns.lookup(MBB) : 0);
     for (MachineBasicBlock *MBB : Blocks)
-      Changed |= foldClrZeroCmpToTest(*MBB, MF);
-    for (MachineBasicBlock *MBB : Blocks)
       Changed |= foldClrZeroMemCmp(*MBB, MF);
     for (MachineBasicBlock *MBB : Blocks)
       Changed |= foldMemoryImmFlagOp(*MBB, MF);
     for (MachineBasicBlock *MBB : Blocks)
       Changed |= foldMemoryRegFlagOp(*MBB, MF);
+    for (MachineBasicBlock *MBB : Blocks)
+      Changed |= foldAsciiUpperCmp(*MBB, MF);
     for (MachineBasicBlock *MBB : Blocks)
       if (MBB->getParent() == &MF)
         Changed |= foldKnownZeroByteStoreToBSet(*MBB, MF);
@@ -187,14 +209,31 @@ bool BedrockPeephole::runOnMachineFunction(MachineFunction &MF) {
     for (MachineBasicBlock *MBB : Blocks)
       Changed |= foldSumReturnCopy(*MBB, MF);
   }
-  if (!OptNone && MF.getFunction().hasMinSize())
-    Changed |= foldMinSizeA32ToCalleeSavedDRegs(MF);
+  Changed |= foldStackAddressReloadsAcrossCalls(MF);
+  if (OptNone)
+    Changed |= foldRepeatedStackAddressLeasWithBorrowedBase(MF);
+  Changed |= foldStackSpillCompareChain(MF);
+  if (!OptNone && MF.getFunction().hasMinSize()) {
+    bool RemappedA32 = foldMinSizeA32ToCalleeSavedDRegs(MF);
+    Changed |= RemappedA32;
+    if (RemappedA32) {
+      for (MachineBasicBlock *MBB : Blocks)
+        if (MBB->getParent() == &MF)
+          Changed |= foldClrZeroCmpToTest(*MBB, MF);
+      if (EnableO2OrSize)
+        Changed |= shrinkUnusedPushPopMask(MF);
+    }
+  }
   if (!OptNone && MF.getFunction().hasMinSize())
     Changed |= foldA6BaseCopyStackSpill(MF);
   if (!OptNone && MF.getFunction().hasMinSize())
     for (MachineBasicBlock *MBB : Blocks)
       if (MBB->getParent() == &MF)
         Changed |= foldAImmCopyToDImm(*MBB, MF);
+  if (!OptNone && MF.getFunction().hasMinSize())
+    for (MachineBasicBlock *MBB : Blocks)
+      if (MBB->getParent() == &MF)
+        Changed |= foldDImmCopyToAImm(*MBB, MF);
   for (MachineBasicBlock *MBB : Blocks) {
     Changed |= foldPostInc(*MBB, MF);
     Changed |= normalizeA32Arithmetic(*MBB, MF);
@@ -205,6 +244,8 @@ bool BedrockPeephole::runOnMachineFunction(MachineFunction &MF) {
         Changed |= foldIndexedMem(*MBB, MF);
   if (!OptNone && MF.getFunction().hasMinSize())
     Changed |= foldMinSizeMAddWindowBaseBias(MF);
+  if (!OptNone && MF.getFunction().hasMinSize())
+    Changed |= foldNegatedStepStoreUpdateLoops(MF);
   if (!OptNone && MF.getFunction().hasMinSize())
     for (MachineBasicBlock *MBB : Blocks) {
       if (MBB->getParent() != &MF)
@@ -219,7 +260,7 @@ bool BedrockPeephole::runOnMachineFunction(MachineFunction &MF) {
     }
   if (!OptNone && MF.getFunction().hasMinSize())
     Changed |= foldSMaxPretestZeroReturn(MF);
-  if (!OptNone && MF.getFunction().hasMinSize()) {
+  if (EnableO2OrSize) {
     Changed |= foldAscendingLoadProgressionLoops(MF);
     Changed |= foldAscendingConstStoreLoops(MF);
     Changed |= foldAscendingMultiStoreLoops(MF);
@@ -275,7 +316,9 @@ bool BedrockPeephole::runOnMachineFunction(MachineFunction &MF) {
   if (EnableO2OrSize)
     for (MachineBasicBlock *MBB : Blocks)
       if (MBB->getParent() == &MF)
-        Changed |= foldDRegCopyCoalescing(*MBB, MF);
+        Changed |= foldRegCopyCoalescing(*MBB, MF);
+  if (EnableO2OrSize)
+    Changed |= foldCrossBlockExtMemResultCopies(MF);
   if (EnableO2OrSize)
     for (MachineBasicBlock *MBB : Blocks)
       if (MBB->getParent() == &MF)
@@ -306,11 +349,39 @@ bool BedrockPeephole::runOnMachineFunction(MachineFunction &MF) {
     for (MachineBasicBlock *MBB : Blocks)
       if (MBB->getParent() == &MF)
         Changed |= foldClrStore(*MBB, MF);
+    for (MachineBasicBlock *MBB : Blocks)
+      if (MBB->getParent() == &MF)
+        Changed |= foldClrZeroCmpToTest(*MBB, MF);
     if (EnableO2OrSize)
       Changed |= shrinkUnusedPushPopMask(MF);
   }
   if (EnableO2OrSize)
     Changed |= foldByteIndexedMemUtilityLoops(MF);
+  if (EnableO2OrSize)
+    Changed |= foldImmediateByteCopyRepLoops(MF);
+  if (EnableO2OrSize) {
+    for (MachineBasicBlock *MBB : Blocks)
+      if (MBB->getParent() == &MF) {
+        Changed |= foldAbsIndexedAddressRuns(*MBB, MF);
+        Changed |= foldStridedImmQwordStores(*MBB, MF);
+        Changed |= foldAbsoluteStoreRuns(*MBB, MF);
+        Changed |= foldAbsoluteLoadRuns(*MBB, MF);
+        Changed |= foldAbsoluteDestStoreRuns(*MBB, MF);
+        Changed |= foldPostIncQwordZeroStoreRuns(*MBB, MF);
+        Changed |= foldOffsetQwordZeroStoreRuns(*MBB, MF);
+        Changed |= foldAbsBaseToNearbyOffset(*MBB, MF);
+        Changed |= foldAbsMemoryOps(*MBB, MF);
+        Changed |= foldDirectAbsMemoryRuns(*MBB, MF);
+        Changed |= foldImmAbsMemoryOps(*MBB, MF);
+      }
+    Changed |= foldDirectAbsMemoryGlobalBases(MF);
+    for (MachineBasicBlock *MBB : Blocks)
+      if (MBB->getParent() == &MF)
+        Changed |= foldAbsBaseToNearbyOffset(*MBB, MF);
+    for (MachineBasicBlock *MBB : Blocks)
+      if (MBB->getParent() == &MF)
+        Changed |= foldPostInc(*MBB, MF);
+  }
   if (EnableO1)
     Changed |= foldMinMaxBranchDiamond(MF);
   return Changed;

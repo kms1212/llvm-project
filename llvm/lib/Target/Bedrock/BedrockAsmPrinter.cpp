@@ -35,6 +35,7 @@
 #include "llvm/MC/MCSymbol.h"
 #include "llvm/MC/TargetRegistry.h"
 #include "llvm/Support/Compiler.h"
+#include "llvm/Support/CodeGen.h"
 #include "llvm/Support/EndianStream.h"
 #include "llvm/Support/MathExtras.h"
 #include "llvm/Target/TargetLoweringObjectFile.h"
@@ -260,6 +261,26 @@ static bool isPositiveConstCountSetup(const MachineBasicBlock &Header,
   return SawCountDef && LastConst && *LastConst > 0;
 }
 
+static bool isRepgLoopPreheader(const MachineBasicBlock &Header,
+                                const MachineBasicBlock &Body,
+                                Register CountReg,
+                                const TargetRegisterInfo &TRI) {
+  if (!Header.isSuccessor(&Body) || Header.succ_size() != 1)
+    return false;
+
+  for (const MachineInstr &MI : Header) {
+    if (MI.isDebugInstr() || MI.isPosition())
+      continue;
+    if (MI.isBranch() || MI.isCall() || MI.isReturn() || MI.isTerminator())
+      return false;
+    if (instrTouchesReg(MI, CountReg, TRI) || MI.getPreInstrSymbol() ||
+        MI.getPostInstrSymbol())
+      return false;
+  }
+
+  return true;
+}
+
 static bool hasOrderedMemOperand(const MachineInstr &MI) {
   for (MachineMemOperand *MMO : MI.memoperands())
     if (MMO->isVolatile() || !MMO->isUnordered())
@@ -293,6 +314,23 @@ static bool isRepgBodyEligible(const MachineInstr &MI, Register CountReg,
       MI.getPostInstrSymbol())
     return false;
   return true;
+}
+
+static bool isRepgLatchTailEligible(const MachineInstr &MI, Register CountReg,
+                                    const TargetRegisterInfo &TRI) {
+  return isRepgBodyEligible(MI, CountReg, TRI) &&
+         !instrUsesReg(MI, Bedrock::FLAGS, TRI) &&
+         !instrDefinesReg(MI, Bedrock::FLAGS, TRI);
+}
+
+static bool isPotentialRepgLatchTail(const MachineInstr &MI,
+                                     const TargetRegisterInfo &TRI) {
+  return !MI.isDebugInstr() && !MI.isPosition() && !MI.isPseudo() &&
+         !MI.isBundle() && !MI.isBranch() && !MI.isCall() && !MI.isReturn() &&
+         !MI.isTerminator() && !hasOrderedMemOperand(MI) &&
+         !hasSymbolicOperand(MI) && !MI.getPreInstrSymbol() &&
+         !MI.getPostInstrSymbol() && !instrUsesReg(MI, Bedrock::FLAGS, TRI) &&
+         !instrDefinesReg(MI, Bedrock::FLAGS, TRI);
 }
 
 static bool flagsUsedBeforeDefAfter(const MachineBasicBlock &Body,
@@ -414,7 +452,67 @@ static MCFixupKind getFixupKindForOpcode(unsigned Opcode) {
     return Bedrock::fixup_bedrock_pcrel16;
   case Bedrock::CALLpcrel:
     return Bedrock::fixup_bedrock_pcrel32;
+  case Bedrock::MOV32imm:
+  case Bedrock::OR32imm:
+    return Bedrock::fixup_bedrock_imm32;
   case Bedrock::MOV64abs:
+  case Bedrock::MOV64symmr:
+  case Bedrock::MOV8absrm:
+  case Bedrock::MOV16absrm:
+  case Bedrock::MOV32absrm:
+  case Bedrock::MOV64absrm:
+  case Bedrock::MOV8absmr:
+  case Bedrock::MOV16absmr:
+  case Bedrock::MOV32absmr:
+  case Bedrock::MOV64absmr:
+  case Bedrock::MOV8absmi:
+  case Bedrock::MOV16absmi:
+  case Bedrock::MOV32absmi:
+  case Bedrock::MOV64absmi:
+  case Bedrock::MOV8mabs:
+  case Bedrock::MOV16mabs:
+  case Bedrock::MOV32mabs:
+  case Bedrock::MOV64mabs:
+  case Bedrock::FMOV32absrm:
+  case Bedrock::FMOV64absrm:
+  case Bedrock::FMOV32absmr:
+  case Bedrock::FMOV64absmr:
+  case Bedrock::INC8absm:
+  case Bedrock::INC16absm:
+  case Bedrock::INC32absm:
+  case Bedrock::INC64absm:
+  case Bedrock::DEC8absm:
+  case Bedrock::DEC16absm:
+  case Bedrock::DEC32absm:
+  case Bedrock::DEC64absm:
+  case Bedrock::CMP8absmi:
+  case Bedrock::CMP16absmi:
+  case Bedrock::CMP32absmi:
+  case Bedrock::CMP64absmi:
+  case Bedrock::TEST8absmi:
+  case Bedrock::TEST16absmi:
+  case Bedrock::TEST32absmi:
+  case Bedrock::TEST64absmi:
+  case Bedrock::EXTZQ8absrm:
+  case Bedrock::EXTZQ16absrm:
+  case Bedrock::EXTZQ32absrm:
+  case Bedrock::EXTZQ8absmr:
+  case Bedrock::EXTZQ16absmr:
+  case Bedrock::EXTZQ32absmr:
+  case Bedrock::EXTSQ8absrm:
+  case Bedrock::EXTSQ16absrm:
+  case Bedrock::EXTSQ32absrm:
+  case Bedrock::EXTSQ8absmr:
+  case Bedrock::EXTSQ16absmr:
+  case Bedrock::EXTSQ32absmr:
+  case Bedrock::EXTZL8absrm:
+  case Bedrock::EXTZL16absrm:
+  case Bedrock::EXTZL8absmr:
+  case Bedrock::EXTZL16absmr:
+  case Bedrock::EXTSL8absrm:
+  case Bedrock::EXTSL16absrm:
+  case Bedrock::EXTSL8absmr:
+  case Bedrock::EXTSL16absmr:
     return Bedrock::fixup_bedrock_abs64;
   case Bedrock::MOV32idx4lrm:
     return Bedrock::fixup_bedrock_pcrel32;
@@ -538,6 +636,36 @@ static uint64_t readPayloadWords(const uint16_t *Words, size_t Start,
   return Value;
 }
 
+static uint64_t signExtendPayload(uint64_t Value, unsigned Bits) {
+  if (Bits >= 64)
+    return Value;
+  uint64_t Mask = (uint64_t(1) << Bits) - 1;
+  Value &= Mask;
+  uint64_t SignBit = uint64_t(1) << (Bits - 1);
+  return (Value ^ SignBit) - SignBit;
+}
+
+static unsigned shortestSignedImmediatePayloadWords(uint64_t Value) {
+  if (signExtendPayload(Value, 16) == Value)
+    return 1;
+  if (signExtendPayload(Value, 32) == Value)
+    return 2;
+  return 4;
+}
+
+static uint64_t immediateEATokenForPayloadWords(unsigned Words) {
+  switch (Words) {
+  case 1:
+    return BEDROCK_EA_IMM16;
+  case 2:
+    return BEDROCK_EA_IMM32;
+  case 4:
+    return BEDROCK_EA_IMM64;
+  default:
+    llvm_unreachable("invalid Bedrock immediate payload word count");
+  }
+}
+
 static bool sizeSuffixForForm(const bedrock_form_desc *Form,
                               const uint16_t *Words, char &Suffix) {
   const bedrock_field_desc *Field = findFieldBySource(Form, "size");
@@ -559,6 +687,10 @@ static bool sizeSuffixForForm(const bedrock_form_desc *Form,
   }
   if (Kind == "WL" && Value < 2) {
     Suffix = "WL"[Value];
+    return true;
+  }
+  if (Kind == "LQ" && Value < 2) {
+    Suffix = "LQ"[Value];
     return true;
   }
   return false;
@@ -689,14 +821,6 @@ static bool rewriteRegTargetImmToEA(uint16_t *Words, size_t &WordCount,
     return true;
 
   size_t PayloadStart = payloadStartWord(Form, Words);
-  if (ID.ends_with("IMM_TO_D")) {
-    if (PayloadStart >= WordCount)
-      return false;
-    uint64_t ImmValue = readPayloadWords(Words, PayloadStart,
-                                         unsigned(WordCount - PayloadStart));
-    return encodeImmToEATarget(Words, WordCount, Mnemonic, Suffix, ImmValue,
-                               *DstEA);
-  }
 
   const bedrock_field_desc *SrcField = findImmediateEAField(Form, Words);
   if (!SrcField)
@@ -720,8 +844,167 @@ static void setDeclaredWords(uint16_t &Word0, unsigned WordCount) {
           uint16_t((WordCount - 1) << 12);
 }
 
+static bool compactImmToDPayload(uint16_t *Words, size_t &WordCount,
+                                 const bedrock_form_desc *Form) {
+  StringRef ID(Form->id);
+  if (!ID.ends_with("IMM_TO_D") || findFieldBySource(Form, "imm"))
+    return true;
+
+  char Suffix = 0;
+  if (!sizeSuffixForForm(Form, Words, Suffix) || Suffix != 'L')
+    return true;
+
+  size_t PayloadStart = payloadStartWord(Form, Words);
+  if (PayloadStart >= WordCount)
+    return false;
+  if (WordCount <= PayloadStart + 1)
+    return true;
+
+  uint64_t ImmValue = readPayloadWords(Words, PayloadStart,
+                                       unsigned(WordCount - PayloadStart));
+  if (ImmValue > 0xffff)
+    return true;
+
+  Words[PayloadStart] = uint16_t(ImmValue);
+  for (size_t I = PayloadStart + 1; I != WordCount; ++I)
+    Words[I] = 0;
+  WordCount = PayloadStart + 1;
+  setDeclaredWords(Words[0], WordCount);
+  return true;
+}
+
+static bool encodeClearReg(uint16_t *Words, size_t &WordCount, const char *FormID,
+                           uint64_t Reg) {
+  const bedrock_form_desc *NewForm = bedrock_find_form_by_id(FormID);
+  if (!NewForm)
+    return false;
+
+  uint64_t FieldValues[BEDROCK_MAX_INSTRUCTION_WORDS] = {};
+  for (size_t I = 0; I != NewForm->field_count; ++I) {
+    const bedrock_field_desc *Field = bedrock_form_field(NewForm, I);
+    if (!Field)
+      return false;
+    if (StringRef(Field->source) == "dst")
+      FieldValues[I] = Reg;
+    else
+      return false;
+  }
+
+  return bedrock_encode_form_words(NewForm, FieldValues, NewForm->field_count,
+                                   Words, BEDROCK_MAX_INSTRUCTION_WORDS,
+                                   &WordCount) == BEDROCK_OK;
+}
+
+static bool encodeMovImmToEAReg(uint16_t *Words, size_t &WordCount,
+                                uint64_t DstEA, uint64_t ImmValue,
+                                unsigned PayloadWords) {
+  const bedrock_form_desc *NewForm = bedrock_find_form_by_id("MOV.EA_TO_EA");
+  if (!NewForm)
+    return false;
+
+  uint64_t FieldValues[BEDROCK_MAX_INSTRUCTION_WORDS] = {};
+  for (size_t I = 0; I != NewForm->field_count; ++I) {
+    const bedrock_field_desc *Field = bedrock_form_field(NewForm, I);
+    if (!Field)
+      return false;
+    StringRef Source(Field->source);
+    if (Source == "size")
+      FieldValues[I] = 3;
+    else if (Source == "src" && StringRef(Field->kind) == "EA")
+      FieldValues[I] = immediateEATokenForPayloadWords(PayloadWords);
+    else if (Source == "dst" && StringRef(Field->kind) == "EA")
+      FieldValues[I] = DstEA;
+    else
+      return false;
+  }
+
+  size_t EncodedWordCount = 0;
+  if (bedrock_encode_form_words(NewForm, FieldValues, NewForm->field_count,
+                                Words, BEDROCK_MAX_INSTRUCTION_WORDS,
+                                &EncodedWordCount) != BEDROCK_OK)
+    return false;
+
+  size_t PayloadStart = payloadStartWord(NewForm, Words);
+  if (PayloadStart + PayloadWords > BEDROCK_MAX_INSTRUCTION_WORDS)
+    return false;
+  for (unsigned I = 0; I != PayloadWords; ++I)
+    Words[PayloadStart + I] = uint16_t((ImmValue >> (I * 16)) & 0xffff);
+
+  WordCount = PayloadStart + PayloadWords;
+  setDeclaredWords(Words[0], WordCount);
+  return true;
+}
+
+static bool compactMovImmToA(uint16_t *Words, size_t &WordCount,
+                             const bedrock_form_desc *Form) {
+  if (StringRef(Form->id) != "MOV.IMM_TO_A")
+    return true;
+
+  const bedrock_field_desc *DstField = findFieldBySource(Form, "dst");
+  if (!DstField)
+    return false;
+  uint64_t AReg = extractFormField(Words, DstField);
+
+  size_t PayloadStart = payloadStartWord(Form, Words);
+  if (PayloadStart + 4 > WordCount)
+    return false;
+  uint64_t ImmValue = readPayloadWords(Words, PayloadStart, 4);
+  if (ImmValue == 0)
+    return encodeClearReg(Words, WordCount, "CLR.A", AReg);
+
+  unsigned PayloadWords = shortestSignedImmediatePayloadWords(ImmValue);
+  if (PayloadWords == 4)
+    return true;
+  return encodeMovImmToEAReg(Words, WordCount, BEDROCK_EA_AREG + AReg,
+                             ImmValue, PayloadWords);
+}
+
+static bool compactMovQZeroToD(uint16_t *Words, size_t &WordCount,
+                               const bedrock_form_desc *Form) {
+  StringRef ID(Form->id);
+  if (!ID.starts_with("MOV.EA_TO_D"))
+    return true;
+
+  char Suffix = 0;
+  if (!sizeSuffixForForm(Form, Words, Suffix) || Suffix != 'Q')
+    return true;
+
+  const bedrock_field_desc *SrcField = findFieldBySource(Form, "src");
+  const bedrock_field_desc *DstField = findFieldBySource(Form, "dst");
+  if (!SrcField || !DstField || StringRef(SrcField->kind) != "EA" ||
+      StringRef(DstField->kind) != "DREG")
+    return true;
+
+  unsigned ImmWords =
+      immediateEAPayloadWords(extractFormField(Words, SrcField));
+  if (ImmWords == 0)
+    return true;
+  size_t PayloadStart = payloadStartWord(Form, Words);
+  if (PayloadStart + ImmWords > WordCount)
+    return false;
+  if (signExtendPayload(readPayloadWords(Words, PayloadStart, ImmWords),
+                        ImmWords * 16) != 0)
+    return true;
+
+  return encodeClearReg(Words, WordCount, "CLR.D",
+                        extractFormField(Words, DstField));
+}
+
 static bool compactImmEA6Encoding(uint16_t *Words, size_t &WordCount,
                                   const bedrock_form_desc *Form) {
+  if (!compactImmToDPayload(Words, WordCount, Form))
+    return false;
+  size_t OldWordCount = WordCount;
+  if (!compactMovImmToA(Words, WordCount, Form))
+    return false;
+  if (WordCount != OldWordCount)
+    return true;
+  OldWordCount = WordCount;
+  if (!compactMovQZeroToD(Words, WordCount, Form))
+    return false;
+  if (WordCount != OldWordCount)
+    return true;
+
   const bedrock_field_desc *ImmField = findImmEA6Field(Form);
   if (!ImmField)
     return rewriteRegTargetImmToEA(Words, WordCount, Form);
@@ -950,8 +1233,32 @@ private:
     *EstimatedTextOffset += *Bytes;
   }
 
+  bool allowRepgAtCurrentOptLevel() const {
+    if (!MF)
+      return false;
+    if (MF->getFunction().hasMinSize())
+      return true;
+    return TM.getOptLevel() >= CodeGenOptLevel::Default;
+  }
+
+  bool allowRepgSizeGrowth() const {
+    return MF && !MF->getFunction().hasMinSize() &&
+           TM.getOptLevel() >= CodeGenOptLevel::Default;
+  }
+
+  uint64_t maxRepgGrowthBytes() const {
+    if (!allowRepgSizeGrowth())
+      return 0;
+    if (TM.getOptLevel() >= CodeGenOptLevel::Aggressive)
+      return BedrockRepgIcacheLineBytes;
+    return BedrockRepgIcacheLineBytes / 2;
+  }
+
   bool findRepgCandidate(const MachineInstr &MI, RepgCandidate &Candidate) {
-    if (!MF || !MF->getFunction().hasMinSize() || !MI.getParent())
+    // REPG-general is an ordinary architectural execution form in the ISA.
+    // Keep the size-only bias for -Oz, but allow O2/O3 to form grouped loops
+    // when the code shape already matches the architectural constraints.
+    if (!MF || !allowRepgAtCurrentOptLevel() || !MI.getParent())
       return false;
 
     const MachineBasicBlock &Body = *MI.getParent();
@@ -964,9 +1271,9 @@ private:
       return false;
 
     const TargetRegisterInfo &TRI = *MF->getSubtarget().getRegisterInfo();
-    MachineBasicBlock::const_iterator BodyEnd = LatchI;
     MachineBasicBlock::const_iterator DecI = Body.end();
     Register CountReg = Bedrock::NoRegister;
+    SmallVector<const MachineInstr *, 4> LatchTail;
     if (LatchI->getOpcode() == Bedrock::JCC) {
       if (LatchI->getNumOperands() < 2 || !LatchI->getOperand(0).isMBB() ||
           LatchI->getOperand(0).getMBB() != &Body)
@@ -975,19 +1282,27 @@ private:
       if (!LatchCC || *LatchCC != BedrockCC::NE)
         return false;
 
-      DecI = prevNonDebug(LatchI, Body);
-      if (DecI == Body.end() ||
-          (DecI->getOpcode() != Bedrock::DEC32r &&
-           DecI->getOpcode() != Bedrock::DEC64r) ||
-          DecI->getNumOperands() < 2 || !DecI->getOperand(0).isReg() ||
-          !DecI->getOperand(1).isReg())
+      auto SearchI = prevNonDebug(LatchI, Body);
+      while (SearchI != Body.end()) {
+        if ((SearchI->getOpcode() == Bedrock::DEC32r ||
+             SearchI->getOpcode() == Bedrock::DEC64r) &&
+            SearchI->getNumOperands() >= 2 && SearchI->getOperand(0).isReg() &&
+            SearchI->getOperand(1).isReg()) {
+          DecI = SearchI;
+          break;
+        }
+        if (!isPotentialRepgLatchTail(*SearchI, TRI))
+          return false;
+        LatchTail.push_back(&*SearchI);
+        SearchI = prevNonDebug(SearchI, Body);
+      }
+      if (DecI == Body.end())
         return false;
 
       CountReg = DecI->getOperand(0).getReg();
       if (!isDReg(CountReg) ||
           !regsOverlap(TRI, CountReg, DecI->getOperand(1).getReg()))
         return false;
-      BodyEnd = DecI;
     } else if (isDJccOpcode(LatchI->getOpcode())) {
       if (LatchI->getNumOperands() < 4 || !LatchI->getOperand(0).isReg() ||
           !LatchI->getOperand(1).isReg() || !LatchI->getOperand(2).isMBB() ||
@@ -1004,21 +1319,42 @@ private:
       return false;
     }
 
-    MachineBasicBlock *Header = findSingleNonSelfPredecessor(Body);
-    if (!Header ||
-        (!isPositiveCountPretest(*Header, Body, CountReg, TRI) &&
-         !isZeroExitCountPretest(*Header, Body, CountReg, TRI) &&
-         !isPositiveConstCountSetup(*Header, Body, CountReg, TRI)))
+    const MachineBasicBlock *LoopEntry = &Body;
+    MachineBasicBlock *Header = nullptr;
+    constexpr unsigned MaxPreheaderHops = 4;
+    for (unsigned Hops = 0; Hops != MaxPreheaderHops; ++Hops) {
+      Header = findSingleNonSelfPredecessor(*LoopEntry);
+      if (!Header)
+        return false;
+      if (isPositiveCountPretest(*Header, *LoopEntry, CountReg, TRI) ||
+          isZeroExitCountPretest(*Header, *LoopEntry, CountReg, TRI) ||
+          isPositiveConstCountSetup(*Header, *LoopEntry, CountReg, TRI))
+        break;
+      if (!isRepgLoopPreheader(*Header, *LoopEntry, CountReg, TRI))
+        return false;
+      LoopEntry = Header;
+      Header = nullptr;
+    }
+    if (!Header)
       return false;
 
     if (flagsUsedBeforeDefAfter(Body, TRI))
       return false;
 
     SmallVector<const MachineInstr *, 8> BodyInstrs;
-    for (auto I = First; I != BodyEnd; I = nextNonDebug(I, Body)) {
+    MachineBasicBlock::const_iterator BodyStop =
+        DecI == Body.end() ? LatchI : DecI;
+    for (auto I = First; I != BodyStop; I = nextNonDebug(I, Body)) {
       if (!isRepgBodyEligible(*I, CountReg, TRI))
         return false;
       BodyInstrs.push_back(&*I);
+      if (BodyInstrs.size() > 32)
+        return false;
+    }
+    for (auto I = LatchTail.rbegin(), E = LatchTail.rend(); I != E; ++I) {
+      if (!isRepgLatchTailEligible(**I, CountReg, TRI))
+        return false;
+      BodyInstrs.push_back(*I);
       if (BodyInstrs.size() > 32)
         return false;
     }
@@ -1175,8 +1511,14 @@ private:
                                 BedrockRepgIcacheLineBytes
                             ? 0
                             : BedrockRepgIcacheLineBytes - LineOffset;
-    if (PadBytes + GroupBytes >= ScalarBytes)
-      return false;
+    uint64_t TotalGroupedBytes = PadBytes + GroupBytes;
+    if (TotalGroupedBytes >= ScalarBytes) {
+      if (!allowRepgSizeGrowth())
+        return false;
+      uint64_t Growth = TotalGroupedBytes - ScalarBytes;
+      if (Growth > maxRepgGrowthBytes())
+        return false;
+    }
 
     emitRepgPadding(PadBytes);
     emitEncodedRepgGroup(Encoded, Candidate.CountReg);

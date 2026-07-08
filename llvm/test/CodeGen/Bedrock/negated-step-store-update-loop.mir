@@ -1,0 +1,143 @@
+# RUN: llc -mtriple=bedrock -start-before=bedrock-peephole -stop-after=bedrock-peephole -verify-machineinstrs %s -o - | FileCheck %s
+
+# CHECK-LABEL: name: negated_step_store_update_i32
+# CHECK-NOT:   $d5 = MOV64rr $d3
+# CHECK:       $d4 = nuw ADD32rr $d4, $d3
+# CHECK-NEXT:  MOV32mr $d4, $a0, 0
+# CHECK-NOT:   SUB32rr
+
+# CHECK-LABEL: name: negated_step_store_update_i64
+# CHECK-NOT:   $d5 = MOV64rr $d2
+# CHECK:       $d4 = nuw ADD64rr $d4, $d2
+# CHECK-NEXT:  MOV64mr $d4, $a0, 0
+# CHECK-NOT:   SUB64rr
+
+# CHECK-LABEL: name: mismatched_step_negative
+# CHECK:       $d5 = MOV64rr $d3
+# CHECK-NEXT:  $d5 = ADD32rr killed $d5, $d4
+# CHECK-NEXT:  MOV32mr killed $d5, $a0, 0
+# CHECK-NEXT:  $d4 = nuw SUB32rr killed $d4, $d0
+
+--- |
+  target triple = "bedrock"
+
+  define void @negated_step_store_update_i32() #0 {
+    ret void
+  }
+
+  define void @negated_step_store_update_i64() #0 {
+    ret void
+  }
+
+  define void @mismatched_step_negative() #0 {
+    ret void
+  }
+
+  attributes #0 = { minsize optsize }
+...
+---
+name: negated_step_store_update_i32
+tracksRegLiveness: true
+body: |
+  bb.0:
+    successors: %bb.1
+    liveins: $a0, $d0
+
+    $d1 = MOV8ri 48
+    $d2 = CLR64r
+    $d3 = CLR64r
+    $d3 = SUB32rr killed $d3, $d0, implicit-def dead $flags
+    $d4 = MOV32rm $a0, 0
+
+  bb.1:
+    successors: %bb.3, %bb.2
+    liveins: $a0, $d0, $d1, $d2, $d3, $d4
+
+    CMP32rr $d4, $d0, implicit-def $flags
+    JCC %bb.3, 4, implicit $flags
+
+  bb.2:
+    successors: %bb.1
+    liveins: $a0, $d0, $d1, $d2, $d3, $d4
+
+    $d5 = MOV64rr $d3
+    $d5 = ADD32rr killed $d5, $d4, implicit-def dead $flags
+    MOV32mr killed $d5, $a0, 0 :: (store (s32))
+    $d4 = nuw SUB32rr killed $d4, $d0, implicit-def dead $flags
+    $d2 = DEC32r $d2, implicit-def $flags
+    $d1 = INC8r $d1, implicit-def $flags
+    JMP %bb.1
+
+  bb.3:
+    RET implicit $sp
+...
+---
+name: negated_step_store_update_i64
+tracksRegLiveness: true
+body: |
+  bb.0:
+    successors: %bb.1
+    liveins: $a0, $d0
+
+    $d2 = CLR64r
+    $d2 = SUB64rr killed $d2, $d0, implicit-def dead $flags
+    $d1 = MOV8ri 48
+    $d3 = CLR64r
+    $d4 = MOV64rm $a0, 0
+
+  bb.1:
+    successors: %bb.3, %bb.2
+    liveins: $a0, $d0, $d1, $d2, $d3, $d4
+
+    CMP64rr $d4, $d0, implicit-def $flags
+    JCC %bb.3, 4, implicit $flags
+
+  bb.2:
+    successors: %bb.1
+    liveins: $a0, $d0, $d1, $d2, $d3, $d4
+
+    $d5 = MOV64rr $d2
+    $d5 = ADD64rr killed $d5, $d4, implicit-def dead $flags
+    MOV64mr killed $d5, $a0, 0 :: (store (s64))
+    $d4 = nuw SUB64rr killed $d4, $d0, implicit-def dead $flags
+    $d3 = DEC32r $d3, implicit-def $flags
+    $d1 = INC8r $d1, implicit-def $flags
+    JMP %bb.1
+
+  bb.3:
+    RET implicit $sp
+...
+---
+name: mismatched_step_negative
+tracksRegLiveness: true
+body: |
+  bb.0:
+    successors: %bb.1
+    liveins: $a0, $d0, $d1
+
+    $d2 = MOV8ri 48
+    $d3 = CLR64r
+    $d3 = SUB32rr killed $d3, $d1, implicit-def dead $flags
+    $d4 = MOV32rm $a0, 0
+
+  bb.1:
+    successors: %bb.3, %bb.2
+    liveins: $a0, $d0, $d2, $d3, $d4
+
+    CMP32rr $d4, $d0, implicit-def $flags
+    JCC %bb.3, 4, implicit $flags
+
+  bb.2:
+    successors: %bb.1
+    liveins: $a0, $d0, $d2, $d3, $d4
+
+    $d5 = MOV64rr $d3
+    $d5 = ADD32rr killed $d5, $d4, implicit-def dead $flags
+    MOV32mr killed $d5, $a0, 0 :: (store (s32))
+    $d4 = nuw SUB32rr killed $d4, $d0, implicit-def dead $flags
+    $d2 = INC8r $d2, implicit-def $flags
+    JMP %bb.1
+
+  bb.3:
+    RET implicit $sp
+...

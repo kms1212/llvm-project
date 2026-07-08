@@ -10,6 +10,7 @@
 #define LLVM_LIB_TARGET_BEDROCK_BEDROCKTARGETMACHINE_H
 
 #include "BedrockSubtarget.h"
+#include "llvm/Analysis/TargetTransformInfo.h"
 #include "llvm/CodeGen/CodeGenTargetMachineImpl.h"
 #include <optional>
 
@@ -27,6 +28,7 @@ public:
                        bool JIT);
 
   const BedrockSubtarget *getSubtargetImpl(const Function &F) const override;
+  TargetTransformInfo getTargetTransformInfo(const Function &F) const override;
   TargetPassConfig *createPassConfig(PassManagerBase &PM) override;
   MachineFunctionInfo *
   createMachineFunctionInfo(BumpPtrAllocator &Allocator, const Function &F,

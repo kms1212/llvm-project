@@ -1,0 +1,68 @@
+# RUN: llc -mtriple=bedrock -start-before=bedrock-peephole -stop-after=bedrock-peephole -verify-machineinstrs %s -o - | FileCheck %s
+
+# CHECK-LABEL: name: abs_zext_to_imm32
+# CHECK:       $d0 = MOV64ri 60129542144
+# CHECK-NEXT:  $d0 = OR32imm $d0, @payload
+# CHECK-NOT:   EXTZQ32rr
+# CHECK-NOT:   OR64ri
+# CHECK-NOT:   MOV64abs
+
+# CHECK-LABEL: name: keep_abs64_without_zext
+# CHECK:       $d0 = MOV64abs @payload
+
+# CHECK-LABEL: name: abs_and_to_imm32_zext
+# CHECK:       $d1 = MOV32imm @payload
+# CHECK-NEXT:  $d1 = EXTZQ32rr $d1
+# CHECK-NEXT:  $d1 = ADD64rr killed $d1, $d0
+# CHECK-NOT:   MOV64abs
+# CHECK-NOT:   AND64ri
+
+--- |
+  target triple = "bedrock"
+
+  @payload = external global i8
+
+  define i64 @abs_zext_to_imm32() #0 {
+    ret i64 0
+  }
+
+  define i64 @keep_abs64_without_zext() #0 {
+    ret i64 0
+  }
+
+  define i64 @abs_and_to_imm32_zext() #0 {
+    ret i64 0
+  }
+
+  attributes #0 = { nounwind minsize optsize }
+...
+---
+name: abs_zext_to_imm32
+tracksRegLiveness: true
+body: |
+  bb.0:
+    $d0 = MOV64abs @payload
+    $d0 = EXTZQ32rr killed $d0, implicit-def $flags
+    $d0 = OR64ri killed $d0, 60129542144, implicit-def dead $flags
+    RET implicit $d0, implicit $sp
+...
+---
+name: abs_and_to_imm32_zext
+tracksRegLiveness: true
+body: |
+  bb.0:
+    liveins: $d0
+
+    $d1 = MOV64abs @payload
+    $d1 = AND64ri killed $d1, 4294967295, implicit-def dead $flags
+    $d1 = ADD64rr killed $d1, $d0, implicit-def dead $flags
+    RET implicit $d1, implicit $sp
+...
+---
+name: keep_abs64_without_zext
+tracksRegLiveness: true
+body: |
+  bb.0:
+    $d0 = MOV64abs @payload
+    RET implicit $d0, implicit $sp
+...

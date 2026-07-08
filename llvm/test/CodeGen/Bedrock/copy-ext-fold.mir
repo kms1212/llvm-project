@@ -1,0 +1,62 @@
+# RUN: llc -mtriple=bedrock -start-before=bedrock-peephole -stop-after=bedrock-peephole -verify-machineinstrs %s -o - | FileCheck %s
+
+# CHECK-LABEL: name: copy_a_to_zext32
+# CHECK-NOT:   MOV64rr
+# CHECK:       $d0 = EXTZQ32rr killed $a0
+
+# CHECK-LABEL: name: copy_d_to_sext32_a_dst
+# CHECK-NOT:   MOV64rr
+# CHECK:       $a1 = EXTSQ32rr killed $d0
+
+# CHECK-LABEL: name: copy_a_to_zext8_negative
+# CHECK:       $d0 = MOV64rr killed $a0
+# CHECK:       $d1 = EXTZQ8rr killed $d0
+
+--- |
+  target triple = "bedrock"
+
+  define void @copy_a_to_zext32() {
+    ret void
+  }
+
+  define void @copy_d_to_sext32_a_dst() {
+    ret void
+  }
+
+  define void @copy_a_to_zext8_negative() {
+    ret void
+  }
+...
+---
+name: copy_a_to_zext32
+tracksRegLiveness: true
+body: |
+  bb.0:
+    liveins: $a0
+
+    $d0 = MOV64rr killed $a0
+    $d0 = EXTZQ32rr killed $d0, implicit-def dead $flags
+    RET implicit $sp
+...
+---
+name: copy_d_to_sext32_a_dst
+tracksRegLiveness: true
+body: |
+  bb.0:
+    liveins: $d0
+
+    $a0 = MOV64rr killed $d0
+    $a1 = EXTSQ32rr killed $a0, implicit-def dead $flags
+    RET implicit $sp
+...
+---
+name: copy_a_to_zext8_negative
+tracksRegLiveness: true
+body: |
+  bb.0:
+    liveins: $a0
+
+    $d0 = MOV64rr killed $a0
+    $d1 = EXTZQ8rr killed $d0, implicit-def dead $flags
+    RET implicit $sp
+...

@@ -27,6 +27,10 @@ public:
 
   void Select(SDNode *Node) override;
   bool selectAddr(SDValue Addr, SDValue &Base, SDValue &Offset);
+  bool selectIdx4Addr(SDValue Addr, SDValue &Base, SDValue &Index,
+                      SDValue &Offset);
+  bool selectIdx8Addr(SDValue Addr, SDValue &Base, SDValue &Index,
+                      SDValue &Offset);
   bool selectBitOp(SDNode *Node);
 
   bool SelectInlineAsmMemoryOperand(const SDValue &Op,
@@ -86,6 +90,79 @@ bool BedrockDAGToDAGISel::selectAddr(SDValue Addr, SDValue &Base,
   Base = Addr;
   Offset = CurDAG->getTargetConstant(0, DL, VT);
   return true;
+}
+
+static SDValue getTargetBase(SelectionDAG *DAG, SDValue Base) {
+  if (auto *FI = dyn_cast<FrameIndexSDNode>(Base))
+    return DAG->getTargetFrameIndex(FI->getIndex(), Base.getValueType());
+  return Base;
+}
+
+static bool stripConstantOffset(SDValue &Addr, int64_t &Offset) {
+  Offset = 0;
+  while (Addr.getOpcode() == ISD::ADD && Addr.getNumOperands() == 2) {
+    auto *CN = dyn_cast<ConstantSDNode>(Addr.getOperand(1));
+    if (!CN)
+      break;
+    int64_t Addend = CN->getSExtValue();
+    if (!isInt<32>(Offset + Addend))
+      return false;
+    Offset += Addend;
+    Addr = Addr.getOperand(0);
+  }
+  return true;
+}
+
+static bool matchShiftedIndex(SDValue V, unsigned Shift, SDValue &Index) {
+  if (V.getOpcode() != ISD::SHL || V.getNumOperands() != 2)
+    return false;
+  auto *CN = dyn_cast<ConstantSDNode>(V.getOperand(1));
+  if (!CN || CN->getZExtValue() != Shift)
+    return false;
+  Index = V.getOperand(0);
+  return true;
+}
+
+static bool selectIndexedAddr(SelectionDAG *DAG, SDValue Addr, unsigned Shift,
+                              SDValue &Base, SDValue &Index,
+                              SDValue &Offset) {
+  SDLoc DL(Addr);
+  EVT VT = Addr.getValueType();
+
+  int64_t OffsetVal = 0;
+  if (!stripConstantOffset(Addr, OffsetVal))
+    return false;
+
+  if (Addr.getOpcode() != ISD::ADD || Addr.getNumOperands() != 2)
+    return false;
+
+  SDValue LHS = Addr.getOperand(0);
+  SDValue RHS = Addr.getOperand(1);
+
+  SDValue ScaledIndex;
+  if (matchShiftedIndex(RHS, Shift, ScaledIndex)) {
+    Base = getTargetBase(DAG, LHS);
+    Index = ScaledIndex;
+    Offset = DAG->getTargetConstant(OffsetVal, DL, VT);
+    return true;
+  }
+  if (matchShiftedIndex(LHS, Shift, ScaledIndex)) {
+    Base = getTargetBase(DAG, RHS);
+    Index = ScaledIndex;
+    Offset = DAG->getTargetConstant(OffsetVal, DL, VT);
+    return true;
+  }
+  return false;
+}
+
+bool BedrockDAGToDAGISel::selectIdx4Addr(SDValue Addr, SDValue &Base,
+                                         SDValue &Index, SDValue &Offset) {
+  return selectIndexedAddr(CurDAG, Addr, 2, Base, Index, Offset);
+}
+
+bool BedrockDAGToDAGISel::selectIdx8Addr(SDValue Addr, SDValue &Base,
+                                         SDValue &Index, SDValue &Offset) {
+  return selectIndexedAddr(CurDAG, Addr, 3, Base, Index, Offset);
 }
 
 static unsigned getBTestOpcode(EVT VT) {
