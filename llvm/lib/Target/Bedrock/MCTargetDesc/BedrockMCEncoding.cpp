@@ -113,6 +113,10 @@ uint64_t readLE(ArrayRef<uint8_t> Bytes, unsigned Offset, unsigned Width) {
   return Value;
 }
 
+uint16_t readBE16(ArrayRef<uint8_t> Bytes, unsigned Offset) {
+  return (uint16_t(Bytes[Offset]) << 8) | Bytes[Offset + 1];
+}
+
 void appendSignedImm(SmallVectorImpl<char> &Text, ArrayRef<uint8_t> Tail,
                      unsigned Width) {
   uint64_t Raw = readLE(Tail, 0, Width);
@@ -539,6 +543,167 @@ bool decodeCompactEA(uint8_t EA, ArrayRef<uint8_t> Tail, unsigned &Consumed,
     default:
       return false;
     }
+  }
+
+  return false;
+}
+
+bool getCompactEATailBytes(uint8_t EA, unsigned &TailBytes) {
+  if (EA <= 0x1f) {
+    TailBytes = 0;
+    return true;
+  }
+  if (EA >= 0x20 && EA <= 0x5f) {
+    TailBytes = 1u << ((EA >> 4) - 2);
+    return true;
+  }
+  if (EA >= 0x60 && EA <= 0x67) {
+    TailBytes = 1u << (EA & 0x3);
+    return true;
+  }
+  if (EA == 0x68 || EA == 0x69) {
+    TailBytes = 0;
+    return true;
+  }
+  if (EA == 0x6a || EA == 0x6b) {
+    TailBytes = EA == 0x6a ? 4 : 8;
+    return true;
+  }
+  if (EA >= 0x6c && EA <= 0x6f) {
+    TailBytes = 1u << (EA - 0x6c);
+    return true;
+  }
+  return false;
+}
+
+static const char *getFpuSizeSuffix(unsigned Size) {
+  switch (Size) {
+  case 0:
+    return "S";
+  case 1:
+    return "D";
+  default:
+    return nullptr;
+  }
+}
+
+bool getFpuRawInstSize(ArrayRef<uint8_t> Bytes, uint64_t &Size) {
+  if (Bytes.size() < 2)
+    return false;
+
+  uint16_t Word0 = readBE16(Bytes, 0);
+  if (Word0 != 0x1f65 && Word0 != 0x1f67)
+    return false;
+
+  Size = 4;
+  if (Bytes.size() < 4)
+    return false;
+
+  uint16_t Ext = readBE16(Bytes, 2);
+  uint8_t EA = 0;
+  bool HasEA = false;
+
+  if (Word0 == 0x1f65) {
+    if (Ext >= 0x1800 && Ext <= 0x1fff) {
+      EA = Ext & 0x3f;
+      HasEA = true;
+    } else if (Ext >= 0x2000 && Ext <= 0x27ff) {
+      EA = Ext & 0x3f;
+      HasEA = true;
+    } else if ((Ext >= 0x0280 && Ext <= 0x02ff) ||
+               (Ext >= 0x0400 && Ext <= 0x05ff) ||
+               (Ext >= 0x0600 && Ext <= 0x06ff)) {
+      HasEA = false;
+    } else {
+      return false;
+    }
+  } else if (!((Ext >= 0x0200 && Ext <= 0x03ff) ||
+               (Ext >= 0x2000 && Ext <= 0x21ff) ||
+               (Ext >= 0x8a00 && Ext <= 0x8bff) ||
+               (Ext >= 0xc600 && Ext <= 0xc7ff))) {
+    return false;
+  }
+
+  if (HasEA) {
+    unsigned TailBytes = 0;
+    if (!getCompactEATailBytes(EA, TailBytes))
+      return false;
+    Size += TailBytes;
+  }
+
+  return Bytes.size() >= Size;
+}
+
+bool decodeFpuRawInst(ArrayRef<uint8_t> Bytes, SmallString<128> &Text) {
+  if (Bytes.size() < 4)
+    return false;
+
+  uint16_t Word0 = readBE16(Bytes, 0);
+  uint16_t Ext = readBE16(Bytes, 2);
+
+  if (Word0 == 0x1f65) {
+    if (Ext >= 0x0400 && Ext <= 0x05ff) {
+      const char *Suffix = getFpuSizeSuffix((Ext >> 8) & 0x1);
+      unsigned Src = Ext & 0xf;
+      unsigned Dst = (Ext >> 4) & 0xf;
+      Text = formatv("FMOV.{0}\tf{1}, f{2}", Suffix, Src, Dst).str();
+      return true;
+    }
+
+    if ((Ext >= 0x0280 && Ext <= 0x02ff) ||
+        (Ext >= 0x0680 && Ext <= 0x06ff)) {
+      bool IsUnsigned = Ext >= 0x0680;
+      unsigned Src = Ext & 0x7;
+      unsigned Dst = (Ext >> 3) & 0xf;
+      Text = formatv("{0}\tr{1}, f{2}", IsUnsigned ? "FCVTU" : "FCVT", Src,
+                     Dst)
+                 .str();
+      return true;
+    }
+
+    if (Ext >= 0x0600 && Ext <= 0x067f) {
+      unsigned Dst = Ext & 0x7;
+      unsigned Src = (Ext >> 3) & 0xf;
+      Text = formatv("FCVT\tf{0}, r{1}", Src, Dst).str();
+      return true;
+    }
+
+    if ((Ext >= 0x1800 && Ext <= 0x1fff) ||
+        (Ext >= 0x2000 && Ext <= 0x27ff)) {
+      bool IsLoad = Ext < 0x2000;
+      const char *Suffix = getFpuSizeSuffix((Ext >> 10) & 0x1);
+      unsigned Reg = (Ext >> 6) & 0xf;
+      uint8_t EA = Ext & 0x3f;
+      unsigned Consumed = 0;
+      SmallString<64> EAText;
+      if (!decodeCompactEA(EA, Bytes.drop_front(4), Consumed, EAText))
+        return false;
+      if (IsLoad)
+        Text = formatv("FMOV.{0}\t{1}, f{2}", Suffix, EAText, Reg).str();
+      else
+        Text = formatv("FMOV.{0}\tf{1}, {2}", Suffix, Reg, EAText).str();
+      return true;
+    }
+  }
+
+  if (Word0 == 0x1f67) {
+    StringRef Mnemonic;
+    if (Ext >= 0x0200 && Ext <= 0x03ff)
+      Mnemonic = "FADD";
+    else if (Ext >= 0x2000 && Ext <= 0x21ff)
+      Mnemonic = "FDIV";
+    else if (Ext >= 0x8a00 && Ext <= 0x8bff)
+      Mnemonic = "FMUL";
+    else if (Ext >= 0xc600 && Ext <= 0xc7ff)
+      Mnemonic = "FSUB";
+    else
+      return false;
+
+    const char *Suffix = getFpuSizeSuffix((Ext >> 8) & 0x1);
+    unsigned Src = Ext & 0xf;
+    unsigned Dst = (Ext >> 4) & 0xf;
+    Text = formatv("{0}.{1}\tf{2}, f{3}", Mnemonic, Suffix, Src, Dst).str();
+    return true;
   }
 
   return false;
@@ -1366,6 +1531,9 @@ bool BedrockMC::getInstructionSize(ArrayRef<uint8_t> Bytes, uint64_t &Size) {
     return false;
   }
 
+  if (getFpuRawInstSize(Bytes, Size))
+    return true;
+
   bool HasPrefix = Bytes[0] & 0x80;
   bool IsExtended = Bytes[0] & 0x40;
 
@@ -1383,6 +1551,9 @@ bool BedrockMC::decodeRawInst(ArrayRef<uint8_t> Bytes, uint64_t &Size,
                               SmallString<128> &Text) {
   if (!getInstructionSize(Bytes, Size))
     return false;
+
+  if (decodeFpuRawInst(Bytes.take_front(Size), Text))
+    return true;
 
   bool HasPrefix = Bytes[0] & 0x80;
   bool IsExtended = Bytes[0] & 0x40;

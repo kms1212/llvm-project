@@ -52,8 +52,8 @@ def F13 : BedrockFPR<13, 29, "f13">;
 def F14 : BedrockFPR<14, 30, "f14">;
 def F15 : BedrockFPR<15, 31, "f15">;
 
-def GPR64 : RegisterClass<"Bedrock", [i64], 64, (sequence "R%u", 0, 15)> {
+def GPR64 : RegisterClass<"Bedrock", [i32, i64], 64, (sequence "R%u", 0, 15)> {
   let DecoderMethod = "DecodeGPR64RegisterClass";
 }
 
-def FPR64 : RegisterClass<"Bedrock", [f64], 64, (sequence "F%u", 0, 15)>;
+def FPR64 : RegisterClass<"Bedrock", [f32, f64], 64, (sequence "F%u", 0, 15)>;

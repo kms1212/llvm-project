@@ -14,6 +14,7 @@ class Proc<string Name, list<SubtargetFeature> Features>
 def : Proc<"generic", []>;
 
 include "BedrockRegisterInfo.td"
+include "BedrockCallingConv.td"
 include "BedrockInstrInfo.td"
 
 defm : RemapAllTargetPseudoPointerOperands<GPR64>;

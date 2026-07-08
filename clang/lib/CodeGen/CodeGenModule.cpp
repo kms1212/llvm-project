@@ -312,6 +312,8 @@ createTargetCodeGenInfo(CodeGenModule &CGM) {
   case llvm::Triple::bpfeb:
   case llvm::Triple::bpfel:
     return createBPFTargetCodeGenInfo(CGM);
+  case llvm::Triple::bedrock:
+    return createBedrockTargetCodeGenInfo(CGM);
   case llvm::Triple::loongarch32:
   case llvm::Triple::loongarch64: {
     StringRef ABIStr = Target.getABI();

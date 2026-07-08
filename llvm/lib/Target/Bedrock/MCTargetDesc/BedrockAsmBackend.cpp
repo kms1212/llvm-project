@@ -80,8 +80,10 @@ public:
 
   bool writeNopData(raw_ostream &OS, uint64_t Count,
                     const MCSubtargetInfo *STI) const override {
-    if ((Count % 2) != 0)
-      return false;
+    if ((Count % 2) != 0) {
+      OS.write_zeros(1);
+      --Count;
+    }
 
     uint64_t NopCount = Count / 2;
     while (NopCount--)

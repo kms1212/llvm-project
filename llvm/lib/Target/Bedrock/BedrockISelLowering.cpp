@@ -1,0 +1,466 @@
+//===-- BedrockISelLowering.cpp - Bedrock DAG lowering --------------------===//
+//
+// Part of the LLVM Project, under the Apache License v2.0 with LLVM Exceptions.
+// See https://llvm.org/LICENSE.txt for license information.
+// SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
+//
+//===----------------------------------------------------------------------===//
+
+#include "BedrockISelLowering.h"
+#include "BedrockSubtarget.h"
+#include "MCTargetDesc/BedrockMCTargetDesc.h"
+#include "llvm/CodeGen/CallingConvLower.h"
+#include "llvm/CodeGen/MachineFrameInfo.h"
+#include "llvm/CodeGen/MachineFunction.h"
+#include "llvm/CodeGen/MachineRegisterInfo.h"
+#include "llvm/IR/Function.h"
+#include "llvm/Support/ErrorHandling.h"
+#include "llvm/Target/TargetMachine.h"
+
+using namespace llvm;
+
+#define DEBUG_TYPE "bedrock-isel-lowering"
+
+#include "BedrockGenCallingConv.inc"
+
+BedrockTargetLowering::BedrockTargetLowering(const TargetMachine &TM,
+                                             const BedrockSubtarget &STI)
+    : TargetLowering(TM, STI), Subtarget(STI) {
+  addRegisterClass(MVT::i32, &Bedrock::GPR64RegClass);
+  addRegisterClass(MVT::i64, &Bedrock::GPR64RegClass);
+  addRegisterClass(MVT::f32, &Bedrock::FPR64RegClass);
+  addRegisterClass(MVT::f64, &Bedrock::FPR64RegClass);
+
+  setBooleanContents(ZeroOrOneBooleanContent);
+  setMinFunctionAlignment(Align(2));
+
+  for (MVT VT : {MVT::i32, MVT::i64}) {
+    setOperationAction(ISD::BR_CC, VT, Custom);
+    setOperationAction(ISD::SETCC, VT, Custom);
+    setOperationAction(ISD::SELECT, VT, Custom);
+    setOperationAction(ISD::SELECT_CC, VT, Custom);
+    setOperationAction(ISD::SIGN_EXTEND_INREG, VT, Custom);
+
+    setLoadExtAction(ISD::EXTLOAD, VT, MVT::i1, Promote);
+    setLoadExtAction(ISD::SEXTLOAD, VT, MVT::i1, Promote);
+    setLoadExtAction(ISD::ZEXTLOAD, VT, MVT::i1, Promote);
+    setLoadExtAction(ISD::EXTLOAD, VT, MVT::i8, Legal);
+    setLoadExtAction(ISD::SEXTLOAD, VT, MVT::i8, Legal);
+    setLoadExtAction(ISD::ZEXTLOAD, VT, MVT::i8, Legal);
+    setLoadExtAction(ISD::EXTLOAD, VT, MVT::i16, Legal);
+    setLoadExtAction(ISD::SEXTLOAD, VT, MVT::i16, Legal);
+    setLoadExtAction(ISD::ZEXTLOAD, VT, MVT::i16, Legal);
+  }
+  setOperationAction(ISD::MULHU, MVT::i32, Expand);
+
+  setLoadExtAction(ISD::EXTLOAD, MVT::i64, MVT::i32, Legal);
+  setLoadExtAction(ISD::SEXTLOAD, MVT::i64, MVT::i32, Legal);
+  setLoadExtAction(ISD::ZEXTLOAD, MVT::i64, MVT::i32, Legal);
+
+  setTruncStoreAction(MVT::i32, MVT::i8, Legal);
+  setTruncStoreAction(MVT::i32, MVT::i16, Legal);
+  setTruncStoreAction(MVT::i64, MVT::i8, Legal);
+  setTruncStoreAction(MVT::i64, MVT::i16, Legal);
+  setTruncStoreAction(MVT::i64, MVT::i32, Legal);
+  setOperationAction(ISD::SIGN_EXTEND_INREG, MVT::i1, Custom);
+  for (MVT VT : {MVT::f32, MVT::f64}) {
+    setOperationAction(ISD::ConstantFP, VT, Expand);
+    setOperationAction(ISD::FADD, VT, Legal);
+    setOperationAction(ISD::FSUB, VT, Legal);
+    setOperationAction(ISD::FMUL, VT, Legal);
+    setOperationAction(ISD::FDIV, VT, Legal);
+    setOperationAction(ISD::SINT_TO_FP, VT, Legal);
+    setOperationAction(ISD::UINT_TO_FP, VT, Legal);
+  }
+  setMinimumJumpTableEntries(~0U);
+
+  computeRegisterProperties(Subtarget.getRegisterInfo());
+}
+
+const char *BedrockTargetLowering::getTargetNodeName(unsigned Opcode) const {
+  switch (Opcode) {
+  case BedrockISD::RET_FLAG:
+    return "BedrockISD::RET_FLAG";
+  case BedrockISD::CALL:
+    return "BedrockISD::CALL";
+  case BedrockISD::CMP:
+    return "BedrockISD::CMP";
+  case BedrockISD::BR_CC:
+    return "BedrockISD::BR_CC";
+  case BedrockISD::SET_CC:
+    return "BedrockISD::SET_CC";
+  default:
+    return nullptr;
+  }
+}
+
+EVT BedrockTargetLowering::getSetCCResultType(const DataLayout &DL,
+                                              LLVMContext &Context,
+                                              EVT VT) const {
+  return MVT::i64;
+}
+
+MVT BedrockTargetLowering::getScalarShiftAmountTy(const DataLayout &DL,
+                                                  EVT VT) const {
+  return MVT::i64;
+}
+
+static unsigned getBedrockCondCode(ISD::CondCode CC) {
+  switch (CC) {
+  case ISD::SETEQ:
+    return 0x2;
+  case ISD::SETNE:
+    return 0x3;
+  case ISD::SETULT:
+    return 0x4;
+  case ISD::SETUGE:
+    return 0x5;
+  case ISD::SETULE:
+    return 0xa;
+  case ISD::SETUGT:
+    return 0xb;
+  case ISD::SETLT:
+    return 0xc;
+  case ISD::SETGE:
+    return 0xd;
+  case ISD::SETLE:
+    return 0xe;
+  case ISD::SETGT:
+    return 0xf;
+  default:
+    report_fatal_error("unsupported Bedrock integer condition code");
+  }
+}
+
+static ISD::CondCode getCondCodeOperand(SDValue Op, StringRef Context) {
+  if (auto *CC = dyn_cast<CondCodeSDNode>(Op))
+    return CC->get();
+  report_fatal_error(Twine("Bedrock expected condition code in ") + Context);
+}
+
+static EVT getVTSDNodeOperand(SDValue Op, StringRef Context) {
+  if (auto *VT = dyn_cast<VTSDNode>(Op))
+    return VT->getVT();
+  report_fatal_error(Twine("Bedrock expected value type in ") + Context);
+}
+
+SDValue BedrockTargetLowering::LowerOperation(SDValue Op,
+                                              SelectionDAG &DAG) const {
+  switch (Op.getOpcode()) {
+  case ISD::BR_CC:
+    return LowerBR_CC(Op, DAG);
+  case ISD::SETCC:
+    return LowerSETCC(Op, DAG);
+  case ISD::SELECT:
+    return LowerSELECT(Op, DAG);
+  case ISD::SELECT_CC:
+    return LowerSELECT_CC(Op, DAG);
+  case ISD::SIGN_EXTEND_INREG:
+    return LowerSIGN_EXTEND_INREG(Op, DAG);
+  default:
+    llvm_unreachable("unhandled Bedrock lowering operation");
+  }
+}
+
+SDValue BedrockTargetLowering::LowerBR_CC(SDValue Op, SelectionDAG &DAG) const {
+  SDValue Chain = Op.getOperand(0);
+  ISD::CondCode CC = getCondCodeOperand(Op.getOperand(1), "BR_CC");
+  SDValue LHS = Op.getOperand(2);
+  SDValue RHS = Op.getOperand(3);
+  SDValue Dest = Op.getOperand(4);
+  SDLoc DL(Op);
+
+  SDValue TargetCC = DAG.getConstant(getBedrockCondCode(CC), DL, MVT::i32);
+  SDValue Glue = DAG.getNode(BedrockISD::CMP, DL, MVT::Glue, LHS, RHS);
+  return DAG.getNode(BedrockISD::BR_CC, DL, Op.getValueType(), Chain, Dest,
+                     TargetCC, Glue);
+}
+
+SDValue BedrockTargetLowering::LowerSETCC(SDValue Op, SelectionDAG &DAG) const {
+  SDValue LHS = Op.getOperand(0);
+  SDValue RHS = Op.getOperand(1);
+  ISD::CondCode CC = getCondCodeOperand(Op.getOperand(2), "SETCC");
+  SDLoc DL(Op);
+
+  SDValue TargetCC = DAG.getConstant(getBedrockCondCode(CC), DL, MVT::i32);
+  SDValue Glue = DAG.getNode(BedrockISD::CMP, DL, MVT::Glue, LHS, RHS);
+  return DAG.getNode(BedrockISD::SET_CC, DL, Op.getValueType(), TargetCC, Glue);
+}
+
+static SDValue fitIntegerToVT(SDValue Value, EVT VT, const SDLoc &DL,
+                              SelectionDAG &DAG) {
+  EVT ValueVT = Value.getValueType();
+  if (ValueVT == VT)
+    return Value;
+  if (ValueVT.bitsLT(VT))
+    return DAG.getNode(ISD::ZERO_EXTEND, DL, VT, Value);
+  return DAG.getNode(ISD::TRUNCATE, DL, VT, Value);
+}
+
+static SDValue lowerSelectFromZeroOrOne(SDValue Cond, SDValue TrueValue,
+                                        SDValue FalseValue, const SDLoc &DL,
+                                        SelectionDAG &DAG) {
+  EVT VT = TrueValue.getValueType();
+  if (!VT.isInteger())
+    report_fatal_error("Bedrock only supports integer select lowering");
+
+  Cond = fitIntegerToVT(Cond, VT, DL, DAG);
+  SDValue Zero = DAG.getConstant(0, DL, VT);
+  SDValue Mask = DAG.getNode(ISD::SUB, DL, VT, Zero, Cond);
+  SDValue InvertedMask = DAG.getNode(ISD::XOR, DL, VT, Mask,
+                                     DAG.getAllOnesConstant(DL, VT));
+  SDValue TruePart = DAG.getNode(ISD::AND, DL, VT, TrueValue, Mask);
+  SDValue FalsePart = DAG.getNode(ISD::AND, DL, VT, FalseValue, InvertedMask);
+  return DAG.getNode(ISD::OR, DL, VT, TruePart, FalsePart);
+}
+
+SDValue BedrockTargetLowering::LowerSELECT(SDValue Op,
+                                           SelectionDAG &DAG) const {
+  SDLoc DL(Op);
+  return lowerSelectFromZeroOrOne(Op.getOperand(0), Op.getOperand(1),
+                                  Op.getOperand(2), DL, DAG);
+}
+
+SDValue BedrockTargetLowering::LowerSELECT_CC(SDValue Op,
+                                              SelectionDAG &DAG) const {
+  SDValue LHS = Op.getOperand(0);
+  SDValue RHS = Op.getOperand(1);
+  SDValue TrueValue = Op.getOperand(2);
+  SDValue FalseValue = Op.getOperand(3);
+  SDValue CC = Op.getOperand(4);
+  SDLoc DL(Op);
+
+  SDValue Cond =
+      DAG.getSetCC(DL, MVT::i64, LHS, RHS, getCondCodeOperand(CC, "SELECT_CC"));
+  return lowerSelectFromZeroOrOne(Cond, TrueValue, FalseValue, DL, DAG);
+}
+
+SDValue BedrockTargetLowering::LowerSIGN_EXTEND_INREG(SDValue Op,
+                                                      SelectionDAG &DAG) const {
+  SDValue Value = Op.getOperand(0);
+  EVT VT = Value.getValueType();
+  EVT ExtVT = getVTSDNodeOperand(Op.getOperand(1), "SIGN_EXTEND_INREG");
+  SDLoc DL(Op);
+
+  unsigned Shift = VT.getScalarSizeInBits() - ExtVT.getScalarSizeInBits();
+  EVT ShiftVT = getScalarShiftAmountTy(DAG.getDataLayout(), VT);
+  SDValue ShiftValue = DAG.getConstant(Shift, DL, ShiftVT);
+  SDValue Shifted = DAG.getNode(ISD::SHL, DL, VT, Value, ShiftValue);
+  return DAG.getNode(ISD::SRA, DL, VT, Shifted, ShiftValue);
+}
+
+static SDValue convertLocVT(SDValue Value, const CCValAssign &VA,
+                            const SDLoc &DL, SelectionDAG &DAG) {
+  switch (VA.getLocInfo()) {
+  case CCValAssign::Full:
+    return Value;
+  case CCValAssign::SExt:
+    Value = DAG.getNode(ISD::AssertSext, DL, VA.getLocVT(), Value,
+                        DAG.getValueType(VA.getValVT()));
+    return DAG.getNode(ISD::TRUNCATE, DL, VA.getValVT(), Value);
+  case CCValAssign::ZExt:
+    Value = DAG.getNode(ISD::AssertZext, DL, VA.getLocVT(), Value,
+                        DAG.getValueType(VA.getValVT()));
+    return DAG.getNode(ISD::TRUNCATE, DL, VA.getValVT(), Value);
+  case CCValAssign::AExt:
+    return DAG.getNode(ISD::TRUNCATE, DL, VA.getValVT(), Value);
+  default:
+    llvm_unreachable("unknown argument location info");
+  }
+}
+
+static SDValue promoteToLocVT(SDValue Value, const CCValAssign &VA,
+                              const SDLoc &DL, SelectionDAG &DAG) {
+  switch (VA.getLocInfo()) {
+  case CCValAssign::Full:
+    return Value;
+  case CCValAssign::SExt:
+    return DAG.getNode(ISD::SIGN_EXTEND, DL, VA.getLocVT(), Value);
+  case CCValAssign::ZExt:
+    return DAG.getNode(ISD::ZERO_EXTEND, DL, VA.getLocVT(), Value);
+  case CCValAssign::AExt:
+    return DAG.getNode(ISD::ANY_EXTEND, DL, VA.getLocVT(), Value);
+  default:
+    llvm_unreachable("unknown argument location info");
+  }
+}
+
+static bool isSupportedCallingConv(CallingConv::ID CallConv) {
+  return CallConv == CallingConv::C || CallConv == CallingConv::Fast;
+}
+
+SDValue BedrockTargetLowering::LowerFormalArguments(
+    SDValue Chain, CallingConv::ID CallConv, bool IsVarArg,
+    const SmallVectorImpl<ISD::InputArg> &Ins, const SDLoc &DL,
+    SelectionDAG &DAG, SmallVectorImpl<SDValue> &InVals) const {
+  if (!isSupportedCallingConv(CallConv))
+    report_fatal_error("Bedrock only supports C-compatible calling conventions");
+  if (IsVarArg)
+    report_fatal_error("Bedrock varargs lowering is not implemented yet");
+
+  MachineFunction &MF = DAG.getMachineFunction();
+  MachineRegisterInfo &RegInfo = MF.getRegInfo();
+
+  SmallVector<CCValAssign, 16> ArgLocs;
+  CCState CCInfo(CallConv, IsVarArg, MF, ArgLocs, *DAG.getContext());
+  CCInfo.AnalyzeFormalArguments(Ins, CC_Bedrock);
+
+  SmallVector<SDValue, 8> ArgChains;
+  for (unsigned I = 0, E = ArgLocs.size(); I != E; ++I) {
+    const CCValAssign &VA = ArgLocs[I];
+    if (VA.isMemLoc())
+      report_fatal_error("Bedrock stack arguments are not implemented yet");
+
+    const TargetRegisterClass *RC =
+        VA.getLocVT().isFloatingPoint() ? &Bedrock::FPR64RegClass
+                                        : &Bedrock::GPR64RegClass;
+    Register VReg = RegInfo.createVirtualRegister(RC);
+    RegInfo.addLiveIn(VA.getLocReg(), VReg);
+    SDValue ArgValue = DAG.getCopyFromReg(Chain, DL, VReg, VA.getLocVT());
+    ArgChains.push_back(ArgValue.getValue(ArgValue->getNumValues() - 1));
+    InVals.push_back(convertLocVT(ArgValue, VA, DL, DAG));
+  }
+
+  if (!ArgChains.empty())
+    Chain = DAG.getNode(ISD::TokenFactor, DL, MVT::Other, ArgChains);
+  return Chain;
+}
+
+SDValue
+BedrockTargetLowering::LowerCall(TargetLowering::CallLoweringInfo &CLI,
+                                 SmallVectorImpl<SDValue> &InVals) const {
+  SelectionDAG &DAG = CLI.DAG;
+  SDLoc &DL = CLI.DL;
+  SmallVectorImpl<ISD::OutputArg> &Outs = CLI.Outs;
+  SmallVectorImpl<SDValue> &OutVals = CLI.OutVals;
+  SmallVectorImpl<ISD::InputArg> &Ins = CLI.Ins;
+  SDValue Chain = CLI.Chain;
+  SDValue Callee = CLI.Callee;
+  CallingConv::ID CallConv = CLI.CallConv;
+  bool IsVarArg = CLI.IsVarArg;
+
+  CLI.IsTailCall = false;
+
+  if (!isSupportedCallingConv(CallConv))
+    report_fatal_error("Bedrock only supports C-compatible calling conventions");
+  if (IsVarArg)
+    report_fatal_error("Bedrock vararg calls are not implemented yet");
+
+  MachineFunction &MF = DAG.getMachineFunction();
+  SmallVector<CCValAssign, 16> ArgLocs;
+  CCState CCInfo(CallConv, IsVarArg, MF, ArgLocs, *DAG.getContext());
+  CCInfo.AnalyzeCallOperands(Outs, CC_Bedrock);
+  if (CCInfo.getStackSize() != 0)
+    report_fatal_error("Bedrock stack call arguments are not implemented yet");
+
+  Chain = DAG.getCALLSEQ_START(Chain, CCInfo.getStackSize(), 0, DL);
+
+  SmallVector<std::pair<Register, SDValue>, 8> RegsToPass;
+  for (unsigned I = 0, E = ArgLocs.size(); I != E; ++I) {
+    const CCValAssign &VA = ArgLocs[I];
+    if (VA.isMemLoc())
+      report_fatal_error(
+          "Bedrock stack call arguments are not implemented yet");
+    RegsToPass.push_back(
+        {VA.getLocReg(), promoteToLocVT(OutVals[I], VA, DL, DAG)});
+  }
+
+  SDValue InGlue;
+  for (const auto &[Reg, Value] : RegsToPass) {
+    Chain = DAG.getCopyToReg(Chain, DL, Reg, Value, InGlue);
+    InGlue = Chain.getValue(1);
+  }
+
+  if (auto *G = dyn_cast<GlobalAddressSDNode>(Callee))
+    Callee = DAG.getTargetGlobalAddress(
+        G->getGlobal(), DL, getPointerTy(DAG.getDataLayout()), G->getOffset());
+  else if (auto *E = dyn_cast<ExternalSymbolSDNode>(Callee))
+    Callee = DAG.getTargetExternalSymbol(E->getSymbol(),
+                                         getPointerTy(DAG.getDataLayout()));
+  else {
+    for (const auto &[Reg, Value] : RegsToPass) {
+      if (Reg == Bedrock::R6)
+        report_fatal_error(
+            "Bedrock indirect calls currently support at most six arguments");
+    }
+  }
+
+  const BedrockRegisterInfo *TRI = Subtarget.getRegisterInfo();
+  const uint32_t *Mask = TRI->getCallPreservedMask(MF, CallConv);
+  assert(Mask && "missing Bedrock call preserved mask");
+
+  SDVTList NodeTys = DAG.getVTList(MVT::Other, MVT::Glue);
+  SmallVector<SDValue, 16> Ops;
+  Ops.push_back(Chain);
+  Ops.push_back(Callee);
+  Ops.push_back(DAG.getRegisterMask(Mask));
+  for (const auto &[Reg, Value] : RegsToPass)
+    Ops.push_back(DAG.getRegister(Reg, Value.getValueType()));
+  if (InGlue.getNode())
+    Ops.push_back(InGlue);
+
+  Chain = DAG.getNode(BedrockISD::CALL, DL, NodeTys, Ops);
+  InGlue = Chain.getValue(1);
+
+  Chain = DAG.getCALLSEQ_END(Chain, CCInfo.getStackSize(), 0, InGlue, DL);
+  InGlue = Chain.getValue(1);
+
+  return LowerCallResult(Chain, InGlue, CallConv, IsVarArg, Ins, DL, DAG,
+                         InVals);
+}
+
+SDValue BedrockTargetLowering::LowerCallResult(
+    SDValue Chain, SDValue InGlue, CallingConv::ID CallConv, bool IsVarArg,
+    const SmallVectorImpl<ISD::InputArg> &Ins, const SDLoc &DL,
+    SelectionDAG &DAG, SmallVectorImpl<SDValue> &InVals) const {
+  SmallVector<CCValAssign, 4> RVLocs;
+  CCState CCInfo(CallConv, IsVarArg, DAG.getMachineFunction(), RVLocs,
+                 *DAG.getContext());
+  CCInfo.AnalyzeCallResult(Ins, RetCC_Bedrock);
+
+  for (unsigned I = 0, E = RVLocs.size(); I != E; ++I) {
+    const CCValAssign &VA = RVLocs[I];
+    SDValue RetValue =
+        DAG.getCopyFromReg(Chain, DL, VA.getLocReg(), VA.getLocVT(), InGlue);
+    Chain = RetValue.getValue(1);
+    InGlue = RetValue.getValue(2);
+    InVals.push_back(convertLocVT(RetValue, VA, DL, DAG));
+  }
+  return Chain;
+}
+
+bool BedrockTargetLowering::CanLowerReturn(
+    CallingConv::ID CallConv, MachineFunction &MF, bool IsVarArg,
+    const SmallVectorImpl<ISD::OutputArg> &Outs, LLVMContext &Context,
+    const Type *RetTy) const {
+  SmallVector<CCValAssign, 4> RVLocs;
+  CCState CCInfo(CallConv, IsVarArg, MF, RVLocs, Context);
+  return CCInfo.CheckReturn(Outs, RetCC_Bedrock);
+}
+
+SDValue
+BedrockTargetLowering::LowerReturn(SDValue Chain, CallingConv::ID CallConv,
+                                   bool IsVarArg,
+                                   const SmallVectorImpl<ISD::OutputArg> &Outs,
+                                   const SmallVectorImpl<SDValue> &OutVals,
+                                   const SDLoc &DL, SelectionDAG &DAG) const {
+  SmallVector<CCValAssign, 4> RVLocs;
+  CCState CCInfo(CallConv, IsVarArg, DAG.getMachineFunction(), RVLocs,
+                 *DAG.getContext());
+  CCInfo.AnalyzeReturn(Outs, RetCC_Bedrock);
+
+  SDValue Glue;
+  SmallVector<SDValue, 8> RetOps(1, Chain);
+  for (unsigned I = 0, E = RVLocs.size(); I != E; ++I) {
+    const CCValAssign &VA = RVLocs[I];
+    SDValue Value = promoteToLocVT(OutVals[I], VA, DL, DAG);
+    Chain = DAG.getCopyToReg(Chain, DL, VA.getLocReg(), Value, Glue);
+    Glue = Chain.getValue(1);
+    RetOps.push_back(DAG.getRegister(VA.getLocReg(), VA.getLocVT()));
+  }
+
+  RetOps[0] = Chain;
+  if (Glue.getNode())
+    RetOps.push_back(Glue);
+  return DAG.getNode(BedrockISD::RET_FLAG, DL, MVT::Other, RetOps);
+}

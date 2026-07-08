@@ -198,6 +198,7 @@ protected:
 void setAArch64TargetInfo(Ctx &);
 void setAMDGPUTargetInfo(Ctx &);
 void setARMTargetInfo(Ctx &);
+void setBedrockTargetInfo(Ctx &);
 void setAVRTargetInfo(Ctx &);
 void setHexagonTargetInfo(Ctx &);
 void setLoongArchTargetInfo(Ctx &);

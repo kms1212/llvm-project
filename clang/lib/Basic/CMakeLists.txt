@@ -100,6 +100,7 @@ add_clang_library(clangBasic
   Targets/ARC.cpp
   Targets/ARM.cpp
   Targets/AVR.cpp
+  Targets/Bedrock.cpp
   Targets/BPF.cpp
   Targets/CSKY.cpp
   Targets/DirectX.cpp

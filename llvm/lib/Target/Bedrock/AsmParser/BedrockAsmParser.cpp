@@ -31,6 +31,8 @@ using namespace llvm;
 
 #define DEBUG_TYPE "bedrock-asm-parser"
 
+static MCRegister MatchRegisterName(StringRef Name);
+
 namespace {
 
 class BedrockAsmParser : public MCTargetAsmParser {
@@ -57,6 +59,7 @@ class BedrockAsmParser : public MCTargetAsmParser {
 
   bool parseOperand(OperandVector &Operands);
   bool parseMemoryOperand(OperandVector &Operands);
+  bool parseRegisterMaskOperand(OperandVector &Operands);
 
   MCAsmParser &getParser() const { return Parser; }
   AsmLexer &getLexer() const { return Parser.getLexer(); }
@@ -74,6 +77,7 @@ class BedrockOperand : public MCParsedAsmOperand {
 public:
   enum MemBaseKind { MemReg, MemSP, MemPC, MemAbs, MemZero };
   enum MemUpdateKind { MemNoUpdate, MemPostInc, MemPreDec };
+  enum ImmVariantKind { ImmNoVariant, ImmAbs64, ImmPCRel32 };
 
 private:
   enum KindTy { TokenKind, RegKind, ImmKind, MemKind } Kind;
@@ -81,6 +85,7 @@ private:
   std::string Tok;
   MCRegister Register = Bedrock::NoRegister;
   const MCExpr *Imm = nullptr;
+  ImmVariantKind ImmVariant = ImmNoVariant;
   MemBaseKind BaseKind = MemAbs;
   unsigned BaseReg = 0;
   const MCExpr *Disp = nullptr;
@@ -101,8 +106,10 @@ public:
   BedrockOperand(MCRegister Register, SMLoc Start, SMLoc End)
       : Kind(RegKind), Register(Register), Start(Start), End(End) {}
 
-  BedrockOperand(const MCExpr *Imm, SMLoc Start, SMLoc End)
-      : Kind(ImmKind), Imm(Imm), Start(Start), End(End) {}
+  BedrockOperand(const MCExpr *Imm, SMLoc Start, SMLoc End,
+                 ImmVariantKind ImmVariant = ImmNoVariant)
+      : Kind(ImmKind), Imm(Imm), ImmVariant(ImmVariant), Start(Start),
+        End(End) {}
 
   BedrockOperand(MemBaseKind BaseKind, unsigned BaseReg, const MCExpr *Disp,
                  bool HasDisp, SMLoc Start, SMLoc End,
@@ -165,6 +172,11 @@ public:
   const MCExpr *getImm() const {
     assert(Kind == ImmKind && "invalid access");
     return Imm;
+  }
+
+  ImmVariantKind getImmVariant() const {
+    assert(Kind == ImmKind && "invalid access");
+    return ImmVariant;
   }
 
   MemBaseKind getMemBaseKind() const {
@@ -247,9 +259,10 @@ public:
     return std::make_unique<BedrockOperand>(Reg, Start, End);
   }
 
-  static std::unique_ptr<BedrockOperand> createImm(const MCExpr *Imm,
-                                                   SMLoc Start, SMLoc End) {
-    return std::make_unique<BedrockOperand>(Imm, Start, End);
+  static std::unique_ptr<BedrockOperand>
+  createImm(const MCExpr *Imm, SMLoc Start, SMLoc End,
+            ImmVariantKind ImmVariant = ImmNoVariant) {
+    return std::make_unique<BedrockOperand>(Imm, Start, End, ImmVariant);
   }
 
   static std::unique_ptr<BedrockOperand>
@@ -264,7 +277,7 @@ public:
   }
 };
 
-bool getRegNo(MCRegister Reg, unsigned &RegNo) {
+MCRegister getGPRByNo(unsigned RegNo) {
   static const MCRegister Regs[] = {
       Bedrock::R0,  Bedrock::R1,  Bedrock::R2,  Bedrock::R3,
       Bedrock::R4,  Bedrock::R5,  Bedrock::R6,  Bedrock::R7,
@@ -272,13 +285,75 @@ bool getRegNo(MCRegister Reg, unsigned &RegNo) {
       Bedrock::R12, Bedrock::R13, Bedrock::R14, Bedrock::R15,
   };
 
-  for (unsigned I = 0; I != std::size(Regs); ++I) {
-    if (Reg == Regs[I]) {
+  if (RegNo >= std::size(Regs))
+    return Bedrock::NoRegister;
+  return Regs[RegNo];
+}
+
+MCRegister getFPRByNo(unsigned RegNo) {
+  static const MCRegister Regs[] = {
+      Bedrock::F0,  Bedrock::F1,  Bedrock::F2,  Bedrock::F3,
+      Bedrock::F4,  Bedrock::F5,  Bedrock::F6,  Bedrock::F7,
+      Bedrock::F8,  Bedrock::F9,  Bedrock::F10, Bedrock::F11,
+      Bedrock::F12, Bedrock::F13, Bedrock::F14, Bedrock::F15,
+  };
+
+  if (RegNo >= std::size(Regs))
+    return Bedrock::NoRegister;
+  return Regs[RegNo];
+}
+
+bool getRegNo(MCRegister Reg, unsigned &RegNo) {
+  for (unsigned I = 0; I != 16; ++I) {
+    if (Reg == getGPRByNo(I)) {
       RegNo = I;
       return true;
     }
   }
   return false;
+}
+
+bool parseRegisterAlias(StringRef Name, unsigned &RegNo) {
+  if (Name.size() < 2)
+    return false;
+
+  char Prefix = Name.front();
+  if (Prefix != 'd' && Prefix != 'a')
+    return false;
+
+  unsigned long long AliasNo;
+  StringRef Tail = Name.drop_front();
+  if (Tail.consumeInteger(10, AliasNo) || !Tail.empty() || AliasNo >= 8)
+    return false;
+
+  RegNo = Prefix == 'd' ? AliasNo : AliasNo + 8;
+  return true;
+}
+
+bool parseNumberedRegister(StringRef Name, char Prefix, unsigned Limit,
+                           unsigned &RegNo) {
+  if (Name.size() < 2 || Name.front() != Prefix)
+    return false;
+
+  unsigned long long ParsedNo;
+  StringRef Tail = Name.drop_front();
+  if (Tail.consumeInteger(10, ParsedNo) || !Tail.empty() ||
+      ParsedNo >= Limit)
+    return false;
+
+  RegNo = ParsedNo;
+  return true;
+}
+
+MCRegister matchBedrockRegisterName(StringRef Name) {
+  unsigned RegNo;
+  if (parseRegisterAlias(Name, RegNo))
+    return getGPRByNo(RegNo);
+  if (parseNumberedRegister(Name, 'r', 16, RegNo))
+    return getGPRByNo(RegNo);
+  if (parseNumberedRegister(Name, 'f', 16, RegNo))
+    return getFPRByNo(RegNo);
+  return ::MatchRegisterName(Name);
 }
 
 bool getConstantImm(const BedrockOperand &Op, int64_t &Value) {
@@ -312,6 +387,37 @@ bool getSRegNo(StringRef Name, unsigned &RegNo) {
 
 bool getSRegNo(const BedrockOperand &Op, unsigned &RegNo) {
   return Op.isToken() && getSRegNo(Op.getToken(), RegNo);
+}
+
+bool getCRNo(StringRef Name, unsigned &RegNo) {
+  int Value = StringSwitch<int>(Name)
+                  .Case("ptcr", 0x0000)
+                  .Case("ascr", 0x0001)
+                  .Case("icr", 0x0002)
+                  .Case("spc", 0x0100)
+                  .Case("scs", 0x0101)
+                  .Case("sds", 0x0102)
+                  .Case("sss0", 0x0200)
+                  .Case("ssp0", 0x0201)
+                  .Case("sss1", 0x0210)
+                  .Case("ssp1", 0x0211)
+                  .Case("sss2", 0x0220)
+                  .Case("ssp2", 0x0221)
+                  .Case("sss3", 0x0230)
+                  .Case("ssp3", 0x0231)
+                  .Case("bootpc", 0x1000)
+                  .Case("bootcfg", 0x1001)
+                  .Case("ptc", 0x1100)
+                  .Case("pmc", 0x1101)
+                  .Default(-1);
+  if (Value < 0)
+    return false;
+  RegNo = Value;
+  return true;
+}
+
+bool getCRNo(const BedrockOperand &Op, unsigned &RegNo) {
+  return Op.isToken() && getCRNo(Op.getToken(), RegNo);
 }
 
 struct RawFixup {
@@ -604,8 +710,23 @@ bool encodeCompactEA(const BedrockOperand &Op, bool AllowImmediate, uint8_t &EA,
   if (Op.isImm()) {
     if (!AllowImmediate)
       return false;
+    if (Op.getImmVariant() == BedrockOperand::ImmAbs64) {
+      if (Op.getImm()->evaluateAsAbsolute(Value)) {
+        WidthCode = 3;
+        appendLE(Tail, static_cast<uint64_t>(Value), 8);
+      } else {
+        WidthCode = 3;
+        if (!appendExprTail(Op.getImm(), 8, Tail, Fixups, FK_Data_8))
+          return false;
+      }
+      EA = 0x6c + WidthCode;
+      return true;
+    }
+    MCFixupKind ImmFixup = Op.getImmVariant() == BedrockOperand::ImmPCRel32
+                                ? MCFixupKind(Bedrock::fixup_bedrock_pcrel32)
+                                : MCFixupKind(Bedrock::fixup_bedrock_imm32);
     if (!appendSignedAuto(Op.getImm(), Tail, WidthCode, Fixups,
-                          Bedrock::fixup_bedrock_imm32))
+                          ImmFixup))
       return false;
     EA = 0x6c + WidthCode;
     return true;
@@ -1068,6 +1189,8 @@ bool tryEncodeSymbolicInstruction(OperandVector &Operands,
   if (Operands.size() == 2 && GetOp(1).isImm()) {
     int64_t Absolute;
     if (getConstantImm(GetOp(1), Absolute))
+      return false;
+    if (GetOp(1).getImmVariant() == BedrockOperand::ImmAbs64)
       return false;
 
     unsigned Cond = 0;
@@ -1759,8 +1882,13 @@ bool tryEncodeMediumInstruction(OperandVector &Operands,
       SmallVector<uint8_t, 2> Tail;
       SmallVector<RawFixup, 1> LocalFixups;
       unsigned RegNo;
-      if (encodeUnsignedTail(ImmOp, 2, Tail, &LocalFixups) && RegOp.isReg() &&
-          getRegNo(RegOp.getReg(), RegNo)) {
+      unsigned CRNo;
+      bool EncodedSelector = encodeUnsignedTail(ImmOp, 2, Tail, &LocalFixups);
+      if (!EncodedSelector && getCRNo(ImmOp, CRNo)) {
+        appendLE(Tail, CRNo, 2);
+        EncodedSelector = true;
+      }
+      if (EncodedSelector && RegOp.isReg() && getRegNo(RegOp.getReg(), RegNo)) {
         PatternFieldValue Fields[] = {{Form.RegField, RegNo}};
         uint32_t Payload = applyPatternValues(Form.Pattern, Fields);
         return FinishLong(Payload, Tail, LocalFixups);
@@ -1996,7 +2124,7 @@ ParseStatus BedrockAsmParser::tryParseRegister(MCRegister &Reg, SMLoc &StartLoc,
     return ParseStatus::NoMatch;
 
   StringRef Name = getLexer().getTok().getIdentifier();
-  Reg = MatchRegisterName(Name.lower());
+  Reg = matchBedrockRegisterName(Name.lower());
   if (Reg == Bedrock::NoRegister)
     return ParseStatus::NoMatch;
 
@@ -2009,6 +2137,8 @@ ParseStatus BedrockAsmParser::tryParseRegister(MCRegister &Reg, SMLoc &StartLoc,
 bool BedrockAsmParser::parseOperand(OperandVector &Operands) {
   if (getLexer().is(AsmToken::LBrac))
     return parseMemoryOperand(Operands);
+  if (getLexer().is(AsmToken::LCurly))
+    return parseRegisterMaskOperand(Operands);
 
   MCRegister Reg;
   SMLoc StartLoc;
@@ -2022,14 +2152,74 @@ bool BedrockAsmParser::parseOperand(OperandVector &Operands) {
   if (getLexer().is(AsmToken::Identifier)) {
     StringRef Name = getLexer().getTok().getIdentifier();
     std::string Lower = Name.lower();
+    unsigned Ignored;
     if (Lower == "sp" || Lower == "pc" || Lower == "cs" || Lower == "ds" ||
         Lower == "ss" || Lower == "gs0" || Lower == "gs1" || Lower == "gs2" ||
-        Lower == "gs3" || Lower == "gs4") {
+        Lower == "gs3" || Lower == "gs4" || getCRNo(Lower, Ignored)) {
       StartLoc = getLexer().getTok().getLoc();
       Operands.push_back(BedrockOperand::createToken(Lower, StartLoc));
       getLexer().Lex();
       return false;
     }
+  }
+
+  if (getLexer().is(AsmToken::Identifier)) {
+    StringRef Name = getLexer().getTok().getIdentifier();
+    size_t At = Name.find('@');
+    if (At != StringRef::npos) {
+      StartLoc = getLexer().getTok().getLoc();
+      StringRef SymbolName = Name.take_front(At);
+      StringRef VariantName = Name.drop_front(At + 1);
+      auto Variant =
+          StringSwitch<BedrockOperand::ImmVariantKind>(VariantName.lower())
+              .Case("abs64", BedrockOperand::ImmAbs64)
+              .Case("pcrel32", BedrockOperand::ImmPCRel32)
+              .Default(BedrockOperand::ImmNoVariant);
+      if (SymbolName.empty() || Variant == BedrockOperand::ImmNoVariant)
+        return Error(getLexer().getTok().getLoc(),
+                     "invalid Bedrock symbol variant");
+
+      EndLoc = getLexer().getTok().getEndLoc();
+      getLexer().Lex();
+
+      const MCExpr *Expr = MCSymbolRefExpr::create(
+          getParser().getContext().getOrCreateSymbol(SymbolName),
+          getParser().getContext());
+      Operands.push_back(
+          BedrockOperand::createImm(Expr, StartLoc, EndLoc, Variant));
+      return false;
+    }
+  }
+
+  if (getLexer().is(AsmToken::Identifier) &&
+      getLexer().peekTok().is(AsmToken::At)) {
+    StartLoc = getLexer().getTok().getLoc();
+    std::string SymbolName = getLexer().getTok().getIdentifier().str();
+    getLexer().Lex();
+    getLexer().Lex();
+
+    if (!getLexer().is(AsmToken::Identifier))
+      return Error(getLexer().getLoc(), "expected Bedrock symbol variant");
+
+    StringRef VariantName = getLexer().getTok().getIdentifier();
+    auto Variant =
+        StringSwitch<BedrockOperand::ImmVariantKind>(VariantName.lower())
+            .Case("abs64", BedrockOperand::ImmAbs64)
+            .Case("pcrel32", BedrockOperand::ImmPCRel32)
+            .Default(BedrockOperand::ImmNoVariant);
+    if (Variant == BedrockOperand::ImmNoVariant)
+      return Error(getLexer().getTok().getLoc(),
+                   "invalid Bedrock symbol variant");
+
+    EndLoc = getLexer().getTok().getEndLoc();
+    getLexer().Lex();
+
+    const MCExpr *Expr = MCSymbolRefExpr::create(
+        getParser().getContext().getOrCreateSymbol(SymbolName),
+        getParser().getContext());
+    Operands.push_back(
+        BedrockOperand::createImm(Expr, StartLoc, EndLoc, Variant));
+    return false;
   }
 
   if (getLexer().is(AsmToken::Integer) || getLexer().is(AsmToken::Minus) ||
@@ -2044,6 +2234,53 @@ bool BedrockAsmParser::parseOperand(OperandVector &Operands) {
   }
 
   return true;
+}
+
+bool BedrockAsmParser::parseRegisterMaskOperand(OperandVector &Operands) {
+  SMLoc StartLoc = getLexer().getTok().getLoc();
+  if (parseToken(AsmToken::LCurly, "expected '{'"))
+    return true;
+
+  uint64_t Mask = 0;
+  for (;;) {
+    MCRegister FirstReg;
+    SMLoc FirstStart;
+    SMLoc FirstEnd;
+    if (!tryParseRegister(FirstReg, FirstStart, FirstEnd).isSuccess())
+      return Error(getLexer().getLoc(), "expected register in register mask");
+
+    unsigned FirstNo;
+    if (!getRegNo(FirstReg, FirstNo))
+      return Error(FirstStart, "expected general register in register mask");
+
+    unsigned LastNo = FirstNo;
+    if (parseOptionalToken(AsmToken::Minus)) {
+      MCRegister LastReg;
+      SMLoc LastStart;
+      SMLoc LastEnd;
+      if (!tryParseRegister(LastReg, LastStart, LastEnd).isSuccess())
+        return Error(getLexer().getLoc(), "expected register after '-'");
+      if (!getRegNo(LastReg, LastNo))
+        return Error(LastStart, "expected general register in register mask");
+      if (LastNo < FirstNo)
+        return Error(LastStart, "register mask range must be ascending");
+    }
+
+    for (unsigned RegNo = FirstNo; RegNo <= LastNo; ++RegNo)
+      Mask |= uint64_t(1) << RegNo;
+
+    if (!parseOptionalToken(AsmToken::Comma))
+      break;
+  }
+
+  SMLoc EndLoc = getLexer().getTok().getEndLoc();
+  if (parseToken(AsmToken::RCurly, "expected '}'"))
+    return true;
+
+  Operands.push_back(BedrockOperand::createImm(
+      MCConstantExpr::create(Mask, getParser().getContext()), StartLoc,
+      EndLoc));
+  return false;
 }
 
 bool BedrockAsmParser::parseMemoryOperand(OperandVector &Operands) {
@@ -2276,6 +2513,9 @@ bool BedrockAsmParser::parseInstruction(ParseInstructionInfo &Info,
     Mnemonic = getLexer().getTok().getIdentifier().lower();
     getLexer().Lex();
   }
+
+  if (Mnemonic == "lea")
+    Mnemonic = "lea.q";
 
   Operands.push_back(BedrockOperand::createToken(Mnemonic, MnemonicLoc));
 
