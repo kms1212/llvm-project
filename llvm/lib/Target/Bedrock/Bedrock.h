@@ -19,9 +19,11 @@ class PassRegistry;
 
 FunctionPass *createBedrockISelDag(BedrockTargetMachine &TM,
                                    CodeGenOptLevel OptLevel);
+FunctionPass *createBedrockPreEmitPeepholePass();
 
 void initializeBedrockAsmPrinterPass(PassRegistry &);
 void initializeBedrockDAGToDAGISelLegacyPass(PassRegistry &);
+void initializeBedrockPreEmitPeepholePass(PassRegistry &);
 
 } // namespace llvm
 

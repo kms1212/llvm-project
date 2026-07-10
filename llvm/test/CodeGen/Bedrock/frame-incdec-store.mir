@@ -1,0 +1,126 @@
+# RUN: llc -mtriple=bedrock -start-after=prologepilog -verify-machineinstrs %s -o - | FileCheck %s
+
+# REQUIRES: bedrock-registered-target
+
+--- |
+  target triple = "bedrock"
+
+  @g = external global i64
+
+  define i64 @fold_frame_inc_store() {
+    ret i64 0
+  }
+
+  define i64 @keep_live_frame_inc_store() {
+    ret i64 0
+  }
+
+  define i64 @fold_live_frame_inc_cmp() {
+    ret i64 0
+  }
+
+  define i64 @fold_reg_inc_store() {
+    ret i64 0
+  }
+
+  define i64 @fold_reg_offset_inc_store() {
+    ret i64 0
+  }
+
+  define i64 @fold_abs_dec_store() {
+    ret i64 0
+  }
+...
+---
+name:            fold_frame_inc_store
+tracksRegLiveness: true
+body:             |
+  bb.0:
+    ; CHECK-LABEL: fold_frame_inc_store:
+    ; CHECK: inc.l [sp + 24]
+    ; CHECK-NOT: mov.q [sp + 24], r1
+    ; CHECK: ret
+    $r1 = LOADLfi 24, 0
+    $r1 = INCL3r killed $r1
+    STORELfi killed $r1, 24, 0
+    RET
+...
+---
+name:            keep_live_frame_inc_store
+tracksRegLiveness: true
+body:             |
+  bb.0:
+    ; CHECK-LABEL: keep_live_frame_inc_store:
+    ; CHECK: mov.q [sp + 24], r1
+    ; CHECK-NEXT: inc.l r1
+    ; CHECK-NEXT: mov.q r1, [sp + 24]
+    ; CHECK-NEXT: mov.q r1, r0
+    ; CHECK: ret
+    $r1 = LOADQfi 24, 0
+    $r1 = INCL3r killed $r1
+    STOREQfi $r1, 24, 0
+    $r0 = MOVQrr killed $r1
+    RET implicit $r0
+...
+---
+name:            fold_live_frame_inc_cmp
+tracksRegLiveness: true
+body:             |
+  bb.0:
+    ; CHECK-LABEL: fold_live_frame_inc_cmp:
+    ; CHECK: inc.l [sp + 24]
+    ; CHECK-NEXT: cmp.l [sp + 32], [sp + 24]
+    ; CHECK-NOT: mov.q [sp + 32], r2
+    ; CHECK-NOT: mov.q r1, [sp + 24]
+    ; CHECK: ret
+    $r1 = LOADLfi 24, 0
+    $r1 = INCL3r killed $r1
+    STORELfi $r1, 24, 0
+    $r2 = LOADLfi 32, 0
+    CMPLrr killed $r2, killed $r1
+    RET
+...
+---
+name:            fold_reg_inc_store
+tracksRegLiveness: true
+body:             |
+  bb.0:
+    ; CHECK-LABEL: fold_reg_inc_store:
+    ; CHECK: inc.l [r0]
+    ; CHECK-NOT: mov.l [r0], r1
+    ; CHECK: ret
+    liveins: $r0
+    $r1 = LOADLrr $r0
+    $r1 = INCL3r killed $r1
+    STORELrr killed $r1, $r0
+    RET
+...
+---
+name:            fold_reg_offset_inc_store
+tracksRegLiveness: true
+body:             |
+  bb.0:
+    ; CHECK-LABEL: fold_reg_offset_inc_store:
+    ; CHECK: inc.q [r0 + 16]
+    ; CHECK-NOT: mov.q [r0 + 16], r1
+    ; CHECK: ret
+    liveins: $r0
+    $r1 = LOADQro $r0, 16
+    $r1 = INCQ3r killed $r1
+    STOREQro killed $r1, $r0, 16
+    RET
+...
+---
+name:            fold_abs_dec_store
+tracksRegLiveness: true
+body:             |
+  bb.0:
+    ; CHECK-LABEL: fold_abs_dec_store:
+    ; CHECK: dec.q [g]
+    ; CHECK-NOT: mov.q [g], r1
+    ; CHECK: ret
+    $r1 = LOADQabs @g
+    $r1 = DECQ3r killed $r1
+    STOREQabs killed $r1, @g
+    RET
+...

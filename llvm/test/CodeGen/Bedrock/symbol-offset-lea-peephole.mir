@@ -1,0 +1,87 @@
+# RUN: llc -mtriple=bedrock -run-pass=bedrock-pre-emit-peephole -verify-machineinstrs %s -o - | FileCheck %s
+
+# REQUIRES: bedrock-registered-target
+
+--- |
+  target triple = "bedrock"
+
+  @g = external global i8
+
+  define void @fold_symbol_offset() {
+    ret void
+  }
+
+  define void @fold_symbol_index_lhs() {
+    ret void
+  }
+
+  define void @fold_symbol_index_rhs() {
+    ret void
+  }
+
+  define void @keep_scaled_index_memory_candidate() {
+    ret void
+  }
+...
+---
+name:            fold_symbol_offset
+tracksRegLiveness: true
+body:             |
+  ; CHECK-LABEL: name: fold_symbol_offset
+  ; CHECK: $r0 = CONST64 @g
+  ; CHECK-NEXT: $r1 = LEAro $r0, 76
+  ; CHECK-NOT: CONST64 @g + 76
+  bb.0:
+    $r0 = CONST64 @g
+    $r1 = CONST64 @g + 76
+    RET
+...
+---
+name:            fold_symbol_index_lhs
+tracksRegLiveness: true
+body:             |
+  ; CHECK-LABEL: name: fold_symbol_index_lhs
+  ; CHECK-NOT: CONST64 @g + 40
+  ; CHECK: $r1 = LEAro killed $r0, @g + 40
+  ; CHECK-NOT: ADDQ3rr
+  bb.0:
+    liveins: $r0
+
+    $r1 = CONST64 @g + 40
+    $r1 = ADDQ3rr killed $r1, killed $r0
+    RET implicit $r1
+...
+---
+name:            fold_symbol_index_rhs
+tracksRegLiveness: true
+body:             |
+  ; CHECK-LABEL: name: fold_symbol_index_rhs
+  ; CHECK-NOT: CONST64 @g + 48
+  ; CHECK: $r0 = LEAro killed $r0, @g + 48
+  ; CHECK-NOT: ADDQ3rr
+  bb.0:
+    liveins: $r0
+
+    $r1 = CONST64 @g + 48
+    $r0 = ADDQ3rr killed $r0, killed $r1
+    RET implicit $r0
+...
+---
+name:            keep_scaled_index_memory_candidate
+tracksRegLiveness: true
+body:             |
+  ; CHECK-LABEL: name: keep_scaled_index_memory_candidate
+  ; CHECK: $r0 = SHLQ3ri killed $r0, 2
+  ; CHECK-NEXT: $r1 = CONST64 @g
+  ; CHECK-NEXT: $r1 = ADDQ3rr killed $r1, killed $r0
+  ; CHECK-NEXT: $r2 = LOADLrr killed $r1
+  ; CHECK-NOT: LEAro killed $r0, @g
+  bb.0:
+    liveins: $r0
+
+    $r0 = SHLQ3ri killed $r0, 2
+    $r1 = CONST64 @g
+    $r1 = ADDQ3rr killed $r1, killed $r0
+    $r2 = LOADLrr killed $r1 :: (load (s32))
+    RET implicit $r2
+...

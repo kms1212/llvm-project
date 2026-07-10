@@ -63,34 +63,23 @@ DecodeStatus BedrockDisassembler::getInstruction(MCInst &MI, uint64_t &Size,
                                                  ArrayRef<uint8_t> Bytes,
                                                  uint64_t Address,
                                                  raw_ostream &CStream) const {
+  if (Bytes.empty()) {
+    Size = 0;
+    return MCDisassembler::Fail;
+  }
+
+  SmallString<128> RawText;
+  if (BedrockMC::decodeRawInst(Bytes, Size, RawText)) {
+    BedrockMC::createRawInst(Bytes.take_front(Size), MI);
+    return MCDisassembler::Success;
+  }
+
   if (Bytes.size() < 2) {
     Size = 0;
     return MCDisassembler::Fail;
   }
 
   uint64_t Word = support::endian::read16be(Bytes.data());
-  if (Word == 0x1f65 || Word == 0x1f67) {
-    SmallString<128> RawText;
-    if (!BedrockMC::decodeRawInst(Bytes, Size, RawText)) {
-      Size = 0;
-      return MCDisassembler::Fail;
-    }
-
-    BedrockMC::createRawInst(Bytes.take_front(Size), MI);
-    return MCDisassembler::Success;
-  }
-
-  if (Word & 0xc000) {
-    SmallString<128> RawText;
-    if (!BedrockMC::decodeRawInst(Bytes, Size, RawText)) {
-      Size = 0;
-      return MCDisassembler::Fail;
-    }
-
-    BedrockMC::createRawInst(Bytes.take_front(Size), MI);
-    return MCDisassembler::Success;
-  }
-
   DecodeStatus Result =
       decodeInstruction(DecoderTable16, MI, Word, Address, this, STI);
   if (Result != MCDisassembler::Fail) {

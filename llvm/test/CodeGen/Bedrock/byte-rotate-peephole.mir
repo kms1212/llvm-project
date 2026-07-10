@@ -1,0 +1,48 @@
+# RUN: llc -mtriple=bedrock -run-pass=bedrock-pre-emit-peephole -verify-machineinstrs %s -o - | FileCheck %s
+
+# REQUIRES: bedrock-registered-target
+
+--- |
+  target triple = "bedrock"
+
+  define i32 @fold_rotl8(i32 %x) {
+  entry:
+    br label %rot
+  rot:
+    br label %join
+  join:
+    ret i32 0
+  }
+...
+---
+name:            fold_rotl8
+tracksRegLiveness: true
+body:             |
+  ; CHECK-LABEL: name: fold_rotl8
+  ; CHECK: $r0 = ROLB3ri killed $r0, 1
+  ; CHECK-NEXT: $r1 = CONST64 0
+  ; CHECK-NOT: SHRL3ri
+  ; CHECK-NOT: ANDL3ri
+  bb.0.entry:
+    successors: %bb.1(0x80000000)
+    liveins: $r0
+
+    $r0 = EXTZLBrr killed $r0
+    BR %bb.1
+
+  bb.1.rot:
+    successors: %bb.2(0x80000000)
+    liveins: $r0
+
+    $r1 = MOVQrr $r0
+    $r1 = SHRL3ri killed $r1, 7
+    $r0 = nuw nsw ADDL3rr $r0, killed $r0
+    $r0 = ANDL3ri killed $r0, 254
+    BR %bb.2
+
+  bb.2.join:
+    liveins: $r0, $r1
+
+    $r0 = ORL3rr killed $r0, killed $r1
+    RET implicit $r0
+...

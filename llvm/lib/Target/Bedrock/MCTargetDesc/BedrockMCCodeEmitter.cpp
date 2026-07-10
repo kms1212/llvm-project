@@ -46,6 +46,78 @@ void BedrockMCCodeEmitter::encodeInstruction(const MCInst &MI,
                                              SmallVectorImpl<char> &CB,
                                              SmallVectorImpl<MCFixup> &Fixups,
                                              const MCSubtargetInfo &STI) const {
+  auto EmitByte = [&](uint8_t Byte) {
+    CB.push_back(static_cast<char>(Byte));
+  };
+  auto GetRegNo = [&](unsigned OpNo) -> uint8_t {
+    return Ctx.getRegisterInfo()->getEncodingValue(MI.getOperand(OpNo).getReg());
+  };
+
+  switch (MI.getOpcode()) {
+  case Bedrock::ILLEGAL:
+    EmitByte(0x00);
+    return;
+  case Bedrock::NOP:
+    EmitByte(0x01);
+    return;
+  case Bedrock::RET:
+    EmitByte(0x02);
+    return;
+  case Bedrock::LRET:
+    EmitByte(0x03);
+    return;
+  case Bedrock::IRET:
+    EmitByte(0x04);
+    return;
+  case Bedrock::SYSCALL:
+    EmitByte(0x05);
+    return;
+  case Bedrock::SYSRET:
+    EmitByte(0x06);
+    return;
+  case Bedrock::BKPT:
+    EmitByte(0x07);
+    return;
+  case Bedrock::WAIT:
+    EmitByte(0x08);
+    return;
+  case Bedrock::YIELD:
+    EmitByte(0x09);
+    return;
+  case Bedrock::RFENCE:
+    EmitByte(0x0a);
+    return;
+  case Bedrock::WFENCE:
+    EmitByte(0x0b);
+    return;
+  case Bedrock::AFENCE:
+    EmitByte(0x0c);
+    return;
+  case Bedrock::PUSHPi:
+    EmitByte(0x10 | static_cast<uint8_t>(MI.getOperand(0).getImm()));
+    return;
+  case Bedrock::POPPi:
+    EmitByte(0x18 | static_cast<uint8_t>(MI.getOperand(0).getImm()));
+    return;
+  case Bedrock::PUSHr:
+    EmitByte(0x20 | GetRegNo(0));
+    return;
+  case Bedrock::POPr:
+    EmitByte(0x30 | GetRegNo(0));
+    return;
+  case Bedrock::MOVQrs:
+    EmitByte(0x40 | GetRegNo(0));
+    return;
+  case Bedrock::MOVQsr:
+    EmitByte(0x50 | GetRegNo(0));
+    return;
+  case Bedrock::CLRQr:
+    EmitByte(0x60 | GetRegNo(0));
+    return;
+  default:
+    break;
+  }
+
   if (MI.getOpcode() == Bedrock::RAW_EXPR) {
     unsigned NumFixups = MI.getOperand(0).getImm();
     unsigned ByteOp = 1 + NumFixups * 3;

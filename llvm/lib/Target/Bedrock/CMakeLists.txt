@@ -21,12 +21,14 @@ add_llvm_target(BedrockCodeGen
   BedrockInstrInfo.cpp
   BedrockISelDAGToDAG.cpp
   BedrockISelLowering.cpp
+  BedrockPreEmitPeephole.cpp
   BedrockRegisterInfo.cpp
   BedrockSelectionDAGInfo.cpp
   BedrockSubtarget.cpp
   BedrockTargetMachine.cpp
 
   LINK_COMPONENTS
+  Analysis
   AsmPrinter
   CodeGen
   CodeGenTypes

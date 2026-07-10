@@ -1,0 +1,193 @@
+# RUN: llc -mtriple=bedrock -run-pass=bedrock-pre-emit-peephole -verify-machineinstrs %s -o - | FileCheck %s
+
+# REQUIRES: bedrock-registered-target
+
+--- |
+  target triple = "bedrock"
+
+  define i32 @fold_mul3(i32 %x) {
+    ret i32 0
+  }
+
+  define i32 @fold_single_use_const3_loop(i32 %x) {
+    ret i32 0
+  }
+
+  define i32 @fold_const3_with_exit_redef(i32 %x) {
+    ret i32 0
+  }
+
+  define i32 @fold_const3_non_entry_preheader(i32 %x) {
+    ret i32 0
+  }
+
+  define i32 @fold_power_plus_one_mul_dead_pair(i32 %x) {
+    ret i32 0
+  }
+
+  define i32 @fold_materialized_mul_imm_same_block(i32 %x) {
+    ret i32 0
+  }
+
+  define i32 @fold_materialized_mul_imm_preheader(i32 %x) {
+    ret i32 0
+  }
+...
+---
+name:            fold_mul3
+tracksRegLiveness: true
+body:             |
+  ; CHECK-LABEL: name: fold_mul3
+  ; CHECK: $r0 = MOVQrr $r10
+  ; CHECK-NEXT: $r0 = ADDL3rr $r0, $r10
+  ; CHECK-NEXT: $r0 = ADDL3rr $r0, $r10
+  ; CHECK-NOT: CONST32 3
+  ; CHECK-NOT: MULL3rr
+  bb.0:
+    liveins: $r10
+
+    $r0 = MOVQrr $r10
+    $r1 = CONST32 3
+    $r0 = MULL3rr killed $r0, killed $r1
+    $r0 = XORL3rr killed $r0, killed $r0
+    RET implicit $r0
+...
+---
+name:            fold_single_use_const3_loop
+tracksRegLiveness: true
+body:             |
+  ; CHECK-LABEL: name: fold_single_use_const3_loop
+  ; CHECK-NOT: CONST32 3
+  ; CHECK: $r6 = MOVQrr $r8
+  ; CHECK-NEXT: $r8 = ADDL3rr $r8, $r8
+  ; CHECK-NEXT: $r8 = ADDL3rr $r8, killed $r6
+  ; CHECK-NOT: MULL3rr
+  bb.0:
+    successors: %bb.1
+    liveins: $r8
+
+    $r6 = CONST32 3
+    BR %bb.1
+
+  bb.1:
+    liveins: $r6, $r8
+
+    $r8 = MULL3rr killed $r8, $r6
+    RET implicit $r8
+...
+---
+name:            fold_const3_with_exit_redef
+tracksRegLiveness: true
+body:             |
+  ; CHECK-LABEL: name: fold_const3_with_exit_redef
+  ; CHECK-NOT: CONST32 3
+  ; CHECK: $r9 = MOVQrr $r8
+  ; CHECK-NEXT: $r8 = ADDL3rr $r8, $r8
+  ; CHECK-NEXT: $r8 = ADDL3rr $r8, killed $r9
+  ; CHECK: $r9 = CONST32 42
+  bb.0:
+    successors: %bb.1
+    liveins: $r8
+
+    $r9 = CONST32 3
+    BR %bb.1
+
+  bb.1:
+    successors: %bb.2
+    liveins: $r8, $r9
+
+    $r8 = MULL3rr killed $r8, $r9
+    BR %bb.2
+
+  bb.2:
+    liveins: $r8
+
+    $r9 = CONST32 42
+    RET implicit $r8
+...
+---
+name:            fold_const3_non_entry_preheader
+tracksRegLiveness: true
+body:             |
+  ; CHECK-LABEL: name: fold_const3_non_entry_preheader
+  ; CHECK-NOT: CONST32 3
+  ; CHECK: $r6 = MOVQrr $r8
+  ; CHECK-NEXT: $r8 = ADDL3rr $r8, $r8
+  ; CHECK-NEXT: $r8 = ADDL3rr $r8, killed $r6
+  bb.0:
+    successors: %bb.1
+    liveins: $r8
+
+    BR %bb.1
+
+  bb.1:
+    successors: %bb.2
+    liveins: $r8
+
+    $r6 = CONST32 3
+    BR %bb.2
+
+  bb.2:
+    liveins: $r6, $r8
+
+    $r8 = MULL3rr killed $r8, $r6
+    RET implicit $r8
+...
+---
+name:            fold_power_plus_one_mul_dead_pair
+tracksRegLiveness: true
+body:             |
+  ; CHECK-LABEL: name: fold_power_plus_one_mul_dead_pair
+  ; CHECK-NOT: PUSHPi 1
+  ; CHECK-NOT: CONST32 5
+  ; CHECK: $r0 = MOVQrr $r14
+  ; CHECK-NEXT: $r0 = MULL3ri killed $r0, 5
+  ; CHECK-NOT: MULL3rr
+  ; CHECK-NOT: POPPi 1
+  bb.0:
+    liveins: $r12, $r13, $r14
+
+    PUSHPi 1
+    $r12 = CONST32 5
+    $r0 = MOVQrr $r14
+    $r0 = MULL3rr killed $r0, $r12
+    POPPi 1
+    RET implicit $r0
+...
+---
+name:            fold_materialized_mul_imm_same_block
+tracksRegLiveness: true
+body:             |
+  ; CHECK-LABEL: name: fold_materialized_mul_imm_same_block
+  ; CHECK-NOT: CONST32 29
+  ; CHECK: $r0 = MULL3ri killed $r0, 29
+  ; CHECK-NOT: MULL3rr
+  bb.0:
+    liveins: $r10
+
+    $r0 = MOVQrr $r10
+    $r1 = CONST32 29
+    $r0 = MULL3rr killed $r0, killed $r1
+    RET implicit $r0
+...
+---
+name:            fold_materialized_mul_imm_preheader
+tracksRegLiveness: true
+body:             |
+  ; CHECK-LABEL: name: fold_materialized_mul_imm_preheader
+  ; CHECK-NOT: CONST32 320
+  ; CHECK: $r8 = MULL3ri killed $r8, 320
+  ; CHECK-NOT: MULL3rr
+  bb.0:
+    successors: %bb.1
+    liveins: $r8
+
+    $r6 = CONST32 320
+    BR %bb.1
+
+  bb.1:
+    liveins: $r6, $r8
+
+    $r8 = MULL3rr killed $r8, $r6
+    RET implicit $r8
+...

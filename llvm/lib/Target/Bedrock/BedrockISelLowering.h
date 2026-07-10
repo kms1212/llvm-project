@@ -22,8 +22,16 @@ enum NodeType : unsigned {
   RET_FLAG,
   CALL,
   CMP,
+  TEST,
   BR_CC,
   SET_CC,
+  SELECT_CC,
+  SMAX,
+  SMIN,
+  UMAX,
+  UMIN,
+  SMAX_ZERO,
+  SMIN_ZERO,
 };
 } // namespace BedrockISD
 
@@ -37,7 +45,12 @@ public:
   EVT getSetCCResultType(const DataLayout &DL, LLVMContext &Context,
                          EVT VT) const override;
   MVT getScalarShiftAmountTy(const DataLayout &DL, EVT VT) const override;
+  unsigned getJumpTableEncoding() const override;
+  bool isJumpTableRelative() const override { return true; }
   bool ShouldShrinkFPConstant(EVT VT) const override { return false; }
+  MachineBasicBlock *
+  EmitInstrWithCustomInserter(MachineInstr &MI,
+                              MachineBasicBlock *MBB) const override;
 
 private:
   SDValue LowerOperation(SDValue Op, SelectionDAG &DAG) const override;
@@ -70,6 +83,7 @@ private:
   SDValue LowerSETCC(SDValue Op, SelectionDAG &DAG) const;
   SDValue LowerSELECT(SDValue Op, SelectionDAG &DAG) const;
   SDValue LowerSELECT_CC(SDValue Op, SelectionDAG &DAG) const;
+  SDValue LowerMinMax(SDValue Op, SelectionDAG &DAG) const;
   SDValue LowerSIGN_EXTEND_INREG(SDValue Op, SelectionDAG &DAG) const;
 };
 

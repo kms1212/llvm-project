@@ -8,15 +8,23 @@
 
 #include "BedrockTargetMachine.h"
 #include "Bedrock.h"
+#include "BedrockTargetTransformInfo.h"
 #include "TargetInfo/BedrockTargetInfo.h"
+#include "llvm/CodeGen/GlobalMerge.h"
+#include "llvm/Analysis/TargetTransformInfo.h"
 #include "llvm/CodeGen/Passes.h"
 #include "llvm/CodeGen/TargetLoweringObjectFileImpl.h"
 #include "llvm/CodeGen/TargetPassConfig.h"
 #include "llvm/MC/TargetRegistry.h"
+#include "llvm/Support/CommandLine.h"
 #include "llvm/Support/Compiler.h"
 #include <optional>
 
 using namespace llvm;
+
+static cl::opt<cl::boolOrDefault>
+    EnableGlobalMerge("bedrock-enable-global-merge", cl::Hidden,
+                      cl::desc("Enable the global merge pass"));
 
 extern "C" LLVM_ABI LLVM_EXTERNAL_VISIBILITY void
 LLVMInitializeBedrockTarget() {
@@ -25,6 +33,7 @@ LLVMInitializeBedrockTarget() {
   PassRegistry &PR = *PassRegistry::getPassRegistry();
   initializeBedrockAsmPrinterPass(PR);
   initializeBedrockDAGToDAGISelLegacyPass(PR);
+  initializeBedrockPreEmitPeepholePass(PR);
 }
 
 static Reloc::Model getEffectiveRelocModel(std::optional<Reloc::Model> RM) {
@@ -45,6 +54,11 @@ BedrockTargetMachine::BedrockTargetMachine(const Target &T, const Triple &TT,
   initAsmInfo();
 }
 
+TargetTransformInfo
+BedrockTargetMachine::getTargetTransformInfo(const Function &F) const {
+  return TargetTransformInfo(std::make_unique<BedrockTTIImpl>(this, F));
+}
+
 namespace {
 class BedrockPassConfig : public TargetPassConfig {
 public:
@@ -56,6 +70,8 @@ public:
   }
 
   bool addInstSelector() override;
+  bool addPreISel() override;
+  void addPreEmitPass() override;
 };
 } // namespace
 
@@ -66,4 +82,19 @@ TargetPassConfig *BedrockTargetMachine::createPassConfig(PassManagerBase &PM) {
 bool BedrockPassConfig::addInstSelector() {
   addPass(createBedrockISelDag(getBedrockTargetMachine(), getOptLevel()));
   return false;
+}
+
+bool BedrockPassConfig::addPreISel() {
+  if ((TM->getOptLevel() != CodeGenOptLevel::None &&
+       EnableGlobalMerge == cl::BOU_UNSET) ||
+      EnableGlobalMerge == cl::BOU_TRUE)
+    addPass(createGlobalMergePass(TM, /*MaxOffset=*/32767,
+                                  /*OnlyOptimizeForSize=*/false,
+                                  /*MergeExternalByDefault=*/true));
+
+  return false;
+}
+
+void BedrockPassConfig::addPreEmitPass() {
+  addPass(createBedrockPreEmitPeepholePass());
 }

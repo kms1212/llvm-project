@@ -38,17 +38,9 @@ BitVector
 BedrockRegisterInfo::getReservedRegs(const MachineFunction &MF) const {
   BitVector Reserved(getNumRegs());
 
-  // Stack and callee-save lowering is not wired yet. Keep ABI callee-saved
-  // registers out of allocation until prologue/epilogue save-restore exists.
-  Reserved.set(Bedrock::R8);
-  Reserved.set(Bedrock::R9);
-  Reserved.set(Bedrock::R10);
-  Reserved.set(Bedrock::R11);
-  Reserved.set(Bedrock::R12);
-  Reserved.set(Bedrock::R13);
-  Reserved.set(Bedrock::R14);
   Reserved.set(Bedrock::R15);
 
+  // FPR callee-save lowering needs separate validation before allocation.
   Reserved.set(Bedrock::F8);
   Reserved.set(Bedrock::F9);
   Reserved.set(Bedrock::F10);

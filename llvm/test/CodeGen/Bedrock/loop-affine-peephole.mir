@@ -1,0 +1,185 @@
+# RUN: llc -mtriple=bedrock -run-pass=bedrock-pre-emit-peephole -verify-machineinstrs %s -o - | FileCheck %s
+
+# REQUIRES: bedrock-registered-target
+
+--- |
+  target triple = "bedrock"
+
+  define i32 @fold_affine_mul_loop() {
+    ret i32 0
+  }
+
+  define i32 @fold_callee_saved_affine_mul_loop() {
+    ret i32 0
+  }
+
+  define i32 @fold_callee_saved_affine_self_loop() {
+    ret i32 0
+  }
+
+  define i32 @fold_self_loop_iv_copy() {
+    ret i32 0
+  }
+
+  declare void @callee(i64)
+...
+---
+name:            fold_affine_mul_loop
+tracksRegLiveness: true
+body:             |
+  ; CHECK-LABEL: name: fold_affine_mul_loop
+  ; CHECK-NOT: CONST32 17
+  ; CHECK: $r2 = CONST32 3
+  ; CHECK-NOT: MULL3rr
+  ; CHECK: STOREBrr $r2, killed $r3
+  ; CHECK: $r2 = ADDL3ri killed $r2, 17
+  bb.0:
+    successors: %bb.1
+
+    $r0 = CONST64 0
+    $r1 = CONST32 17
+    BR %bb.1
+
+  bb.1:
+    successors: %bb.3(0x04000000), %bb.2(0x7c000000)
+    liveins: $r0, $r1
+
+    CMPQri $r0, 16
+    BRCC %bb.3, 2
+
+  bb.2:
+    successors: %bb.1
+    liveins: $r0, $r1
+
+    $r2 = MOVQrr $r0
+    $r2 = MULL3rr killed $r2, $r1
+    $r3 = LEAfi 0, 0
+    $r3 = ADDQ3rr killed $r3, $r0
+    $r2 = ADDL3ri killed $r2, 3
+    STOREBrr killed $r2, killed $r3
+    $r0 = INCQ3r killed $r0
+    BR %bb.1
+
+  bb.3:
+    liveins: $r0
+
+    RET implicit $r0
+...
+---
+name:            fold_callee_saved_affine_mul_loop
+tracksRegLiveness: true
+body:             |
+  ; CHECK-LABEL: name: fold_callee_saved_affine_mul_loop
+  ; CHECK-NOT: CONST32 29
+  ; CHECK: $r11 = CONST32 0
+  ; CHECK-NOT: MULL3rr
+  ; CHECK: $r1 = MOVQrr $r11
+  ; CHECK-NEXT: $r1 = XORL3rr killed $r1, killed $r0
+  ; CHECK-NEXT: $r11 = ADDL3ri killed $r11, 29
+  bb.0:
+    successors: %bb.1
+
+    $r0 = CONST64 7
+    $r9 = CONST32 0
+    $r11 = CONST32 29
+    BR %bb.1
+
+  bb.1:
+    successors: %bb.3(0x04000000), %bb.2(0x7c000000)
+    liveins: $r0, $r9, $r11
+
+    CMPLri $r9, 24
+    BRCC %bb.3, 5
+
+  bb.2:
+    successors: %bb.1
+    liveins: $r0, $r9, $r11
+
+    $r1 = MOVQrr $r9
+    $r1 = MULL3rr killed $r1, $r11
+    $r1 = XORL3rr killed $r1, killed $r0
+    CALL @callee, csr_bedrock, implicit-def dead $r0, implicit-def dead $r1, implicit-def dead $r2, implicit-def dead $r3, implicit-def dead $r4, implicit-def dead $r5, implicit-def dead $r6, implicit-def dead $r7, implicit-def dead $f0, implicit-def dead $f1, implicit-def dead $f2, implicit-def dead $f3, implicit-def dead $f4, implicit-def dead $f5, implicit-def dead $f6, implicit-def dead $f7, implicit $r1
+    $r9 = INCL3r killed $r9
+    BR %bb.1
+
+  bb.3:
+    liveins: $r9
+
+    RET implicit $r9
+...
+---
+name:            fold_callee_saved_affine_self_loop
+tracksRegLiveness: true
+body:             |
+  ; CHECK-LABEL: name: fold_callee_saved_affine_self_loop
+  ; CHECK-NOT: CONST32 9
+  ; CHECK: $r10 = CONST32 0
+  ; CHECK-NOT: MULL3rr
+  ; CHECK: $r0 = XORL3rr killed $r0, $r10
+  ; CHECK-NEXT: $r10 = ADDL3ri killed $r10, 9
+  ; CHECK: CALL @callee
+  bb.0:
+    successors: %bb.1
+
+    $r0 = CONST64 90
+    $r8 = CONST64 0
+    $r10 = CONST32 9
+    BR %bb.1
+
+  bb.1:
+    successors: %bb.2(0x04000000), %bb.1(0x7c000000)
+    liveins: $r0, $r8, $r10
+
+    $r1 = MOVQrr $r8
+    $r1 = MULL3rr killed $r1, $r10
+    $r0 = XORL3rr killed $r0, killed $r1
+    CALL @callee, csr_bedrock, implicit-def dead $r0, implicit-def dead $r1, implicit-def dead $r2, implicit-def dead $r3, implicit-def dead $r4, implicit-def dead $r5, implicit-def dead $r6, implicit-def dead $r7, implicit-def dead $f0, implicit-def dead $f1, implicit-def dead $f2, implicit-def dead $f3, implicit-def dead $f4, implicit-def dead $f5, implicit-def dead $f6, implicit-def dead $f7, implicit $r0
+    $r8 = INCQ3r killed $r8
+    CMPQri $r8, 16
+    BRCC %bb.1, 3
+
+  bb.2:
+    liveins: $r0
+
+    RET implicit $r0
+...
+---
+name:            fold_self_loop_iv_copy
+tracksRegLiveness: true
+body:             |
+  ; CHECK-LABEL: name: fold_self_loop_iv_copy
+  ; CHECK-NOT: $r10 = CONST32 0
+  ; CHECK: $r14 = CONST32 0
+  ; CHECK: bb.1:
+  ; CHECK-NEXT: successors: %bb.1(0x7c000000), %bb.2(0x04000000)
+  ; CHECK-NEXT: liveins: $r14
+  ; CHECK: $r2 = MOVQrr $r14
+  ; CHECK: $r1 = MOVQrr $r14
+  ; CHECK: $r14 = INCL3r killed $r14
+  ; CHECK-NEXT: CMPLri $r14, 24
+  ; CHECK-NOT: $r10 = MOVQrr $r14
+  ; CHECK: BRCC %bb.1, 4
+  bb.0:
+    successors: %bb.1
+
+    $r10 = CONST32 0
+    $r14 = CONST32 0
+    BR %bb.1
+
+  bb.1:
+    successors: %bb.1(0x7c000000), %bb.2(0x04000000)
+    liveins: $r10, $r14
+
+    $r2 = MOVQrr $r10
+    $r1 = MOVQrr $r10
+    CALL @callee, csr_bedrock, implicit-def dead $r0, implicit-def dead $r1, implicit-def dead $r2, implicit-def dead $r3, implicit-def dead $r4, implicit-def dead $r5, implicit-def dead $r6, implicit-def dead $r7, implicit-def dead $f0, implicit-def dead $f1, implicit-def dead $f2, implicit-def dead $f3, implicit-def dead $f4, implicit-def dead $f5, implicit-def dead $f6, implicit-def dead $f7, implicit $r1, implicit $r2
+    $r14 = INCL3r killed $r14
+    CMPLri killed $r10, 23
+    $r10 = MOVQrr $r14
+    BRCC %bb.1, 4
+
+  bb.2:
+    liveins: $r0
+
+    RET implicit $r0
+...

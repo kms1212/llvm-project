@@ -6,9 +6,13 @@ nop
 .p2align 2
 ret
 
-; CHECK: 0: 20 40
+; CHECK: 0: 01
 ; CHECK-SAME: nop
-; CHECK: 2: 20 40
+; CHECK: 1: 01
 ; CHECK-SAME: nop
-; CHECK: 4: 20 41
+; CHECK: 2: 01
+; CHECK-SAME: nop
+; CHECK: 3: 01
+; CHECK-SAME: nop
+; CHECK: 4: 02
 ; CHECK-SAME: ret

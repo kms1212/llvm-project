@@ -1,5 +1,7 @@
 ; REQUIRES: bedrock-registered-target
 ; RUN: llc -mtriple=bedrock -verify-machineinstrs < %s | FileCheck %s
+; RUN: llc -mtriple=bedrock -filetype=obj < %s -o %t.o
+; RUN: llvm-objdump -d --triple=bedrock %t.o | FileCheck %s --check-prefix=OBJ
 
 target triple = "bedrock"
 
@@ -23,7 +25,7 @@ define i64 @stack_slot(i64 %x) {
 
 define i64 @narrow(ptr %p) {
 ; CHECK-LABEL: narrow:
-; CHECK: extsq.w [r2], r1
+; CHECK: extsq.w [r0 + 2], r1
 ; CHECK: extzq.b [r0], r0
 ; CHECK: add.q r1, r0
 ; CHECK: ret
@@ -38,13 +40,15 @@ define i64 @narrow(ptr %p) {
 
 define i64 @branch(i64 %a, i64 %b) {
 ; CHECK-LABEL: branch:
-; CHECK: cmp.q r1, r0
-; CHECK: j.uge .LBB
-; CHECK: jmp .LBB
-; CHECK: lea.q 1, r0
+; CHECK: cmpjuge.q r1, r0,
+; CHECK: set r0
 ; CHECK: ret
 ; CHECK: lea.q 2, r0
 ; CHECK: ret
+; OBJ-LABEL: <branch>:
+; OBJ: cb c5 a8 80 03{{[ \t]+}}cmpjuge.q{{[ \t]+}}r1, r0, 3
+; OBJ-NOT: d0 66
+; OBJ-LABEL: <setcc>:
 entry:
   %c = icmp ult i64 %a, %b
   br i1 %c, label %lt, label %ge
@@ -57,9 +61,49 @@ ge:
 define i64 @setcc(i64 %a, i64 %b) {
 ; CHECK-LABEL: setcc:
 ; CHECK: cmp.q r1, r0
-; CHECK: set.eq r0
+; CHECK: seteq r0
 ; CHECK: ret
   %c = icmp eq i64 %a, %b
   %z = zext i1 %c to i64
   ret i64 %z
+}
+
+define i64 @medium_branch(i64 %a, ptr %p) {
+; CHECK-LABEL: medium_branch:
+; CHECK: pushp 3
+; CHECK: mov.q r1, r8
+; CHECK: testjeq.q r0, r0, .LBB
+; CHECK: popp 3
+; CHECK: ret
+; OBJ-LABEL: <medium_branch>:
+; OBJ: cf c5 90 30 b7 00{{[ \t]+}}testjeq.q{{[ \t]+}}r0, r0, 183
+; OBJ-NOT: d0 66
+  %c = icmp eq i64 %a, 0
+  br i1 %c, label %far, label %body
+
+body:
+  call void @use(ptr %p)
+  call void @use(ptr %p)
+  call void @use(ptr %p)
+  call void @use(ptr %p)
+  call void @use(ptr %p)
+  call void @use(ptr %p)
+  call void @use(ptr %p)
+  call void @use(ptr %p)
+  call void @use(ptr %p)
+  call void @use(ptr %p)
+  call void @use(ptr %p)
+  call void @use(ptr %p)
+  call void @use(ptr %p)
+  call void @use(ptr %p)
+  call void @use(ptr %p)
+  call void @use(ptr %p)
+  call void @use(ptr %p)
+  call void @use(ptr %p)
+  call void @use(ptr %p)
+  call void @use(ptr %p)
+  ret i64 0
+
+far:
+  ret i64 1
 }

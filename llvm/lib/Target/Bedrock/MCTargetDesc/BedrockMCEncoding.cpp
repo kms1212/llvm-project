@@ -52,6 +52,17 @@ const char *getCondName(unsigned Cond) {
   }
 }
 
+const char *getFullCondName(unsigned Cond) {
+  switch (Cond) {
+  case 0x0:
+    return "t";
+  case 0x1:
+    return "f";
+  default:
+    return getCondName(Cond);
+  }
+}
+
 const char *getRepCondName(unsigned Cond) {
   switch (Cond) {
   case 0x0:
@@ -87,6 +98,31 @@ const char *getRepCondName(unsigned Cond) {
   default:
     return nullptr;
   }
+}
+
+const char *getMemoryOrderName(unsigned Order) {
+  switch (Order) {
+  case 0:
+    return "relaxed";
+  case 1:
+    return "acquire";
+  case 2:
+    return "release";
+  case 3:
+    return "acqrel";
+  case 4:
+    return "seqcst";
+  default:
+    return nullptr;
+  }
+}
+
+bool isRepPayload(uint32_t Payload) {
+  return (Payload & 0x3ff00) == 0x24000 && ((Payload >> 4) & 0xf) != 0x1;
+}
+
+bool isRepgPayload(uint32_t Payload) {
+  return (Payload & 0x3fff0) == 0x2680;
 }
 
 const char *getSRegName(unsigned Reg) {
@@ -156,6 +192,35 @@ unsigned extractPatternField(StringRef Pattern, uint32_t Payload, char Field) {
   return Value;
 }
 
+bool matchPattern64(StringRef Pattern, uint64_t Payload) {
+  uint64_t Mask = 0;
+  uint64_t Value = 0;
+  unsigned Width = Pattern.size();
+  for (unsigned I = 0; I != Width; ++I) {
+    char C = Pattern[I];
+    if (C != '0' && C != '1')
+      continue;
+    unsigned Bit = Width - I - 1;
+    Mask |= uint64_t(1) << Bit;
+    if (C == '1')
+      Value |= uint64_t(1) << Bit;
+  }
+  return (Payload & Mask) == Value;
+}
+
+unsigned extractPatternField64(StringRef Pattern, uint64_t Payload,
+                               char Field) {
+  unsigned Value = 0;
+  unsigned Width = Pattern.size();
+  for (unsigned I = 0; I != Width; ++I) {
+    if (Pattern[I] != Field)
+      continue;
+    unsigned Bit = Width - I - 1;
+    Value = (Value << 1) | ((Payload >> Bit) & 1);
+  }
+  return Value;
+}
+
 void appendSignedOffset(SmallVectorImpl<char> &Text, int64_t Value) {
   if (Value < 0)
     appendText(Text, formatv(" - {0}", -Value).str());
@@ -179,7 +244,7 @@ void appendExt0Index(SmallVectorImpl<char> &Text, unsigned Mode, unsigned Reg) {
   }
 }
 
-bool decodePrefixByte(uint8_t Prefix, SmallString<32> &Text) {
+[[maybe_unused]] bool decodePrefixByte(uint8_t Prefix, SmallString<32> &Text) {
   Text.clear();
   switch (Prefix) {
   case 0x00:
@@ -219,26 +284,56 @@ bool decodePrefixByte(uint8_t Prefix, SmallString<32> &Text) {
   return true;
 }
 
-bool prependPrefixes(ArrayRef<uint8_t> Bytes, SmallString<128> &Text) {
-  if ((Bytes[0] & 0x80) == 0)
-    return true;
+bool decodeExtraShortPayload(uint8_t Payload, SmallString<128> &Text) {
+  struct FixedForm {
+    uint8_t Payload;
+    StringRef Mnemonic;
+  };
 
-  SmallString<128> PrefixText;
-  for (uint8_t Prefix : Bytes.slice(2, 2)) {
-    SmallString<32> Slot;
-    if (!decodePrefixByte(Prefix, Slot))
-      return false;
-    if (!Slot.empty()) {
-      PrefixText += Slot;
-      PrefixText += ", ";
+  static const FixedForm FixedForms[] = {
+      {0x00, "illegal"}, {0x01, "nop"},    {0x02, "ret"},
+      {0x03, "lret"},    {0x04, "iret"},   {0x05, "syscall"},
+      {0x06, "sysret"},  {0x07, "bkpt"},   {0x08, "wait"},
+      {0x09, "yield"},   {0x0a, "rfence"}, {0x0b, "wfence"},
+      {0x0c, "afence"},
+  };
+
+  for (const FixedForm &Form : FixedForms) {
+    if (Payload == Form.Payload) {
+      Text = Form.Mnemonic;
+      return true;
     }
   }
 
-  if (!PrefixText.empty()) {
-    PrefixText += Text;
-    Text = PrefixText;
+  if ((Payload & 0x78) == 0x10) {
+    Text = formatv("pushp\t{0}", Payload & 0x7).str();
+    return true;
   }
-  return true;
+  if ((Payload & 0x78) == 0x18) {
+    Text = formatv("popp\t{0}", Payload & 0x7).str();
+    return true;
+  }
+
+  unsigned Reg = Payload & 0xf;
+  switch (Payload >> 4) {
+  case 0x2:
+    Text = formatv("push\tr{0}", Reg).str();
+    return true;
+  case 0x3:
+    Text = formatv("pop\tr{0}", Reg).str();
+    return true;
+  case 0x4:
+    Text = formatv("mov.q\tr{0}, sp", Reg).str();
+    return true;
+  case 0x5:
+    Text = formatv("mov.q\tsp, r{0}", Reg).str();
+    return true;
+  case 0x6:
+    Text = formatv("clr.q\tr{0}", Reg).str();
+    return true;
+  default:
+    return false;
+  }
 }
 
 bool decodeShortPayload(uint16_t Payload, SmallString<128> &Text) {
@@ -248,12 +343,8 @@ bool decodeShortPayload(uint16_t Payload, SmallString<128> &Text) {
   };
 
   static const FixedForm FixedForms[] = {
-      {0x2040, "nop"},     {0x2041, "ret"},     {0x2042, "lret"},
-      {0x2043, "syscall"}, {0x2044, "sysret"},  {0x2045, "iret"},
-      {0x2046, "bkpt"},    {0x2047, "wait"},    {0x2048, "yield"},
-      {0x2049, "halt"},    {0x204a, "illegal"}, {0x204b, "rfence"},
-      {0x204c, "wfence"},  {0x204d, "afence"},  {0x204e, "reset"},
-      {0x2050, "trap"},
+      {0x2049, "halt"},
+      {0x204e, "reset"},
   };
 
   for (const FixedForm &Form : FixedForms) {
@@ -286,31 +377,6 @@ bool decodeShortPayload(uint16_t Payload, SmallString<128> &Text) {
   }
 
   unsigned LowReg = Payload & 0xf;
-  switch (Payload >> 4) {
-  case 0x200:
-    Text = formatv("mov.q\tr{0}, sp", LowReg).str();
-    return true;
-  case 0x201:
-    Text = formatv("mov.q\tsp, r{0}", LowReg).str();
-    return true;
-  case 0x202:
-    Text = formatv("push\tr{0}", LowReg).str();
-    return true;
-  case 0x203:
-    Text = formatv("pop\tr{0}", LowReg).str();
-    return true;
-  default:
-    break;
-  }
-
-  if ((Payload & 0x3ff0) == 0x2050) {
-    const char *Cond = getCondName(Payload & 0xf);
-    if (!Cond)
-      return false;
-    Text = formatv("trap.{0}", Cond).str();
-    return true;
-  }
-
   if ((Payload & 0x3f00) == 0x2100) {
     unsigned Reg = (Payload >> 4) & 0xf;
     unsigned Cond = Payload & 0xf;
@@ -321,7 +387,7 @@ bool decodeShortPayload(uint16_t Payload, SmallString<128> &Text) {
     const char *CondName = getCondName(Cond);
     if (!CondName)
       return false;
-    Text = formatv("set.{0}\tr{1}", CondName, Reg).str();
+    Text = formatv("set{0}\tr{1}", CondName, Reg).str();
     return true;
   }
 
@@ -332,7 +398,7 @@ bool decodeShortPayload(uint16_t Payload, SmallString<128> &Text) {
   static const UnaryForm UnaryForms[] = {
       {0x220, "inc.l"},     {0x230, "inc.q"},     {0x221, "dec.l"},
       {0x231, "dec.q"},     {0x222, "neg.l"},     {0x232, "neg.q"},
-      {0x223, "clr.l"},     {0x233, "clr.q"},     {0x224, "abs.l"},
+      {0x223, "clr.l"},     {0x224, "abs.l"},
       {0x234, "abs.q"},     {0x225, "not.l"},     {0x235, "not.q"},
       {0x229, "revbyte.w"}, {0x22a, "revbyte.l"}, {0x22b, "revbyte.q"},
   };
@@ -360,7 +426,7 @@ bool decodeShortPayload(uint16_t Payload, SmallString<128> &Text) {
     const char *Cond = getCondName(Op6 & 0xf);
     if (!Cond)
       return false;
-    Text = formatv("j.{0}\t{1}", Cond, Imm8).str();
+    Text = formatv("j{0}\t{1}", Cond, Imm8).str();
     return true;
   }
 
@@ -576,6 +642,14 @@ bool getCompactEATailBytes(uint8_t EA, unsigned &TailBytes) {
   return false;
 }
 
+bool isCompactEAImmediate(uint8_t EA) { return EA >= 0x6c && EA <= 0x6f; }
+
+bool isCompactEARegister(uint8_t EA) { return EA <= 0x0f || EA == 0x68; }
+
+bool isCompactEAMemory(uint8_t EA) {
+  return !isCompactEARegister(EA) && !isCompactEAImmediate(EA) && EA <= 0x74;
+}
+
 static const char *getFpuSizeSuffix(unsigned Size) {
   switch (Size) {
   case 0:
@@ -587,7 +661,8 @@ static const char *getFpuSizeSuffix(unsigned Size) {
   }
 }
 
-bool getFpuRawInstSize(ArrayRef<uint8_t> Bytes, uint64_t &Size) {
+[[maybe_unused]] bool getFpuRawInstSize(ArrayRef<uint8_t> Bytes,
+                                        uint64_t &Size) {
   if (Bytes.size() < 2)
     return false;
 
@@ -634,7 +709,8 @@ bool getFpuRawInstSize(ArrayRef<uint8_t> Bytes, uint64_t &Size) {
   return Bytes.size() >= Size;
 }
 
-bool decodeFpuRawInst(ArrayRef<uint8_t> Bytes, SmallString<128> &Text) {
+[[maybe_unused]] bool decodeFpuRawInst(ArrayRef<uint8_t> Bytes,
+                                       SmallString<128> &Text) {
   if (Bytes.size() < 4)
     return false;
 
@@ -945,6 +1021,31 @@ bool decodeMediumPayload(uint32_t Payload, ArrayRef<uint8_t> Tail,
   if (decodeMediumRRExt(Payload, Tail, Text))
     return true;
 
+  if ((Payload & 0x3fff0) == 0x2d80) {
+    Text = formatv("setf\t{0}", Payload & 0xf).str();
+    return true;
+  }
+  if ((Payload & 0x3fff0) == 0x2580) {
+    Text = formatv("clrf\t{0}", Payload & 0xf).str();
+    return true;
+  }
+
+  static const char *SizeSuffixes = "bwlq";
+  if (matchPattern("000010z0z01000rrrr", Payload)) {
+    unsigned Z = extractPatternField("000010z0z01000rrrr", Payload, 'z');
+    Text = formatv("incf.{0}\tr{1}", SizeSuffixes[Z],
+                   extractPatternField("000010z0z01000rrrr", Payload, 'r'))
+               .str();
+    return true;
+  }
+  if (matchPattern("000010z0z11000rrrr", Payload)) {
+    unsigned Z = extractPatternField("000010z0z11000rrrr", Payload, 'z');
+    Text = formatv("decf.{0}\tr{1}", SizeSuffixes[Z],
+                   extractPatternField("000010z0z11000rrrr", Payload, 'r'))
+               .str();
+    return true;
+  }
+
   if (Payload == 0x2600) {
     if (!NeedTail(2))
       return false;
@@ -964,7 +1065,7 @@ bool decodeMediumPayload(uint32_t Payload, ArrayRef<uint8_t> Tail,
     const char *Cond = getCondName(Payload & 0xf);
     if (!Cond || !NeedTail(2))
       return false;
-    Text = formatv("j.{0}\t", Cond).str();
+    Text = formatv("j{0}\t", Cond).str();
     appendSignedImm(Text, Tail, 2);
     return true;
   }
@@ -972,7 +1073,7 @@ bool decodeMediumPayload(uint32_t Payload, ArrayRef<uint8_t> Tail,
     const char *Cond = getCondName(Payload & 0xf);
     if (!Cond || !NeedTail(4))
       return false;
-    Text = formatv("j.{0}\t", Cond).str();
+    Text = formatv("j{0}\t", Cond).str();
     appendSignedImm(Text, Tail, 4);
     return true;
   }
@@ -996,7 +1097,7 @@ bool decodeMediumPayload(uint32_t Payload, ArrayRef<uint8_t> Tail,
     const char *Cond = getCondName(Payload & 0xf);
     if (!Cond || !NeedTail(2))
       return false;
-    Text = formatv("call.{0}\t", Cond).str();
+    Text = formatv("call{0}\t", Cond).str();
     appendSignedImm(Text, Tail, 2);
     return true;
   }
@@ -1004,7 +1105,7 @@ bool decodeMediumPayload(uint32_t Payload, ArrayRef<uint8_t> Tail,
     const char *Cond = getCondName(Payload & 0xf);
     if (!Cond || !NeedTail(4))
       return false;
-    Text = formatv("call.{0}\t", Cond).str();
+    Text = formatv("call{0}\t", Cond).str();
     appendSignedImm(Text, Tail, 4);
     return true;
   }
@@ -1041,18 +1142,6 @@ bool decodeMediumPayload(uint32_t Payload, ArrayRef<uint8_t> Tail,
   case 0x2784:
     if (!NeedTail(2))
       return false;
-    Text = "pushm\t";
-    appendUnsignedImm(Text, Tail, 2);
-    return true;
-  case 0x2785:
-    if (!NeedTail(2))
-      return false;
-    Text = "popm\t";
-    appendUnsignedImm(Text, Tail, 2);
-    return true;
-  case 0x2786:
-    if (!NeedTail(2))
-      return false;
     Text = "trace\t";
     appendUnsignedImm(Text, Tail, 2);
     return true;
@@ -1073,17 +1162,6 @@ bool decodeMediumPayload(uint32_t Payload, ArrayRef<uint8_t> Tail,
     return true;
   }
 
-  if ((Payload & 0x33ff0) == 0x12600) {
-    static const char Suffixes[] = {'b', 'w', 'l', 'q'};
-    unsigned Size = (Payload >> 14) & 0x3;
-    if (!NeedTail(2))
-      return false;
-    Text = formatv("sum.{0}\t", Suffixes[Size]).str();
-    appendUnsignedImm(Text, Tail, 2);
-    Text += formatv(", r{0}", Payload & 0xf).str();
-    return true;
-  }
-
   return false;
 }
 
@@ -1097,43 +1175,77 @@ bool decodeLongPayload(uint32_t Payload, ArrayRef<uint8_t> Tail,
     LongDir Dir;
     char RegField;
     bool RequireNonRegEA;
+    bool RequireMemoryEA;
+    bool AllowImmediateEA;
   };
 
   static const LongRegEAForm LongRegEAForms[] = {
-      {"adc", "1111000000zz000sssseeeeeee", "bwlq", LongDir::RnEA, 's', true},
-      {"adc", "1111000000zz001sssseeeeeee", "bwlq", LongDir::EARn, 's', true},
-      {"sbb", "1111000000zz010sssseeeeeee", "bwlq", LongDir::RnEA, 's', true},
-      {"sbb", "1111000000zz011sssseeeeeee", "bwlq", LongDir::EARn, 's', true},
-      {"clz", "1111000000zz100ddddeeeeeee", "bwlq", LongDir::EARn, 'd', false},
-      {"ctz", "1111000000zz101ddddeeeeeee", "bwlq", LongDir::EARn, 'd', false},
-      {"cls", "1111000000zz110ddddeeeeeee", "bwlq", LongDir::EARn, 'd', false},
-      {"cts", "1111000000zz111ddddeeeeeee", "bwlq", LongDir::EARn, 'd', false},
-      {"minu", "1111000001zz000ddddeeeeeee", "bwlq", LongDir::EARn, 'd', false},
-      {"minu", "1111000001zz001sssseeeeeee", "bwlq", LongDir::RnEA, 's', true},
-      {"mins", "1111000001zz010ddddeeeeeee", "bwlq", LongDir::EARn, 'd', false},
-      {"mins", "1111000001zz011sssseeeeeee", "bwlq", LongDir::RnEA, 's', true},
-      {"maxu", "1111000001zz100ddddeeeeeee", "bwlq", LongDir::EARn, 'd', false},
-      {"maxu", "1111000001zz101sssseeeeeee", "bwlq", LongDir::RnEA, 's', true},
-      {"maxs", "1111000001zz110ddddeeeeeee", "bwlq", LongDir::EARn, 'd', false},
-      {"maxs", "1111000001zz111sssseeeeeee", "bwlq", LongDir::RnEA, 's', true},
+      {"adc", "1111000000zz000sssseeeeeee", "bwlq", LongDir::RnEA, 's', true,
+       false, false},
+      {"adc", "1111000000zz001sssseeeeeee", "bwlq", LongDir::EARn, 's', true,
+       false, true},
+      {"sbb", "1111000000zz010sssseeeeeee", "bwlq", LongDir::RnEA, 's', true,
+       false, false},
+      {"sbb", "1111000000zz011sssseeeeeee", "bwlq", LongDir::EARn, 's', true,
+       false, true},
+      {"clz", "1111000000zz100ddddeeeeeee", "bwlq", LongDir::EARn, 'd', false,
+       false, true},
+      {"ctz", "1111000000zz101ddddeeeeeee", "bwlq", LongDir::EARn, 'd', false,
+       false, true},
+      {"cls", "1111000000zz110ddddeeeeeee", "bwlq", LongDir::EARn, 'd', false,
+       false, true},
+      {"cts", "1111000000zz111ddddeeeeeee", "bwlq", LongDir::EARn, 'd', false,
+       false, true},
+      {"minu", "1111000001zz000ddddeeeeeee", "bwlq", LongDir::EARn, 'd', false,
+       false, true},
+      {"minu", "1111000001zz001sssseeeeeee", "bwlq", LongDir::RnEA, 's', true,
+       false, false},
+      {"mins", "1111000001zz010ddddeeeeeee", "bwlq", LongDir::EARn, 'd', false,
+       false, true},
+      {"mins", "1111000001zz011sssseeeeeee", "bwlq", LongDir::RnEA, 's', true,
+       false, false},
+      {"maxu", "1111000001zz100ddddeeeeeee", "bwlq", LongDir::EARn, 'd', false,
+       false, true},
+      {"maxu", "1111000001zz101sssseeeeeee", "bwlq", LongDir::RnEA, 's', true,
+       false, false},
+      {"maxs", "1111000001zz110ddddeeeeeee", "bwlq", LongDir::EARn, 'd', false,
+       false, true},
+      {"maxs", "1111000001zz111sssseeeeeee", "bwlq", LongDir::RnEA, 's', true,
+       false, false},
       {"popcnt", "1111000010zz000ddddeeeeeee", "bwlq", LongDir::EARn, 'd',
-       false},
+       false, false, true},
       {"parity", "1111000010zz001ddddeeeeeee", "bwlq", LongDir::EARn, 'd',
-       false},
-      {"mul", "1111000010zz010ddddeeeeeee", "bwlq", LongDir::EARn, 'd', false},
+       false, false, true},
+      {"mul", "1111000010zz010ddddeeeeeee", "bwlq", LongDir::EARn, 'd', false,
+       false, true},
       {"clmul", "1111000010zz011ddddeeeeeee", "bwlq", LongDir::EARn, 'd',
-       false},
-      {"divu", "1111000010zz100ddddeeeeeee", "bwlq", LongDir::EARn, 'd', false},
-      {"divs", "1111000010zz101ddddeeeeeee", "bwlq", LongDir::EARn, 'd', false},
-      {"modu", "1111000010zz110ddddeeeeeee", "bwlq", LongDir::EARn, 'd', false},
-      {"mods", "1111000010zz111ddddeeeeeee", "bwlq", LongDir::EARn, 'd', false},
-      {"btest", "111100001100000bbbbeeeeeee", "", LongDir::RnEA, 'b', false},
-      {"bset", "111100001100001bbbbeeeeeee", "", LongDir::RnEA, 'b', false},
-      {"bclr", "111100001100010bbbbeeeeeee", "", LongDir::RnEA, 'b', false},
-      {"bchg", "111100001100011bbbbeeeeeee", "", LongDir::RnEA, 'b', false},
-      {"lcall", "111100001100101rrrreeeeeee", "", LongDir::RnEA, 'r', false},
-      {"ljmp", "111100001100110rrrreeeeeee", "", LongDir::RnEA, 'r', false},
-      {"clmulh.q", "111100001100111ddddeeeeeee", "", LongDir::EARn, 'd', false},
+       false, false, true},
+      {"divu", "1111000010zz100ddddeeeeeee", "bwlq", LongDir::EARn, 'd', false,
+       false, true},
+      {"divs", "1111000010zz101ddddeeeeeee", "bwlq", LongDir::EARn, 'd', false,
+       false, true},
+      {"modu", "1111000010zz110ddddeeeeeee", "bwlq", LongDir::EARn, 'd', false,
+       false, true},
+      {"mods", "1111000010zz111ddddeeeeeee", "bwlq", LongDir::EARn, 'd', false,
+       false, true},
+      {"btest", "111100001100000bbbbeeeeeee", "", LongDir::RnEA, 'b', false,
+       false, true},
+      {"bset", "111100001100001bbbbeeeeeee", "", LongDir::RnEA, 'b', false,
+       false, false},
+      {"bclr", "111100001100010bbbbeeeeeee", "", LongDir::RnEA, 'b', false,
+       false, false},
+      {"bchg", "111100001100011bbbbeeeeeee", "", LongDir::RnEA, 'b', false,
+       false, false},
+      {"lcall", "111100001100100rrrreeeeeee", "", LongDir::RnEA, 'r', false,
+       false, true},
+      {"ljmp", "111100001100101rrrreeeeeee", "", LongDir::RnEA, 'r', false,
+       false, true},
+      {"clmulh.q", "111100001100110ddddeeeeeee", "", LongDir::EARn, 'd', false,
+       false, true},
+      {"seglea", "1111000011010zzddddeeeeeee", "bwlq", LongDir::EARn, 'd',
+       false, false, true},
+      {"movnt", "1111001000zz000sssseeeeeee", "bwlq", LongDir::RnEA, 's',
+       false, true, false},
   };
 
   for (const LongRegEAForm &F : LongRegEAForms) {
@@ -1142,6 +1254,10 @@ bool decodeLongPayload(uint32_t Payload, ArrayRef<uint8_t> Tail,
 
     uint8_t EA = extractPatternField(F.Pattern, Payload, 'e');
     if (F.RequireNonRegEA && EA < 0x10)
+      continue;
+    if (F.RequireMemoryEA && !isCompactEAMemory(EA))
+      continue;
+    if (!F.AllowImmediateEA && isCompactEAImmediate(EA))
       continue;
 
     unsigned Consumed = 0;
@@ -1167,18 +1283,69 @@ bool decodeLongPayload(uint32_t Payload, ArrayRef<uint8_t> Tail,
     return true;
   }
 
-  if (matchPattern("111100001100100cccceeeeeee", Payload)) {
-    const char *Cond = getCondName(
-        extractPatternField("111100001100100cccceeeeeee", Payload, 'c'));
+  if (matchPattern("111100101zzhhhhlllliiiiiii", Payload)) {
+    unsigned Z = extractPatternField("111100101zzhhhhlllliiiiiii", Payload, 'z');
+    unsigned Imm =
+        extractPatternField("111100101zzhhhhlllliiiiiii", Payload, 'i');
+    if (Imm >= (16u << Z))
+      return false;
+    Text =
+        formatv("extract.{0}\t{1}, r{2}, r{3}", "bwlq"[Z], Imm,
+                extractPatternField("111100101zzhhhhlllliiiiiii", Payload, 'h'),
+                extractPatternField("111100101zzhhhhlllliiiiiii", Payload, 'l'))
+            .str();
+    return true;
+  }
+
+  struct LongCmpTestJumpForm {
+    StringRef Base;
+    StringRef Pattern;
+    unsigned TailWidth;
+  };
+  static const LongCmpTestJumpForm LongCmpTestJumpForms[] = {
+      {"cmpj", "111100010zzccccssss000dddd", 1},
+      {"cmpj", "111100010zzccccssss001dddd", 2},
+      {"testj", "111100010zzccccssss010dddd", 1},
+      {"testj", "111100010zzccccssss011dddd", 2},
+  };
+  for (const LongCmpTestJumpForm &F : LongCmpTestJumpForms) {
+    if (!matchPattern(F.Pattern, Payload))
+      continue;
+    unsigned Z = extractPatternField(F.Pattern, Payload, 'z');
+    unsigned CondCode = extractPatternField(F.Pattern, Payload, 'c');
+    const char *Cond = getCondName(CondCode);
     if (!Cond)
       return false;
-    uint8_t EA =
-        extractPatternField("111100001100100cccceeeeeee", Payload, 'e');
+
+    if (Tail.size() < F.TailWidth)
+      return false;
+
+    Text = formatv("{0}{1}.{2}\tr{3}, r{4}, ", F.Base, Cond, "bwlq"[Z],
+                   extractPatternField(F.Pattern, Payload, 's'),
+                   extractPatternField(F.Pattern, Payload, 'd'))
+               .str();
+    appendSignedImm(Text, Tail, F.TailWidth);
+    return true;
+  }
+
+  if (matchPattern("11110000111ccccrrrreeeeeee", Payload)) {
+    unsigned CondCode =
+        extractPatternField("11110000111ccccrrrreeeeeee", Payload, 'c');
+    if (CondCode == 0x1)
+      return false;
+    const char *Cond = getFullCondName(CondCode);
+    if (!Cond)
+      return false;
+    uint8_t EA = extractPatternField("11110000111ccccrrrreeeeeee", Payload, 'e');
     unsigned Consumed = 0;
     SmallString<64> EAText;
     if (!decodeCompactEA(EA, Tail, Consumed, EAText))
       return false;
-    Text = formatv("dj.{0}\t{1}", Cond, EAText).str();
+    Text = formatv("dj{0}\tr{1}, {2}", Cond,
+                   extractPatternField("11110000111ccccrrrreeeeeee", Payload,
+                                       'r'),
+                   EAText)
+               .str();
     return true;
   }
 
@@ -1186,24 +1353,29 @@ bool decodeLongPayload(uint32_t Payload, ArrayRef<uint8_t> Tail,
     StringRef Mnemonic;
     StringRef Pattern;
     StringRef Suffixes;
+    bool RequireMemoryEA;
   };
   static const LongEAOnlyForm LongEAOnlyForms[] = {
-      {"seglea", "1111000100zz1100000eeeeeee", "bwlq"},
-      {"invpage", "1111101111010000110eeeeeee", ""},
-      {"flshdcache", "1111101111010000111eeeeeee", ""},
-      {"invdcache", "1111101111010001000eeeeeee", ""},
-      {"invicache", "1111101111010001001eeeeeee", ""},
-      {"prefetch", "1111101111010001010eeeeeee", ""},
-      {"synccache", "1111101111010001011eeeeeee", ""},
-      {"wrbkdcache", "1111101111010001100eeeeeee", ""},
-      {"save", "1111101111010001101eeeeeee", ""},
-      {"restore", "1111101111010001110eeeeeee", ""},
+      {"invpage", "1111101111010000010eeeeeee", "", false},
+      {"flshdcache", "1111101111010000011eeeeeee", "", true},
+      {"invdcache", "1111101111010000100eeeeeee", "", true},
+      {"invicache", "1111101111010000101eeeeeee", "", true},
+      {"prefetch", "1111101111010000110eeeeeee", "", true},
+      {"synccache", "1111101111010000111eeeeeee", "", true},
+      {"wrbkdcache", "1111101111010001000eeeeeee", "", true},
+      {"save", "1111101111010001001eeeeeee", "", false},
+      {"restore", "1111101111010001010eeeeeee", "", false},
+      {"prefetchnt", "1111101111010001011eeeeeee", "", true},
+      {"encinst", "1111101111010001100eeeeeee", "", true},
   };
 
   for (const LongEAOnlyForm &F : LongEAOnlyForms) {
     if (!matchPattern(F.Pattern, Payload))
       continue;
     uint8_t EA = extractPatternField(F.Pattern, Payload, 'e');
+    if (F.RequireMemoryEA && !isCompactEAMemory(EA))
+      continue;
+
     unsigned Consumed = 0;
     SmallString<64> EAText;
     if (!decodeCompactEA(EA, Tail, Consumed, EAText))
@@ -1219,46 +1391,48 @@ bool decodeLongPayload(uint32_t Payload, ArrayRef<uint8_t> Tail,
     return true;
   }
 
-  struct LongRegOnlyForm {
-    StringRef Base;
-    StringRef Pattern;
-    StringRef Suffixes;
-    char RegField;
-  };
-  static const LongRegOnlyForm LongRegOnlyForms[] = {
-      {"incn", "1111000100zz1100001000rrrr", "bwlq", 'r'},
-      {"decn", "1111000100zz1100001001rrrr", "bwlq", 'r'},
-  };
-
-  for (const LongRegOnlyForm &F : LongRegOnlyForms) {
-    if (!matchPattern(F.Pattern, Payload))
-      continue;
-    unsigned Z = extractPatternField(F.Pattern, Payload, 'z');
-    if (Z >= F.Suffixes.size())
-      continue;
-    unsigned Reg = extractPatternField(F.Pattern, Payload, F.RegField);
-    Text = formatv("{0}.{1}\tr{2}", F.Base, F.Suffixes[Z], Reg).str();
-    return true;
-  }
-
   struct LongEAEAForm {
     StringRef Mnemonic;
     StringRef Pattern;
     StringRef Suffixes;
+    bool RequireSrcNonReg;
+    bool RequireDstNonReg;
+    bool RequireSrcMemory;
+    bool RequireDstMemory;
+    bool AllowSrcImmediate;
+    bool AllowDstImmediate;
   };
   static const LongEAEAForm LongEAEAForms[] = {
-      {"mov", "1111100000zzsssssssddddddd", "bwlq"},
-      {"cmp", "1111100001zzsssssssddddddd", "bwlq"},
-      {"extsw.b", "111110100000sssssssddddddd", ""},
-      {"extsq.b", "111110100001sssssssddddddd", ""},
-      {"extsq.w", "111110100010sssssssddddddd", ""},
-      {"extsq.l", "111110100011sssssssddddddd", ""},
-      {"extzw.b", "111110100100sssssssddddddd", ""},
-      {"extzq.b", "111110100101sssssssddddddd", ""},
-      {"extzq.w", "111110100110sssssssddddddd", ""},
-      {"extzq.l", "111110100111sssssssddddddd", ""},
-      {"extsl", "11111010100zsssssssddddddd", "bw"},
-      {"extzl", "11111010101zsssssssddddddd", "bw"},
+      {"mov", "1111100000zzsssssssddddddd", "bwlq", true, true, false, false,
+       true, false},
+      {"cmp", "1111100001zzsssssssddddddd", "bwlq", true, true, false, false,
+       true, true},
+      {"movuc", "1111100010zzsssssssddddddd", "bwlq", false, false, true,
+       false, false, false},
+      {"movcu", "1111100011zzsssssssddddddd", "bwlq", false, false, false,
+       true, true, false},
+      {"movuu", "1111100100zzsssssssddddddd", "bwlq", false, false, true,
+       true, false, false},
+      {"extsw.b", "111110100000sssssssddddddd", "", true, true, false, false,
+       true, false},
+      {"extsq.b", "111110100001sssssssddddddd", "", true, true, false, false,
+       true, false},
+      {"extsq.w", "111110100010sssssssddddddd", "", true, true, false, false,
+       true, false},
+      {"extsq.l", "111110100011sssssssddddddd", "", true, true, false, false,
+       true, false},
+      {"extzw.b", "111110100100sssssssddddddd", "", true, true, false, false,
+       true, false},
+      {"extzq.b", "111110100101sssssssddddddd", "", true, true, false, false,
+       true, false},
+      {"extzq.w", "111110100110sssssssddddddd", "", true, true, false, false,
+       true, false},
+      {"extzq.l", "111110100111sssssssddddddd", "", true, true, false, false,
+       true, false},
+      {"extsl", "11111010100zsssssssddddddd", "bw", true, true, false, false,
+       true, false},
+      {"extzl", "11111010101zsssssssddddddd", "bw", true, true, false, false,
+       true, false},
   };
 
   for (const LongEAEAForm &F : LongEAEAForms) {
@@ -1266,7 +1440,17 @@ bool decodeLongPayload(uint32_t Payload, ArrayRef<uint8_t> Tail,
       continue;
     uint8_t SrcEA = extractPatternField(F.Pattern, Payload, 's');
     uint8_t DstEA = extractPatternField(F.Pattern, Payload, 'd');
-    if (SrcEA < 0x10 || DstEA < 0x10)
+    if (F.RequireSrcNonReg && SrcEA < 0x10)
+      continue;
+    if (F.RequireDstNonReg && DstEA < 0x10)
+      continue;
+    if (F.RequireSrcMemory && !isCompactEAMemory(SrcEA))
+      continue;
+    if (F.RequireDstMemory && !isCompactEAMemory(DstEA))
+      continue;
+    if (!F.AllowSrcImmediate && isCompactEAImmediate(SrcEA))
+      continue;
+    if (!F.AllowDstImmediate && isCompactEAImmediate(DstEA))
       continue;
 
     unsigned SrcConsumed = 0;
@@ -1340,43 +1524,43 @@ bool decodeLongPayload(uint32_t Payload, ArrayRef<uint8_t> Tail,
     return true;
   }
 
-  if (matchPattern("111110111101000000vvvvpppp", Payload)) {
+  if (matchPattern("111110111101001vvvv000pppp", Payload)) {
     Text =
         formatv("vtop\tr{0}, r{1}",
-                extractPatternField("111110111101000000vvvvpppp", Payload, 'v'),
-                extractPatternField("111110111101000000vvvvpppp", Payload, 'p'))
+                extractPatternField("111110111101001vvvv000pppp", Payload, 'v'),
+                extractPatternField("111110111101001vvvv000pppp", Payload, 'p'))
             .str();
     return true;
   }
-  if (matchPattern("111110111101000001ppppaaaa", Payload)) {
+  if (matchPattern("111110111101001aaaa001pppp", Payload)) {
     Text =
         formatv("swpta\tr{0}, r{1}",
-                extractPatternField("111110111101000001ppppaaaa", Payload, 'p'),
-                extractPatternField("111110111101000001ppppaaaa", Payload, 'a'))
+                extractPatternField("111110111101001aaaa001pppp", Payload, 'p'),
+                extractPatternField("111110111101001aaaa001pppp", Payload, 'a'))
             .str();
     return true;
   }
-  if (matchPattern("1111101111010000100sssdddd", Payload)) {
+  if (matchPattern("1111101111010000000sssdddd", Payload)) {
     unsigned SReg =
-        extractPatternField("1111101111010000100sssdddd", Payload, 's');
+        extractPatternField("1111101111010000000sssdddd", Payload, 's');
     const char *SRegName = getSRegName(SReg);
     if (!SRegName)
       return false;
     Text =
         formatv("rdseg\t{0}, r{1}", SRegName,
-                extractPatternField("1111101111010000100sssdddd", Payload, 'd'))
+                extractPatternField("1111101111010000000sssdddd", Payload, 'd'))
             .str();
     return true;
   }
-  if (matchPattern("1111101111010000101sssdddd", Payload)) {
+  if (matchPattern("1111101111010000001sssdddd", Payload)) {
     unsigned SReg =
-        extractPatternField("1111101111010000101sssdddd", Payload, 's');
+        extractPatternField("1111101111010000001sssdddd", Payload, 's');
     const char *SRegName = getSRegName(SReg);
     if (!SRegName)
       return false;
     Text =
         formatv("wrseg\tr{0}, {1}",
-                extractPatternField("1111101111010000101sssdddd", Payload, 'd'),
+                extractPatternField("1111101111010000001sssdddd", Payload, 'd'),
                 SRegName)
             .str();
     return true;
@@ -1389,9 +1573,9 @@ bool decodeLongPayload(uint32_t Payload, ArrayRef<uint8_t> Tail,
     char RegField;
   };
   static const LongImm16RegForm Imm16Forms[] = {
-      {"rdcr", "1111101111010010000000dddd", true, 'd'},
-      {"wrcr", "1111101111010010000001ssss", false, 's'},
-      {"rdpmc", "1111101111010010001010dddd", true, 'd'},
+      {"rdcr", "1111101111010001110000dddd", true, 'd'},
+      {"wrcr", "1111101111010001110001ssss", false, 's'},
+      {"rdpmc", "1111101111010001111010dddd", true, 'd'},
   };
   for (const LongImm16RegForm &F : Imm16Forms) {
     if (!matchPattern(F.Pattern, Payload))
@@ -1413,15 +1597,15 @@ bool decodeLongPayload(uint32_t Payload, ArrayRef<uint8_t> Tail,
     char RegField;
   };
   static const LongSysRegForm SysRegForms[] = {
-      {"rdflags", "1111101111010010000010dddd", 'd'},
-      {"wrflags", "1111101111010010000011ssss", 's'},
-      {"rdfflags", "1111101111010010000100dddd", 'd'},
-      {"wrfflags", "1111101111010010000101ssss", 's'},
-      {"rdstatus", "1111101111010010000110dddd", 'd'},
-      {"wrstatus", "1111101111010010000111ssss", 's'},
-      {"rdfstatus", "1111101111010010001000dddd", 'd'},
-      {"wrfstatus", "1111101111010010001001ssss", 's'},
-      {"swpt", "1111101111010010001011pppp", 'p'},
+      {"rdflags", "1111101111010001110010dddd", 'd'},
+      {"wrflags", "1111101111010001110011ssss", 's'},
+      {"rdfflags", "1111101111010001110100dddd", 'd'},
+      {"wrfflags", "1111101111010001110101ssss", 's'},
+      {"rdstatus", "1111101111010001110110dddd", 'd'},
+      {"wrstatus", "1111101111010001110111ssss", 's'},
+      {"rdfstatus", "1111101111010001111000dddd", 'd'},
+      {"wrfstatus", "1111101111010001111001ssss", 's'},
+      {"swpt", "1111101111010001111011pppp", 'p'},
   };
   for (const LongSysRegForm &F : SysRegForms) {
     if (!matchPattern(F.Pattern, Payload))
@@ -1432,13 +1616,13 @@ bool decodeLongPayload(uint32_t Payload, ArrayRef<uint8_t> Tail,
     return true;
   }
 
-  if (Payload == 0x3ef4f00) {
+  if (Payload == 0x3ef4600) {
     if (Tail.size() < 2)
       return false;
     Text = formatv("invasid\t{0}", readLE(Tail, 0, 2)).str();
     return true;
   }
-  if (Payload == 0x3ef4f01) {
+  if (Payload == 0x3ef4601) {
     Text = "invtlb";
     return true;
   }
@@ -1448,9 +1632,9 @@ bool decodeLongPayload(uint32_t Payload, ArrayRef<uint8_t> Tail,
     StringRef Pattern;
   };
   static const LongQRRForm QRRForms[] = {
-      {"mulhu.q", "111110111110000000ssssdddd"},
-      {"mulhs.q", "111110111110000001ssssdddd"},
-      {"mulhsu.q", "111110111110000010ssssdddd"},
+      {"mulhu.q", "111110111101001ssss100dddd"},
+      {"mulhs.q", "111110111101001ssss101dddd"},
+      {"mulhsu.q", "111110111101001ssss110dddd"},
   };
   for (const LongQRRForm &F : QRRForms) {
     if (!matchPattern(F.Pattern, Payload))
@@ -1459,6 +1643,206 @@ bool decodeLongPayload(uint32_t Payload, ArrayRef<uint8_t> Tail,
                    extractPatternField(F.Pattern, Payload, 's'),
                    extractPatternField(F.Pattern, Payload, 'd'))
                .str();
+    return true;
+  }
+
+  return false;
+}
+
+bool decodeExtraLongPayload(uint64_t Payload, ArrayRef<uint8_t> Tail,
+                            SmallString<128> &Text) {
+  struct ExtraMovccForm {
+    StringRef Pattern;
+    bool RegToEA;
+  };
+  static const ExtraMovccForm MovccForms[] = {
+      {"1111110001000cccczzssss0000eeeeeee", true},
+      {"1111110001001cccczzdddd0000eeeeeee", false},
+  };
+  for (const ExtraMovccForm &F : MovccForms) {
+    if (!matchPattern64(F.Pattern, Payload))
+      continue;
+
+    const char *Cond = getCondName(extractPatternField64(F.Pattern, Payload, 'c'));
+    if (!Cond)
+      return false;
+
+    uint8_t EA = extractPatternField64(F.Pattern, Payload, 'e');
+    unsigned Consumed = 0;
+    SmallString<64> EAText;
+    if (!decodeCompactEA(EA, Tail, Consumed, EAText))
+      return false;
+
+    unsigned Z = extractPatternField64(F.Pattern, Payload, 'z');
+    if (Z >= 4)
+      return false;
+    if (F.RegToEA) {
+      unsigned Reg = extractPatternField64(F.Pattern, Payload, 's');
+      Text = formatv("mov{0}.{1}\tr{2}, {3}", Cond, "bwlq"[Z], Reg, EAText)
+                 .str();
+    } else {
+      unsigned Reg = extractPatternField64(F.Pattern, Payload, 'd');
+      Text = formatv("mov{0}.{1}\t{2}, r{3}", Cond, "bwlq"[Z], EAText, Reg)
+                 .str();
+    }
+    return true;
+  }
+
+  if (matchPattern64("111111000101cccciiiibbbb000eeeeeee", Payload)) {
+    unsigned CondCode =
+        extractPatternField64("111111000101cccciiiibbbb000eeeeeee", Payload,
+                              'c');
+    if (CondCode == 0x1)
+      return false;
+    const char *Cond = getFullCondName(CondCode);
+    if (!Cond)
+      return false;
+
+    uint8_t EA =
+        extractPatternField64("111111000101cccciiiibbbb000eeeeeee", Payload,
+                              'e');
+    unsigned Consumed = 0;
+    SmallString<64> EAText;
+    if (!decodeCompactEA(EA, Tail, Consumed, EAText))
+      return false;
+
+    Text =
+        formatv("ij{0}\tr{1}, r{2}, {3}", Cond,
+                extractPatternField64("111111000101cccciiiibbbb000eeeeeee",
+                                      Payload, 'i'),
+                extractPatternField64("111111000101cccciiiibbbb000eeeeeee",
+                                      Payload, 'b'),
+                EAText)
+            .str();
+    return true;
+  }
+
+  struct ExtraBndForm {
+    StringRef Base;
+    StringRef Pattern;
+  };
+  static const ExtraBndForm BndForms[] = {
+      {"bndsii", "111111000010zz000llllhhhh00eeeeeee"},
+      {"bndsix", "111111000010zz001llllhhhh00eeeeeee"},
+      {"bndsxi", "111111000010zz010llllhhhh00eeeeeee"},
+      {"bndsxx", "111111000010zz011llllhhhh00eeeeeee"},
+      {"bnduii", "111111000010zz100llllhhhh00eeeeeee"},
+      {"bnduix", "111111000010zz101llllhhhh00eeeeeee"},
+      {"bnduxi", "111111000010zz110llllhhhh00eeeeeee"},
+      {"bnduxx", "111111000010zz111llllhhhh00eeeeeee"},
+  };
+  for (const ExtraBndForm &F : BndForms) {
+    if (!matchPattern64(F.Pattern, Payload))
+      continue;
+
+    uint8_t EA = extractPatternField64(F.Pattern, Payload, 'e');
+    unsigned Consumed = 0;
+    SmallString<64> EAText;
+    if (!decodeCompactEA(EA, Tail, Consumed, EAText))
+      return false;
+    unsigned Z = extractPatternField64(F.Pattern, Payload, 'z');
+    if (Z >= 4)
+      return false;
+    Text = formatv("{0}.{1}\tr{2}, {3}, r{4}", F.Base, "bwlq"[Z],
+                   extractPatternField64(F.Pattern, Payload, 'l'), EAText,
+                   extractPatternField64(F.Pattern, Payload, 'h'))
+               .str();
+    return true;
+  }
+
+  struct ExtraDivModForm {
+    StringRef Base;
+    StringRef Pattern;
+  };
+  static const ExtraDivModForm DivModForms[] = {
+      {"divmodu", "111111000011zz0qqqqrrrr0000eeeeeee"},
+      {"divmods", "111111000011zz1qqqqrrrr0000eeeeeee"},
+  };
+  for (const ExtraDivModForm &F : DivModForms) {
+    if (!matchPattern64(F.Pattern, Payload))
+      continue;
+
+    uint8_t EA = extractPatternField64(F.Pattern, Payload, 'e');
+    unsigned Consumed = 0;
+    SmallString<64> EAText;
+    if (!decodeCompactEA(EA, Tail, Consumed, EAText))
+      return false;
+    unsigned Z = extractPatternField64(F.Pattern, Payload, 'z');
+    if (Z >= 4)
+      return false;
+    Text = formatv("{0}.{1}\t{2}, r{3}, r{4}", F.Base, "bwlq"[Z], EAText,
+                   extractPatternField64(F.Pattern, Payload, 'q'),
+                   extractPatternField64(F.Pattern, Payload, 'r'))
+               .str();
+    return true;
+  }
+
+  struct ExtraFetchForm {
+    StringRef Base;
+    StringRef Pattern;
+  };
+  static const ExtraFetchForm FetchForms[] = {
+      {"fetchadd", "111111000111zz000ooossss000eeeeeee"},
+      {"fetchand", "111111000111zz001ooossss000eeeeeee"},
+      {"fetchor", "111111000111zz010ooossss000eeeeeee"},
+      {"fetchsub", "111111000111zz011ooossss000eeeeeee"},
+      {"fetchxor", "111111000111zz100ooossss000eeeeeee"},
+  };
+  for (const ExtraFetchForm &F : FetchForms) {
+    if (!matchPattern64(F.Pattern, Payload))
+      continue;
+
+    unsigned Order = extractPatternField64(F.Pattern, Payload, 'o');
+    const char *OrderName = getMemoryOrderName(Order);
+    if (!OrderName)
+      return false;
+
+    uint8_t EA = extractPatternField64(F.Pattern, Payload, 'e');
+    if (!isCompactEAMemory(EA))
+      return false;
+    unsigned Consumed = 0;
+    SmallString<64> EAText;
+    if (!decodeCompactEA(EA, Tail, Consumed, EAText))
+      return false;
+    unsigned Z = extractPatternField64(F.Pattern, Payload, 'z');
+    if (Z >= 4)
+      return false;
+    Text = formatv("{0}.{1}/{2}\tr{3}, {4}", F.Base, "bwlq"[Z], OrderName,
+                   extractPatternField64(F.Pattern, Payload, 's'), EAText)
+               .str();
+    return true;
+  }
+
+  if (matchPattern64("1111110010000zzoooxxxxdddd0eeeeeee", Payload)) {
+    unsigned Order =
+        extractPatternField64("1111110010000zzoooxxxxdddd0eeeeeee", Payload,
+                              'o');
+    const char *OrderName = getMemoryOrderName(Order);
+    if (!OrderName)
+      return false;
+
+    uint8_t EA =
+        extractPatternField64("1111110010000zzoooxxxxdddd0eeeeeee", Payload,
+                              'e');
+    if (!isCompactEAMemory(EA))
+      return false;
+    unsigned Consumed = 0;
+    SmallString<64> EAText;
+    if (!decodeCompactEA(EA, Tail, Consumed, EAText))
+      return false;
+    unsigned Z =
+        extractPatternField64("1111110010000zzoooxxxxdddd0eeeeeee", Payload,
+                              'z');
+    if (Z >= 4)
+      return false;
+    Text =
+        formatv("cmpxchg.{0}/{1}\tr{2}, r{3}, {4}", "bwlq"[Z], OrderName,
+                extractPatternField64("1111110010000zzoooxxxxdddd0eeeeeee",
+                                      Payload, 'x'),
+                extractPatternField64("1111110010000zzoooxxxxdddd0eeeeeee",
+                                      Payload, 'd'),
+                EAText)
+            .str();
     return true;
   }
 
@@ -1498,13 +1882,30 @@ bool BedrockMC::getRawInstBytes(const MCInst &Inst,
   return true;
 }
 
+bool BedrockMC::encodeExtraShort(uint8_t Payload,
+                                 SmallVectorImpl<uint8_t> &Bytes) {
+  if (Payload >= 0x80)
+    return false;
+  Bytes.push_back(Payload);
+  return true;
+}
+
+bool BedrockMC::encodeShort(uint16_t Payload, SmallVectorImpl<uint8_t> &Bytes) {
+  if (Payload >= (1u << 14))
+    return false;
+  Bytes.push_back(0x80 | ((Payload >> 8) & 0x3f));
+  Bytes.push_back(Payload & 0xff);
+  return true;
+}
+
 bool BedrockMC::encodeMedium(uint32_t Payload, ArrayRef<uint8_t> Tail,
                              SmallVectorImpl<uint8_t> &Bytes) {
-  unsigned ExtBytes = 1 + Tail.size();
-  if (Payload >= (1u << 18) || ExtBytes == 0 || ExtBytes > 16)
+  unsigned TotalBytes = 3 + Tail.size();
+  if (Payload >= (1u << 18) || (Payload >> 14) == 0xf || TotalBytes > 18)
     return false;
 
-  Bytes.push_back(0x40 | ((ExtBytes - 1) << 2) | ((Payload >> 16) & 0x3));
+  Bytes.push_back(0xc0 | ((TotalBytes - 3) << 2) |
+                  ((Payload >> 16) & 0x3));
   Bytes.push_back((Payload >> 8) & 0xff);
   Bytes.push_back(Payload & 0xff);
   Bytes.append(Tail.begin(), Tail.end());
@@ -1513,11 +1914,32 @@ bool BedrockMC::encodeMedium(uint32_t Payload, ArrayRef<uint8_t> Tail,
 
 bool BedrockMC::encodeLong(uint32_t Payload, ArrayRef<uint8_t> Tail,
                            SmallVectorImpl<uint8_t> &Bytes) {
-  unsigned ExtBytes = 2 + Tail.size();
-  if (Payload >= (1u << 26) || ExtBytes > 16)
+  unsigned TotalBytes = 4 + Tail.size();
+  unsigned Selector6 = Payload >> 20;
+  if (Payload >= (1u << 26) || Selector6 < 0x3c || Selector6 > 0x3e ||
+      TotalBytes > 18)
     return false;
 
-  Bytes.push_back(0x40 | ((ExtBytes - 1) << 2) | ((Payload >> 24) & 0x3));
+  Bytes.push_back(0xc0 | ((TotalBytes - 3) << 2) |
+                  ((Payload >> 24) & 0x3));
+  Bytes.push_back((Payload >> 16) & 0xff);
+  Bytes.push_back((Payload >> 8) & 0xff);
+  Bytes.push_back(Payload & 0xff);
+  Bytes.append(Tail.begin(), Tail.end());
+  return true;
+}
+
+bool BedrockMC::encodeExtraLong(uint64_t Payload, ArrayRef<uint8_t> Tail,
+                                SmallVectorImpl<uint8_t> &Bytes) {
+  unsigned TotalBytes = 5 + Tail.size();
+  unsigned Selector6 = Payload >> 28;
+  if (Payload >= (uint64_t(1) << 34) || Selector6 != 0x3f ||
+      TotalBytes > 18)
+    return false;
+
+  Bytes.push_back(0xc0 | ((TotalBytes - 3) << 2) |
+                  ((Payload >> 32) & 0x3));
+  Bytes.push_back((Payload >> 24) & 0xff);
   Bytes.push_back((Payload >> 16) & 0xff);
   Bytes.push_back((Payload >> 8) & 0xff);
   Bytes.push_back(Payload & 0xff);
@@ -1526,61 +1948,134 @@ bool BedrockMC::encodeLong(uint32_t Payload, ArrayRef<uint8_t> Tail,
 }
 
 bool BedrockMC::getInstructionSize(ArrayRef<uint8_t> Bytes, uint64_t &Size) {
-  if (Bytes.size() < 2) {
+  if (Bytes.empty()) {
     Size = 0;
     return false;
   }
 
-  if (getFpuRawInstSize(Bytes, Size))
+  uint8_t Byte0 = Bytes[0];
+  if ((Byte0 & 0x80) == 0) {
+    Size = 1;
     return true;
-
-  bool HasPrefix = Bytes[0] & 0x80;
-  bool IsExtended = Bytes[0] & 0x40;
-
-  if (!IsExtended) {
-    Size = 2 + (HasPrefix ? 2 : 0);
+  }
+  if ((Byte0 & 0xc0) == 0x80) {
+    Size = 2;
     return Bytes.size() >= Size;
   }
 
-  unsigned ExtBytes = ((Bytes[0] >> 2) & 0xf) + 1;
-  Size = 2 + (HasPrefix ? 2 : 0) + ExtBytes;
+  Size = 3 + ((Byte0 >> 2) & 0xf);
   return Bytes.size() >= Size;
 }
 
 bool BedrockMC::decodeRawInst(ArrayRef<uint8_t> Bytes, uint64_t &Size,
                               SmallString<128> &Text) {
+  uint64_t FpuSize;
+  if (getFpuRawInstSize(Bytes, FpuSize) &&
+      decodeFpuRawInst(Bytes.take_front(FpuSize), Text)) {
+    Size = FpuSize;
+    return true;
+  }
+
   if (!getInstructionSize(Bytes, Size))
     return false;
 
-  if (decodeFpuRawInst(Bytes.take_front(Size), Text))
+  uint8_t Byte0 = Bytes[0];
+  if ((Byte0 & 0x80) == 0) {
+    if (!decodeExtraShortPayload(Byte0 & 0x7f, Text))
+      return false;
     return true;
+  }
 
-  bool HasPrefix = Bytes[0] & 0x80;
-  bool IsExtended = Bytes[0] & 0x40;
-  if (!IsExtended) {
-    uint16_t Payload = ((Bytes[0] & 0x3f) << 8) | Bytes[1];
+  if ((Byte0 & 0xc0) == 0x80) {
+    uint16_t Payload = ((Byte0 & 0x3f) << 8) | Bytes[1];
     if (!decodeShortPayload(Payload, Text))
       return false;
-    return prependPrefixes(Bytes, Text);
+    return true;
   }
 
-  unsigned ExtBytes = ((Bytes[0] >> 2) & 0xf) + 1;
-  unsigned ExtOffset = 2 + (HasPrefix ? 2 : 0);
-  ArrayRef<uint8_t> Ext = Bytes.slice(ExtOffset, ExtBytes);
-  uint32_t BasePayload = ((Bytes[0] & 0x3) << 8) | Bytes[1];
-  uint32_t MediumPayload = (BasePayload << 8) | Ext[0];
-
-  if ((MediumPayload >> 14) == 0xf) {
-    if (Ext.size() < 2)
-      return false;
-    uint32_t LongPayload =
-        (BasePayload << 16) | (uint32_t(Ext[0]) << 8) | Ext[1];
-    if (!decodeLongPayload(LongPayload, Ext.drop_front(2), Text))
-      return false;
-    return prependPrefixes(Bytes, Text);
-  }
-
-  if (!decodeMediumPayload(MediumPayload, Ext.drop_front(), Text))
+  ArrayRef<uint8_t> Inst = Bytes.take_front(Size);
+  if (Inst.size() < 3)
     return false;
-  return prependPrefixes(Bytes, Text);
+
+  uint32_t FirstTen = ((Byte0 & 0x3) << 8) | Inst[1];
+  uint32_t MediumPayload = (FirstTen << 8) | Inst[2];
+  unsigned Selector6 = MediumPayload >> 12;
+
+  if (isRepgPayload(MediumPayload) && Inst.size() >= 5) {
+    uint64_t BodyBytes = readLE(Inst, 3, 2);
+    if (BodyBytes != 0 && Bytes.drop_front(Size).size() >= BodyBytes) {
+      ArrayRef<uint8_t> Body = Bytes.drop_front(Size).take_front(BodyBytes);
+      SmallString<128> BodyText;
+      uint64_t BodyOffset = 0;
+      bool DecodedBody = true;
+      bool FirstBodyInst = true;
+      while (BodyOffset != BodyBytes) {
+        uint64_t BodyInstSize = 0;
+        SmallString<128> BodyInstText;
+        if (!decodeRawInst(Body.drop_front(BodyOffset), BodyInstSize,
+                           BodyInstText) ||
+            BodyInstSize == 0 || BodyOffset + BodyInstSize > BodyBytes) {
+          DecodedBody = false;
+          break;
+        }
+        if (!FirstBodyInst)
+          BodyText += "; ";
+        BodyText += BodyInstText;
+        FirstBodyInst = false;
+        BodyOffset += BodyInstSize;
+      }
+
+      if (DecodedBody && BodyOffset == BodyBytes) {
+        Text = formatv("repg\tr{0}, ", MediumPayload & 0xf).str();
+        Text += "{ ";
+        Text += BodyText;
+        Text += " }";
+        Size += BodyBytes;
+        return true;
+      }
+    }
+  }
+
+  if (isRepPayload(MediumPayload)) {
+    ArrayRef<uint8_t> BodyBytes = Bytes.drop_front(Size);
+    uint64_t BodySize = 0;
+    SmallString<128> BodyText;
+    if (BodyBytes.empty() || !decodeRawInst(BodyBytes, BodySize, BodyText))
+      return false;
+
+    unsigned Cond = (MediumPayload >> 4) & 0xf;
+    unsigned Reg = MediumPayload & 0xf;
+    const char *Name = getRepCondName(Cond);
+    if (!Name)
+      return false;
+
+    Text = formatv("{0}\tr{1}, ({2})", Name, Reg, BodyText).str();
+    Size += BodySize;
+    return true;
+  }
+
+  if (Selector6 == 0x3f) {
+    if (Inst.size() < 5)
+      return false;
+    uint64_t ExtraLongPayload = (uint64_t(FirstTen) << 24) |
+                                (uint64_t(Inst[2]) << 16) |
+                                (uint64_t(Inst[3]) << 8) | uint64_t(Inst[4]);
+    if (!decodeExtraLongPayload(ExtraLongPayload, Inst.drop_front(5), Text))
+      return false;
+    return true;
+  }
+
+  if (Selector6 >= 0x3c) {
+    if (Inst.size() < 4)
+      return false;
+    uint32_t LongPayload = (FirstTen << 16) | (uint32_t(Inst[2]) << 8) |
+                           uint32_t(Inst[3]);
+    if (!decodeLongPayload(LongPayload, Inst.drop_front(4), Text))
+      return false;
+    return true;
+  }
+
+  if (!decodeMediumPayload(MediumPayload, Inst.drop_front(3), Text))
+    return false;
+  return true;
 }

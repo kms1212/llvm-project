@@ -1,0 +1,68 @@
+# RUN: llc -mtriple=bedrock -run-pass=bedrock-pre-emit-peephole -verify-machineinstrs %s -o - | FileCheck %s
+
+# REQUIRES: bedrock-registered-target
+
+--- |
+  target triple = "bedrock"
+
+  @g = external global i64
+  @other = external global i64
+
+  define void @fold_global_base_abs_accesses() {
+    ret void
+  }
+
+  define void @introduce_global_base_abs_accesses() {
+    ret void
+  }
+
+  declare void @callee()
+...
+---
+name:            fold_global_base_abs_accesses
+tracksRegLiveness: true
+body:             |
+  ; CHECK-LABEL: name: fold_global_base_abs_accesses
+  ; CHECK: PUSHPi 2
+  ; CHECK-NEXT: $r0 = CONST64 7
+  ; CHECK-NEXT: $r10 = CONST64 @g
+  ; CHECK-NEXT: STOREQro $r0, $r10, 8
+  ; CHECK-NEXT: $r1 = LOADQro $r10, 16
+  ; CHECK-NEXT: STOREQ_Immro 1, $r10, 24
+  ; CHECK-NEXT: INCQmo $r10, 32
+  ; CHECK-NEXT: STOREQabs $r10, @other
+  ; CHECK-NEXT: $r10 = CONST64 152
+  ; CHECK-NEXT: STOREQabs $r1, @g + 40
+  bb.0:
+    liveins: $r10
+
+    PUSHPi 2
+    $r0 = CONST64 7
+    STOREQabs $r0, @g + 8
+    $r1 = LOADQabs @g + 16
+    STOREQ_Immabs 1, @g + 24
+    INCQabs @g + 32
+    $r10 = CONST64 @g
+    STOREQabs $r10, @other
+    $r10 = CONST64 152
+    STOREQabs $r1, @g + 40
+    RET
+...
+---
+name:            introduce_global_base_abs_accesses
+tracksRegLiveness: true
+body:             |
+  ; CHECK-LABEL: name: introduce_global_base_abs_accesses
+  ; CHECK: $r6 = CONST64 @g + 112
+  ; CHECK-NEXT: $r1 = LOADQro $r6, 0
+  ; CHECK-NEXT: $r2 = LOADQro $r6, 8
+  ; CHECK-NEXT: $r3 = LOADQro $r6, 16
+  ; CHECK-NEXT: $r4 = LOADQro $r6, 24
+  ; CHECK-NEXT: TAILCALL @callee
+  bb.0:
+    $r1 = LOADQabs @g + 112
+    $r2 = LOADQabs @g + 120
+    $r3 = LOADQabs @g + 128
+    $r4 = LOADQabs @g + 136
+    TAILCALL @callee
+...

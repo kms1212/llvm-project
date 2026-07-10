@@ -1,0 +1,105 @@
+# RUN: llc -mtriple=bedrock -verify-machineinstrs %s -o - | FileCheck %s
+
+# REQUIRES: bedrock-registered-target
+
+--- |
+  target triple = "bedrock"
+
+  define void @copied_base_index_load() {
+    ret void
+  }
+
+  define void @copied_base_index_store() {
+    ret void
+  }
+
+  define void @sp_index_load() {
+    ret void
+  }
+
+  define void @sp_index_store() {
+    ret void
+  }
+
+  define void @indexed_load_cmp() {
+    ret void
+  }
+...
+---
+name:            copied_base_index_load
+tracksRegLiveness: true
+body:             |
+  ; CHECK-LABEL: copied_base_index_load:
+  ; CHECK-NOT: mov.q{{.*}}r8, r0
+  ; CHECK-NOT: add.q{{.*}}r9, r0
+  ; CHECK: extzq.b	[ds:r8 + r9], r0
+  bb.0:
+    liveins: $r8, $r9
+
+    $r0 = MOVQrr $r8
+    $r0 = ADDQ3rr killed $r0, $r9
+    $r0 = LOADB_Zrr killed $r0 :: (load (s8))
+    RET implicit $r0
+...
+---
+name:            copied_base_index_store
+tracksRegLiveness: true
+body:             |
+  ; CHECK-LABEL: copied_base_index_store:
+  ; CHECK-NOT: mov.q{{.*}}r8, r0
+  ; CHECK-NOT: add.q{{.*}}r9, r0
+  ; CHECK: mov.b	r10, [ds:r8 + r9]
+  bb.0:
+    liveins: $r8, $r9, $r10
+
+    $r0 = MOVQrr $r8
+    $r0 = ADDQ3rr killed $r0, $r9
+    STOREBrr $r10, killed $r0 :: (store (s8))
+    RET
+...
+---
+name:            sp_index_load
+tracksRegLiveness: true
+body:             |
+  ; CHECK-LABEL: sp_index_load:
+  ; CHECK-NOT: mov.q{{.*}}sp, r0
+  ; CHECK-NOT: add.q{{.*}}r9, r0
+  ; CHECK: extzq.b	[sp + r9], r0
+  bb.0:
+    liveins: $r9
+
+    $r0 = LEAfi 0, 0
+    $r0 = ADDQ3rr killed $r0, $r9
+    $r0 = LOADB_Zrr killed $r0 :: (load (s8))
+    RET implicit $r0
+...
+---
+name:            sp_index_store
+tracksRegLiveness: true
+body:             |
+  ; CHECK-LABEL: sp_index_store:
+  ; CHECK-NOT: mov.q{{.*}}sp, r0
+  ; CHECK-NOT: add.q{{.*}}r9, r0
+  ; CHECK: mov.b	r10, [sp + r9]
+  bb.0:
+    liveins: $r9, $r10
+
+    $r0 = LEAfi 0, 0
+    $r0 = ADDQ3rr killed $r0, $r9
+    STOREBrr $r10, killed $r0 :: (store (s8))
+    RET
+...
+---
+name:            indexed_load_cmp
+tracksRegLiveness: true
+body:             |
+  ; CHECK-LABEL: indexed_load_cmp:
+  ; CHECK-NOT: mov.l	[ds:r1 + r2], r0
+  ; CHECK: cmp.l	r3, [ds:r1 + r2]
+  bb.0:
+    liveins: $r1, $r2, $r3
+
+    $r0 = LOADLrx $r1, $r2 :: (load (s32))
+    CMPLrr $r3, killed $r0
+    RET
+...

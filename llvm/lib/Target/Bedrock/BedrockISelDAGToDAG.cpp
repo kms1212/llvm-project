@@ -7,6 +7,7 @@
 //===----------------------------------------------------------------------===//
 
 #include "Bedrock.h"
+#include "BedrockISelLowering.h"
 #include "BedrockTargetMachine.h"
 #include "MCTargetDesc/BedrockMCTargetDesc.h"
 #include "llvm/CodeGen/SelectionDAGISel.h"
@@ -66,6 +67,10 @@ static unsigned getBinaryPseudo(unsigned Opcode, MVT VT) {
     return Is64 ? Bedrock::XORQ3rr : Bedrock::XORL3rr;
   case ISD::SHL:
     return Is64 ? Bedrock::SHLQ3rr : Bedrock::SHLL3rr;
+  case ISD::ROTL:
+    return Is64 ? Bedrock::ROLQ3rr : Bedrock::ROLL3rr;
+  case ISD::ROTR:
+    return Is64 ? Bedrock::RORQ3rr : Bedrock::RORL3rr;
   case ISD::SRL:
     return Is64 ? Bedrock::SHRQ3rr : Bedrock::SHRL3rr;
   case ISD::SRA:
@@ -83,6 +88,280 @@ static unsigned getBinaryPseudo(unsigned Opcode, MVT VT) {
   default:
     llvm_unreachable("unexpected Bedrock binary pseudo");
   }
+}
+
+static unsigned getBinaryImmPseudo(unsigned Opcode, MVT VT) {
+  bool Is64 = VT == MVT::i64;
+  switch (Opcode) {
+  case ISD::ADD:
+    return Is64 ? Bedrock::ADDQ3ri : Bedrock::ADDL3ri;
+  case ISD::SUB:
+    return Is64 ? Bedrock::SUBQ3ri : Bedrock::SUBL3ri;
+  case ISD::AND:
+    return Is64 ? Bedrock::ANDQ3ri : Bedrock::ANDL3ri;
+  case ISD::OR:
+    return Is64 ? Bedrock::ORQ3ri : Bedrock::ORL3ri;
+  case ISD::XOR:
+    return Is64 ? Bedrock::XORQ3ri : Bedrock::XORL3ri;
+  case ISD::SHL:
+    return Is64 ? Bedrock::SHLQ3ri : Bedrock::SHLL3ri;
+  case ISD::ROTL:
+    return Is64 ? Bedrock::ROLQ3ri : Bedrock::ROLL3ri;
+  case ISD::ROTR:
+    return Is64 ? Bedrock::RORQ3ri : Bedrock::RORL3ri;
+  case ISD::SRL:
+    return Is64 ? Bedrock::SHRQ3ri : Bedrock::SHRL3ri;
+  case ISD::SRA:
+    return Is64 ? Bedrock::SARQ3ri : Bedrock::SARL3ri;
+  default:
+    llvm_unreachable("unexpected Bedrock binary immediate pseudo");
+  }
+}
+
+static unsigned getIncDecPseudo(unsigned Opcode, MVT VT, int64_t Imm) {
+  bool Is64 = VT == MVT::i64;
+  if (Opcode == ISD::ADD) {
+    if (Imm == 1)
+      return Is64 ? Bedrock::INCQ3r : Bedrock::INCL3r;
+    if (Imm == -1)
+      return Is64 ? Bedrock::DECQ3r : Bedrock::DECL3r;
+  }
+  if (Opcode == ISD::SUB) {
+    if (Imm == 1)
+      return Is64 ? Bedrock::DECQ3r : Bedrock::DECL3r;
+    if (Imm == -1)
+      return Is64 ? Bedrock::INCQ3r : Bedrock::INCL3r;
+  }
+  return 0;
+}
+
+static unsigned getNegPseudo(MVT VT) {
+  return VT == MVT::i64 ? Bedrock::NEGQ3r : Bedrock::NEGL3r;
+}
+
+static unsigned getAbsPseudo(MVT VT) {
+  return VT == MVT::i64 ? Bedrock::ABSQ3r : Bedrock::ABSL3r;
+}
+
+static unsigned getNotPseudo(MVT VT) {
+  return VT == MVT::i64 ? Bedrock::NOTQ3r : Bedrock::NOTL3r;
+}
+
+static unsigned getSignExtendInRegPseudo(MVT VT, MVT ExtVT) {
+  if (VT == MVT::i32) {
+    switch (ExtVT.SimpleTy) {
+    case MVT::i8:
+      return Bedrock::EXTSLBrr;
+    case MVT::i16:
+      return Bedrock::EXTSLWrr;
+    default:
+      return 0;
+    }
+  }
+
+  if (VT == MVT::i64) {
+    switch (ExtVT.SimpleTy) {
+    case MVT::i8:
+      return Bedrock::EXTSQBrr;
+    case MVT::i16:
+      return Bedrock::EXTSQWrr;
+    case MVT::i32:
+      return Bedrock::EXTSQLrr;
+    default:
+      return 0;
+    }
+  }
+
+  return 0;
+}
+
+static unsigned getZeroExtendMaskPseudo(MVT VT, const APInt &Mask) {
+  if (VT == MVT::i32) {
+    if (Mask == UINT64_C(0xff))
+      return Bedrock::EXTZLBrr;
+    if (Mask == UINT64_C(0xffff))
+      return Bedrock::EXTZLWrr;
+    return 0;
+  }
+
+  if (VT == MVT::i64) {
+    if (Mask == UINT64_C(0xff))
+      return Bedrock::EXTZQBrr;
+    if (Mask == UINT64_C(0xffff))
+      return Bedrock::EXTZQWrr;
+    if (Mask == UINT64_C(0xffffffff))
+      return Bedrock::EXTZQLrr;
+    return 0;
+  }
+
+  return 0;
+}
+
+static bool selectZeroExtendMask(SelectionDAG *DAG, SDNode *N, SDLoc DL,
+                                 MVT VT) {
+  if (N->getOpcode() != ISD::AND)
+    return false;
+
+  SDValue Value;
+  const ConstantSDNode *Mask = nullptr;
+  if ((Mask = dyn_cast<ConstantSDNode>(N->getOperand(1))))
+    Value = N->getOperand(0);
+  else if ((Mask = dyn_cast<ConstantSDNode>(N->getOperand(0))))
+    Value = N->getOperand(1);
+  else
+    return false;
+
+  unsigned Opc = getZeroExtendMaskPseudo(VT, Mask->getAPIntValue());
+  if (!Opc)
+    return false;
+
+  SDValue Ops[] = {Value};
+  DAG->SelectNodeTo(N, Opc, VT, Ops);
+  return true;
+}
+
+static bool isCommutativeImmOpcode(unsigned Opcode) {
+  switch (Opcode) {
+  case ISD::ADD:
+  case ISD::AND:
+  case ISD::OR:
+  case ISD::XOR:
+    return true;
+  default:
+    return false;
+  }
+}
+
+static unsigned getMinMaxImmPseudo(unsigned Opcode, MVT VT) {
+  bool Is64 = VT == MVT::i64;
+  switch (Opcode) {
+  case BedrockISD::SMAX:
+    return Is64 ? Bedrock::MAXSQ3ri : Bedrock::MAXSL3ri;
+  case BedrockISD::SMIN:
+    return Is64 ? Bedrock::MINSQ3ri : Bedrock::MINSL3ri;
+  case BedrockISD::UMAX:
+    return Is64 ? Bedrock::MAXUQ3ri : Bedrock::MAXUL3ri;
+  case BedrockISD::UMIN:
+    return Is64 ? Bedrock::MINUQ3ri : Bedrock::MINUL3ri;
+  default:
+    llvm_unreachable("unexpected Bedrock min/max immediate pseudo");
+  }
+}
+
+static bool isBedrockMinMaxOpcode(unsigned Opcode) {
+  switch (Opcode) {
+  case BedrockISD::SMAX:
+  case BedrockISD::SMIN:
+  case BedrockISD::UMAX:
+  case BedrockISD::UMIN:
+    return true;
+  default:
+    return false;
+  }
+}
+
+static bool selectMinMaxImmediate(SelectionDAG *DAG, SDNode *N, SDLoc DL,
+                                  MVT VT) {
+  unsigned Opcode = N->getOpcode();
+  if (!isBedrockMinMaxOpcode(Opcode))
+    return false;
+
+  SDValue LHS = N->getOperand(0);
+  SDValue RHS = N->getOperand(1);
+  if (auto *CN = dyn_cast<ConstantSDNode>(RHS)) {
+    SDValue Ops[] = {LHS, DAG->getTargetConstant(CN->getSExtValue(), DL,
+                                                 MVT::i64)};
+    DAG->SelectNodeTo(N, getMinMaxImmPseudo(Opcode, VT), VT, Ops);
+    return true;
+  }
+  if (auto *CN = dyn_cast<ConstantSDNode>(LHS)) {
+    SDValue Ops[] = {RHS, DAG->getTargetConstant(CN->getSExtValue(), DL,
+                                                 MVT::i64)};
+    DAG->SelectNodeTo(N, getMinMaxImmPseudo(Opcode, VT), VT, Ops);
+    return true;
+  }
+  return false;
+}
+
+static bool isShiftOrRotateOpcode(unsigned Opcode) {
+  switch (Opcode) {
+  case ISD::SHL:
+  case ISD::ROTL:
+  case ISD::ROTR:
+  case ISD::SRL:
+  case ISD::SRA:
+    return true;
+  default:
+    return false;
+  }
+}
+
+static bool selectBSetImmediate(SelectionDAG *DAG, SDNode *N, SDLoc DL,
+                                MVT VT, SDValue Value,
+                                const ConstantSDNode *CN) {
+  if (N->getOpcode() != ISD::OR || VT != MVT::i64)
+    return false;
+
+  const APInt &Imm = CN->getAPIntValue();
+  if (Imm.isPowerOf2()) {
+    unsigned Bit = Imm.countr_zero();
+    if (!isUInt<6>(Bit))
+      return false;
+
+    SDValue Ops[] = {Value, DAG->getTargetConstant(Bit, DL, MVT::i64)};
+    DAG->SelectNodeTo(N, Bedrock::BSETQ3ri, VT, Ops);
+    return true;
+  }
+
+  if (Imm.popcount() != 2 || isInt<32>(CN->getSExtValue()))
+    return false;
+
+  APInt Remaining = Imm;
+  unsigned Bit0 = Remaining.countr_zero();
+  Remaining.clearBit(Bit0);
+  unsigned Bit1 = Remaining.countr_zero();
+  if (!isUInt<6>(Bit0) || !isUInt<6>(Bit1))
+    return false;
+
+  SDValue Ops[] = {Value, DAG->getTargetConstant(Bit0, DL, MVT::i64),
+                   DAG->getTargetConstant(Bit1, DL, MVT::i64)};
+  DAG->SelectNodeTo(N, Bedrock::BSET2Q3ri, VT, Ops);
+  return true;
+}
+
+static bool selectBinaryImmediate(SelectionDAG *DAG, SDNode *N, SDLoc DL,
+                                  MVT VT) {
+  unsigned Opcode = N->getOpcode();
+  SDValue LHS = N->getOperand(0);
+  SDValue RHS = N->getOperand(1);
+
+  if (auto *CN = dyn_cast<ConstantSDNode>(RHS)) {
+    if (selectBSetImmediate(DAG, N, DL, VT, LHS, CN))
+      return true;
+
+    int64_t Imm = CN->getSExtValue();
+    if (isShiftOrRotateOpcode(Opcode) && !isUInt<6>(Imm))
+      return false;
+
+    SDValue Ops[] = {LHS, DAG->getTargetConstant(Imm, DL, MVT::i64)};
+    DAG->SelectNodeTo(N, getBinaryImmPseudo(Opcode, VT), VT, Ops);
+    return true;
+  }
+
+  if (!isCommutativeImmOpcode(Opcode))
+    return false;
+
+  if (auto *CN = dyn_cast<ConstantSDNode>(LHS)) {
+    if (selectBSetImmediate(DAG, N, DL, VT, RHS, CN))
+      return true;
+
+    int64_t Imm = CN->getSExtValue();
+    SDValue Ops[] = {RHS, DAG->getTargetConstant(Imm, DL, MVT::i64)};
+    DAG->SelectNodeTo(N, getBinaryImmPseudo(Opcode, VT), VT, Ops);
+    return true;
+  }
+
+  return false;
 }
 
 static bool selectFrameAddress(SelectionDAG *DAG, SDValue Addr, SDLoc DL,
@@ -123,8 +402,83 @@ static bool selectFrameAddress(SelectionDAG *DAG, SDValue Addr, SDLoc DL,
   return false;
 }
 
+static bool isMaterializedAddressBase(SDValue Addr) {
+  switch (Addr.getOpcode()) {
+  case ISD::FrameIndex:
+  case ISD::GlobalAddress:
+  case ISD::ExternalSymbol:
+  case ISD::BlockAddress:
+  case ISD::ConstantPool:
+  case ISD::JumpTable:
+    return true;
+  default:
+    return false;
+  }
+}
+
+static bool selectRegOffsetAddress(SDValue Addr, SDValue &Base,
+                                   int64_t &Offset) {
+  if (Addr.getOpcode() != ISD::ADD)
+    return false;
+
+  SDValue LHS = Addr.getOperand(0);
+  SDValue RHS = Addr.getOperand(1);
+  if (auto *CN = dyn_cast<ConstantSDNode>(RHS)) {
+    if (isMaterializedAddressBase(LHS))
+      return false;
+    Base = LHS;
+    Offset = CN->getSExtValue();
+    return true;
+  }
+  if (auto *CN = dyn_cast<ConstantSDNode>(LHS)) {
+    if (isMaterializedAddressBase(RHS))
+      return false;
+    Base = RHS;
+    Offset = CN->getSExtValue();
+    return true;
+  }
+
+  return false;
+}
+
+static bool selectRegOffsetLEA(SelectionDAG *DAG, SDNode *N, SDLoc DL) {
+  if (N->getOpcode() != ISD::ADD || N->getValueType(0) != MVT::i64)
+    return false;
+
+  SDValue Base;
+  int64_t Offset = 0;
+  if (!selectRegOffsetAddress(SDValue(N, 0), Base, Offset))
+    return false;
+
+  SDValue Ops[] = {Base, DAG->getTargetConstant(Offset, DL, MVT::i64)};
+  DAG->SelectNodeTo(N, Bedrock::LEAro, MVT::i64, Ops);
+  return true;
+}
+
 static bool selectSymbolAddress(SelectionDAG *DAG, SDValue Addr, SDLoc DL,
                                 SDValue &Target) {
+  if (Addr.getOpcode() == ISD::ADD) {
+    SDValue Base;
+    int64_t Offset = 0;
+    SDValue LHS = Addr.getOperand(0);
+    SDValue RHS = Addr.getOperand(1);
+    if (auto *CN = dyn_cast<ConstantSDNode>(RHS)) {
+      Base = LHS;
+      Offset = CN->getSExtValue();
+    } else if (auto *CN = dyn_cast<ConstantSDNode>(LHS)) {
+      Base = RHS;
+      Offset = CN->getSExtValue();
+    }
+
+    if (Base) {
+      if (auto *GA = dyn_cast<GlobalAddressSDNode>(Base)) {
+        Target = DAG->getTargetGlobalAddress(GA->getGlobal(), DL, MVT::i64,
+                                             GA->getOffset() + Offset);
+        return true;
+      }
+    }
+  }
+
   if (auto *GA = dyn_cast<GlobalAddressSDNode>(Addr)) {
     Target = DAG->getTargetGlobalAddress(GA->getGlobal(), DL, MVT::i64,
                                          GA->getOffset());
@@ -190,6 +544,8 @@ static bool selectMaterializedSymbolAddress(SelectionDAG *DAG, SDNode *N,
     Target = DAG->getTargetJumpTable(JT->getIndex(), MVT::i64);
     return true;
   }
+  case ISD::ADD:
+    return selectSymbolAddress(DAG, SDValue(N, 0), DL, Target);
   default:
     return false;
   }
@@ -266,6 +622,31 @@ static unsigned getLoadAbsOpcode(const LoadSDNode *LD) {
   }
 }
 
+static unsigned getLoadOffsetOpcode(const LoadSDNode *LD) {
+  switch (getLoadOpcode(LD, /*IsFrame=*/false)) {
+  case Bedrock::LOADB_Zrr:
+    return Bedrock::LOADB_Zro;
+  case Bedrock::LOADW_Zrr:
+    return Bedrock::LOADW_Zro;
+  case Bedrock::LOADL_Zrr:
+    return Bedrock::LOADL_Zro;
+  case Bedrock::LOADB_Srr:
+    return Bedrock::LOADB_Sro;
+  case Bedrock::LOADW_Srr:
+    return Bedrock::LOADW_Sro;
+  case Bedrock::LOADL_Srr:
+    return Bedrock::LOADL_Sro;
+  case Bedrock::LOADLrr:
+    return Bedrock::LOADLro;
+  case Bedrock::LOADQrr:
+    return Bedrock::LOADQro;
+  case Bedrock::FLOADDrr:
+    return Bedrock::FLOADDro;
+  default:
+    llvm_unreachable("unexpected Bedrock load opcode");
+  }
+}
+
 static unsigned getStoreOpcode(const StoreSDNode *ST, bool IsFrame) {
   MVT MemVT = ST->getMemoryVT().getSimpleVT();
   auto Pick = [&](unsigned RegOp, unsigned FrameOp) {
@@ -288,6 +669,92 @@ static unsigned getStoreOpcode(const StoreSDNode *ST, bool IsFrame) {
   }
 }
 
+static bool selectStoreImmediate(const StoreSDNode *ST, int64_t &Imm) {
+  auto *CN = dyn_cast<ConstantSDNode>(ST->getValue());
+  if (!CN)
+    return false;
+
+  switch (ST->getMemoryVT().getSimpleVT().SimpleTy) {
+  case MVT::i8:
+  case MVT::i16:
+  case MVT::i32:
+  case MVT::i64:
+    break;
+  default:
+    return false;
+  }
+
+  Imm = CN->getSExtValue();
+  return Imm != 0;
+}
+
+static unsigned getStoreImmOpcode(const StoreSDNode *ST, bool IsFrame) {
+  MVT MemVT = ST->getMemoryVT().getSimpleVT();
+  auto Pick = [&](unsigned RegOp, unsigned FrameOp) {
+    return IsFrame ? FrameOp : RegOp;
+  };
+
+  switch (MemVT.SimpleTy) {
+  case MVT::i8:
+    return Pick(Bedrock::STOREB_Immrr, Bedrock::STOREB_Immfi);
+  case MVT::i16:
+    return Pick(Bedrock::STOREW_Immrr, Bedrock::STOREW_Immfi);
+  case MVT::i32:
+    return Pick(Bedrock::STOREL_Immrr, Bedrock::STOREL_Immfi);
+  case MVT::i64:
+    return Pick(Bedrock::STOREQ_Immrr, Bedrock::STOREQ_Immfi);
+  default:
+    llvm_unreachable("unexpected Bedrock immediate store memvt");
+  }
+}
+
+static unsigned getStoreOffsetOpcode(const StoreSDNode *ST) {
+  switch (getStoreOpcode(ST, /*IsFrame=*/false)) {
+  case Bedrock::STOREBrr:
+    return Bedrock::STOREBro;
+  case Bedrock::STOREWrr:
+    return Bedrock::STOREWro;
+  case Bedrock::STORELrr:
+    return Bedrock::STORELro;
+  case Bedrock::STOREQrr:
+    return Bedrock::STOREQro;
+  case Bedrock::FSTOREDrr:
+    return Bedrock::FSTOREDro;
+  default:
+    llvm_unreachable("unexpected Bedrock store opcode");
+  }
+}
+
+static unsigned getStoreImmOffsetOpcode(const StoreSDNode *ST) {
+  switch (ST->getMemoryVT().getSimpleVT().SimpleTy) {
+  case MVT::i8:
+    return Bedrock::STOREB_Immro;
+  case MVT::i16:
+    return Bedrock::STOREW_Immro;
+  case MVT::i32:
+    return Bedrock::STOREL_Immro;
+  case MVT::i64:
+    return Bedrock::STOREQ_Immro;
+  default:
+    llvm_unreachable("unexpected Bedrock immediate offset store memvt");
+  }
+}
+
+static unsigned getStoreImmAbsOpcode(const StoreSDNode *ST) {
+  switch (ST->getMemoryVT().getSimpleVT().SimpleTy) {
+  case MVT::i8:
+    return Bedrock::STOREB_Immabs;
+  case MVT::i16:
+    return Bedrock::STOREW_Immabs;
+  case MVT::i32:
+    return Bedrock::STOREL_Immabs;
+  case MVT::i64:
+    return Bedrock::STOREQ_Immabs;
+  default:
+    llvm_unreachable("unexpected Bedrock absolute immediate store memvt");
+  }
+}
+
 static unsigned getStoreAbsOpcode(const StoreSDNode *ST) {
   switch (getStoreOpcode(ST, /*IsFrame=*/false)) {
   case Bedrock::STOREBrr:
@@ -305,6 +772,27 @@ static unsigned getStoreAbsOpcode(const StoreSDNode *ST) {
   }
 }
 
+static bool selectCompareImmediate(SelectionDAG *DAG, SDNode *N, SDLoc DL) {
+  if (N->getOpcode() != BedrockISD::CMP)
+    return false;
+
+  SDValue LHS = N->getOperand(0);
+  SDValue RHS = N->getOperand(1);
+  auto *CN = dyn_cast<ConstantSDNode>(RHS);
+  if (!CN)
+    return false;
+
+  MVT VT = LHS.getSimpleValueType();
+  if (VT != MVT::i32 && VT != MVT::i64)
+    return false;
+
+  SDValue Ops[] = {LHS,
+                   DAG->getTargetConstant(CN->getSExtValue(), DL, MVT::i64)};
+  DAG->SelectNodeTo(N, VT == MVT::i64 ? Bedrock::CMPQri : Bedrock::CMPLri,
+                    MVT::Glue, Ops);
+  return true;
+}
+
 void BedrockDAGToDAGISel::Select(SDNode *N) {
   if (N->isMachineOpcode()) {
     N->setNodeId(-1);
@@ -312,6 +800,15 @@ void BedrockDAGToDAGISel::Select(SDNode *N) {
   }
 
   SDLoc DL(N);
+  if (selectCompareImmediate(CurDAG, N, DL))
+    return;
+  if (N->getNumValues() > 0) {
+    EVT VT = N->getValueType(0);
+    if ((VT == MVT::i32 || VT == MVT::i64) &&
+        selectMinMaxImmediate(CurDAG, N, DL, VT.getSimpleVT()))
+      return;
+  }
+
   if (auto *LD = dyn_cast<LoadSDNode>(N)) {
     SDValue FrameIndex;
     int64_t Offset = 0;
@@ -336,6 +833,19 @@ void BedrockDAGToDAGISel::Select(SDNode *N) {
       return;
     }
 
+    SDValue Base;
+    Offset = 0;
+    if (selectRegOffsetAddress(LD->getBasePtr(), Base, Offset)) {
+      SDValue Ops[] = {
+          Base,
+          CurDAG->getTargetConstant(Offset, DL, MVT::i64),
+          LD->getChain(),
+      };
+      CurDAG->SelectNodeTo(N, getLoadOffsetOpcode(LD), LD->getValueType(0),
+                           MVT::Other, Ops);
+      return;
+    }
+
     SDValue Ops[] = {LD->getBasePtr(), LD->getChain()};
     CurDAG->SelectNodeTo(N, getLoadOpcode(LD, /*IsFrame=*/false),
                          LD->getValueType(0), MVT::Other, Ops);
@@ -343,11 +853,26 @@ void BedrockDAGToDAGISel::Select(SDNode *N) {
   }
 
   if (auto *ST = dyn_cast<StoreSDNode>(N)) {
+    int64_t StoreImm = 0;
+    bool HasStoreImm = selectStoreImmediate(ST, StoreImm);
+
     SDValue FrameIndex;
     int64_t Offset = 0;
     bool IsFrame =
         selectFrameAddress(CurDAG, ST->getBasePtr(), DL, FrameIndex, Offset);
     if (IsFrame) {
+      if (HasStoreImm) {
+        SDValue Ops[] = {
+            CurDAG->getTargetConstant(StoreImm, DL, MVT::i64),
+            FrameIndex,
+            CurDAG->getTargetConstant(Offset, DL, MVT::i64),
+            ST->getChain(),
+        };
+        CurDAG->SelectNodeTo(N, getStoreImmOpcode(ST, /*IsFrame=*/true),
+                             MVT::Other, Ops);
+        return;
+      }
+
       SDValue Ops[] = {
           ST->getValue(),
           FrameIndex,
@@ -361,8 +886,53 @@ void BedrockDAGToDAGISel::Select(SDNode *N) {
 
     SDValue Target;
     if (selectSymbolAddress(CurDAG, ST->getBasePtr(), DL, Target)) {
+      if (HasStoreImm) {
+        SDValue Ops[] = {
+            CurDAG->getTargetConstant(StoreImm, DL, MVT::i64),
+            Target,
+            ST->getChain(),
+        };
+        CurDAG->SelectNodeTo(N, getStoreImmAbsOpcode(ST), MVT::Other, Ops);
+        return;
+      }
+
       SDValue Ops[] = {ST->getValue(), Target, ST->getChain()};
       CurDAG->SelectNodeTo(N, getStoreAbsOpcode(ST), MVT::Other, Ops);
+      return;
+    }
+
+    SDValue Base;
+    Offset = 0;
+    if (selectRegOffsetAddress(ST->getBasePtr(), Base, Offset)) {
+      if (HasStoreImm) {
+        SDValue Ops[] = {
+            CurDAG->getTargetConstant(StoreImm, DL, MVT::i64),
+            Base,
+            CurDAG->getTargetConstant(Offset, DL, MVT::i64),
+            ST->getChain(),
+        };
+        CurDAG->SelectNodeTo(N, getStoreImmOffsetOpcode(ST), MVT::Other, Ops);
+        return;
+      }
+
+      SDValue Ops[] = {
+          ST->getValue(),
+          Base,
+          CurDAG->getTargetConstant(Offset, DL, MVT::i64),
+          ST->getChain(),
+      };
+      CurDAG->SelectNodeTo(N, getStoreOffsetOpcode(ST), MVT::Other, Ops);
+      return;
+    }
+
+    if (HasStoreImm) {
+      SDValue Ops[] = {
+          CurDAG->getTargetConstant(StoreImm, DL, MVT::i64),
+          ST->getBasePtr(),
+          ST->getChain(),
+      };
+      CurDAG->SelectNodeTo(N, getStoreImmOpcode(ST, /*IsFrame=*/false),
+                           MVT::Other, Ops);
       return;
     }
 
@@ -394,6 +964,72 @@ void BedrockDAGToDAGISel::Select(SDNode *N) {
   }
 
   if (VT == MVT::i32 || VT == MVT::i64) {
+    if (N->getOpcode() == ISD::ABS) {
+      SDValue Ops[] = {N->getOperand(0)};
+      CurDAG->SelectNodeTo(N, getAbsPseudo(VT.getSimpleVT()), VT, Ops);
+      return;
+    }
+
+    if (N->getOpcode() == ISD::SUB && isNullConstant(N->getOperand(0))) {
+      SDValue Ops[] = {N->getOperand(1)};
+      CurDAG->SelectNodeTo(N, getNegPseudo(VT.getSimpleVT()), VT, Ops);
+      return;
+    }
+
+    if (N->getOpcode() == ISD::XOR) {
+      if (isAllOnesConstant(N->getOperand(0))) {
+        SDValue Ops[] = {N->getOperand(1)};
+        CurDAG->SelectNodeTo(N, getNotPseudo(VT.getSimpleVT()), VT, Ops);
+        return;
+      }
+      if (isAllOnesConstant(N->getOperand(1))) {
+        SDValue Ops[] = {N->getOperand(0)};
+        CurDAG->SelectNodeTo(N, getNotPseudo(VT.getSimpleVT()), VT, Ops);
+        return;
+      }
+    }
+
+    if (N->getOpcode() == ISD::SIGN_EXTEND_INREG) {
+      auto *ExtVT = dyn_cast<VTSDNode>(N->getOperand(1));
+      if (!ExtVT)
+        report_fatal_error("Bedrock expected SIGN_EXTEND_INREG value type");
+      if (unsigned Opc = getSignExtendInRegPseudo(
+              VT.getSimpleVT(), ExtVT->getVT().getSimpleVT())) {
+        SDValue Ops[] = {N->getOperand(0)};
+        CurDAG->SelectNodeTo(N, Opc, VT, Ops);
+        return;
+      }
+    }
+
+    if (selectZeroExtendMask(CurDAG, N, DL, VT.getSimpleVT()))
+      return;
+
+    if (N->getOpcode() == ISD::ADD || N->getOpcode() == ISD::SUB) {
+      SDValue LHS = N->getOperand(0);
+      SDValue RHS = N->getOperand(1);
+      if (auto *CN = dyn_cast<ConstantSDNode>(RHS)) {
+        if (unsigned Opc = getIncDecPseudo(N->getOpcode(), VT.getSimpleVT(),
+                                           CN->getSExtValue())) {
+          SDValue Ops[] = {LHS};
+          CurDAG->SelectNodeTo(N, Opc, VT, Ops);
+          return;
+        }
+      }
+      if (N->getOpcode() == ISD::ADD) {
+        if (auto *CN = dyn_cast<ConstantSDNode>(LHS)) {
+          if (unsigned Opc = getIncDecPseudo(N->getOpcode(), VT.getSimpleVT(),
+                                             CN->getSExtValue())) {
+            SDValue Ops[] = {RHS};
+            CurDAG->SelectNodeTo(N, Opc, VT, Ops);
+            return;
+          }
+        }
+      }
+    }
+
+    if (selectRegOffsetLEA(CurDAG, N, DL))
+      return;
+
     switch (N->getOpcode()) {
     case ISD::ADD:
     case ISD::SUB:
@@ -401,6 +1037,26 @@ void BedrockDAGToDAGISel::Select(SDNode *N) {
     case ISD::OR:
     case ISD::XOR:
     case ISD::SHL:
+    case ISD::ROTL:
+    case ISD::ROTR:
+    case ISD::SRL:
+    case ISD::SRA:
+      if (selectBinaryImmediate(CurDAG, N, DL, VT.getSimpleVT()))
+        return;
+      break;
+    default:
+      break;
+    }
+
+    switch (N->getOpcode()) {
+    case ISD::ADD:
+    case ISD::SUB:
+    case ISD::AND:
+    case ISD::OR:
+    case ISD::XOR:
+    case ISD::SHL:
+    case ISD::ROTL:
+    case ISD::ROTR:
     case ISD::SRL:
     case ISD::SRA:
     case ISD::MUL:
