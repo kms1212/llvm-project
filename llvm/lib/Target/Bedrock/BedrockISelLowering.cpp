@@ -633,13 +633,6 @@ BedrockTargetLowering::LowerCall(TargetLowering::CallLoweringInfo &CLI,
   else if (auto *E = dyn_cast<ExternalSymbolSDNode>(Callee))
     Callee = DAG.getTargetExternalSymbol(E->getSymbol(),
                                          getPointerTy(DAG.getDataLayout()));
-  else {
-    for (const auto &[Reg, Value] : RegsToPass) {
-      if (Reg == Bedrock::R6)
-        report_fatal_error(
-            "Bedrock indirect calls currently support at most six arguments");
-    }
-  }
 
   const BedrockRegisterInfo *TRI = Subtarget.getRegisterInfo();
   const uint32_t *Mask = TRI->getCallPreservedMask(MF, CallConv);

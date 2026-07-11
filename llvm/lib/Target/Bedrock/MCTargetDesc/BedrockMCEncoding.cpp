@@ -1329,6 +1329,26 @@ bool decodeLongPayload(uint32_t Payload, ArrayRef<uint8_t> Tail,
     return true;
   }
 
+  struct LongControlEAForm {
+    StringRef Mnemonic;
+    StringRef Pattern;
+  };
+  static const LongControlEAForm LongControlEAForms[] = {
+      {"call", "1111000011100010000eeeeeee"},
+      {"jmp", "1111000011100010001eeeeeee"},
+  };
+  for (const LongControlEAForm &F : LongControlEAForms) {
+    if (!matchPattern(F.Pattern, Payload))
+      continue;
+    uint8_t EA = extractPatternField(F.Pattern, Payload, 'e');
+    unsigned Consumed = 0;
+    SmallString<64> EAText;
+    if (!decodeCompactEA(EA, Tail, Consumed, EAText))
+      return false;
+    Text = formatv("{0}\t{1}", F.Mnemonic, EAText).str();
+    return true;
+  }
+
   if (matchPattern("11110000111ccccrrrreeeeeee", Payload)) {
     unsigned CondCode =
         extractPatternField("11110000111ccccrrrreeeeeee", Payload, 'c');

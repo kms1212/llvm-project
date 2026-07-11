@@ -94,6 +94,14 @@ jmp 1000
 ; CHECK-INST: jmp	1000
 ; CHECK-ENCODING: encoding: [0xc8,0x26,0x00,0xe8,0x03]
 
+call r3
+; CHECK-INST: call	r3
+; CHECK-ENCODING: encoding: [0xc7,0xc3,0x88,0x03]
+
+jmp r4
+; CHECK-INST: jmp	r4
+; CHECK-ENCODING: encoding: [0xc7,0xc3,0x88,0x84]
+
 inc.b r1
 ; CHECK-INST: inc.b	r1
 ; CHECK-ENCODING: encoding: [0xc0,0x20,0x01]

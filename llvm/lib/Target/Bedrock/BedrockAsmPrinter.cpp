@@ -454,10 +454,6 @@ static const char *getCondSuffix(unsigned Cond) {
 
 static uint8_t getRegEA(Register Reg) { return getGPRNo(Reg); }
 
-static Register getIndirectSegmentReg(Register TargetReg) {
-  return TargetReg == Bedrock::R6 ? Bedrock::R7 : Bedrock::R6;
-}
-
 static void getMemEAForReg(Register BaseReg, uint8_t &EA,
                            SmallVectorImpl<uint8_t> &Tail) {
   EA = 0x10 | getGPRNo(BaseReg);
@@ -5461,7 +5457,7 @@ BedrockAsmPrinter::getInstSizeForBranchLayout(const MachineInstr &MI) const {
     return RepgHeaderSize + 7;
   case Bedrock::CALLr:
   case Bedrock::BRIND:
-    return RepgHeaderSize + 8;
+    return RepgHeaderSize + 4;
   default:
     break;
   }
@@ -7316,42 +7312,20 @@ void BedrockAsmPrinter::emitTailCall(const MachineInstr *MI) {
 
 void BedrockAsmPrinter::emitIndirectCall(const MachineInstr *MI) {
   Register CalleeReg = MI->getOperand(0).getReg();
-  Register SegmentReg = getIndirectSegmentReg(CalleeReg);
-
   SmallVector<uint8_t, 4> Bytes;
-  uint32_t RdsegPayload = applyPatternValues(
-      "1111101111010000000sssdddd", {{'s', 0}, {'d', getGPRNo(SegmentReg)}});
-  if (!BedrockMC::encodeLong(RdsegPayload, {}, Bytes))
-    report_fatal_error("failed to encode Bedrock indirect call segment read");
-  emitRaw(Bytes);
-
-  Bytes.clear();
-  uint32_t LCallPayload =
-      applyPatternValues("111100001100100rrrreeeeeee",
-                         {{'r', getGPRNo(SegmentReg)},
-                          {'e', getRegEA(CalleeReg)}});
-  if (!BedrockMC::encodeLong(LCallPayload, {}, Bytes))
+  uint32_t CallPayload = applyPatternValues(
+      "1111000011100010000eeeeeee", {{'e', getRegEA(CalleeReg)}});
+  if (!BedrockMC::encodeLong(CallPayload, {}, Bytes))
     report_fatal_error("failed to encode Bedrock indirect call");
   emitRaw(Bytes);
 }
 
 void BedrockAsmPrinter::emitIndirectJump(const MachineInstr *MI) {
   Register TargetReg = MI->getOperand(0).getReg();
-  Register SegmentReg = getIndirectSegmentReg(TargetReg);
-
   SmallVector<uint8_t, 4> Bytes;
-  uint32_t RdsegPayload = applyPatternValues(
-      "1111101111010000000sssdddd", {{'s', 0}, {'d', getGPRNo(SegmentReg)}});
-  if (!BedrockMC::encodeLong(RdsegPayload, {}, Bytes))
-    report_fatal_error("failed to encode Bedrock indirect jump segment read");
-  emitRaw(Bytes);
-
-  Bytes.clear();
-  uint32_t LJmpPayload =
-      applyPatternValues("111100001100101rrrreeeeeee",
-                         {{'r', getGPRNo(SegmentReg)},
-                          {'e', getRegEA(TargetReg)}});
-  if (!BedrockMC::encodeLong(LJmpPayload, {}, Bytes))
+  uint32_t JmpPayload = applyPatternValues(
+      "1111000011100010001eeeeeee", {{'e', getRegEA(TargetReg)}});
+  if (!BedrockMC::encodeLong(JmpPayload, {}, Bytes))
     report_fatal_error("failed to encode Bedrock indirect jump");
   emitRaw(Bytes);
 }

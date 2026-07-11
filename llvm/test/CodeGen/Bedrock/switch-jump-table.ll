@@ -23,8 +23,8 @@ define void @dense_switch(i32 %x) {
 ; CHECK-NOT: shl.q
 ; CHECK: lea.q .LJTI{{[0-9]+}}_{{[0-9]+}}, [[JT:r[0-9]+]]
 ; CHECK-NEXT: extsq.l [ds:[[JT]] + r0], r0
-; CHECK: rdseg cs, {{r[0-9]+}}
-; CHECK: ljmp {{r[0-9]+}}, {{r[0-9]+}}
+; CHECK-NEXT: add.q [[JT]], r0
+; CHECK-NEXT: jmp r0
 ; CHECK: .section .rodata
 ; CHECK: .LJTI{{[0-9]+}}_{{[0-9]+}}:
 ; CHECK-NEXT: .long .LBB{{[0-9]+}}_{{[0-9]+}}-.LJTI{{[0-9]+}}_{{[0-9]+}}

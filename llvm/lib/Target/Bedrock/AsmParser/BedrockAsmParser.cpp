@@ -2121,6 +2121,20 @@ bool tryEncodeMediumInstruction(OperandVector &Operands,
   }
 
   if (Operands.size() == 2) {
+    if (Mnemonic == "call" || Mnemonic == "jmp") {
+      uint8_t EA;
+      SmallVector<uint8_t, 8> Tail;
+      SmallVector<RawFixup, 2> LocalFixups;
+      if (encodeCompactEA(GetOp(1), /*AllowImmediate=*/false, EA, Tail,
+                          &LocalFixups)) {
+        StringRef Pattern = Mnemonic == "call"
+                                ? "1111000011100010000eeeeeee"
+                                : "1111000011100010001eeeeeee";
+        uint32_t Payload = applyPatternValues(Pattern, {{'e', EA}});
+        return FinishLong(Payload, Tail, LocalFixups);
+      }
+    }
+
     struct LongEAOnlyForm {
       StringRef Mnemonic;
       StringRef Pattern;

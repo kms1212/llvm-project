@@ -865,7 +865,7 @@ let isBarrier = 1 in
 def BR : BedrockPseudo<(outs), (ins brtarget:$dst), [(br bb:$dst)]>;
 def BRCC : BedrockPseudo<(outs), (ins brtarget:$dst, i32imm:$cc),
                          [(BedrockBrCC bb:$dst, imm:$cc)]>;
-let isBarrier = 1, isIndirectBranch = 1, Defs = [R6, R7] in
+let isBarrier = 1, isIndirectBranch = 1 in
 def BRIND : BedrockPseudo<(outs), (ins GPR64:$dst), [(brind GPR64:$dst)]>;
 }
 

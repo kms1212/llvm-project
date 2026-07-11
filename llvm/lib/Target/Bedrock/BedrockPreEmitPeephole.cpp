@@ -6757,7 +6757,8 @@ bool BedrockPreEmitPeephole::foldTailCall(MachineBasicBlock::iterator I,
                                           MachineBasicBlock &MBB,
                                           const TargetInstrInfo &TII) {
   MachineInstr &CallMI = *I;
-  if (CallMI.getOpcode() != Bedrock::CALL)
+  if (CallMI.getOpcode() != Bedrock::CALL &&
+      CallMI.getOpcode() != Bedrock::CALLr)
     return false;
 
   MachineInstr *CallPadDown = nullptr;
@@ -6800,7 +6801,10 @@ bool BedrockPreEmitPeephole::foldTailCall(MachineBasicBlock::iterator I,
     return false;
 
   DebugLoc DL = CallMI.getDebugLoc();
-  BuildMI(MBB, RetI, DL, TII.get(Bedrock::TAILCALL)).add(CallMI.getOperand(0));
+  unsigned TailOpcode = CallMI.getOpcode() == Bedrock::CALL
+                            ? Bedrock::TAILCALL
+                            : Bedrock::BRIND;
+  BuildMI(MBB, RetI, DL, TII.get(TailOpcode)).add(CallMI.getOperand(0));
   if (CallPadDown && CallPadUp) {
     CallPadDown->eraseFromParent();
     CallPadUp->eraseFromParent();
