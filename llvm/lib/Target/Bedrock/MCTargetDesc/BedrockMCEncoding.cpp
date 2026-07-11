@@ -1168,6 +1168,34 @@ bool decodeMediumPayload(uint32_t Payload, ArrayRef<uint8_t> Tail,
 
 bool decodeLongPayload(uint32_t Payload, ArrayRef<uint8_t> Tail,
                        SmallString<128> &Text) {
+  struct LongFpuMemoryForm {
+    StringRef Pattern;
+    bool IsLoad;
+    char RegField;
+  };
+  static const LongFpuMemoryForm LongFpuMemoryForms[] = {
+      {"1111010101z0000ddddeeeeeee", true, 'd'},
+      {"1111011000z0000sssseeeeeee", false, 's'},
+  };
+  for (const LongFpuMemoryForm &F : LongFpuMemoryForms) {
+    if (!matchPattern(F.Pattern, Payload))
+      continue;
+    unsigned Size = extractPatternField(F.Pattern, Payload, 'z');
+    unsigned Reg = extractPatternField(F.Pattern, Payload, F.RegField);
+    uint8_t EA = extractPatternField(F.Pattern, Payload, 'e');
+    unsigned Consumed = 0;
+    SmallString<64> EAText;
+    if (!decodeCompactEA(EA, Tail, Consumed, EAText))
+      return false;
+    if (F.IsLoad)
+      Text = formatv("FMOV.{0}\t{1}, f{2}", Size ? 'D' : 'S', EAText, Reg)
+                 .str();
+    else
+      Text = formatv("FMOV.{0}\tf{1}, {2}", Size ? 'D' : 'S', Reg, EAText)
+                 .str();
+    return true;
+  }
+
   enum class LongDir { RnEA, EARn };
   struct LongRegEAForm {
     StringRef Mnemonic;

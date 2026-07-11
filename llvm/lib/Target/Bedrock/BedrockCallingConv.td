@@ -12,12 +12,5 @@ def RetCC_Bedrock : CallingConv<[
   CCIfType<[i32, i64], CCAssignToReg<[R0, R1]>>
 ]>;
 
-def CC_Bedrock : CallingConv<[
-  CCIfType<[i1, i8, i16, i32], CCPromoteToType<i64>>,
-  CCIfType<[f32, f64], CCAssignToReg<[F0, F1, F2, F3, F4, F5, F6, F7]>>,
-  CCIfType<[i64], CCAssignToReg<[R0, R1, R2, R3, R4, R5, R6, R7]>>,
-  CCIfType<[i64], CCAssignToStack<16, 16>>
-]>;
-
 def CSR_Bedrock : CalleeSavedRegs<(add R8, R9, R10, R11, R12, R13, R14, R15,
                                        F8, F9, F10, F11, F12, F13, F14, F15)>;

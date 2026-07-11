@@ -38,6 +38,7 @@ BitVector
 BedrockRegisterInfo::getReservedRegs(const MachineFunction &MF) const {
   BitVector Reserved(getNumRegs());
 
+  Reserved.set(Bedrock::SP);
   Reserved.set(Bedrock::R15);
 
   // FPR callee-save lowering needs separate validation before allocation.
@@ -61,8 +62,6 @@ BedrockRegisterInfo::getPointerRegClass(unsigned Kind) const {
 bool BedrockRegisterInfo::eliminateFrameIndex(MachineBasicBlock::iterator II,
                                               int SPAdj, unsigned FIOperandNum,
                                               RegScavenger *RS) const {
-  assert(SPAdj == 0 && "unexpected Bedrock SP adjustment");
-
   MachineInstr &MI = *II;
   MachineFunction &MF = *MI.getParent()->getParent();
   MachineFrameInfo &MFI = MF.getFrameInfo();
@@ -70,7 +69,8 @@ bool BedrockRegisterInfo::eliminateFrameIndex(MachineBasicBlock::iterator II,
   int FrameIndex = MI.getOperand(FIOperandNum).getIndex();
   int64_t ExtraOffset = MI.getOperand(FIOperandNum + 1).getImm();
   int64_t Offset =
-      MFI.getObjectOffset(FrameIndex) + MFI.getStackSize() + ExtraOffset;
+      MFI.getObjectOffset(FrameIndex) + MFI.getStackSize() + ExtraOffset +
+      SPAdj;
 
   MI.getOperand(FIOperandNum).ChangeToImmediate(Offset);
   MI.getOperand(FIOperandNum + 1).ChangeToImmediate(0);

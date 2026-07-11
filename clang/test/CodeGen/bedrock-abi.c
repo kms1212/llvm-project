@@ -15,6 +15,8 @@ struct Big {
   long c;
 };
 
+typedef unsigned __int128 uint128_t;
+
 // CHECK-LABEL: define{{.*}} i32 @narrow(
 // CHECK-SAME: i8 noundef signext %a,
 // CHECK-SAME: i16 noundef zeroext %b,
@@ -56,3 +58,46 @@ void pass_big(struct Big b) {
 int var_int(__builtin_va_list list) {
   return __builtin_va_arg(list, int);
 }
+
+// CHECK-LABEL: define{{.*}} i64 @mixed_register_classes(
+// CHECK-SAME: i64 noundef %count,
+// CHECK-SAME: double noundef %scale,
+// CHECK-SAME: i128 noundef %wide,
+// CHECK-SAME: ptr noundef byval(%struct.Pair) align 16 %pair,
+// CHECK-SAME: float noundef %bias)
+unsigned long mixed_register_classes(unsigned long count, double scale,
+                                     uint128_t wide, struct Pair pair,
+                                     float bias) {
+  return count + (unsigned long)scale + (unsigned long)wide + pair.a +
+         (unsigned long)bias;
+}
+
+// CHECK-LABEL: define{{.*}} void @sret_register_reservation(
+// CHECK-SAME: ptr dead_on_unwind noalias writable sret(%struct.Big) align 8 %agg.result,
+// CHECK-SAME: i64 noundef %tag,
+// CHECK-SAME: i128 noundef %wide,
+// CHECK-SAME: double noundef %factor)
+struct Big sret_register_reservation(unsigned long tag, uint128_t wide,
+                                     double factor) {
+  struct Big out = {tag, (long)wide, (long)factor};
+  return out;
+}
+
+// CHECK-LABEL: define{{.*}} i64 @pair_exhaustion_signature(
+// CHECK-SAME: i64 noundef %a0, i64 noundef %a1, i64 noundef %a2,
+// CHECK-SAME: i64 noundef %a3, i64 noundef %a4, i64 noundef %a5,
+// CHECK-SAME: i64 noundef %a6, i128 noundef %wide, i64 noundef %tail)
+unsigned long pair_exhaustion_signature(
+    unsigned long a0, unsigned long a1, unsigned long a2, unsigned long a3,
+    unsigned long a4, unsigned long a5, unsigned long a6, uint128_t wide,
+    unsigned long tail) {
+  return a0 + (unsigned long)wide + tail;
+}
+
+// CHECK-LABEL: define{{.*}} i128 @return_i128(i128 noundef %value)
+uint128_t return_i128(uint128_t value) { return value; }
+
+// Bedrock long double uses the base ABI's IEEE double representation and
+// FLOAT register class.
+// CHECK-LABEL: define{{.*}} double @return_long_double(double noundef %value)
+long double return_long_double(long double value) { return value; }

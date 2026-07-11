@@ -8,6 +8,7 @@
 
 #include "BedrockTargetMachine.h"
 #include "Bedrock.h"
+#include "BedrockMachineFunctionInfo.h"
 #include "BedrockTargetTransformInfo.h"
 #include "TargetInfo/BedrockTargetInfo.h"
 #include "llvm/CodeGen/GlobalMerge.h"
@@ -57,6 +58,13 @@ BedrockTargetMachine::BedrockTargetMachine(const Target &T, const Triple &TT,
 TargetTransformInfo
 BedrockTargetMachine::getTargetTransformInfo(const Function &F) const {
   return TargetTransformInfo(std::make_unique<BedrockTTIImpl>(this, F));
+}
+
+MachineFunctionInfo *BedrockTargetMachine::createMachineFunctionInfo(
+    BumpPtrAllocator &Allocator, const Function &F,
+    const TargetSubtargetInfo *STI) const {
+  return BedrockMachineFunctionInfo::create<BedrockMachineFunctionInfo>(
+      Allocator, F, STI);
 }
 
 namespace {

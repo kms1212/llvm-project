@@ -184,12 +184,12 @@ private:
   void emitFpuMove(const MachineInstr *MI);
   void emitFpuBinaryPseudo(const MachineInstr *MI, uint16_t BaseExt);
   void emitFpuConvert(const MachineInstr *MI, bool IsUnsigned);
-  void emitFpuAbsLoad(const MachineInstr *MI);
-  void emitFpuAbsStore(const MachineInstr *MI);
-  void emitFpuLoad(const MachineInstr *MI, bool IsFrame);
-  void emitFpuLoadOffset(const MachineInstr *MI);
-  void emitFpuStore(const MachineInstr *MI, bool IsFrame);
-  void emitFpuStoreOffset(const MachineInstr *MI);
+  void emitFpuAbsLoad(const MachineInstr *MI, bool IsDouble);
+  void emitFpuAbsStore(const MachineInstr *MI, bool IsDouble);
+  void emitFpuLoad(const MachineInstr *MI, bool IsFrame, bool IsDouble);
+  void emitFpuLoadOffset(const MachineInstr *MI, bool IsDouble);
+  void emitFpuStore(const MachineInstr *MI, bool IsFrame, bool IsDouble);
+  void emitFpuStoreOffset(const MachineInstr *MI, bool IsDouble);
   void emitStackAdjust(const MachineInstr *MI, bool IsDown);
   void emitBranch(const MachineInstr *MI, bool IsCond);
   void emitCmpTestJump(const MachineInstr *MI);
@@ -5356,7 +5356,9 @@ BedrockAsmPrinter::getInstSizeForBranchLayout(const MachineInstr &MI) const {
   case Bedrock::LOADLspx:
   case Bedrock::LOADQspx:
     return RepgHeaderSize + 5;
+  case Bedrock::FLOADSrr:
   case Bedrock::FLOADDrr:
+  case Bedrock::FSTORESrr:
   case Bedrock::FSTOREDrr:
     return RepgHeaderSize + 4;
   case Bedrock::LOADB_Zro:
@@ -5373,7 +5375,9 @@ BedrockAsmPrinter::getInstSizeForBranchLayout(const MachineInstr &MI) const {
   case Bedrock::STOREQro:
     return RepgHeaderSize + 3 +
            getOffsetTailSize(MI.getOperand(2).getImm());
+  case Bedrock::FLOADSro:
   case Bedrock::FLOADDro:
+  case Bedrock::FSTORESro:
   case Bedrock::FSTOREDro:
     return RepgHeaderSize + 4 +
            getOffsetTailSize(MI.getOperand(2).getImm());
@@ -5390,7 +5394,9 @@ BedrockAsmPrinter::getInstSizeForBranchLayout(const MachineInstr &MI) const {
   case Bedrock::STORELabs:
   case Bedrock::STOREQabs:
     return RepgHeaderSize + 7;
+  case Bedrock::FLOADSabs:
   case Bedrock::FLOADDabs:
+  case Bedrock::FSTORESabs:
   case Bedrock::FSTOREDabs:
     return RepgHeaderSize + 8;
   case Bedrock::LOADB_Zfi:
@@ -5406,7 +5412,9 @@ BedrockAsmPrinter::getInstSizeForBranchLayout(const MachineInstr &MI) const {
   case Bedrock::STORELfi:
   case Bedrock::STOREQfi:
     return RepgHeaderSize + 3 + getFrameTailSize(MI, 1);
+  case Bedrock::FLOADSfi:
   case Bedrock::FLOADDfi:
+  case Bedrock::FSTORESfi:
   case Bedrock::FSTOREDfi:
     return RepgHeaderSize + 4 + getFrameTailSize(MI, 1);
   case Bedrock::STOREB_Immrr:
@@ -6965,7 +6973,8 @@ void BedrockAsmPrinter::emitFpuConvert(const MachineInstr *MI,
   emitFpuRaw(0x1f65, Ext, {});
 }
 
-void BedrockAsmPrinter::emitFpuAbsLoad(const MachineInstr *MI) {
+void BedrockAsmPrinter::emitFpuAbsLoad(const MachineInstr *MI,
+                                       bool IsDouble) {
   Register DstReg = MI->getOperand(0).getReg();
   const MachineOperand &Addr = MI->getOperand(1);
   const MCExpr *Expr = lowerSymbolOperand(Addr);
@@ -6973,21 +6982,25 @@ void BedrockAsmPrinter::emitFpuAbsLoad(const MachineInstr *MI) {
   if (OutStreamer->hasRawTextSupport()) {
     SmallString<96> Text;
     raw_svector_ostream OS(Text);
-    OS << "\tFMOV.D\t[";
+    OS << "\tFMOV." << (IsDouble ? 'D' : 'S') << "\t[";
     MAI->printExpr(OS, *Expr);
     OS << "], " << BedrockInstPrinter::getRegisterName(DstReg);
     OutStreamer->emitRawText(OS.str());
     return;
   }
 
+  SmallVector<uint8_t, 4> Tail(4, 0);
   SmallVector<uint8_t, 8> Bytes;
-  appendBE16(Bytes, 0x1f65);
-  appendBE16(Bytes, 0x1800 | 0x0400 | (getFPRNo(DstReg) << 6) | 0x6a);
-  Bytes.append(4, 0);
+  uint32_t Payload = applyPatternValues(
+      "1111010101z0000ddddeeeeeee",
+      {{'z', IsDouble}, {'d', getFPRNo(DstReg)}, {'e', 0x6a}});
+  if (!BedrockMC::encodeLong(Payload, Tail, Bytes))
+    report_fatal_error("failed to encode Bedrock absolute FPU load");
   emitRawExpr(Bytes, 4, FK_Data_4, Expr);
 }
 
-void BedrockAsmPrinter::emitFpuAbsStore(const MachineInstr *MI) {
+void BedrockAsmPrinter::emitFpuAbsStore(const MachineInstr *MI,
+                                        bool IsDouble) {
   Register SrcReg = MI->getOperand(0).getReg();
   const MachineOperand &Addr = MI->getOperand(1);
   const MCExpr *Expr = lowerSymbolOperand(Addr);
@@ -6995,7 +7008,8 @@ void BedrockAsmPrinter::emitFpuAbsStore(const MachineInstr *MI) {
   if (OutStreamer->hasRawTextSupport()) {
     SmallString<96> Text;
     raw_svector_ostream OS(Text);
-    OS << "\tFMOV.D\t" << BedrockInstPrinter::getRegisterName(SrcReg)
+    OS << "\tFMOV." << (IsDouble ? 'D' : 'S') << "\t"
+       << BedrockInstPrinter::getRegisterName(SrcReg)
        << ", [";
     MAI->printExpr(OS, *Expr);
     OS << "]";
@@ -7003,14 +7017,18 @@ void BedrockAsmPrinter::emitFpuAbsStore(const MachineInstr *MI) {
     return;
   }
 
+  SmallVector<uint8_t, 4> Tail(4, 0);
   SmallVector<uint8_t, 8> Bytes;
-  appendBE16(Bytes, 0x1f65);
-  appendBE16(Bytes, 0x2000 | 0x0400 | (getFPRNo(SrcReg) << 6) | 0x6a);
-  Bytes.append(4, 0);
+  uint32_t Payload = applyPatternValues(
+      "1111011000z0000sssseeeeeee",
+      {{'z', IsDouble}, {'s', getFPRNo(SrcReg)}, {'e', 0x6a}});
+  if (!BedrockMC::encodeLong(Payload, Tail, Bytes))
+    report_fatal_error("failed to encode Bedrock absolute FPU store");
   emitRawExpr(Bytes, 4, FK_Data_4, Expr);
 }
 
-void BedrockAsmPrinter::emitFpuLoad(const MachineInstr *MI, bool IsFrame) {
+void BedrockAsmPrinter::emitFpuLoad(const MachineInstr *MI, bool IsFrame,
+                                    bool IsDouble) {
   Register DstReg = MI->getOperand(0).getReg();
 
   uint8_t EA;
@@ -7020,11 +7038,17 @@ void BedrockAsmPrinter::emitFpuLoad(const MachineInstr *MI, bool IsFrame) {
   else
     getMemEAForReg(MI->getOperand(1).getReg(), EA, Tail);
 
-  uint16_t Ext = 0x1800 | 0x0400 | (getFPRNo(DstReg) << 6) | EA;
-  emitFpuRaw(0x1f65, Ext, Tail);
+  SmallVector<uint8_t, 12> Bytes;
+  uint32_t Payload = applyPatternValues(
+      "1111010101z0000ddddeeeeeee",
+      {{'z', IsDouble}, {'d', getFPRNo(DstReg)}, {'e', EA}});
+  if (!BedrockMC::encodeLong(Payload, Tail, Bytes))
+    report_fatal_error("failed to encode Bedrock FPU load");
+  emitRaw(Bytes);
 }
 
-void BedrockAsmPrinter::emitFpuLoadOffset(const MachineInstr *MI) {
+void BedrockAsmPrinter::emitFpuLoadOffset(const MachineInstr *MI,
+                                          bool IsDouble) {
   Register DstReg = MI->getOperand(0).getReg();
 
   uint8_t EA;
@@ -7032,11 +7056,17 @@ void BedrockAsmPrinter::emitFpuLoadOffset(const MachineInstr *MI) {
   getMemEAForRegOffset(MI->getOperand(1).getReg(), MI->getOperand(2).getImm(),
                        EA, Tail);
 
-  uint16_t Ext = 0x1800 | 0x0400 | (getFPRNo(DstReg) << 6) | EA;
-  emitFpuRaw(0x1f65, Ext, Tail);
+  SmallVector<uint8_t, 12> Bytes;
+  uint32_t Payload = applyPatternValues(
+      "1111010101z0000ddddeeeeeee",
+      {{'z', IsDouble}, {'d', getFPRNo(DstReg)}, {'e', EA}});
+  if (!BedrockMC::encodeLong(Payload, Tail, Bytes))
+    report_fatal_error("failed to encode Bedrock offset FPU load");
+  emitRaw(Bytes);
 }
 
-void BedrockAsmPrinter::emitFpuStore(const MachineInstr *MI, bool IsFrame) {
+void BedrockAsmPrinter::emitFpuStore(const MachineInstr *MI, bool IsFrame,
+                                     bool IsDouble) {
   Register SrcReg = MI->getOperand(0).getReg();
 
   uint8_t EA;
@@ -7046,11 +7076,17 @@ void BedrockAsmPrinter::emitFpuStore(const MachineInstr *MI, bool IsFrame) {
   else
     getMemEAForReg(MI->getOperand(1).getReg(), EA, Tail);
 
-  uint16_t Ext = 0x2000 | 0x0400 | (getFPRNo(SrcReg) << 6) | EA;
-  emitFpuRaw(0x1f65, Ext, Tail);
+  SmallVector<uint8_t, 12> Bytes;
+  uint32_t Payload = applyPatternValues(
+      "1111011000z0000sssseeeeeee",
+      {{'z', IsDouble}, {'s', getFPRNo(SrcReg)}, {'e', EA}});
+  if (!BedrockMC::encodeLong(Payload, Tail, Bytes))
+    report_fatal_error("failed to encode Bedrock FPU store");
+  emitRaw(Bytes);
 }
 
-void BedrockAsmPrinter::emitFpuStoreOffset(const MachineInstr *MI) {
+void BedrockAsmPrinter::emitFpuStoreOffset(const MachineInstr *MI,
+                                           bool IsDouble) {
   Register SrcReg = MI->getOperand(0).getReg();
 
   uint8_t EA;
@@ -7058,8 +7094,13 @@ void BedrockAsmPrinter::emitFpuStoreOffset(const MachineInstr *MI) {
   getMemEAForRegOffset(MI->getOperand(1).getReg(), MI->getOperand(2).getImm(),
                        EA, Tail);
 
-  uint16_t Ext = 0x2000 | 0x0400 | (getFPRNo(SrcReg) << 6) | EA;
-  emitFpuRaw(0x1f65, Ext, Tail);
+  SmallVector<uint8_t, 12> Bytes;
+  uint32_t Payload = applyPatternValues(
+      "1111011000z0000sssseeeeeee",
+      {{'z', IsDouble}, {'s', getFPRNo(SrcReg)}, {'e', EA}});
+  if (!BedrockMC::encodeLong(Payload, Tail, Bytes))
+    report_fatal_error("failed to encode Bedrock offset FPU store");
+  emitRaw(Bytes);
 }
 
 void BedrockAsmPrinter::emitStackAdjust(const MachineInstr *MI, bool IsDown) {
@@ -7909,8 +7950,11 @@ void BedrockAsmPrinter::emitInstruction(const MachineInstr *MI) {
   case Bedrock::LOADQrr:
     emitLoad(MI, 3, /*IsFrame=*/false);
     return;
+  case Bedrock::FLOADSrr:
+    emitFpuLoad(MI, /*IsFrame=*/false, /*IsDouble=*/false);
+    return;
   case Bedrock::FLOADDrr:
-    emitFpuLoad(MI, /*IsFrame=*/false);
+    emitFpuLoad(MI, /*IsFrame=*/false, /*IsDouble=*/true);
     return;
   case Bedrock::LOADB_Zrx:
     emitLoadIndex(MI, 0, /*IsExt=*/true, /*IsSigned=*/false);
@@ -7984,8 +8028,11 @@ void BedrockAsmPrinter::emitInstruction(const MachineInstr *MI) {
   case Bedrock::LOADQro:
     emitLoadOffset(MI, 3);
     return;
+  case Bedrock::FLOADSro:
+    emitFpuLoadOffset(MI, /*IsDouble=*/false);
+    return;
   case Bedrock::FLOADDro:
-    emitFpuLoadOffset(MI);
+    emitFpuLoadOffset(MI, /*IsDouble=*/true);
     return;
   case Bedrock::LOADB_Zabs:
     emitAbsLoad(MI, 0, /*IsExt=*/true, /*IsSigned=*/false);
@@ -8011,8 +8058,11 @@ void BedrockAsmPrinter::emitInstruction(const MachineInstr *MI) {
   case Bedrock::LOADQabs:
     emitAbsLoad(MI, 3);
     return;
+  case Bedrock::FLOADSabs:
+    emitFpuAbsLoad(MI, /*IsDouble=*/false);
+    return;
   case Bedrock::FLOADDabs:
-    emitFpuAbsLoad(MI);
+    emitFpuAbsLoad(MI, /*IsDouble=*/true);
     return;
   case Bedrock::LOADB_Zfi:
     emitLoad(MI, 0, /*IsFrame=*/true, /*IsExt=*/true, /*IsSigned=*/false);
@@ -8038,8 +8088,11 @@ void BedrockAsmPrinter::emitInstruction(const MachineInstr *MI) {
   case Bedrock::LOADQfi:
     emitLoad(MI, 3, /*IsFrame=*/true);
     return;
+  case Bedrock::FLOADSfi:
+    emitFpuLoad(MI, /*IsFrame=*/true, /*IsDouble=*/false);
+    return;
   case Bedrock::FLOADDfi:
-    emitFpuLoad(MI, /*IsFrame=*/true);
+    emitFpuLoad(MI, /*IsFrame=*/true, /*IsDouble=*/true);
     return;
   case Bedrock::STOREBrr:
     emitStore(MI, 0, /*IsFrame=*/false);
@@ -8077,8 +8130,11 @@ void BedrockAsmPrinter::emitInstruction(const MachineInstr *MI) {
   case Bedrock::STOREQspx:
     emitStoreSPIndex(MI, 3);
     return;
+  case Bedrock::FSTORESrr:
+    emitFpuStore(MI, /*IsFrame=*/false, /*IsDouble=*/false);
+    return;
   case Bedrock::FSTOREDrr:
-    emitFpuStore(MI, /*IsFrame=*/false);
+    emitFpuStore(MI, /*IsFrame=*/false, /*IsDouble=*/true);
     return;
   case Bedrock::STOREB_Immrr:
     emitImmStore(MI, 0, /*IsFrame=*/false);
@@ -8104,8 +8160,11 @@ void BedrockAsmPrinter::emitInstruction(const MachineInstr *MI) {
   case Bedrock::STOREQro:
     emitStoreOffset(MI, 3);
     return;
+  case Bedrock::FSTORESro:
+    emitFpuStoreOffset(MI, /*IsDouble=*/false);
+    return;
   case Bedrock::FSTOREDro:
-    emitFpuStoreOffset(MI);
+    emitFpuStoreOffset(MI, /*IsDouble=*/true);
     return;
   case Bedrock::STOREB_Immro:
     emitImmStoreOffset(MI, 0);
@@ -8131,8 +8190,11 @@ void BedrockAsmPrinter::emitInstruction(const MachineInstr *MI) {
   case Bedrock::STOREQabs:
     emitAbsStore(MI, 3);
     return;
+  case Bedrock::FSTORESabs:
+    emitFpuAbsStore(MI, /*IsDouble=*/false);
+    return;
   case Bedrock::FSTOREDabs:
-    emitFpuAbsStore(MI);
+    emitFpuAbsStore(MI, /*IsDouble=*/true);
     return;
   case Bedrock::STOREB_Immabs:
     emitImmStoreAbs(MI, 0);
@@ -8158,8 +8220,11 @@ void BedrockAsmPrinter::emitInstruction(const MachineInstr *MI) {
   case Bedrock::STOREQfi:
     emitStore(MI, 3, /*IsFrame=*/true);
     return;
+  case Bedrock::FSTORESfi:
+    emitFpuStore(MI, /*IsFrame=*/true, /*IsDouble=*/false);
+    return;
   case Bedrock::FSTOREDfi:
-    emitFpuStore(MI, /*IsFrame=*/true);
+    emitFpuStore(MI, /*IsFrame=*/true, /*IsDouble=*/true);
     return;
   case Bedrock::STOREB_Immfi:
     emitImmStore(MI, 0, /*IsFrame=*/true);

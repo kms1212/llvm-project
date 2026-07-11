@@ -87,6 +87,17 @@ void BedrockInstrInfo::copyPhysReg(MachineBasicBlock &MBB,
                                    Register SrcReg, bool KillSrc,
                                    bool RenamableDest,
                                    bool RenamableSrc) const {
+  if (DestReg == Bedrock::SP && Bedrock::GPR64RegClass.contains(SrcReg)) {
+    BuildMI(MBB, I, DL, get(Bedrock::MOVQrs))
+        .addReg(SrcReg, getKillRegState(KillSrc));
+    return;
+  }
+
+  if (SrcReg == Bedrock::SP && Bedrock::GPR64RegClass.contains(DestReg)) {
+    BuildMI(MBB, I, DL, get(Bedrock::MOVQsr), DestReg);
+    return;
+  }
+
   if (Bedrock::FPR64RegClass.contains(DestReg, SrcReg)) {
     BuildMI(MBB, I, DL, get(Bedrock::FMOVDrr), DestReg)
         .addReg(SrcReg, getKillRegState(KillSrc));

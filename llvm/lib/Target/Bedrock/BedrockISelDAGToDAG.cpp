@@ -604,6 +604,8 @@ static unsigned getLoadOpcode(const LoadSDNode *LD, bool IsFrame) {
   };
 
   if (ExtType == ISD::NON_EXTLOAD || ExtType == ISD::EXTLOAD) {
+    if (VT == MVT::f32 && MemVT == MVT::f32)
+      return Pick(Bedrock::FLOADSrr, Bedrock::FLOADSfi);
     if (VT == MVT::f64 && MemVT == MVT::f64)
       return Pick(Bedrock::FLOADDrr, Bedrock::FLOADDfi);
 
@@ -658,6 +660,8 @@ static unsigned getLoadAbsOpcode(const LoadSDNode *LD) {
     return Bedrock::LOADLabs;
   case Bedrock::LOADQrr:
     return Bedrock::LOADQabs;
+  case Bedrock::FLOADSrr:
+    return Bedrock::FLOADSabs;
   case Bedrock::FLOADDrr:
     return Bedrock::FLOADDabs;
   default:
@@ -683,6 +687,8 @@ static unsigned getLoadOffsetOpcode(const LoadSDNode *LD) {
     return Bedrock::LOADLro;
   case Bedrock::LOADQrr:
     return Bedrock::LOADQro;
+  case Bedrock::FLOADSrr:
+    return Bedrock::FLOADSro;
   case Bedrock::FLOADDrr:
     return Bedrock::FLOADDro;
   default:
@@ -705,6 +711,8 @@ static unsigned getStoreOpcode(const StoreSDNode *ST, bool IsFrame) {
     return Pick(Bedrock::STORELrr, Bedrock::STORELfi);
   case MVT::i64:
     return Pick(Bedrock::STOREQrr, Bedrock::STOREQfi);
+  case MVT::f32:
+    return Pick(Bedrock::FSTORESrr, Bedrock::FSTORESfi);
   case MVT::f64:
     return Pick(Bedrock::FSTOREDrr, Bedrock::FSTOREDfi);
   default:
@@ -761,6 +769,8 @@ static unsigned getStoreOffsetOpcode(const StoreSDNode *ST) {
     return Bedrock::STORELro;
   case Bedrock::STOREQrr:
     return Bedrock::STOREQro;
+  case Bedrock::FSTORESrr:
+    return Bedrock::FSTORESro;
   case Bedrock::FSTOREDrr:
     return Bedrock::FSTOREDro;
   default:
@@ -808,6 +818,8 @@ static unsigned getStoreAbsOpcode(const StoreSDNode *ST) {
     return Bedrock::STORELabs;
   case Bedrock::STOREQrr:
     return Bedrock::STOREQabs;
+  case Bedrock::FSTORESrr:
+    return Bedrock::FSTORESabs;
   case Bedrock::FSTOREDrr:
     return Bedrock::FSTOREDabs;
   default:

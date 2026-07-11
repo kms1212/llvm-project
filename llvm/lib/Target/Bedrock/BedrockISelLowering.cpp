@@ -7,6 +7,8 @@
 //===----------------------------------------------------------------------===//
 
 #include "BedrockISelLowering.h"
+#include "BedrockCallingConv.h"
+#include "BedrockMachineFunctionInfo.h"
 #include "BedrockSubtarget.h"
 #include "MCTargetDesc/BedrockMCTargetDesc.h"
 #include "llvm/CodeGen/CallingConvLower.h"
@@ -555,30 +557,53 @@ SDValue BedrockTargetLowering::LowerFormalArguments(
     report_fatal_error("Bedrock varargs lowering is not implemented yet");
 
   MachineFunction &MF = DAG.getMachineFunction();
+  MachineFrameInfo &MFI = MF.getFrameInfo();
   MachineRegisterInfo &RegInfo = MF.getRegInfo();
 
   SmallVector<CCValAssign, 16> ArgLocs;
-  CCState CCInfo(CallConv, IsVarArg, MF, ArgLocs, *DAG.getContext());
+  BedrockCCState CCInfo(CallConv, IsVarArg, MF, ArgLocs, *DAG.getContext());
   CCInfo.AnalyzeFormalArguments(Ins, CC_Bedrock);
 
   SmallVector<SDValue, 8> ArgChains;
   for (unsigned I = 0, E = ArgLocs.size(); I != E; ++I) {
     const CCValAssign &VA = ArgLocs[I];
-    if (VA.isMemLoc())
-      report_fatal_error("Bedrock stack arguments are not implemented yet");
-
-    const TargetRegisterClass *RC =
-        VA.getLocVT().isFloatingPoint() ? &Bedrock::FPR64RegClass
-                                        : &Bedrock::GPR64RegClass;
-    Register VReg = RegInfo.createVirtualRegister(RC);
-    RegInfo.addLiveIn(VA.getLocReg(), VReg);
-    SDValue ArgValue = DAG.getCopyFromReg(Chain, DL, VReg, VA.getLocVT());
-    ArgChains.push_back(ArgValue.getValue(ArgValue->getNumValues() - 1));
+    SDValue ArgValue;
+    if (VA.isRegLoc()) {
+      const TargetRegisterClass *RC =
+          VA.getLocVT().isFloatingPoint() ? &Bedrock::FPR64RegClass
+                                          : &Bedrock::GPR64RegClass;
+      Register VReg = RegInfo.createVirtualRegister(RC);
+      RegInfo.addLiveIn(VA.getLocReg(), VReg);
+      ArgValue = DAG.getCopyFromReg(Chain, DL, VReg, VA.getLocVT());
+      ArgChains.push_back(ArgValue.getValue(1));
+    } else {
+      assert(VA.isMemLoc() && "argument must be in a register or on stack");
+      int64_t EntryOffset = 16 + VA.getLocMemOffset();
+      uint64_t ObjSize = VA.getLocVT().getStoreSize();
+      int FI = MFI.CreateFixedObject(ObjSize, EntryOffset, /*IsImmutable=*/true);
+      MFI.setObjectAlignment(FI, commonAlignment(Align(16), EntryOffset));
+      SDValue FIN = DAG.getFrameIndex(FI, getPointerTy(DAG.getDataLayout()));
+      ArgValue = DAG.getLoad(
+          VA.getLocVT(), DL, Chain, FIN,
+          MachinePointerInfo::getFixedStack(MF, FI));
+      ArgChains.push_back(ArgValue.getValue(1));
+    }
     InVals.push_back(convertLocVT(ArgValue, VA, DL, DAG));
   }
 
   if (!ArgChains.empty())
     Chain = DAG.getNode(ISD::TokenFactor, DL, MVT::Other, ArgChains);
+
+  for (unsigned I = 0, E = Ins.size(); I != E; ++I) {
+    if (!Ins[I].Flags.isSRet())
+      continue;
+    auto *FuncInfo = MF.getInfo<BedrockMachineFunctionInfo>();
+    Register SRetReg = RegInfo.createVirtualRegister(&Bedrock::GPR64RegClass);
+    FuncInfo->setSRetReturnReg(SRetReg);
+    SDValue Copy = DAG.getCopyToReg(DAG.getEntryNode(), DL, SRetReg, InVals[I]);
+    Chain = DAG.getNode(ISD::TokenFactor, DL, MVT::Other, Chain, Copy);
+    break;
+  }
   return Chain;
 }
 
@@ -604,22 +629,57 @@ BedrockTargetLowering::LowerCall(TargetLowering::CallLoweringInfo &CLI,
 
   MachineFunction &MF = DAG.getMachineFunction();
   SmallVector<CCValAssign, 16> ArgLocs;
-  CCState CCInfo(CallConv, IsVarArg, MF, ArgLocs, *DAG.getContext());
+  BedrockCCState CCInfo(CallConv, IsVarArg, MF, ArgLocs, *DAG.getContext());
   CCInfo.AnalyzeCallOperands(Outs, CC_Bedrock);
-  if (CCInfo.getStackSize() != 0)
-    report_fatal_error("Bedrock stack call arguments are not implemented yet");
 
-  Chain = DAG.getCALLSEQ_START(Chain, CCInfo.getStackSize(), 0, DL);
+  SmallVector<SDValue, 16> ArgValues(OutVals.begin(), OutVals.end());
+  for (unsigned I = 0, E = Outs.size(); I != E; ++I) {
+    ISD::ArgFlagsTy Flags = Outs[I].Flags;
+    if (!Flags.isByVal())
+      continue;
+
+    unsigned Size = Flags.getByValSize();
+    Align Alignment(16);
+    int FI = MF.getFrameInfo().CreateStackObject(Size, Alignment,
+                                                  /*isSpillSlot=*/false);
+    SDValue FIPtr =
+        DAG.getFrameIndex(FI, getPointerTy(DAG.getDataLayout()));
+    SDValue SizeNode = DAG.getConstant(Size, DL, MVT::i64);
+    Chain = DAG.getMemcpy(Chain, DL, FIPtr, ArgValues[I], SizeNode, Alignment,
+                          /*IsVolatile=*/false, /*AlwaysInline=*/false,
+                          /*CI=*/nullptr, std::nullopt, MachinePointerInfo(),
+                          MachinePointerInfo());
+    ArgValues[I] = FIPtr;
+  }
+
+  uint64_t CallFrameSize = 8 + CCInfo.getStackSize();
+  Chain = DAG.getCALLSEQ_START(Chain, CallFrameSize, 0, DL);
 
   SmallVector<std::pair<Register, SDValue>, 8> RegsToPass;
+  SmallVector<SDValue, 8> MemOpChains;
+  SDValue StackPtr;
   for (unsigned I = 0, E = ArgLocs.size(); I != E; ++I) {
     const CCValAssign &VA = ArgLocs[I];
-    if (VA.isMemLoc())
-      report_fatal_error(
-          "Bedrock stack call arguments are not implemented yet");
-    RegsToPass.push_back(
-        {VA.getLocReg(), promoteToLocVT(OutVals[I], VA, DL, DAG)});
+    SDValue ArgValue = promoteToLocVT(ArgValues[I], VA, DL, DAG);
+    if (VA.isRegLoc()) {
+      RegsToPass.push_back({VA.getLocReg(), ArgValue});
+      continue;
+    }
+
+    assert(VA.isMemLoc() && "argument must be in a register or on stack");
+    if (!StackPtr.getNode())
+      StackPtr = DAG.getCopyFromReg(
+          Chain, DL, Bedrock::SP, getPointerTy(DAG.getDataLayout()));
+    int64_t CallerOffset = 8 + VA.getLocMemOffset();
+    SDValue Address = DAG.getNode(
+        ISD::ADD, DL, getPointerTy(DAG.getDataLayout()), StackPtr,
+        DAG.getIntPtrConstant(CallerOffset, DL));
+    MemOpChains.push_back(DAG.getStore(Chain, DL, ArgValue, Address,
+                                       MachinePointerInfo()));
   }
+
+  if (!MemOpChains.empty())
+    Chain = DAG.getNode(ISD::TokenFactor, DL, MVT::Other, MemOpChains);
 
   SDValue InGlue;
   for (const auto &[Reg, Value] : RegsToPass) {
@@ -651,7 +711,7 @@ BedrockTargetLowering::LowerCall(TargetLowering::CallLoweringInfo &CLI,
   Chain = DAG.getNode(BedrockISD::CALL, DL, NodeTys, Ops);
   InGlue = Chain.getValue(1);
 
-  Chain = DAG.getCALLSEQ_END(Chain, CCInfo.getStackSize(), 0, InGlue, DL);
+  Chain = DAG.getCALLSEQ_END(Chain, CallFrameSize, 0, InGlue, DL);
   InGlue = Chain.getValue(1);
 
   return LowerCallResult(Chain, InGlue, CallConv, IsVarArg, Ins, DL, DAG,
@@ -706,6 +766,20 @@ BedrockTargetLowering::LowerReturn(SDValue Chain, CallingConv::ID CallConv,
     Chain = DAG.getCopyToReg(Chain, DL, VA.getLocReg(), Value, Glue);
     Glue = Chain.getValue(1);
     RetOps.push_back(DAG.getRegister(VA.getLocReg(), VA.getLocVT()));
+  }
+
+  MachineFunction &MF = DAG.getMachineFunction();
+  if (MF.getFunction().hasStructRetAttr()) {
+    Register SRetReg =
+        MF.getInfo<BedrockMachineFunctionInfo>()->getSRetReturnReg();
+    if (!SRetReg)
+      report_fatal_error("missing Bedrock sret return register");
+
+    SDValue SRetValue = DAG.getCopyFromReg(Chain, DL, SRetReg, MVT::i64);
+    Chain = SRetValue.getValue(1);
+    Chain = DAG.getCopyToReg(Chain, DL, Bedrock::R0, SRetValue, Glue);
+    Glue = Chain.getValue(1);
+    RetOps.push_back(DAG.getRegister(Bedrock::R0, MVT::i64));
   }
 
   RetOps[0] = Chain;

@@ -34,6 +34,7 @@ def R12 : BedrockGPR<12, "r12">;
 def R13 : BedrockGPR<13, "r13">;
 def R14 : BedrockGPR<14, "r14">;
 def R15 : BedrockGPR<15, "r15">;
+def SP  : BedrockReg<0, 32, "sp">;
 
 def F0  : BedrockFPR<0,  16, "f0">;
 def F1  : BedrockFPR<1,  17, "f1">;
@@ -55,5 +56,7 @@ def F15 : BedrockFPR<15, 31, "f15">;
 def GPR64 : RegisterClass<"Bedrock", [i32, i64], 64, (sequence "R%u", 0, 15)> {
   let DecoderMethod = "DecodeGPR64RegisterClass";
 }
+
+def SPReg : RegisterClass<"Bedrock", [i64], 64, (add SP)>;
 
 def FPR64 : RegisterClass<"Bedrock", [f32, f64], 64, (sequence "F%u", 0, 15)>;

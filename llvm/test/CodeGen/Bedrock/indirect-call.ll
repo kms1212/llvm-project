@@ -10,7 +10,7 @@ define i64 @indirect_call(ptr %fn, i64 %x) {
 ; CHECK-NOT: rdseg cs
 ; CHECK-NOT: lcall
 ; CHECK: call r{{[0-9]+}}
-; CHECK: add.q
+; CHECK: inc.q r0
 ; CHECK: ret
 ; OBJ-LABEL: <indirect_call>:
 ; OBJ-NOT: rdseg cs

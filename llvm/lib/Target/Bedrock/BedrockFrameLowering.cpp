@@ -17,20 +17,20 @@
 using namespace llvm;
 
 BedrockFrameLowering::BedrockFrameLowering(const BedrockSubtarget &STI)
-    : TargetFrameLowering(TargetFrameLowering::StackGrowsDown, Align(16), 0,
+    // Generic call-frame tracking rounds adjustments to this value.  Near
+    // calls need an exact eight-byte phase adjustment; emitPrologue still
+    // rounds every persistent function body frame to the ABI's 16 bytes.
+    : TargetFrameLowering(TargetFrameLowering::StackGrowsDown, Align(8), 0,
                           Align(8)) {}
 
 void BedrockFrameLowering::emitPrologue(MachineFunction &MF,
                                         MachineBasicBlock &MBB) const {
   MachineFrameInfo &MFI = MF.getFrameInfo();
   uint64_t StackSize = MFI.getStackSize();
-  // CALL pushes an eight-byte return address.  Choose the smallest caller
-  // frame whose size is 8 modulo 16, instead of first rounding the raw frame
-  // to 16 and then adding another eight bytes.  A leaf only needs the ABI's
-  // eight-byte internal alignment.  Object offsets remain relative to the
-  // 16-byte-aligned incoming SP, so their declared alignment is preserved.
-  StackSize = MFI.hasCalls() ? alignTo(StackSize + 8, Align(16)) - 8
-                             : alignTo(StackSize, Align(8));
+  // A function observes a 16-byte-aligned SP on entry and keeps its body
+  // frame aligned.  Near-call padding and outgoing arguments are allocated
+  // dynamically around each call rather than being folded into this frame.
+  StackSize = alignTo(StackSize, Align(16));
   MFI.setStackSize(StackSize);
   if (StackSize == 0)
     return;
@@ -57,6 +57,14 @@ void BedrockFrameLowering::emitEpilogue(MachineFunction &MF,
 MachineBasicBlock::iterator BedrockFrameLowering::eliminateCallFramePseudoInstr(
     MachineFunction &MF, MachineBasicBlock &MBB,
     MachineBasicBlock::iterator MI) const {
+  int64_t Amount = MI->getOperand(0).getImm();
+  if (Amount != 0) {
+    const TargetInstrInfo &TII = *MF.getSubtarget().getInstrInfo();
+    unsigned Opcode = MI->getOpcode() == Bedrock::ADJCALLSTACKDOWN
+                          ? Bedrock::ADJSP_DOWN
+                          : Bedrock::ADJSP_UP;
+    BuildMI(MBB, MI, MI->getDebugLoc(), TII.get(Opcode)).addImm(Amount);
+  }
   return MBB.erase(MI);
 }
 

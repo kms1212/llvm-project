@@ -165,6 +165,16 @@ class BedrockRegSP<bits<10> opcode, string asm>
   let Inst{3 -0} = r;
 }
 
+class BedrockSPRegOut<bits<10> opcode, string asm>
+    : BedrockInst<(outs GPR64:$r), (ins), asm> {
+  bits<4> r;
+
+  let Inst{15} = 1;
+  let Inst{14} = 0;
+  let Inst{13 -4} = opcode;
+  let Inst{3 -0} = r;
+}
+
 class BedrockSet<bits<4> cc, string asm>
     : BedrockInst<(outs), (ins GPR64:$r), !strconcat(asm, "\t$r")> {
   bits<4> r;
@@ -278,7 +288,7 @@ def EXTZQBrr : BedrockPseudo<(outs GPR64:$rd), (ins GPR64:$src)>;
 def EXTZQWrr : BedrockPseudo<(outs GPR64:$rd), (ins GPR64:$src)>;
 
 def MOVQrs : BedrockRegSP<0b1000000000, "mov.q\t$r, sp">;
-def MOVQsr : BedrockRegSP<0b1000000001, "mov.q\tsp, $r">;
+def MOVQsr : BedrockSPRegOut<0b1000000001, "mov.q\tsp, $r">;
 def PUSHr : BedrockRegLow<0b1000000010, "push">;
 def POPr : BedrockRegLowOut<0b1000000011, "pop">;
 
@@ -666,6 +676,7 @@ def LOADW_Srr : BedrockPseudo<(outs GPR64:$rd), (ins GPR64:$base)>;
 def LOADL_Srr : BedrockPseudo<(outs GPR64:$rd), (ins GPR64:$base)>;
 def LOADLrr : BedrockPseudo<(outs GPR64:$rd), (ins GPR64:$base)>;
 def LOADQrr : BedrockPseudo<(outs GPR64:$rd), (ins GPR64:$base)>;
+def FLOADSrr : BedrockPseudo<(outs FPR64:$rd), (ins GPR64:$base)>;
 def FLOADDrr : BedrockPseudo<(outs FPR64:$rd), (ins GPR64:$base)>;
 
 def LOADB_Zrx : BedrockPseudo<(outs GPR64:$rd),
@@ -710,6 +721,8 @@ def LOADLro : BedrockPseudo<(outs GPR64:$rd),
                             (ins GPR64:$base, i64imm:$offset)>;
 def LOADQro : BedrockPseudo<(outs GPR64:$rd),
                             (ins GPR64:$base, i64imm:$offset)>;
+def FLOADSro : BedrockPseudo<(outs FPR64:$rd),
+                             (ins GPR64:$base, i64imm:$offset)>;
 def FLOADDro : BedrockPseudo<(outs FPR64:$rd),
                              (ins GPR64:$base, i64imm:$offset)>;
 
@@ -721,6 +734,7 @@ def LOADW_Sabs : BedrockPseudo<(outs GPR64:$rd), (ins i64imm:$addr)>;
 def LOADL_Sabs : BedrockPseudo<(outs GPR64:$rd), (ins i64imm:$addr)>;
 def LOADLabs : BedrockPseudo<(outs GPR64:$rd), (ins i64imm:$addr)>;
 def LOADQabs : BedrockPseudo<(outs GPR64:$rd), (ins i64imm:$addr)>;
+def FLOADSabs : BedrockPseudo<(outs FPR64:$rd), (ins i64imm:$addr)>;
 def FLOADDabs : BedrockPseudo<(outs FPR64:$rd), (ins i64imm:$addr)>;
 
 def LOADB_Zfi : BedrockPseudo<(outs GPR64:$rd),
@@ -739,6 +753,8 @@ def LOADLfi : BedrockPseudo<(outs GPR64:$rd),
                             (ins i64imm:$base, i64imm:$offset)>;
 def LOADQfi : BedrockPseudo<(outs GPR64:$rd),
                             (ins i64imm:$base, i64imm:$offset)>;
+def FLOADSfi : BedrockPseudo<(outs FPR64:$rd),
+                             (ins i64imm:$base, i64imm:$offset)>;
 def FLOADDfi : BedrockPseudo<(outs FPR64:$rd),
                              (ins i64imm:$base, i64imm:$offset)>;
 }
@@ -788,6 +804,7 @@ def STOREBspx : BedrockPseudo<(outs), (ins GPR64:$src, GPR64:$index)>;
 def STOREWspx : BedrockPseudo<(outs), (ins GPR64:$src, GPR64:$index)>;
 def STORELspx : BedrockPseudo<(outs), (ins GPR64:$src, GPR64:$index)>;
 def STOREQspx : BedrockPseudo<(outs), (ins GPR64:$src, GPR64:$index)>;
+def FSTORESrr : BedrockPseudo<(outs), (ins FPR64:$src, GPR64:$base)>;
 def FSTOREDrr : BedrockPseudo<(outs), (ins FPR64:$src, GPR64:$base)>;
 
 def STOREB_Immrr : BedrockPseudo<(outs), (ins i64imm:$imm, GPR64:$base)>;
@@ -803,6 +820,8 @@ def STORELro : BedrockPseudo<(outs),
                              (ins GPR64:$src, GPR64:$base, i64imm:$offset)>;
 def STOREQro : BedrockPseudo<(outs),
                              (ins GPR64:$src, GPR64:$base, i64imm:$offset)>;
+def FSTORESro : BedrockPseudo<(outs),
+                              (ins FPR64:$src, GPR64:$base, i64imm:$offset)>;
 def FSTOREDro : BedrockPseudo<(outs),
                               (ins FPR64:$src, GPR64:$base, i64imm:$offset)>;
 
@@ -823,6 +842,7 @@ def STOREBabs : BedrockPseudo<(outs), (ins GPR64:$src, i64imm:$addr)>;
 def STOREWabs : BedrockPseudo<(outs), (ins GPR64:$src, i64imm:$addr)>;
 def STORELabs : BedrockPseudo<(outs), (ins GPR64:$src, i64imm:$addr)>;
 def STOREQabs : BedrockPseudo<(outs), (ins GPR64:$src, i64imm:$addr)>;
+def FSTORESabs : BedrockPseudo<(outs), (ins FPR64:$src, i64imm:$addr)>;
 def FSTOREDabs : BedrockPseudo<(outs), (ins FPR64:$src, i64imm:$addr)>;
 
 def STOREB_Immabs : BedrockPseudo<(outs), (ins i64imm:$imm, i64imm:$addr)>;
@@ -838,6 +858,8 @@ def STORELfi : BedrockPseudo<(outs),
                              (ins GPR64:$src, i64imm:$base, i64imm:$offset)>;
 def STOREQfi : BedrockPseudo<(outs),
                              (ins GPR64:$src, i64imm:$base, i64imm:$offset)>;
+def FSTORESfi : BedrockPseudo<(outs),
+                              (ins FPR64:$src, i64imm:$base, i64imm:$offset)>;
 def FSTOREDfi : BedrockPseudo<(outs),
                               (ins FPR64:$src, i64imm:$base, i64imm:$offset)>;
 
@@ -898,12 +920,14 @@ def CALLr : BedrockPseudo<(outs), (ins GPR64:$dst)>;
 let isBranch = 1, isTerminator = 1, isBarrier = 1 in
 def TAILCALL : BedrockPseudo<(outs), (ins i64imm:$dst)>;
 
+let hasSideEffects = 1 in {
 def ADJCALLSTACKDOWN : BedrockPseudo<(outs), (ins i64imm:$amt1, i64imm:$amt2),
                                      [(BedrockCallSeqStart timm:$amt1,
                                                             timm:$amt2)]>;
 def ADJCALLSTACKUP : BedrockPseudo<(outs), (ins i64imm:$amt1, i64imm:$amt2),
                                    [(BedrockCallSeqEnd timm:$amt1,
                                                        timm:$amt2)]>;
+}
 
 def : Pat<(BedrockCall (i64 tglobaladdr:$dst)), (CALL tglobaladdr:$dst)>;
 def : Pat<(BedrockCall (i64 texternalsym:$dst)), (CALL texternalsym:$dst)>;
