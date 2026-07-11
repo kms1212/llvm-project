@@ -17280,6 +17280,33 @@ bool Sema::DiagnoseAssignmentResult(AssignConvertType ConvTy,
   if (Complained)
     *Complained = false;
 
+  // A Bedrock far function pointer is a distinct ABI category, not an
+  // address-space variant that can participate in Clang's usual pointer
+  // compatibility recovery.  Diagnose the category crossing directly; the
+  // generic recovery path also assumes a common function type exists.
+  if (Context.getTargetInfo().getTriple().getArch() == llvm::Triple::bedrock) {
+    auto GetFunctionType = [](QualType T) -> QualType {
+      if (T->isFunctionType())
+        return T;
+      if (T->isPointerType() && T->getPointeeType()->isFunctionType())
+        return T->getPointeeType();
+      return {};
+    };
+    QualType DstFunction = GetFunctionType(DstType);
+    QualType SrcFunction = GetFunctionType(SrcType);
+    auto IsFarFunction = [&](QualType T) {
+      return Context.getTargetAddressSpace(T.getAddressSpace()) == 1;
+    };
+    if (!DstFunction.isNull() && !SrcFunction.isNull() &&
+        IsFarFunction(DstFunction) != IsFarFunction(SrcFunction)) {
+      Diag(Loc, diag::err_bedrock_far_function_pointer_cast)
+          << SrcExpr->getSourceRange();
+      if (Complained)
+        *Complained = true;
+      return true;
+    }
+  }
+
   // Decode the result (notice that AST's are still created for extensions).
   bool CheckInferredResultType = false;
   bool isInvalid = false;

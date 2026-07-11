@@ -79,6 +79,11 @@ static bool isOmittedBlockReturnType(const Declarator &D) {
 /// doesn't apply to the given type.
 static void diagnoseBadTypeAttribute(Sema &S, const ParsedAttr &attr,
                                      QualType type) {
+  if (attr.getKind() == ParsedAttr::AT_BedrockFar) {
+    S.Diag(attr.getLoc(), diag::err_bedrock_far_wrong_type);
+    return;
+  }
+
   TypeDiagSelector WhichType;
   bool useExpansionLoc = true;
   switch (attr.getKind()) {
@@ -7157,6 +7162,35 @@ static bool handleMSPointerTypeQualifierAttr(TypeProcessingState &State,
   return false;
 }
 
+static bool handleBedrockFarPointerTypeAttr(TypeProcessingState &State,
+                                            ParsedAttr &PAttr, QualType &Type) {
+  Sema &S = State.getSema();
+  if (S.getLangOpts().CPlusPlus) {
+    S.Diag(PAttr.getLoc(), diag::err_attribute_not_supported_in_lang)
+        << PAttr << /*C++=*/1;
+    PAttr.setInvalid();
+    return true;
+  }
+  if (S.CheckAttrTarget(PAttr) || S.CheckAttrNoArgs(PAttr))
+    return true;
+
+  if (!Type->isPointerType())
+    return false;
+
+  QualType Pointee = Type->getPointeeType();
+  Pointee = S.Context.removeAddrSpaceQualType(Pointee);
+  if (const auto *FT = Pointee->getAs<FunctionType>()) {
+    auto EI = FT->getExtInfo().withCallingConv(CC_BedrockFar);
+    Pointee = QualType(S.Context.adjustFunctionType(FT, EI), 0);
+  }
+  Pointee = S.Context.getAddrSpaceQualType(Pointee, getLangASFromTargetAS(1));
+  QualType Equivalent = S.Context.getQualifiedType(
+      S.Context.getPointerType(Pointee), Type.getLocalQualifiers());
+  Type = State.getAttributedType(
+      createSimpleAttr<BedrockFarAttr>(S.Context, PAttr), Type, Equivalent);
+  return true;
+}
+
 static bool HandleWebAssemblyFuncrefAttr(TypeProcessingState &State,
                                          QualType &QT, ParsedAttr &PAttr) {
   assert(PAttr.getKind() == ParsedAttr::AT_WebAssemblyFuncref);
@@ -7612,6 +7646,8 @@ static Attr *getCCTypeAttr(ASTContext &Ctx, ParsedAttr &Attr) {
     return createSimpleAttr<PreserveAllAttr>(Ctx, Attr);
   case ParsedAttr::AT_M68kRTD:
     return createSimpleAttr<M68kRTDAttr>(Ctx, Attr);
+  case ParsedAttr::AT_BedrockFar:
+    return createSimpleAttr<BedrockFarAttr>(Ctx, Attr);
   case ParsedAttr::AT_PreserveNone:
     return createSimpleAttr<PreserveNoneAttr>(Ctx, Attr);
   case ParsedAttr::AT_RISCVVectorCC:
@@ -8223,6 +8259,10 @@ static bool handleFunctionTypeAttr(TypeProcessingState &state, ParsedAttr &attr,
     Equivalent =
       unwrapped.wrap(S, S.Context.adjustFunctionType(unwrapped.get(), EI));
   }
+  if (CC == CC_BedrockFar)
+    Equivalent = S.Context.getAddrSpaceQualType(
+        S.Context.removeAddrSpaceQualType(Equivalent),
+        getLangASFromTargetAS(1));
   type = state.getAttributedType(CCAttr, type, Equivalent);
   return true;
 }
@@ -8912,6 +8952,17 @@ static void processTypeAttrs(TypeProcessingState &state, QualType &type,
       // FIXME: This attribute needs to actually be handled, but if we ignore
       // it it breaks large amounts of Linux software.
       attr.setUsedAsTypeAttr();
+      break;
+    case ParsedAttr::AT_BedrockFar:
+      attr.setUsedAsTypeAttr();
+      if (type->isPointerType()) {
+        handleBedrockFarPointerTypeAttr(state, attr, type);
+        break;
+      }
+      if (TAL == TAL_DeclSpec)
+        distributeFunctionTypeAttrFromDeclSpec(state, attr, type, CFT);
+      else if (!handleFunctionTypeAttr(state, attr, type, CFT))
+        distributeFunctionTypeAttr(state, attr, type);
       break;
     case ParsedAttr::AT_OpenCLPrivateAddressSpace:
     case ParsedAttr::AT_OpenCLGlobalAddressSpace:
@@ -10135,6 +10186,20 @@ QualType Sema::BuildAtomicType(QualType T, SourceLocation Loc) {
     // are allowed or not; for simplicity, ban them for the moment.
     if (RequireCompleteType(Loc, T, diag::err_atomic_specifier_bad_type, 0))
       return QualType();
+
+    if (Context.getTargetInfo().getTriple().getArch() ==
+        llvm::Triple::bedrock) {
+      if (T->isPointerType() &&
+          Context.getTargetAddressSpace(
+              T->getPointeeType().getAddressSpace()) == 1) {
+        Diag(Loc, diag::err_bedrock_far_atomic_type);
+        return QualType();
+      }
+      if (Context.getTypeSize(T) > 64) {
+        Diag(Loc, diag::err_bedrock_wide_atomic_type) << T;
+        return QualType();
+      }
+    }
 
     int DisallowedKind = -1;
     if (T->isArrayType())

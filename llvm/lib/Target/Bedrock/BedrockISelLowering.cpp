@@ -556,7 +556,8 @@ static SDValue promoteToLocVT(SDValue Value, const CCValAssign &VA,
 }
 
 static bool isSupportedCallingConv(CallingConv::ID CallConv) {
-  return CallConv == CallingConv::C || CallConv == CallingConv::Fast;
+  return CallConv == CallingConv::C || CallConv == CallingConv::Fast ||
+         CallConv == CallingConv::Bedrock_Far;
 }
 
 static bool referencesFrameIndex(SDValue Value,
@@ -718,7 +719,8 @@ BedrockTargetLowering::LowerCall(TargetLowering::CallLoweringInfo &CLI,
     ArgValues[I] = FIPtr;
   }
 
-  uint64_t CallFrameSize = 8 + CCInfo.getStackSize();
+  bool IsFarCall = CallConv == CallingConv::Bedrock_Far;
+  uint64_t CallFrameSize = (IsFarCall ? 0 : 8) + CCInfo.getStackSize();
   Chain = DAG.getCALLSEQ_START(Chain, CallFrameSize, 0, DL);
 
   SmallVector<std::pair<Register, SDValue>, 8> RegsToPass;
@@ -736,7 +738,7 @@ BedrockTargetLowering::LowerCall(TargetLowering::CallLoweringInfo &CLI,
     if (!StackPtr.getNode())
       StackPtr = DAG.getCopyFromReg(
           Chain, DL, Bedrock::SP, getPointerTy(DAG.getDataLayout()));
-    int64_t CallerOffset = 8 + VA.getLocMemOffset();
+    int64_t CallerOffset = (IsFarCall ? 0 : 8) + VA.getLocMemOffset();
     SDValue Address = DAG.getNode(
         ISD::ADD, DL, getPointerTy(DAG.getDataLayout()), StackPtr,
         DAG.getIntPtrConstant(CallerOffset, DL));

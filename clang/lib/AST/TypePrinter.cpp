@@ -1156,6 +1156,9 @@ void TypePrinter::printFunctionAfter(const FunctionType::ExtInfo &Info,
     case CC_M68kRTD:
       OS << " __attribute__((m68k_rtd))";
       break;
+    case CC_BedrockFar:
+      OS << " __far";
+      break;
     case CC_PreserveNone:
       OS << " __attribute__((preserve_none))";
       break;
@@ -1857,6 +1860,9 @@ void TypePrinter::printAttributedBefore(const AttributedType *T,
   if (T->isWebAssemblyFuncrefSpec())
     OS << "__funcref";
 
+  if (T->getAttrKind() == attr::BedrockFar)
+    OS << " __far";
+
   // Print nullability type specifiers.
   if (T->getImmediateNullability()) {
     if (T->getAttrKind() == attr::TypeNonNull)
@@ -1891,7 +1897,8 @@ void TypePrinter::printAttributedAfter(const AttributedType *T,
   // Some attributes are printed as qualifiers before the type, so we have
   // nothing left to do.
   if (T->getAttrKind() == attr::ObjCKindOf || T->isMSTypeSpec() ||
-      T->getImmediateNullability() || T->isWebAssemblyFuncrefSpec())
+      T->getImmediateNullability() || T->isWebAssemblyFuncrefSpec() ||
+      T->getAttrKind() == attr::BedrockFar)
     return;
 
   // Don't print the inert __unsafe_unretained attribute at all.
@@ -2009,6 +2016,7 @@ void TypePrinter::printAttributedAfter(const AttributedType *T,
   case attr::CmseNSCall:
   case attr::AnnotateType:
   case attr::WebAssemblyFuncref:
+  case attr::BedrockFar:
   case attr::ArmAgnostic:
   case attr::ArmStreaming:
   case attr::ArmStreamingCompatible:

@@ -96,6 +96,8 @@ unsigned CodeGenTypes::ClangCallConvToLLVMCallConv(CallingConv CC) {
     return llvm::CallingConv::SwiftTail;
   case CC_M68kRTD:
     return llvm::CallingConv::M68k_RTD;
+  case CC_BedrockFar:
+    return llvm::CallingConv::Bedrock_Far;
   case CC_PreserveNone:
     return llvm::CallingConv::PreserveNone;
     // clang-format off
@@ -303,6 +305,9 @@ static CallingConv getCallingConventionForDecl(const ObjCMethodDecl *D,
 
   if (D->hasAttr<M68kRTDAttr>())
     return CC_M68kRTD;
+
+  if (D->hasAttr<BedrockFarAttr>())
+    return CC_BedrockFar;
 
   if (D->hasAttr<PreserveNoneAttr>())
     return CC_PreserveNone;

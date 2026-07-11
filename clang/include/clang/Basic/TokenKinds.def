@@ -743,6 +743,7 @@ KEYWORD(_Null_unspecified        , KEYALL)
 
 // WebAssembly Type Extension
 KEYWORD(__funcref                     , KEYALL)
+KEYWORD(__far                         , KEYALL)
 
 // Microsoft extensions which should be disabled in strict conformance mode
 KEYWORD(__ptr64                       , KEYMS)

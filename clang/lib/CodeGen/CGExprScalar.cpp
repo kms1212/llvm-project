@@ -5077,6 +5077,16 @@ Value *ScalarExprEmitter::EmitCompare(const BinaryOperator *E,
     Value *LHS = BOInfo.LHS;
     Value *RHS = BOInfo.RHS;
 
+    // Bedrock far-pointer identity is the canonical low address. Segment
+    // images carry access metadata and intentionally do not participate in
+    // equality or ordering.
+    if (LHSTy->isPointerType() &&
+        CGF.CGM.getTarget().getTriple().getArch() == llvm::Triple::bedrock &&
+        cast<llvm::PointerType>(LHS->getType())->getAddressSpace() == 1) {
+      LHS = Builder.CreatePtrToInt(LHS, Builder.getInt64Ty(), "far.addr.lhs");
+      RHS = Builder.CreatePtrToInt(RHS, Builder.getInt64Ty(), "far.addr.rhs");
+    }
+
     // If AltiVec, the comparison results in a numeric type, so we use
     // intrinsics comparing vectors and giving 0 or 1 as a result
     if (LHSTy->isVectorType() && !E->getType()->isVectorType()) {

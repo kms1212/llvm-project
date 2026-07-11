@@ -7339,6 +7339,10 @@ def err_atomic_specifier_bad_type
             "%select{incomplete |array |function |reference |atomic |qualified "
             "|sizeless ||integer |}0type "
             "%1 %select{|||||||which is not trivially copyable||in C23}0">;
+def err_bedrock_far_atomic_type
+    : Error<"a Bedrock far pointer cannot be the type of an atomic object">;
+def err_bedrock_wide_atomic_type
+    : Error<"bedrock atomic object type %0 is wider than 64 bits">;
 def warn_atomic_member_access : Warning<
   "accessing a member of an atomic structure or union is undefined behavior">,
   InGroup<DiagGroup<"atomic-access">>, DefaultError;
@@ -8361,6 +8365,17 @@ def err_bad_cxx_cast_addr_space_mismatch : Error<
   "%select{const_cast|static_cast|reinterpret_cast|dynamic_cast|"
   "C-style cast|functional-style cast|addrspace_cast}0 from %1 to %2 converts between mismatching address"
   " spaces">;
+def err_bedrock_far_function_pointer_cast
+    : Error<"conversion between ordinary and far function-pointer categories "
+            "is not allowed">;
+def err_bedrock_far_function_redeclaration
+    : Error<"redeclaration changes a function between ordinary and far calling "
+            "categories">;
+def err_bedrock_far_wrong_type
+    : Error<"'__far' only applies to pointer and function declarators">;
+def err_bedrock_far_pointer_small_integer_cast
+    : Error<"conversion between a Bedrock far pointer and integer type %0 "
+            "loses the far representation">;
 def ext_bad_cxx_cast_qualifiers_away_incoherent : ExtWarn<
   "ISO C++ does not allow "
   "%select{const_cast|static_cast|reinterpret_cast|dynamic_cast|C-style cast|"

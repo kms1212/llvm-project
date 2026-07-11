@@ -425,15 +425,18 @@ CodeGenModule::CodeGenModule(ASTContext &C,
   PointerAlignInBytes =
       C.toCharUnitsFromBits(C.getTargetInfo().getPointerAlign(LangAS::Default))
           .getQuantity();
-  SizeSizeInBytes =
-    C.toCharUnitsFromBits(C.getTargetInfo().getMaxPointerWidth()).getQuantity();
+  // Bedrock's AS1 far pointers are 128-bit carriers, while intptr_t, size_t,
+  // and ptrdiff_t remain the 64-bit near-address types used by the C ABI.
+  unsigned CPointerWidth = C.getTargetInfo().getMaxPointerWidth();
+  if (C.getTargetInfo().getTriple().getArch() == llvm::Triple::bedrock)
+    CPointerWidth = C.getTargetInfo().getPointerWidth(LangAS::Default);
+  SizeSizeInBytes = C.toCharUnitsFromBits(CPointerWidth).getQuantity();
   IntAlignInBytes =
     C.toCharUnitsFromBits(C.getTargetInfo().getIntAlign()).getQuantity();
   CharTy =
     llvm::IntegerType::get(LLVMContext, C.getTargetInfo().getCharWidth());
   IntTy = llvm::IntegerType::get(LLVMContext, C.getTargetInfo().getIntWidth());
-  IntPtrTy = llvm::IntegerType::get(LLVMContext,
-    C.getTargetInfo().getMaxPointerWidth());
+  IntPtrTy = llvm::IntegerType::get(LLVMContext, CPointerWidth);
   Int8PtrTy = llvm::PointerType::get(LLVMContext,
                                      C.getTargetAddressSpace(LangAS::Default));
   const llvm::DataLayout &DL = M.getDataLayout();
@@ -2857,6 +2860,14 @@ void CodeGenModule::SetLLVMFunctionAttributesForDefinition(const Decl *D,
 
   F->addFnAttrs(B);
 
+  // Far entries must retain their distinct control-transfer and escaped-memory
+  // semantics in the version 1 ABI. Do not let an inline attribute erase the
+  // LCALL/LRET boundary.
+  if (F->getCallingConv() == llvm::CallingConv::Bedrock_Far) {
+    F->removeFnAttr(llvm::Attribute::AlwaysInline);
+    F->addFnAttr(llvm::Attribute::NoInline);
+  }
+
   unsigned alignment = D->getMaxAlignment() / Context.getCharWidth();
   if (alignment)
     F->setAlignment(llvm::Align(alignment));
@@ -5051,9 +5062,13 @@ llvm::Constant *CodeGenModule::GetOrCreateLLVMFunction(
     bool DontDefer, bool IsThunk, llvm::AttributeList ExtraAttrs,
     ForDefinition_t IsForDefinition) {
   const Decl *D = GD.getDecl();
+  const auto *FD = dyn_cast_or_null<FunctionDecl>(D);
+  const unsigned FunctionAS =
+      FD ? getTypes().getTargetAddressSpace(FD->getType())
+         : getDataLayout().getProgramAddressSpace();
 
   std::string NameWithoutMultiVersionMangling;
-  if (const FunctionDecl *FD = cast_or_null<FunctionDecl>(D)) {
+  if (FD) {
     // For the device mark the function as one that should be emitted.
     if (getLangOpts().OpenMPIsTargetDevice && OpenMPRuntime &&
         !OpenMPRuntime->markAsGlobalTarget(GD) && FD->isDefined() &&
@@ -5125,7 +5140,7 @@ llvm::Constant *CodeGenModule::GetOrCreateLLVMFunction(
     }
 
     if ((isa<llvm::Function>(Entry) || isa<llvm::GlobalAlias>(Entry)) &&
-        (Entry->getValueType() == Ty)) {
+        Entry->getAddressSpace() == FunctionAS && Entry->getValueType() == Ty) {
       return Entry;
     }
 
@@ -5150,7 +5165,7 @@ llvm::Constant *CodeGenModule::GetOrCreateLLVMFunction(
   }
 
   llvm::Function *F =
-      llvm::Function::Create(FTy, llvm::Function::ExternalLinkage,
+      llvm::Function::Create(FTy, llvm::Function::ExternalLinkage, FunctionAS,
                              Entry ? StringRef() : MangledName, &getModule());
 
   // Store the declaration associated with this function so it is potentially

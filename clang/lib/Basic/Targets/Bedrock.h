@@ -66,6 +66,20 @@ public:
   }
 
   bool hasBitIntType() const override { return true; }
+
+  CallingConvCheckResult checkCallingConvention(CallingConv CC) const override {
+    return CC == CC_C || CC == CC_BedrockFar ? CCCR_OK : CCCR_Warning;
+  }
+
+  uint64_t getMaxPointerWidth() const override { return 128; }
+
+protected:
+  uint64_t getPointerWidthV(LangAS AS) const override {
+    return getTargetAddressSpace(AS) == 1 ? 128 : PointerWidth;
+  }
+  uint64_t getPointerAlignV(LangAS AS) const override {
+    return getTargetAddressSpace(AS) == 1 ? 128 : PointerAlign;
+  }
 };
 
 } // namespace targets

@@ -3826,6 +3826,17 @@ bool Sema::MergeFunctionDecl(FunctionDecl *New, NamedDecl *&OldD, Scope *S,
     return true;
   }
 
+  if (Context.getTargetInfo().getTriple().getArch() == llvm::Triple::bedrock) {
+    auto IsFarFunction = [&](QualType T) {
+      return Context.getTargetAddressSpace(T.getAddressSpace()) == 1;
+    };
+    if (IsFarFunction(Old->getType()) != IsFarFunction(New->getType())) {
+      Diag(New->getLocation(), diag::err_bedrock_far_function_redeclaration);
+      Diag(OldLocation, diag::note_previous_declaration);
+      return true;
+    }
+  }
+
   // If a function is first declared with a calling convention, but is later
   // declared or defined without one, all following decls assume the calling
   // convention of the first.

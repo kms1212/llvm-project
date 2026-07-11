@@ -1271,6 +1271,7 @@ Parser::isCXXDeclarationSpecifier(ImplicitTypenameContext AllowImplicitTypename,
 
     // WebAssemblyFuncref
   case tok::kw___funcref:
+  case tok::kw___far:
     return TPResult::True;
 
     // Borland

@@ -103,7 +103,10 @@ inline bool CC_Bedrock(unsigned ValNo, MVT ValVT, MVT LocVT,
     return false;
   }
 
-  const bool IsGeneralPair = OrigTy && OrigTy->isIntegerTy(128);
+  const bool IsGeneralPair =
+      OrigTy && (OrigTy->isIntegerTy(128) ||
+                 (OrigTy->isPointerTy() &&
+                  cast<PointerType>(OrigTy)->getAddressSpace() == 1));
   // The fixed and variable portions intentionally use different placement
   // rules. Every unnamed argument occupies one complete 16-byte stack slot;
   // it neither consumes nor exhausts either register cursor.
