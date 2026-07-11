@@ -45,6 +45,8 @@ public:
   EVT getSetCCResultType(const DataLayout &DL, LLVMContext &Context,
                          EVT VT) const override;
   MVT getScalarShiftAmountTy(const DataLayout &DL, EVT VT) const override;
+  SDValue BuildSDIVPow2(SDNode *N, const APInt &Divisor, SelectionDAG &DAG,
+                        SmallVectorImpl<SDNode *> &Created) const override;
   unsigned getJumpTableEncoding() const override;
   bool isJumpTableRelative() const override { return true; }
   bool ShouldShrinkFPConstant(EVT VT) const override { return false; }

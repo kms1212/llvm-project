@@ -129,6 +129,31 @@ MVT BedrockTargetLowering::getScalarShiftAmountTy(const DataLayout &DL,
   return MVT::i64;
 }
 
+SDValue
+BedrockTargetLowering::BuildSDIVPow2(SDNode *N, const APInt &Divisor,
+                                     SelectionDAG &DAG,
+                                     SmallVectorImpl<SDNode *> &) const {
+  EVT VT = N->getValueType(0);
+  const Function &F = DAG.getMachineFunction().getFunction();
+  if ((VT != MVT::i32 && VT != MVT::i64) ||
+      (!F.hasMinSize() && !F.hasOptSize()))
+    return SDValue();
+
+  unsigned ImmBytes = Divisor.isSignedIntN(8)    ? 1
+                      : Divisor.isSignedIntN(16) ? 2
+                      : Divisor.isSignedIntN(32) ? 4
+                                                 : 8;
+  constexpr unsigned LongDivBytes = 4;
+  constexpr unsigned WorstCaseCopyBytes = 2;
+  constexpr unsigned ExpandedSDIVPow2Bytes = 16;
+  if (LongDivBytes + ImmBytes + WorstCaseCopyBytes >= ExpandedSDIVPow2Bytes)
+    return SDValue();
+
+  // At -Oz/-Os the immediate DIVS is smaller even when two-address lowering
+  // needs a copy. Non-size builds keep the shift expansion for lower latency.
+  return SDValue(N, 0);
+}
+
 unsigned BedrockTargetLowering::getJumpTableEncoding() const {
   return MachineJumpTableInfo::EK_LabelDifference32;
 }

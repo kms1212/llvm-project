@@ -69,6 +69,13 @@ let isPseudo = 1, isCodeGenOnly = 1,
     hasNoSchedulingInfo =
         1 in def RAW_EXPR : BedrockInst<(outs), (ins variable_ops), "">;
 
+// Marks a counted loop whose REPG counter is intentionally reused as a
+// body-local scratch register.  The late assembly printer consumes this marker
+// while forming the repeat group; it never reaches the emitted instruction
+// stream.
+let isPseudo = 1, isCodeGenOnly = 1, hasNoSchedulingInfo = 1 in
+def REPG_SCRATCH : BedrockInst<(outs), (ins GPR64:$counter), "">;
+
 class BedrockPseudo<dag outs, dag ins, list<dag> pattern = []>
     : BedrockInst<outs, ins, "", pattern> {
   let isPseudo = 1;
@@ -532,6 +539,10 @@ def DIVSL3rr : BedrockPseudo<(outs GPR64:$rd),
                              (ins GPR64:$lhs, GPR64:$rhs)>;
 def DIVSQ3rr : BedrockPseudo<(outs GPR64:$rd),
                              (ins GPR64:$lhs, GPR64:$rhs)>;
+def DIVSL3ri : BedrockPseudo<(outs GPR64:$rd),
+                             (ins GPR64:$lhs, i64imm:$imm)>;
+def DIVSQ3ri : BedrockPseudo<(outs GPR64:$rd),
+                             (ins GPR64:$lhs, i64imm:$imm)>;
 def MODUL3rr : BedrockPseudo<(outs GPR64:$rd),
                              (ins GPR64:$lhs, GPR64:$rhs)>;
 def MODUQ3rr : BedrockPseudo<(outs GPR64:$rd),
@@ -736,6 +747,8 @@ def LEAfi : BedrockPseudo<(outs GPR64:$rd),
                           (ins i64imm:$base, i64imm:$offset)>;
 def LEAro : BedrockPseudo<(outs GPR64:$rd),
                           (ins GPR64:$base, i64imm:$offset)>;
+def LEArx : BedrockPseudo<(outs GPR64:$rd),
+                          (ins GPR64:$base, GPR64:$index, i64imm:$scale)>;
 
 let mayLoad = 1, mayStore = 1 in {
 def MOVLmmrr : BedrockPseudo<(outs), (ins GPR64:$srcbase, GPR64:$dstbase)>;

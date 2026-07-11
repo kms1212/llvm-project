@@ -18,11 +18,20 @@ using namespace llvm;
 
 BedrockFrameLowering::BedrockFrameLowering(const BedrockSubtarget &STI)
     : TargetFrameLowering(TargetFrameLowering::StackGrowsDown, Align(16), 0,
-                          Align(16)) {}
+                          Align(8)) {}
 
 void BedrockFrameLowering::emitPrologue(MachineFunction &MF,
                                         MachineBasicBlock &MBB) const {
-  uint64_t StackSize = MF.getFrameInfo().getStackSize();
+  MachineFrameInfo &MFI = MF.getFrameInfo();
+  uint64_t StackSize = MFI.getStackSize();
+  // CALL pushes an eight-byte return address.  Choose the smallest caller
+  // frame whose size is 8 modulo 16, instead of first rounding the raw frame
+  // to 16 and then adding another eight bytes.  A leaf only needs the ABI's
+  // eight-byte internal alignment.  Object offsets remain relative to the
+  // 16-byte-aligned incoming SP, so their declared alignment is preserved.
+  StackSize = MFI.hasCalls() ? alignTo(StackSize + 8, Align(16)) - 8
+                             : alignTo(StackSize, Align(8));
+  MFI.setStackSize(StackSize);
   if (StackSize == 0)
     return;
 
@@ -34,7 +43,8 @@ void BedrockFrameLowering::emitPrologue(MachineFunction &MF,
 
 void BedrockFrameLowering::emitEpilogue(MachineFunction &MF,
                                         MachineBasicBlock &MBB) const {
-  uint64_t StackSize = MF.getFrameInfo().getStackSize();
+  const MachineFrameInfo &MFI = MF.getFrameInfo();
+  uint64_t StackSize = MFI.getStackSize();
   if (StackSize == 0)
     return;
 

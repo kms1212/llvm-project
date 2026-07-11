@@ -130,6 +130,8 @@ STATISTIC(NumIntroducedGlobalBaseAbsAccessesFolded,
           "Number of absolute global memory accesses folded with a new base");
 STATISTIC(NumCalleeSavedConstantReusesFolded,
           "Number of callee-saved constant materializations folded by reuse");
+STATISTIC(NumRepgCounterScratchRegsFolded,
+          "Number of REPG counters reused as loop scratch registers");
 
 namespace {
 class BedrockPreEmitPeephole : public MachineFunctionPass {
@@ -270,6 +272,8 @@ private:
   static bool foldCalleeSavedPaddingPair(MachineFunction &MF,
                                          const TargetInstrInfo &TII);
   static bool foldDeadCalleeSavedPairs(MachineFunction &MF);
+  static bool foldRepgCounterScratch(MachineFunction &MF,
+                                     const TargetInstrInfo &TII);
   static bool foldSelectFalseImmediateOp(MachineFunction &MF,
                                          const TargetInstrInfo &TII);
   static bool foldHexDigitSelect(MachineFunction &MF,
@@ -543,6 +547,8 @@ bool BedrockPreEmitPeephole::writesFlags(const MachineInstr &MI) {
   case Bedrock::DIVUQ3rr:
   case Bedrock::DIVSL3rr:
   case Bedrock::DIVSQ3rr:
+  case Bedrock::DIVSL3ri:
+  case Bedrock::DIVSQ3ri:
   case Bedrock::MODUL3rr:
   case Bedrock::MODUQ3rr:
   case Bedrock::MODSL3rr:
@@ -4151,6 +4157,7 @@ static bool isHighPreservingLongOp(unsigned Opcode) {
   case Bedrock::MULL3rr:
   case Bedrock::DIVUL3rr:
   case Bedrock::DIVSL3rr:
+  case Bedrock::DIVSL3ri:
   case Bedrock::MODUL3rr:
   case Bedrock::MODSL3rr:
     return true;
@@ -5667,6 +5674,13 @@ static bool hasExplicitTouchOfAnyReg(const MachineFunction &MF, Register Reg0,
   return false;
 }
 
+static bool isIgnoredSingleSaveRestore(const MachineInstr &MI, Register Reg) {
+  return (MI.getOpcode() == Bedrock::PUSHr ||
+          MI.getOpcode() == Bedrock::POPr) &&
+         MI.getNumExplicitOperands() == 1 && MI.getOperand(0).isReg() &&
+         MI.getOperand(0).getReg() == Reg;
+}
+
 bool BedrockPreEmitPeephole::foldDeadCalleeSavedPairs(MachineFunction &MF) {
   for (unsigned PairIndex = 0; PairIndex != 4; ++PairIndex) {
     Register First;
@@ -5696,6 +5710,366 @@ bool BedrockPreEmitPeephole::foldDeadCalleeSavedPairs(MachineFunction &MF) {
 
     if (Removed)
       return true;
+  }
+
+  for (Register Reg : {Bedrock::R8, Bedrock::R9, Bedrock::R10, Bedrock::R11,
+                       Bedrock::R12, Bedrock::R13, Bedrock::R14}) {
+    bool HasExplicitTouch = false;
+    for (const MachineBasicBlock &MBB : MF) {
+      for (const MachineInstr &MI : MBB) {
+        if (MI.isDebugInstr() || isIgnoredSingleSaveRestore(MI, Reg))
+          continue;
+        if (any_of(MI.explicit_operands(), [Reg](const MachineOperand &MO) {
+              return MO.isReg() && MO.getReg() == Reg;
+            })) {
+          HasExplicitTouch = true;
+          break;
+        }
+      }
+      if (HasExplicitTouch)
+        break;
+    }
+    if (HasExplicitTouch)
+      continue;
+
+    bool Removed = false;
+    for (MachineBasicBlock &MBB : MF) {
+      for (auto I = MBB.begin(); I != MBB.end();) {
+        if (isIgnoredSingleSaveRestore(*I, Reg)) {
+          auto NextI = std::next(I);
+          I->eraseFromParent();
+          I = NextI;
+          Removed = true;
+          continue;
+        }
+        ++I;
+      }
+      MBB.removeLiveIn(Reg.asMCReg());
+    }
+    if (Removed)
+      return true;
+  }
+
+  return false;
+}
+
+static bool hasSavedPair(const MachineFunction &MF, unsigned PairIndex) {
+  bool HasPush = false;
+  bool HasPop = false;
+  for (const MachineBasicBlock &MBB : MF) {
+    for (const MachineInstr &MI : MBB) {
+      if (MI.getNumExplicitOperands() != 1 || !MI.getOperand(0).isImm() ||
+          MI.getOperand(0).getImm() != static_cast<int64_t>(PairIndex))
+        continue;
+      HasPush |= MI.getOpcode() == Bedrock::PUSHPi;
+      HasPop |= MI.getOpcode() == Bedrock::POPPi;
+    }
+  }
+  return HasPush && HasPop;
+}
+
+static bool hasSavedReg(const MachineFunction &MF, Register Reg) {
+  bool HasPush = false;
+  bool HasPop = false;
+  for (const MachineBasicBlock &MBB : MF) {
+    for (const MachineInstr &MI : MBB) {
+      if (!isIgnoredSingleSaveRestore(MI, Reg))
+        continue;
+      HasPush |= MI.getOpcode() == Bedrock::PUSHr;
+      HasPop |= MI.getOpcode() == Bedrock::POPr;
+    }
+  }
+  return HasPush && HasPop;
+}
+
+static MachineBasicBlock::iterator firstNonDebugMI(MachineBasicBlock &MBB) {
+  auto I = MBB.begin();
+  while (I != MBB.end() && I->isDebugInstr())
+    ++I;
+  return I;
+}
+
+static MachineBasicBlock::iterator
+previousNonDebugMI(MachineBasicBlock::iterator I, MachineBasicBlock &MBB) {
+  while (I != MBB.begin()) {
+    --I;
+    if (!I->isDebugInstr())
+      return I;
+  }
+  return MBB.end();
+}
+
+static const MachineBasicBlock *layoutSuccessor(const MachineBasicBlock &MBB) {
+  const MachineFunction &MF = *MBB.getParent();
+  auto I = std::next(MBB.getIterator());
+  return I == MF.end() ? nullptr : &*I;
+}
+
+static bool isCounterDecrement(const MachineInstr &MI, Register CounterReg) {
+  return MI.getOpcode() == Bedrock::DECQ3r &&
+         MI.getNumExplicitOperands() >= 2 && MI.getOperand(0).isReg() &&
+         MI.getOperand(1).isReg() && MI.getOperand(0).getReg() == CounterReg &&
+         MI.getOperand(1).getReg() == CounterReg;
+}
+
+static bool instructionTouchesReg(const MachineInstr &MI, Register Reg) {
+  return any_of(MI.operands(), [Reg](const MachineOperand &MO) {
+    return MO.isReg() && MO.getReg() == Reg;
+  });
+}
+
+static bool isIgnoredPairSaveRestore(const MachineInstr &MI,
+                                     unsigned PairIndex) {
+  return (MI.getOpcode() == Bedrock::PUSHPi ||
+          MI.getOpcode() == Bedrock::POPPi) &&
+         MI.getNumExplicitOperands() == 1 && MI.getOperand(0).isImm() &&
+         MI.getOperand(0).getImm() == static_cast<int64_t>(PairIndex);
+}
+
+static bool tryReuseRepgCounterInBody(MachineFunction &MF,
+                                      MachineBasicBlock &Body,
+                                      MachineInstr &BodyStart,
+                                      MachineInstr &DecMI, Register CounterReg,
+                                      const TargetInstrInfo &TII) {
+  SmallPtrSet<const MachineInstr *, 32> BodyRange;
+  bool ReachedDec = false;
+  for (auto I = BodyStart.getIterator(); I != Body.end(); ++I) {
+    if (&*I == &DecMI) {
+      ReachedDec = true;
+      break;
+    }
+    if (I->isDebugInstr())
+      continue;
+    if (I->isCall() || I->isTerminator() || I->isBranch() || I->isReturn() ||
+        I->isMetaInstruction() || instructionTouchesReg(*I, CounterReg))
+      return false;
+    BodyRange.insert(&*I);
+  }
+  if (!ReachedDec || BodyRange.empty())
+    return false;
+
+  for (unsigned PairIndex = 0; PairIndex != 4; ++PairIndex) {
+    Register First;
+    Register Second;
+    if (!getCalleeSavedPairRegs(PairIndex, First, Second))
+      continue;
+
+    bool SavedPair = hasSavedPair(MF, PairIndex);
+
+    for (Register ScratchReg : {First, Second}) {
+      Register MateReg = ScratchReg == First ? Second : First;
+      bool SavedSingle = hasSavedReg(MF, ScratchReg);
+      if ((!SavedPair && !SavedSingle) ||
+          Body.isLiveIn(ScratchReg.asMCReg()) ||
+          (SavedPair &&
+           hasExplicitTouchOfAnyReg(MF, MateReg, MateReg, PairIndex)))
+        continue;
+
+      bool TouchedOutside = false;
+      for (const MachineBasicBlock &MBB : MF) {
+        for (const MachineInstr &MI : MBB) {
+          if (MI.isDebugInstr() || BodyRange.contains(&MI) ||
+              (SavedPair && isIgnoredPairSaveRestore(MI, PairIndex)) ||
+              (SavedSingle &&
+               isIgnoredSingleSaveRestore(MI, ScratchReg)))
+            continue;
+          if (instructionTouchesReg(MI, ScratchReg)) {
+            TouchedOutside = true;
+            break;
+          }
+        }
+        if (TouchedOutside)
+          break;
+      }
+      if (TouchedOutside)
+        continue;
+
+      bool SawScratch = false;
+      bool Defined = false;
+      bool Invalid = false;
+      for (auto I = BodyStart.getIterator(); &*I != &DecMI; ++I) {
+        if (I->isDebugInstr())
+          continue;
+        bool Reads =
+            any_of(I->operands(), [ScratchReg](const MachineOperand &MO) {
+              return MO.isReg() && !MO.isDef() && MO.getReg() == ScratchReg;
+            });
+        bool Defines =
+            any_of(I->operands(), [ScratchReg](const MachineOperand &MO) {
+              return MO.isReg() && MO.isDef() && MO.getReg() == ScratchReg;
+            });
+        if (Reads && !Defined) {
+          Invalid = true;
+          break;
+        }
+        SawScratch |= Reads || Defines;
+        Defined |= Defines;
+      }
+      if (Invalid || !SawScratch || !Defined)
+        continue;
+
+      BuildMI(Body, BodyStart.getIterator(), BodyStart.getDebugLoc(),
+              TII.get(Bedrock::REPG_SCRATCH))
+          .addReg(CounterReg);
+      for (auto I = BodyStart.getIterator(); &*I != &DecMI; ++I) {
+        for (MachineOperand &MO : I->operands()) {
+          if (MO.isReg() && MO.getReg() == ScratchReg)
+            MO.setReg(CounterReg);
+        }
+      }
+      // The repeat engine restores the captured next-count value at the group
+      // boundary.  Keeping the physical register live through the removed
+      // scalar decrement models that boundary for the machine verifier.
+      MF.getRegInfo().clearKillFlags(CounterReg);
+
+      ++NumRepgCounterScratchRegsFolded;
+      return true;
+    }
+  }
+
+  return false;
+}
+
+bool BedrockPreEmitPeephole::foldRepgCounterScratch(
+    MachineFunction &MF, const TargetInstrInfo &TII) {
+  // Header-loop form: TEST counter; JE exit; body; DEC counter; JMP header.
+  for (MachineBasicBlock &Header : MF) {
+    auto TestI = firstNonDebugMI(Header);
+    if (TestI == Header.end() || TestI->getOpcode() != Bedrock::TESTQrr ||
+        TestI->getNumExplicitOperands() < 2 || !TestI->getOperand(0).isReg() ||
+        !TestI->getOperand(1).isReg() ||
+        TestI->getOperand(0).getReg() != TestI->getOperand(1).getReg())
+      continue;
+    Register CounterReg = TestI->getOperand(0).getReg();
+
+    auto BranchI = std::next(TestI);
+    while (BranchI != Header.end() && BranchI->isDebugInstr())
+      ++BranchI;
+    if (BranchI == Header.end() || BranchI->getOpcode() != Bedrock::BRCC ||
+        BranchI->getOperand(1).getImm() != 0x2)
+      continue;
+    auto AfterBranch = std::next(BranchI);
+    while (AfterBranch != Header.end() && AfterBranch->isDebugInstr())
+      ++AfterBranch;
+    if (AfterBranch != Header.end())
+      continue;
+
+    MachineBasicBlock *Body = Header.getNextNode();
+    MachineBasicBlock *Exit = BranchI->getOperand(0).getMBB();
+    if (!Body || Body == Exit || !Header.isSuccessor(Body) ||
+        !Header.isSuccessor(Exit) || layoutSuccessor(*Body) != Exit ||
+        Body->pred_size() != 1 || *Body->pred_begin() != &Header)
+      continue;
+    auto BodyBrI = Body->getLastNonDebugInstr();
+    if (BodyBrI == Body->end() || BodyBrI->getOpcode() != Bedrock::BR ||
+        BodyBrI->getOperand(0).getMBB() != &Header)
+      continue;
+
+    auto BodyStartI = firstNonDebugMI(*Body);
+    for (auto I = BodyStartI; I != BodyBrI; ++I) {
+      if (I->isDebugInstr())
+        continue;
+      if (isCounterDecrement(*I, CounterReg) &&
+          tryReuseRepgCounterInBody(MF, *Body, *BodyStartI, *I, CounterReg,
+                                    TII)) {
+        while (foldDeadCalleeSavedPairs(MF)) {
+        }
+        return true;
+      }
+      if (instructionTouchesReg(*I, CounterReg))
+        break;
+    }
+  }
+
+  // Guarded self-loop form.  Requiring the canonical guard and one-instruction
+  // preheader keeps the transformation coupled to the assembly printer's REPG
+  // recognizer; if that recognizer cannot remove the scalar loop, this form is
+  // not changed.
+  for (MachineBasicBlock &Body : MF) {
+    auto BranchI = Body.getLastNonDebugInstr();
+    if (BranchI == Body.end() || BranchI->getOpcode() != Bedrock::BRCC ||
+        BranchI->getOperand(0).getMBB() != &Body ||
+        BranchI->getOperand(1).getImm() != 0x3)
+      continue;
+    const MachineBasicBlock *Exit = layoutSuccessor(Body);
+    if (!Exit || !Body.isSuccessor(Exit))
+      continue;
+    auto TestI = previousNonDebugMI(BranchI, Body);
+    auto DecI =
+        TestI == Body.end() ? Body.end() : previousNonDebugMI(TestI, Body);
+    if (TestI == Body.end() || DecI == Body.end() ||
+        TestI->getOpcode() != Bedrock::TESTQrr ||
+        TestI->getNumExplicitOperands() < 2 || !TestI->getOperand(0).isReg() ||
+        !TestI->getOperand(1).isReg() ||
+        TestI->getOperand(0).getReg() != TestI->getOperand(1).getReg())
+      continue;
+    Register CounterReg = TestI->getOperand(0).getReg();
+    if (!isCounterDecrement(*DecI, CounterReg))
+      continue;
+
+    MachineBasicBlock *Preheader = nullptr;
+    for (MachineBasicBlock *Pred : Body.predecessors()) {
+      if (Pred == &Body)
+        continue;
+      if (Preheader) {
+        Preheader = nullptr;
+        break;
+      }
+      Preheader = Pred;
+    }
+    if (!Preheader || Preheader->succ_size() != 1 ||
+        !Preheader->isSuccessor(&Body))
+      continue;
+    auto CounterDefI = firstNonDebugMI(*Preheader);
+    if (CounterDefI == Preheader->end() ||
+        (CounterDefI->getOpcode() != Bedrock::EXTZQLrr &&
+         CounterDefI->getOpcode() != Bedrock::MOVQrr) ||
+        CounterDefI->getNumExplicitOperands() < 2 ||
+        !CounterDefI->getOperand(0).isReg() ||
+        !CounterDefI->getOperand(1).isReg() ||
+        CounterDefI->getOperand(0).getReg() != CounterReg)
+      continue;
+    auto AfterCounterDef = std::next(CounterDefI);
+    while (AfterCounterDef != Preheader->end() &&
+           AfterCounterDef->isDebugInstr())
+      ++AfterCounterDef;
+    if (AfterCounterDef != Preheader->end())
+      continue;
+
+    Register SourceReg = CounterDefI->getOperand(1).getReg();
+    if (Preheader->pred_size() != 1)
+      continue;
+    MachineBasicBlock *Guard = *Preheader->pred_begin();
+    if (layoutSuccessor(*Guard) != Preheader)
+      continue;
+    auto GuardBrI = Guard->getLastNonDebugInstr();
+    auto GuardTestI = GuardBrI == Guard->end()
+                          ? Guard->end()
+                          : previousNonDebugMI(GuardBrI, *Guard);
+    if (GuardBrI == Guard->end() || GuardTestI == Guard->end() ||
+        GuardBrI->getOpcode() != Bedrock::BRCC ||
+        GuardBrI->getOperand(1).getImm() != 0xe ||
+        GuardBrI->getOperand(0).getMBB() == Preheader ||
+        GuardBrI->getOperand(0).getMBB() == &Body ||
+        !Guard->isSuccessor(Preheader) ||
+        !Guard->isSuccessor(GuardBrI->getOperand(0).getMBB()) ||
+        (GuardTestI->getOpcode() != Bedrock::TESTLrr &&
+         GuardTestI->getOpcode() != Bedrock::TESTQrr) ||
+        GuardTestI->getNumExplicitOperands() < 2 ||
+        !GuardTestI->getOperand(0).isReg() ||
+        !GuardTestI->getOperand(1).isReg() ||
+        GuardTestI->getOperand(0).getReg() != SourceReg ||
+        GuardTestI->getOperand(1).getReg() != SourceReg)
+      continue;
+
+    auto BodyStartI = firstNonDebugMI(Body);
+    if (BodyStartI != Body.end() &&
+        tryReuseRepgCounterInBody(MF, Body, *BodyStartI, *DecI, CounterReg,
+                                  TII)) {
+      while (foldDeadCalleeSavedPairs(MF)) {
+      }
+      return true;
+    }
   }
 
   return false;
@@ -6386,7 +6760,39 @@ bool BedrockPreEmitPeephole::foldTailCall(MachineBasicBlock::iterator I,
   if (CallMI.getOpcode() != Bedrock::CALL)
     return false;
 
+  MachineInstr *CallPadDown = nullptr;
+  for (auto PrevI = I; PrevI != MBB.begin();) {
+    --PrevI;
+    if (PrevI->isDebugInstr())
+      continue;
+    if (PrevI->getOpcode() == Bedrock::ADJSP_DOWN &&
+        PrevI->getOperand(0).isImm() && PrevI->getOperand(0).getImm() == 8) {
+      CallPadDown = &*PrevI;
+      break;
+    }
+    if (PrevI->isCall() || PrevI->isInlineAsm() || PrevI->isTerminator() ||
+        isFrameAccessOpcode(PrevI->getOpcode()) ||
+        instructionTouchesReg(*PrevI, Bedrock::R15) ||
+        PrevI->getOpcode() == Bedrock::ADJSP_DOWN ||
+        PrevI->getOpcode() == Bedrock::ADJSP_UP ||
+        PrevI->getOpcode() == Bedrock::PUSHr ||
+        PrevI->getOpcode() == Bedrock::PUSHPi ||
+        PrevI->getOpcode() == Bedrock::POPr ||
+        PrevI->getOpcode() == Bedrock::POPPi)
+      break;
+  }
+
   auto RetI = std::next(I);
+  MachineInstr *CallPadUp = nullptr;
+  auto AfterCallI = RetI;
+  while (AfterCallI != MBB.end() && AfterCallI->isDebugInstr())
+    ++AfterCallI;
+  if (AfterCallI != MBB.end() &&
+      AfterCallI->getOpcode() == Bedrock::ADJSP_UP &&
+      AfterCallI->getOperand(0).isImm() &&
+      AfterCallI->getOperand(0).getImm() == 8)
+    CallPadUp = &*AfterCallI;
+
   while (RetI != MBB.end() &&
          (RetI->isDebugInstr() || isTailCallEpilogueInstr(*RetI)))
     ++RetI;
@@ -6395,6 +6801,10 @@ bool BedrockPreEmitPeephole::foldTailCall(MachineBasicBlock::iterator I,
 
   DebugLoc DL = CallMI.getDebugLoc();
   BuildMI(MBB, RetI, DL, TII.get(Bedrock::TAILCALL)).add(CallMI.getOperand(0));
+  if (CallPadDown && CallPadUp) {
+    CallPadDown->eraseFromParent();
+    CallPadUp->eraseFromParent();
+  }
   CallMI.eraseFromParent();
   RetI->eraseFromParent();
   ++NumTailCallsFolded;
@@ -7061,6 +7471,9 @@ bool BedrockPreEmitPeephole::runOnMachineFunction(MachineFunction &MF) {
     Changed = true;
 
   while (foldIntroducedGlobalBaseAbsAccesses(MF, TII))
+    Changed = true;
+
+  while (foldRepgCounterScratch(MF, TII))
     Changed = true;
 
   return Changed;

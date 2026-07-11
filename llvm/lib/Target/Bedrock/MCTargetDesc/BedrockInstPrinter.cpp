@@ -32,9 +32,9 @@ void BedrockInstPrinter::printInst(const MCInst *MI, uint64_t Address,
   if (MI->getOpcode() == Bedrock::RAW || MI->getOpcode() == Bedrock::RAW_EXPR) {
     if (BedrockMC::getRawInstBytes(*MI, RawBytes) &&
         BedrockMC::decodeRawInst(RawBytes, RawSize, RawText))
-      O << RawText;
+      O << '\t' << RawText;
     else
-      O << "<unknown>";
+      O << "\t<unknown>";
     printAnnotation(O, Annot);
     return;
   }

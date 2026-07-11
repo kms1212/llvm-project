@@ -93,6 +93,18 @@ void BedrockMCCodeEmitter::encodeInstruction(const MCInst &MI,
   case Bedrock::AFENCE:
     EmitByte(0x0c);
     return;
+  case Bedrock::ADDQisp:
+    if (MI.getOperand(0).getImm() == 8) {
+      EmitByte(0x0e);
+      return;
+    }
+    break;
+  case Bedrock::SUBQisp:
+    if (MI.getOperand(0).getImm() == 8) {
+      EmitByte(0x0f);
+      return;
+    }
+    break;
   case Bedrock::PUSHPi:
     EmitByte(0x10 | static_cast<uint8_t>(MI.getOperand(0).getImm()));
     return;

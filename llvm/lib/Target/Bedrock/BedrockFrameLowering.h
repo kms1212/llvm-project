@@ -26,6 +26,8 @@ public:
   eliminateCallFramePseudoInstr(MachineFunction &MF, MachineBasicBlock &MBB,
                                 MachineBasicBlock::iterator MI) const override;
 
+  bool targetHandlesStackFrameRounding() const override { return true; }
+
 protected:
   bool hasFPImpl(const MachineFunction &MF) const override;
 };

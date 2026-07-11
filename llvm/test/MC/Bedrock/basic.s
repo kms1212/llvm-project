@@ -66,6 +66,10 @@ add.q 255, sp
 ; CHECK-INST: add.q	255, sp
 ; CHECK-ENCODING: encoding: [0xaf,0xff]
 
+add.q 8, sp
+; CHECK-INST: add.q	8, sp
+; CHECK-ENCODING: encoding: [0x0e]
+
 jmp -1
 ; CHECK-INST: jmp	-1
 ; CHECK-ENCODING: encoding: [0xb0,0xff]
@@ -73,6 +77,10 @@ jmp -1
 sub.q 1, sp
 ; CHECK-INST: sub.q	1, sp
 ; CHECK-ENCODING: encoding: [0xb1,0x01]
+
+sub.q 8, sp
+; CHECK-INST: sub.q	8, sp
+; CHECK-ENCODING: encoding: [0x0f]
 
 jeq -2
 ; CHECK-INST: jeq	-2

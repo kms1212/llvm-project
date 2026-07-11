@@ -295,7 +295,8 @@ bool decodeExtraShortPayload(uint8_t Payload, SmallString<128> &Text) {
       {0x03, "lret"},    {0x04, "iret"},   {0x05, "syscall"},
       {0x06, "sysret"},  {0x07, "bkpt"},   {0x08, "wait"},
       {0x09, "yield"},   {0x0a, "rfence"}, {0x0b, "wfence"},
-      {0x0c, "afence"},
+      {0x0c, "afence"},  {0x0e, "add.q\t8, sp"},
+      {0x0f, "sub.q\t8, sp"},
   };
 
   for (const FixedForm &Form : FixedForms) {

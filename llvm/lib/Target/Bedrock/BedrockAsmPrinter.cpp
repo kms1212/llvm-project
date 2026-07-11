@@ -110,7 +110,7 @@ private:
                                    const MachineInstr *StartMI,
                                    const MachineInstr *EndMI,
                                    const MachineInstr *SkipMI,
-                                   Register CounterReg,
+                                   Register CounterReg, bool AllowCounterDefs,
                                    uint16_t &BodyBytes) const;
 
   void emitMCInst(const MCInst &Inst);
@@ -195,6 +195,7 @@ private:
   void emitCmpTestJump(const MachineInstr *MI);
   void emitDJ(const MachineInstr *MI);
   void emitRegOffsetAddress(const MachineInstr *MI);
+  void emitScaledIndexAddress(const MachineInstr *MI);
   void emitMemMoveFold(const MachineInstr *LoadMI,
                        const MachineInstr *StoreMI, unsigned Size,
                        MemAddrKind SrcKind, MemAddrKind DstKind);
@@ -1913,6 +1914,7 @@ static bool isSimpleDefCopyBackOpcode(unsigned Opcode) {
   case Bedrock::CONST64:
   case Bedrock::LEAfi:
   case Bedrock::LEAro:
+  case Bedrock::LEArx:
   case Bedrock::CLRQr:
   case Bedrock::EXTSQBrr:
   case Bedrock::EXTSQWrr:
@@ -4097,7 +4099,8 @@ static bool isPositiveCounterGuard(const MachineBasicBlock &GuardMBB,
   }
 }
 
-static bool isRepgBodyCandidate(const MachineInstr &MI, Register CounterReg) {
+static bool isRepgBodyCandidate(const MachineInstr &MI, Register CounterReg,
+                                bool AllowCounterDefs) {
   if (MI.isDebugInstr())
     return true;
 
@@ -4109,7 +4112,7 @@ static bool isRepgBodyCandidate(const MachineInstr &MI, Register CounterReg) {
       MI.getOpcode() == Bedrock::ADJSP_UP)
     return false;
 
-  return !definesReg(MI, CounterReg);
+  return AllowCounterDefs || !definesReg(MI, CounterReg);
 }
 
 static bool isRedundantIncDecTest(const MachineInstr &UnaryMI,
@@ -4711,7 +4714,7 @@ void BedrockAsmPrinter::collectCmpTestJumpBranches(const MachineFunction &MF) {
 bool BedrockAsmPrinter::computeRepeatGroupBodyBytes(
     const MachineBasicBlock &MBB, const MachineInstr *StartMI,
     const MachineInstr *EndMI, const MachineInstr *SkipMI, Register CounterReg,
-    uint16_t &BodyBytes) const {
+    bool AllowCounterDefs, uint16_t &BodyBytes) const {
   uint64_t Size = 0;
   bool InRange = false;
   bool SawBody = false;
@@ -4733,7 +4736,7 @@ bool BedrockAsmPrinter::computeRepeatGroupBodyBytes(
 
     if (SeenSkippedDec && (usesReg(MI, CounterReg) || mayReadFlags(MI)))
       return false;
-    if (!isRepgBodyCandidate(MI, CounterReg))
+    if (!isRepgBodyCandidate(MI, CounterReg, AllowCounterDefs))
       return false;
 
     Size += getInstSizeForBranchLayout(MI);
@@ -4763,8 +4766,7 @@ bool BedrockAsmPrinter::tryCollectHeaderRepeatGroup(
 
   Register CounterReg = HeaderTestI->getOperand(0).getReg();
   auto HeaderBrI = nextNonDebug(std::next(HeaderTestI), HeaderMBB);
-  if (HeaderBrI == HeaderMBB.end() ||
-      HeaderBrI->getOpcode() != Bedrock::BRCC ||
+  if (HeaderBrI == HeaderMBB.end() || HeaderBrI->getOpcode() != Bedrock::BRCC ||
       HeaderBrI->getOperand(1).getImm() != 0x2)
     return false;
   if (nextNonDebug(std::next(HeaderBrI), HeaderMBB) != HeaderMBB.end())
@@ -4773,7 +4775,8 @@ bool BedrockAsmPrinter::tryCollectHeaderRepeatGroup(
   const MachineBasicBlock *ExitMBB = HeaderBrI->getOperand(0).getMBB();
   const MachineBasicBlock *BodyMBB = getLayoutNextBlock(HeaderMBB);
   if (!BodyMBB || BodyMBB == ExitMBB || !HeaderMBB.isSuccessor(BodyMBB) ||
-      !HeaderMBB.isSuccessor(ExitMBB) || getLayoutNextBlock(*BodyMBB) != ExitMBB)
+      !HeaderMBB.isSuccessor(ExitMBB) ||
+      getLayoutNextBlock(*BodyMBB) != ExitMBB)
     return false;
   if (BodyMBB->pred_size() != 1 || *BodyMBB->pred_begin() != &HeaderMBB)
     return false;
@@ -4787,6 +4790,18 @@ bool BedrockAsmPrinter::tryCollectHeaderRepeatGroup(
   if (BodyStartI == BodyMBB->end() || &*BodyStartI == &*BodyBrI)
     return false;
 
+  const MachineInstr *ScratchMarker = nullptr;
+  if (BodyStartI->getOpcode() == Bedrock::REPG_SCRATCH) {
+    if (BodyStartI->getNumExplicitOperands() != 1 ||
+        !BodyStartI->getOperand(0).isReg() ||
+        BodyStartI->getOperand(0).getReg() != CounterReg)
+      return false;
+    ScratchMarker = &*BodyStartI;
+    BodyStartI = nextNonDebug(std::next(BodyStartI), *BodyMBB);
+    if (BodyStartI == BodyMBB->end() || &*BodyStartI == &*BodyBrI)
+      return false;
+  }
+
   const MachineInstr *DecMI = nullptr;
   for (auto I = BodyStartI; I != BodyBrI; ++I) {
     if (I->isDebugInstr())
@@ -4795,7 +4810,7 @@ bool BedrockAsmPrinter::tryCollectHeaderRepeatGroup(
       DecMI = &*I;
       break;
     }
-    if (definesReg(*I, CounterReg))
+    if (!ScratchMarker && definesReg(*I, CounterReg))
       return false;
   }
   if (!DecMI)
@@ -4803,7 +4818,8 @@ bool BedrockAsmPrinter::tryCollectHeaderRepeatGroup(
 
   uint16_t BodyBytes = 0;
   if (!computeRepeatGroupBodyBytes(*BodyMBB, &*BodyStartI, &*BodyBrI, DecMI,
-                                   CounterReg, BodyBytes))
+                                   CounterReg, ScratchMarker != nullptr,
+                                   BodyBytes))
     return false;
 
   RepgStarts[&*BodyStartI] = {CounterReg, BodyBytes};
@@ -4811,6 +4827,8 @@ bool BedrockAsmPrinter::tryCollectHeaderRepeatGroup(
   RepgSuppressedInstrs.insert(&*HeaderBrI);
   RepgSuppressedInstrs.insert(DecMI);
   RepgSuppressedInstrs.insert(&*BodyBrI);
+  if (ScratchMarker)
+    RepgSuppressedInstrs.insert(ScratchMarker);
   RepgEndMarkers.insert(&*BodyBrI);
   return true;
 }
@@ -4881,9 +4899,22 @@ bool BedrockAsmPrinter::tryCollectGuardedSelfRepeatGroup(
     return false;
   }
 
+  const MachineInstr *ScratchMarker = nullptr;
+  if (BodyStartI->getOpcode() == Bedrock::REPG_SCRATCH) {
+    if (BodyStartI->getNumExplicitOperands() != 1 ||
+        !BodyStartI->getOperand(0).isReg() ||
+        BodyStartI->getOperand(0).getReg() != CounterReg)
+      return false;
+    ScratchMarker = &*BodyStartI;
+    BodyStartI = nextNonDebug(std::next(BodyStartI), BodyMBB);
+    if (BodyStartI == BodyMBB.end() || &*BodyStartI == DecMI)
+      return false;
+  }
+
   uint16_t BodyBytes = 0;
   if (!computeRepeatGroupBodyBytes(BodyMBB, &*BodyStartI, DecMI, nullptr,
-                                   CounterReg, BodyBytes)) {
+                                   CounterReg, ScratchMarker != nullptr,
+                                   BodyBytes)) {
     LLVM_DEBUG(dbgs() << "Bedrock REPG: reject self loop invalid body "
                       << BodyMBB.getName() << '\n');
     return false;
@@ -4896,6 +4927,8 @@ bool BedrockAsmPrinter::tryCollectGuardedSelfRepeatGroup(
   RepgSuppressedInstrs.insert(DecMI);
   RepgSuppressedInstrs.insert(TestMI);
   RepgSuppressedInstrs.insert(BranchMI);
+  if (ScratchMarker)
+    RepgSuppressedInstrs.insert(ScratchMarker);
   RepgEndMarkers.insert(BranchMI);
 
   DJBranches.erase(BranchMI);
@@ -5092,6 +5125,8 @@ BedrockAsmPrinter::getInstSizeForBranchLayout(const MachineInstr &MI) const {
   case Bedrock::MAXSQ3ri:
   case Bedrock::MULL3ri:
   case Bedrock::MULQ3ri:
+  case Bedrock::DIVSL3ri:
+  case Bedrock::DIVSQ3ri:
     return RepgHeaderSize + getOptionalRegCopySize(MI, 0, 1) + 4 +
            getSignedAutoSize(MI.getOperand(2).getImm());
   case Bedrock::ADDL3ri:
@@ -5258,6 +5293,8 @@ BedrockAsmPrinter::getInstSizeForBranchLayout(const MachineInstr &MI) const {
     if (isSymbolicAddressOperand(MI.getOperand(2)))
       return RepgHeaderSize + 7;
     llvm_unreachable("invalid Bedrock register-offset LEA operand");
+  case Bedrock::LEArx:
+    return RepgHeaderSize + 5;
   case Bedrock::MOVLmmrr:
   case Bedrock::MOVQmmrr:
     return RepgHeaderSize + 4 +
@@ -5401,6 +5438,8 @@ BedrockAsmPrinter::getInstSizeForBranchLayout(const MachineInstr &MI) const {
     uint64_t Amount = MI.getOperand(0).getImm();
     if (Amount == 0)
       return RepgHeaderSize;
+    if (Amount == 8)
+      return RepgHeaderSize + 1;
     if (Amount <= 0xff)
       return RepgHeaderSize + 2;
     if (isUInt<16>(Amount))
@@ -6403,6 +6442,24 @@ void BedrockAsmPrinter::emitRegOffsetAddress(const MachineInstr *MI) {
               lowerSymbolOperand(OffsetOp));
 }
 
+void BedrockAsmPrinter::emitScaledIndexAddress(const MachineInstr *MI) {
+  Register DstReg = MI->getOperand(0).getReg();
+  Register BaseReg = MI->getOperand(1).getReg();
+  Register IndexReg = MI->getOperand(2).getReg();
+  int64_t Scale = MI->getOperand(3).getImm();
+  if (Scale < 1 || Scale > 3)
+    report_fatal_error("invalid Bedrock scaled-index LEA scale");
+
+  uint8_t EA;
+  SmallVector<uint8_t, 8> Tail;
+  getMemEAForRegIndex(BaseReg, IndexReg, EA, Tail);
+
+  SmallVector<uint8_t, 16> Bytes;
+  if (!BedrockMC::encodeMedium(getLeaPayload(EA, Scale, DstReg), Tail, Bytes))
+    report_fatal_error("failed to encode Bedrock scaled-index address");
+  emitRaw(Bytes);
+}
+
 static char getSizeSuffix(unsigned Size) {
   static const char Suffixes[] = {'b', 'w', 'l', 'q'};
   assert(Size < std::size(Suffixes) && "invalid Bedrock size suffix");
@@ -7013,6 +7070,11 @@ void BedrockAsmPrinter::emitStackAdjust(const MachineInstr *MI, bool IsDown) {
   uint64_t Amount = MI->getOperand(0).getImm();
   if (Amount == 0)
     return;
+
+  if (Amount == 8) {
+    emitRaw({static_cast<uint8_t>(IsDown ? 0x0f : 0x0e)});
+    return;
+  }
 
   if (Amount <= 0xff) {
     MCInst Inst;
@@ -7677,6 +7739,12 @@ void BedrockAsmPrinter::emitInstruction(const MachineInstr *MI) {
   case Bedrock::DIVSQ3rr:
     emitLongBinaryPseudo(MI, "1111000010zz101ddddeeeeeee", 3);
     return;
+  case Bedrock::DIVSL3ri:
+    emitLongBinaryImmPseudo(MI, "1111000010zz101ddddeeeeeee", 2);
+    return;
+  case Bedrock::DIVSQ3ri:
+    emitLongBinaryImmPseudo(MI, "1111000010zz101ddddeeeeeee", 3);
+    return;
   case Bedrock::MODUL3rr:
     emitLongBinaryPseudo(MI, "1111000010zz110ddddeeeeeee", 2);
     return;
@@ -7833,6 +7901,9 @@ void BedrockAsmPrinter::emitInstruction(const MachineInstr *MI) {
     return;
   case Bedrock::LEAro:
     emitRegOffsetAddress(MI);
+    return;
+  case Bedrock::LEArx:
+    emitScaledIndexAddress(MI);
     return;
   case Bedrock::MOVLmmrr:
     emitMemMoveRegRegPseudo(MI, 2);

@@ -9,12 +9,12 @@ declare void @use(ptr)
 
 define i64 @stack_slot(i64 %x) {
 ; CHECK-LABEL: stack_slot:
-; CHECK: sub.q 16, sp
-; CHECK: mov.q r0, [sp + 8]
-; CHECK: lea.q [sp + 8], r0
+; CHECK: sub.q 8, sp
+; CHECK: mov.q r0, [sp]
+; CHECK: mov.q sp, r0
 ; CHECK: call use
-; CHECK: mov.q [sp + 8], r0
-; CHECK: add.q 16, sp
+; CHECK: mov.q [sp], r0
+; CHECK: add.q 8, sp
 ; CHECK: ret
   %slot = alloca i64, align 8
   store i64 %x, ptr %slot, align 8
@@ -70,10 +70,10 @@ define i64 @setcc(i64 %a, i64 %b) {
 
 define i64 @medium_branch(i64 %a, ptr %p) {
 ; CHECK-LABEL: medium_branch:
-; CHECK: pushp 3
+; CHECK: push r8
 ; CHECK: mov.q r1, r8
 ; CHECK: testjeq.q r0, r0, .LBB
-; CHECK: popp 3
+; CHECK: pop r8
 ; CHECK: ret
 ; OBJ-LABEL: <medium_branch>:
 ; OBJ: cf c5 90 30 b7 00{{[ \t]+}}testjeq.q{{[ \t]+}}r0, r0, 183

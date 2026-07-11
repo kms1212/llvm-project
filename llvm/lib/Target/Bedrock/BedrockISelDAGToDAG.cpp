@@ -113,6 +113,8 @@ static unsigned getBinaryImmPseudo(unsigned Opcode, MVT VT) {
     return Is64 ? Bedrock::SHRQ3ri : Bedrock::SHRL3ri;
   case ISD::SRA:
     return Is64 ? Bedrock::SARQ3ri : Bedrock::SARL3ri;
+  case ISD::SDIV:
+    return Is64 ? Bedrock::DIVSQ3ri : Bedrock::DIVSL3ri;
   default:
     llvm_unreachable("unexpected Bedrock binary immediate pseudo");
   }
@@ -452,6 +454,47 @@ static bool selectRegOffsetLEA(SelectionDAG *DAG, SDNode *N, SDLoc DL) {
 
   SDValue Ops[] = {Base, DAG->getTargetConstant(Offset, DL, MVT::i64)};
   DAG->SelectNodeTo(N, Bedrock::LEAro, MVT::i64, Ops);
+  return true;
+}
+
+static bool selectScaledIndexLEA(SelectionDAG *DAG, SDNode *N, SDLoc DL) {
+  if (N->getOpcode() != ISD::ADD || N->getValueType(0) != MVT::i64)
+    return false;
+
+  SDValue Base = N->getOperand(0);
+  SDValue ScaledIndex = N->getOperand(1);
+  if (Base.getOpcode() == ISD::SHL)
+    std::swap(Base, ScaledIndex);
+  if (ScaledIndex.getOpcode() != ISD::SHL)
+    return false;
+  if (isMaterializedAddressBase(Base))
+    return false;
+
+  auto *Scale = dyn_cast<ConstantSDNode>(ScaledIndex.getOperand(1));
+  if (!Scale)
+    return false;
+  uint64_t ScaleAmount = Scale->getZExtValue();
+  if (ScaleAmount < 1 || ScaleAmount > 3)
+    return false;
+
+  // Keep a shared scale explicit. Folding each of its address users would
+  // duplicate the scale in multiple LEAs and can also hide an indexed memory
+  // operand from the late folder.
+  if (!ScaledIndex.hasOneUse())
+    return false;
+
+  // Leave a single-use load address in its decomposed form. The late memory
+  // folder can then encode the same scale directly in the load, avoiding an
+  // otherwise redundant address-producing LEA.
+  if (N->hasOneUse() && N->use_begin()->getUser()->getOpcode() == ISD::LOAD)
+    return false;
+
+  SDValue Ops[] = {
+      Base,
+      ScaledIndex.getOperand(0),
+      DAG->getTargetConstant(ScaleAmount, DL, MVT::i64),
+  };
+  DAG->SelectNodeTo(N, Bedrock::LEArx, MVT::i64, Ops);
   return true;
 }
 
@@ -1027,6 +1070,9 @@ void BedrockDAGToDAGISel::Select(SDNode *N) {
       }
     }
 
+    if (selectScaledIndexLEA(CurDAG, N, DL))
+      return;
+
     if (selectRegOffsetLEA(CurDAG, N, DL))
       return;
 
@@ -1041,6 +1087,7 @@ void BedrockDAGToDAGISel::Select(SDNode *N) {
     case ISD::ROTR:
     case ISD::SRL:
     case ISD::SRA:
+    case ISD::SDIV:
       if (selectBinaryImmediate(CurDAG, N, DL, VT.getSimpleVT()))
         return;
       break;

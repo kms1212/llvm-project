@@ -1272,6 +1272,14 @@ bool tryEncodeShortInstruction(OperandVector &Operands,
     int64_t Imm;
     if (!getConstantImm(GetOp(1), Imm))
       return false;
+    if (Mnemonic == "add.q" && Imm == 8) {
+      encodeExtraShortPayload(0x0e, Bytes);
+      return true;
+    }
+    if (Mnemonic == "sub.q" && Imm == 8) {
+      encodeExtraShortPayload(0x0f, Bytes);
+      return true;
+    }
     if (Mnemonic == "add.q" && isUIntN(8, Imm)) {
       encodeShortPayload(0x2f00 | static_cast<uint8_t>(Imm), Bytes);
       return true;
