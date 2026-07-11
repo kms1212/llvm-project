@@ -35,6 +35,24 @@ def R13 : BedrockGPR<13, "r13">;
 def R14 : BedrockGPR<14, "r14">;
 def R15 : BedrockGPR<15, "r15">;
 def SP  : BedrockReg<0, 32, "sp">;
+def PC  : BedrockReg<0, 33, "pc">;
+def FLAGS : BedrockReg<0, 34, "flags">;
+def STATUS : BedrockReg<0, 35, "status">;
+
+// Segment and architectural state registers are deliberately absent from
+// allocatable register classes. They are named physical resources so calls,
+// far-memory pseudos, unwind information, and system intrinsics can model
+// their effects without exposing them to the register allocator.
+def CS  : BedrockReg<0, 36, "cs">;
+def DS  : BedrockReg<1, 37, "ds">;
+def SS  : BedrockReg<2, 38, "ss">;
+def GS0 : BedrockReg<3, 39, "gs0">;
+def GS1 : BedrockReg<4, 40, "gs1">;
+def GS2 : BedrockReg<5, 41, "gs2">;
+def GS3 : BedrockReg<6, 42, "gs3">;
+def GS4 : BedrockReg<7, 43, "gs4">;
+def FSTATUS : BedrockReg<0, 44, "fstatus">;
+def FFLAGS : BedrockReg<0, 45, "fflags">;
 
 def F0  : BedrockFPR<0,  16, "f0">;
 def F1  : BedrockFPR<1,  17, "f1">;

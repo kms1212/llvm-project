@@ -3495,6 +3495,14 @@ def BedrockFar : DeclOrTypeAttr, TargetSpecificAttr<TargetBedrock> {
   let Documentation = [Undocumented];
 }
 
+def CrossSegmentAccess : InheritableAttr,
+                         TargetSpecificAttr<TargetBedrock> {
+  let Spellings = [GCC<"cross_segment_access">];
+  let Subjects = SubjectList<[Function], ErrorDiag>;
+  let SimpleHandler = 1;
+  let Documentation = [Undocumented];
+}
+
 def PreserveNone : DeclOrTypeAttr,
                    TargetSpecificAttr<TargetArch<!listconcat(TargetAArch64.Arches, TargetAnyX86.Arches)>> {
   let Spellings = [Clang<"preserve_none">];

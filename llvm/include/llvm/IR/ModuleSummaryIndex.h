@@ -823,6 +823,9 @@ public:
     // if this bit is off, the function might be reachable or unreachable.
     unsigned MustBeUnreachable : 1;
 
+    // Function or call may escape the current segment's canonical image.
+    unsigned CrossSegmentAccess : 1;
+
     FFlags &operator&=(const FFlags &RHS) {
       this->ReadNone &= RHS.ReadNone;
       this->ReadOnly &= RHS.ReadOnly;
@@ -834,6 +837,7 @@ public:
       this->MayThrow &= RHS.MayThrow;
       this->HasUnknownCall &= RHS.HasUnknownCall;
       this->MustBeUnreachable &= RHS.MustBeUnreachable;
+      this->CrossSegmentAccess |= RHS.CrossSegmentAccess;
       return *this;
     }
 
@@ -841,7 +845,7 @@ public:
       return this->ReadNone | this->ReadOnly | this->NoRecurse |
              this->ReturnDoesNotAlias | this->NoInline | this->AlwaysInline |
              this->NoUnwind | this->MayThrow | this->HasUnknownCall |
-             this->MustBeUnreachable;
+             this->MustBeUnreachable | this->CrossSegmentAccess;
     }
 
     operator std::string() {
@@ -858,6 +862,7 @@ public:
       OS << ", mayThrow: " << this->MayThrow;
       OS << ", hasUnknownCall: " << this->HasUnknownCall;
       OS << ", mustBeUnreachable: " << this->MustBeUnreachable;
+      OS << ", crossSegmentAccess: " << this->CrossSegmentAccess;
       OS << ")";
       return Output;
     }

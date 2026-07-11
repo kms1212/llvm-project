@@ -720,6 +720,73 @@ static unsigned getStoreOpcode(const StoreSDNode *ST, bool IsFrame) {
   }
 }
 
+static unsigned getFarLoadOpcode(MVT VT, MVT MemVT, ISD::LoadExtType ExtType) {
+  if ((ExtType == ISD::NON_EXTLOAD || ExtType == ISD::EXTLOAD) &&
+      VT == MVT::f32 && MemVT == MVT::f32)
+    return Bedrock::FAR_FLOADS;
+  if ((ExtType == ISD::NON_EXTLOAD || ExtType == ISD::EXTLOAD) &&
+      VT == MVT::f64 && MemVT == MVT::f64)
+    return Bedrock::FAR_FLOADD;
+
+  if (ExtType == ISD::SEXTLOAD) {
+    switch (MemVT.SimpleTy) {
+    case MVT::i8:
+      return Bedrock::FAR_LOADB_S;
+    case MVT::i16:
+      return Bedrock::FAR_LOADW_S;
+    case MVT::i32:
+      return Bedrock::FAR_LOADL_S;
+    default:
+      report_fatal_error("unsupported signed-extending Bedrock far load");
+    }
+  }
+
+  if (ExtType == ISD::ZEXTLOAD) {
+    switch (MemVT.SimpleTy) {
+    case MVT::i8:
+      return Bedrock::FAR_LOADB_Z;
+    case MVT::i16:
+      return Bedrock::FAR_LOADW_Z;
+    case MVT::i32:
+      return Bedrock::FAR_LOADL_Z;
+    default:
+      report_fatal_error("unsupported zero-extending Bedrock far load");
+    }
+  }
+
+  switch (MemVT.SimpleTy) {
+  case MVT::i8:
+    return Bedrock::FAR_LOADB_Z;
+  case MVT::i16:
+    return Bedrock::FAR_LOADW_Z;
+  case MVT::i32:
+    return Bedrock::FAR_LOADL;
+  case MVT::i64:
+    return Bedrock::FAR_LOADQ;
+  default:
+    report_fatal_error("unsupported Bedrock far load");
+  }
+}
+
+static unsigned getFarStoreOpcode(MVT MemVT) {
+  switch (MemVT.SimpleTy) {
+  case MVT::i8:
+    return Bedrock::FAR_STOREB;
+  case MVT::i16:
+    return Bedrock::FAR_STOREW;
+  case MVT::i32:
+    return Bedrock::FAR_STOREL;
+  case MVT::i64:
+    return Bedrock::FAR_STOREQ;
+  case MVT::f32:
+    return Bedrock::FAR_FSTORES;
+  case MVT::f64:
+    return Bedrock::FAR_FSTORED;
+  default:
+    report_fatal_error("unsupported Bedrock far store");
+  }
+}
+
 static bool selectStoreImmediate(const StoreSDNode *ST, int64_t &Imm) {
   auto *CN = dyn_cast<ConstantSDNode>(ST->getValue());
   if (!CN)
@@ -862,6 +929,29 @@ void BedrockDAGToDAGISel::Select(SDNode *N) {
     if ((VT == MVT::i32 || VT == MVT::i64) &&
         selectMinMaxImmediate(CurDAG, N, DL, VT.getSimpleVT()))
       return;
+  }
+
+  if (N->getOpcode() == BedrockISD::FAR_LOAD) {
+    auto *Load = cast<MemIntrinsicSDNode>(N);
+    auto ExtType = static_cast<ISD::LoadExtType>(
+        cast<ConstantSDNode>(N->getOperand(3))->getZExtValue());
+    SDValue Ops[] = {N->getOperand(1), N->getOperand(2), N->getOperand(0)};
+    CurDAG->SelectNodeTo(N,
+                         getFarLoadOpcode(N->getValueType(0).getSimpleVT(),
+                                          Load->getMemoryVT().getSimpleVT(),
+                                          ExtType),
+                         N->getValueType(0), MVT::Other, Ops);
+    return;
+  }
+
+  if (N->getOpcode() == BedrockISD::FAR_STORE) {
+    auto *Store = cast<MemIntrinsicSDNode>(N);
+    SDValue Ops[] = {N->getOperand(1), N->getOperand(2), N->getOperand(3),
+                     N->getOperand(0)};
+    CurDAG->SelectNodeTo(N,
+                         getFarStoreOpcode(Store->getMemoryVT().getSimpleVT()),
+                         MVT::Other, Ops);
+    return;
   }
 
   if (auto *LD = dyn_cast<LoadSDNode>(N)) {

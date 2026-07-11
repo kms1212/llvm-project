@@ -941,6 +941,7 @@ Function *CodeExtractor::constructFunctionDeclaration(
       case Attribute::FnRetThunkExtern:
       case Attribute::Hot:
       case Attribute::HybridPatchable:
+      case Attribute::CrossSegmentAccess:
       case Attribute::NoRecurse:
       case Attribute::InlineHint:
       case Attribute::MinSize:

@@ -8,4 +8,12 @@
 
 #include "BedrockSelectionDAGInfo.h"
 
+#define GET_SDNODE_DESC
+#include "BedrockGenSDNodeInfo.inc"
+
 using namespace llvm;
+
+BedrockSelectionDAGInfo::BedrockSelectionDAGInfo()
+    : SelectionDAGGenTargetInfo(BedrockGenSDNodeInfo) {}
+
+BedrockSelectionDAGInfo::~BedrockSelectionDAGInfo() = default;

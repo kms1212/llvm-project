@@ -9,32 +9,13 @@
 #ifndef LLVM_LIB_TARGET_BEDROCK_BEDROCKISELLOWERING_H
 #define LLVM_LIB_TARGET_BEDROCK_BEDROCKISELLOWERING_H
 
+#include "BedrockSelectionDAGInfo.h"
 #include "llvm/CodeGen/SelectionDAG.h"
 #include "llvm/CodeGen/TargetLowering.h"
 
 namespace llvm {
 
 class BedrockSubtarget;
-
-namespace BedrockISD {
-enum NodeType : unsigned {
-  FIRST_NUMBER = ISD::BUILTIN_OP_END,
-  RET_FLAG,
-  CALL,
-  TAIL_CALL_CANDIDATE,
-  CMP,
-  TEST,
-  BR_CC,
-  SET_CC,
-  SELECT_CC,
-  SMAX,
-  SMIN,
-  UMAX,
-  UMIN,
-  SMAX_ZERO,
-  SMIN_ZERO,
-};
-} // namespace BedrockISD
 
 class BedrockTargetLowering : public TargetLowering {
   const BedrockSubtarget &Subtarget;
@@ -89,6 +70,8 @@ private:
   SDValue LowerMinMax(SDValue Op, SelectionDAG &DAG) const;
   SDValue LowerSIGN_EXTEND_INREG(SDValue Op, SelectionDAG &DAG) const;
   SDValue LowerVASTART(SDValue Op, SelectionDAG &DAG) const;
+  SDValue LowerFarLoad(SDValue Op, SelectionDAG &DAG) const;
+  SDValue LowerFarStore(SDValue Op, SelectionDAG &DAG) const;
 };
 
 } // namespace llvm

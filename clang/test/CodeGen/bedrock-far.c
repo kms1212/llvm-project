@@ -59,4 +59,4 @@ int less_far(far_int_ptr a, far_int_ptr b) { return a < b; }
 // CHECK: sub i64
 long difference_far(far_int_ptr a, far_int_ptr b) { return a - b; }
 
-// CHECK: attributes #0 = { noinline
+// CHECK: attributes #0 = { cross_segment_access noinline

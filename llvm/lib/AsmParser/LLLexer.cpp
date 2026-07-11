@@ -816,6 +816,7 @@ lltok::Kind LLLexer::LexIdentifier() {
   KEYWORD(mayThrow);
   KEYWORD(hasUnknownCall);
   KEYWORD(mustBeUnreachable);
+  KEYWORD(crossSegmentAccess);
   KEYWORD(calls);
   KEYWORD(callee);
   KEYWORD(params);

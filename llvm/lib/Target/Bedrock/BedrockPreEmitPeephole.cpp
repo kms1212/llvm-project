@@ -6758,8 +6758,13 @@ bool BedrockPreEmitPeephole::foldTailCall(MachineBasicBlock::iterator I,
                                           const TargetInstrInfo &TII) {
   MachineInstr &CallMI = *I;
   if (CallMI.getOpcode() != Bedrock::CALL_TAIL &&
-      CallMI.getOpcode() != Bedrock::CALLr_TAIL)
+      CallMI.getOpcode() != Bedrock::CALLr_TAIL &&
+      CallMI.getOpcode() != Bedrock::FARCALLr_TAIL &&
+      CallMI.getOpcode() != Bedrock::FARCALLi_TAIL)
     return false;
+  const bool IsFar = CallMI.getOpcode() == Bedrock::FARCALLr_TAIL ||
+                     CallMI.getOpcode() == Bedrock::FARCALLi_TAIL;
+  const bool IsFarReg = CallMI.getOpcode() == Bedrock::FARCALLr_TAIL;
 
   MachineInstr *CallPadDown = nullptr;
   for (auto PrevI = I; PrevI != MBB.begin();) {
@@ -6799,23 +6804,31 @@ bool BedrockPreEmitPeephole::foldTailCall(MachineBasicBlock::iterator I,
   while (RetI != MBB.end() &&
          (RetI->isDebugInstr() || isTailCallEpilogueInstr(*RetI)))
     ++RetI;
-  if (RetI == MBB.end() || RetI->getOpcode() != Bedrock::RET)
+  if (RetI == MBB.end() ||
+      RetI->getOpcode() != (IsFar ? Bedrock::LRET : Bedrock::RET))
     return false;
 
   // An indirect target may be allocated in a callee-saved register. Reject a
   // fold if restoring the caller would overwrite it before the final jump.
-  if (CallMI.getOpcode() == Bedrock::CALLr_TAIL) {
-    Register TargetReg = CallMI.getOperand(0).getReg();
-    for (auto Scan = std::next(I); Scan != RetI; ++Scan)
-      if (!Scan->isDebugInstr() && instructionTouchesReg(*Scan, TargetReg))
-        return false;
+  if (CallMI.getOpcode() == Bedrock::CALLr_TAIL || IsFar) {
+    unsigned NumTargetRegs = IsFarReg ? 2 : 1;
+    for (unsigned Op = 0; Op != NumTargetRegs; ++Op) {
+      Register TargetReg = CallMI.getOperand(Op).getReg();
+      for (auto Scan = std::next(I); Scan != RetI; ++Scan)
+        if (!Scan->isDebugInstr() && instructionTouchesReg(*Scan, TargetReg))
+          return false;
+    }
   }
 
   DebugLoc DL = CallMI.getDebugLoc();
-  unsigned TailOpcode = CallMI.getOpcode() == Bedrock::CALL_TAIL
-                            ? Bedrock::TAILCALL
-                            : Bedrock::BRIND;
-  BuildMI(MBB, RetI, DL, TII.get(TailOpcode)).add(CallMI.getOperand(0));
+  unsigned TailOpcode =
+      IsFar ? (IsFarReg ? Bedrock::FARTAILr : Bedrock::FARTAILi)
+      : CallMI.getOpcode() == Bedrock::CALL_TAIL ? Bedrock::TAILCALL
+                                                 : Bedrock::BRIND;
+  MachineInstrBuilder Tail = BuildMI(MBB, RetI, DL, TII.get(TailOpcode));
+  Tail.add(CallMI.getOperand(0));
+  if (IsFar)
+    Tail.add(CallMI.getOperand(1));
   if (CallPadDown && CallPadUp) {
     CallPadDown->eraseFromParent();
     CallPadUp->eraseFromParent();

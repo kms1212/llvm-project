@@ -784,6 +784,8 @@ static uint64_t getAttrKindEncoding(Attribute::AttrKind Kind) {
     return bitc::ATTR_KIND_ELEMENTTYPE;
   case Attribute::HybridPatchable:
     return bitc::ATTR_KIND_HYBRID_PATCHABLE;
+  case Attribute::CrossSegmentAccess:
+    return bitc::ATTR_KIND_CROSS_SEGMENT_ACCESS;
   case Attribute::InlineHint:
     return bitc::ATTR_KIND_INLINE_HINT;
   case Attribute::InReg:
@@ -1313,6 +1315,7 @@ static uint64_t getEncodedFFlags(FunctionSummary::FFlags Flags) {
   RawFlags |= (Flags.MayThrow << 7);
   RawFlags |= (Flags.HasUnknownCall << 8);
   RawFlags |= (Flags.MustBeUnreachable << 9);
+  RawFlags |= (Flags.CrossSegmentAccess << 10);
   return RawFlags;
 }
 

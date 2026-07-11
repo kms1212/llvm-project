@@ -1689,6 +1689,11 @@ void llvm::thinLTOFinalizeInModule(Module &TheModule,
 
           if (FS->fflags().NoUnwind && !F->doesNotThrow())
             F->setDoesNotThrow();
+
+          if (FS->fflags().CrossSegmentAccess) {
+            F->addFnAttr(Attribute::CrossSegmentAccess);
+            F->setMemoryEffects(MemoryEffects::unknown());
+          }
         }
       }
 

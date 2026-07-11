@@ -3063,6 +3063,14 @@ void CodeGenModule::ConstructAttributeList(StringRef Name,
     }
   }
 
+  const bool HasCrossSegmentAccess =
+      CallingConv == llvm::CallingConv::Bedrock_Far ||
+      (TargetDecl && TargetDecl->hasAttr<CrossSegmentAccessAttr>());
+  if (HasCrossSegmentAccess) {
+    FuncAttrs.addAttribute(llvm::Attribute::CrossSegmentAccess);
+    FuncAttrs.addMemoryAttr(llvm::MemoryEffects::unknown());
+  }
+
   AttrList = llvm::AttributeList::get(
       getLLVMContext(), llvm::AttributeSet::get(getLLVMContext(), FuncAttrs),
       llvm::AttributeSet::get(getLLVMContext(), RetAttrs), ArgAttrs);

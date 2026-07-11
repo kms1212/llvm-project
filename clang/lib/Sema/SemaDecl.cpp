@@ -12204,6 +12204,16 @@ static void CheckConstPureAttributesUsage(Sema &S, FunctionDecl *NewFD) {
   bool IsPure = NewFD->hasAttr<PureAttr>();
   bool IsConst = NewFD->hasAttr<ConstAttr>();
 
+  const auto *FT = NewFD->getType()->getAs<FunctionType>();
+  bool IsCrossSegment = NewFD->hasAttr<CrossSegmentAccessAttr>() ||
+                        (FT && FT->getCallConv() == CC_BedrockFar);
+  if (IsCrossSegment && (IsPure || IsConst)) {
+    S.Diag(NewFD->getLocation(), diag::err_bedrock_cross_segment_memory_attr)
+        << (IsConst ? "const" : "pure");
+    NewFD->dropAttrs<PureAttr, ConstAttr>();
+    return;
+  }
+
   // If there are no pure or const attributes, there's nothing to check.
   if (!IsPure && !IsConst)
     return;

@@ -15,6 +15,9 @@
 
 namespace llvm {
 
+class AAManager;
+class PassBuilder;
+
 class BedrockTargetMachine : public CodeGenTargetMachineImpl {
   std::unique_ptr<TargetLoweringObjectFile> TLOF;
   BedrockSubtarget Subtarget;
@@ -31,6 +34,9 @@ public:
   }
 
   TargetTransformInfo getTargetTransformInfo(const Function &F) const override;
+
+  void registerDefaultAliasAnalyses(AAManager &AAM) override;
+  void registerPassBuilderCallbacks(PassBuilder &PB) override;
 
   TargetLoweringObjectFile *getObjFileLowering() const override {
     return TLOF.get();

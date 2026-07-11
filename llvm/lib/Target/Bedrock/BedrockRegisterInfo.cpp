@@ -40,6 +40,11 @@ BedrockRegisterInfo::getReservedRegs(const MachineFunction &MF) const {
 
   Reserved.set(Bedrock::SP);
   Reserved.set(Bedrock::R15);
+  for (MCPhysReg Reg :
+       {Bedrock::PC, Bedrock::FLAGS, Bedrock::STATUS, Bedrock::CS, Bedrock::DS,
+        Bedrock::SS, Bedrock::GS0, Bedrock::GS1, Bedrock::GS2, Bedrock::GS3,
+        Bedrock::GS4, Bedrock::FSTATUS, Bedrock::FFLAGS})
+    Reserved.set(Reg);
 
   // FPR callee-save lowering needs separate validation before allocation.
   Reserved.set(Bedrock::F8);

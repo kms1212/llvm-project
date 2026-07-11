@@ -16,6 +16,7 @@ tablegen(LLVM BedrockGenSubtargetInfo.inc -gen-subtarget)
 add_public_tablegen_target(BedrockCommonTableGen)
 
 add_llvm_target(BedrockCodeGen
+  BedrockAliasAnalysis.cpp
   BedrockAsmPrinter.cpp
   BedrockFrameLowering.cpp
   BedrockInstrInfo.cpp

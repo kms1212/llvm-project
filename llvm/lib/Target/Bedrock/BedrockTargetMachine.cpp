@@ -8,15 +8,17 @@
 
 #include "BedrockTargetMachine.h"
 #include "Bedrock.h"
+#include "BedrockAliasAnalysis.h"
 #include "BedrockMachineFunctionInfo.h"
 #include "BedrockTargetTransformInfo.h"
 #include "TargetInfo/BedrockTargetInfo.h"
-#include "llvm/CodeGen/GlobalMerge.h"
 #include "llvm/Analysis/TargetTransformInfo.h"
+#include "llvm/CodeGen/GlobalMerge.h"
 #include "llvm/CodeGen/Passes.h"
 #include "llvm/CodeGen/TargetLoweringObjectFileImpl.h"
 #include "llvm/CodeGen/TargetPassConfig.h"
 #include "llvm/MC/TargetRegistry.h"
+#include "llvm/Passes/PassBuilder.h"
 #include "llvm/Support/CommandLine.h"
 #include "llvm/Support/Compiler.h"
 #include <optional>
@@ -58,6 +60,22 @@ BedrockTargetMachine::BedrockTargetMachine(const Target &T, const Triple &TT,
 TargetTransformInfo
 BedrockTargetMachine::getTargetTransformInfo(const Function &F) const {
   return TargetTransformInfo(std::make_unique<BedrockTTIImpl>(this, F));
+}
+
+void BedrockTargetMachine::registerDefaultAliasAnalyses(AAManager &AAM) {
+  AAM.registerFunctionAnalysis<BedrockAA>();
+}
+
+void BedrockTargetMachine::registerPassBuilderCallbacks(PassBuilder &PB) {
+  PB.registerAnalysisRegistrationCallback([](FunctionAnalysisManager &FAM) {
+    FAM.registerPass([] { return BedrockAA(); });
+  });
+  PB.registerParseAACallback([](StringRef Name, AAManager &AAM) {
+    if (Name != "bedrock-aa")
+      return false;
+    AAM.registerFunctionAnalysis<BedrockAA>();
+    return true;
+  });
 }
 
 MachineFunctionInfo *BedrockTargetMachine::createMachineFunctionInfo(

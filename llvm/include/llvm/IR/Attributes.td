@@ -141,6 +141,10 @@ def FnRetThunkExtern : EnumAttr<"fn_ret_thunk_extern", IntersectPreserve, [FnAtt
 /// Function has a hybrid patchable thunk.
 def HybridPatchable : EnumAttr<"hybrid_patchable", IntersectPreserve, [FnAttr]>;
 
+/// Function or call may access memory through a different segment image.
+def CrossSegmentAccess
+    : EnumAttr<"cross_segment_access", IntersectPreserve, [FnAttr]>;
+
 /// Pass structure in an alloca.
 def InAlloca : TypeAttr<"inalloca", IntersectPreserve, [ParamAttr]>;
 

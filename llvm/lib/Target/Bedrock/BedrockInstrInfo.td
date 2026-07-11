@@ -24,6 +24,13 @@ def SDT_BedrockCallSeqStart : SDCallSeqStart<[SDTCisVT<0, i64>,
 def SDT_BedrockCallSeqEnd : SDCallSeqEnd<[SDTCisVT<0, i64>,
                                            SDTCisVT<1, i64>]>;
 def SDT_BedrockCall : SDTypeProfile<0, -1, [SDTCisVT<0, iPTR>]>;
+def SDT_BedrockFarCall : SDTypeProfile<0, -1, [SDTCisVT<0, i64>,
+                                                   SDTCisVT<1, i64>]>;
+def SDT_BedrockFarLoad : SDTypeProfile<1, 3, [SDTCisVT<1, i64>,
+                                                   SDTCisVT<2, i64>,
+                                                   SDTCisVT<3, i32>]>;
+def SDT_BedrockFarStore : SDTypeProfile<0, 3, [SDTCisVT<1, i64>,
+                                                    SDTCisVT<2, i64>]>;
 def SDT_BedrockCmp : SDTypeProfile<0, 2, [SDTCisSameAs<0, 1>]>;
 def SDT_BedrockTest : SDTypeProfile<0, 1, [SDTCisInt<0>]>;
 def SDT_BedrockBrCC : SDTypeProfile<0, 2, [SDTCisVT<0, OtherVT>,
@@ -36,6 +43,9 @@ def SDT_BedrockSelectCC : SDTypeProfile<1, 5, [SDTCisSameAs<1, 2>,
                                                SDTCisVT<5, i32>]>;
 def SDT_BedrockUnaryInt : SDTypeProfile<1, 1, [SDTCisSameAs<0, 1>,
                                                SDTCisInt<0>]>;
+def SDT_BedrockBinaryInt : SDTypeProfile<1, 2, [SDTCisSameAs<0, 1>,
+                                                SDTCisSameAs<0, 2>,
+                                                SDTCisInt<0>]>;
 
 def BedrockCall : SDNode<"BedrockISD::CALL", SDT_BedrockCall,
                          [SDNPHasChain, SDNPOptInGlue, SDNPOutGlue,
@@ -43,8 +53,20 @@ def BedrockCall : SDNode<"BedrockISD::CALL", SDT_BedrockCall,
 def BedrockTailCallCandidate
     : SDNode<"BedrockISD::TAIL_CALL_CANDIDATE", SDT_BedrockCall,
              [SDNPHasChain, SDNPOptInGlue, SDNPOutGlue, SDNPVariadic]>;
+def BedrockFarCall : SDNode<"BedrockISD::FAR_CALL", SDT_BedrockFarCall,
+                            [SDNPHasChain, SDNPOptInGlue, SDNPOutGlue,
+                             SDNPVariadic]>;
+def BedrockFarTailCallCandidate
+    : SDNode<"BedrockISD::FAR_TAIL_CALL_CANDIDATE", SDT_BedrockFarCall,
+             [SDNPHasChain, SDNPOptInGlue, SDNPOutGlue, SDNPVariadic]>;
+def BedrockFarLoad : SDNode<"BedrockISD::FAR_LOAD", SDT_BedrockFarLoad,
+                            [SDNPHasChain, SDNPMayLoad, SDNPMemOperand]>;
+def BedrockFarStore : SDNode<"BedrockISD::FAR_STORE", SDT_BedrockFarStore,
+                             [SDNPHasChain, SDNPMayStore, SDNPMemOperand]>;
 def BedrockRetFlag : SDNode<"BedrockISD::RET_FLAG", SDTNone,
                             [SDNPHasChain, SDNPOptInGlue, SDNPVariadic]>;
+def BedrockFarRetFlag : SDNode<"BedrockISD::FAR_RET_FLAG", SDTNone,
+                               [SDNPHasChain, SDNPOptInGlue, SDNPVariadic]>;
 def BedrockCmp : SDNode<"BedrockISD::CMP", SDT_BedrockCmp, [SDNPOutGlue]>;
 def BedrockTest : SDNode<"BedrockISD::TEST", SDT_BedrockTest, [SDNPOutGlue]>;
 def BedrockBrCC : SDNode<"BedrockISD::BR_CC", SDT_BedrockBrCC,
@@ -53,10 +75,10 @@ def BedrockSetCC : SDNode<"BedrockISD::SET_CC", SDT_BedrockSetCC,
                           [SDNPInGlue]>;
 def BedrockSelectCC : SDNode<"BedrockISD::SELECT_CC",
                              SDT_BedrockSelectCC>;
-def BedrockSMax : SDNode<"BedrockISD::SMAX", SDT_BedrockCmp>;
-def BedrockSMin : SDNode<"BedrockISD::SMIN", SDT_BedrockCmp>;
-def BedrockUMax : SDNode<"BedrockISD::UMAX", SDT_BedrockCmp>;
-def BedrockUMin : SDNode<"BedrockISD::UMIN", SDT_BedrockCmp>;
+def BedrockSMax : SDNode<"BedrockISD::SMAX", SDT_BedrockBinaryInt>;
+def BedrockSMin : SDNode<"BedrockISD::SMIN", SDT_BedrockBinaryInt>;
+def BedrockUMax : SDNode<"BedrockISD::UMAX", SDT_BedrockBinaryInt>;
+def BedrockUMin : SDNode<"BedrockISD::UMIN", SDT_BedrockBinaryInt>;
 def BedrockSMaxZero : SDNode<"BedrockISD::SMAX_ZERO", SDT_BedrockUnaryInt>;
 def BedrockSMinZero : SDNode<"BedrockISD::SMIN_ZERO", SDT_BedrockUnaryInt>;
 def BedrockCallSeqStart : SDNode<"ISD::CALLSEQ_START",
@@ -224,9 +246,11 @@ class BedrockSetcc<bits<4> cc, string suffix>
     : BedrockSet<cc, !strconcat("set", suffix)>;
 
 def NOP : BedrockShort<0x2040, (outs), (ins), "nop">;
-let isReturn = 1, isTerminator = 1, isBarrier = 1 in
+let isReturn = 1, isTerminator = 1, isBarrier = 1 in {
 def RET : BedrockShort<0x2041, (outs), (ins), "ret", [(BedrockRetFlag)]>;
-def LRET : BedrockShort<0x2042, (outs), (ins), "lret">;
+def LRET : BedrockShort<0x2042, (outs), (ins), "lret",
+                         [(BedrockFarRetFlag)]>;
+}
 def SYSCALL : BedrockShort<0x2043, (outs), (ins), "syscall">;
 def SYSRET : BedrockShort<0x2044, (outs), (ins), "sysret">;
 def IRET : BedrockShort<0x2045, (outs), (ins), "iret">;
@@ -880,6 +904,54 @@ def STOREQ_Immfi : BedrockPseudo<(outs),
                                       i64imm:$offset)>;
 }
 
+// A far-memory pseudo is one indivisible scheduling operation. The assembly
+// printer expands it into WRSEG of the image operand to GS4 followed
+// immediately by a GS4-qualified effective-address access using the low word.
+let Defs = [GS4] in {
+let mayLoad = 1 in {
+def FAR_LOADB_Z : BedrockPseudo<(outs GPR64:$rd),
+                                (ins GPR64:$base, GPR64:$image)>;
+def FAR_LOADW_Z : BedrockPseudo<(outs GPR64:$rd),
+                                (ins GPR64:$base, GPR64:$image)>;
+def FAR_LOADL_Z : BedrockPseudo<(outs GPR64:$rd),
+                                (ins GPR64:$base, GPR64:$image)>;
+def FAR_LOADB_S : BedrockPseudo<(outs GPR64:$rd),
+                                (ins GPR64:$base, GPR64:$image)>;
+def FAR_LOADW_S : BedrockPseudo<(outs GPR64:$rd),
+                                (ins GPR64:$base, GPR64:$image)>;
+def FAR_LOADL_S : BedrockPseudo<(outs GPR64:$rd),
+                                (ins GPR64:$base, GPR64:$image)>;
+def FAR_LOADL : BedrockPseudo<(outs GPR64:$rd),
+                              (ins GPR64:$base, GPR64:$image)>;
+def FAR_LOADQ : BedrockPseudo<(outs GPR64:$rd),
+                              (ins GPR64:$base, GPR64:$image)>;
+def FAR_FLOADS : BedrockPseudo<(outs FPR64:$rd),
+                               (ins GPR64:$base, GPR64:$image)>;
+def FAR_FLOADD : BedrockPseudo<(outs FPR64:$rd),
+                               (ins GPR64:$base, GPR64:$image)>;
+}
+let mayStore = 1 in {
+def FAR_STOREB : BedrockPseudo<(outs),
+                               (ins GPR64:$src, GPR64:$base,
+                                    GPR64:$image)>;
+def FAR_STOREW : BedrockPseudo<(outs),
+                               (ins GPR64:$src, GPR64:$base,
+                                    GPR64:$image)>;
+def FAR_STOREL : BedrockPseudo<(outs),
+                               (ins GPR64:$src, GPR64:$base,
+                                    GPR64:$image)>;
+def FAR_STOREQ : BedrockPseudo<(outs),
+                               (ins GPR64:$src, GPR64:$base,
+                                    GPR64:$image)>;
+def FAR_FSTORES : BedrockPseudo<(outs),
+                                (ins FPR64:$src, GPR64:$base,
+                                     GPR64:$image)>;
+def FAR_FSTORED : BedrockPseudo<(outs),
+                                (ins FPR64:$src, GPR64:$base,
+                                     GPR64:$image)>;
+}
+}
+
 let hasSideEffects = 1 in {
 def ADJSP_DOWN : BedrockPseudo<(outs), (ins i64imm:$amount)>;
 def ADJSP_UP : BedrockPseudo<(outs), (ins i64imm:$amount)>;
@@ -915,17 +987,31 @@ def SELECT_CC_Q : BedrockPseudo<(outs GPR64:$rd),
 }
 
 let isCall = 1, Defs = [R0, R1, R2, R3, R4, R5, R6, R7,
-                        F0, F1, F2, F3, F4, F5, F6, F7] in {
+                        F0, F1, F2, F3, F4, F5, F6, F7, FLAGS, GS4] in {
 def CALL : BedrockPseudo<(outs), (ins i64imm:$dst)>;
 def CALLr : BedrockPseudo<(outs), (ins GPR64:$dst)>;
+def FARCALLr : BedrockPseudo<(outs),
+                             (ins GPR64:$segment, GPR64:$dst)>;
+def FARCALLi : BedrockPseudo<(outs),
+                             (ins GPR64:$segment, i64imm:$dst)>;
 // These retain ordinary call semantics until the late pass verifies that the
 // generated epilogue restores the frame immediately before the transfer.
 def CALL_TAIL : BedrockPseudo<(outs), (ins i64imm:$dst)>;
 def CALLr_TAIL : BedrockPseudo<(outs), (ins GPR64:$dst)>;
+def FARCALLr_TAIL : BedrockPseudo<(outs),
+                                  (ins GPR64:$segment, GPR64:$dst)>;
+def FARCALLi_TAIL : BedrockPseudo<(outs),
+                                  (ins GPR64:$segment, i64imm:$dst)>;
 }
 
 let isBranch = 1, isTerminator = 1, isBarrier = 1 in
 def TAILCALL : BedrockPseudo<(outs), (ins i64imm:$dst)>;
+let isBranch = 1, isTerminator = 1, isBarrier = 1 in
+def FARTAILr : BedrockPseudo<(outs),
+                             (ins GPR64:$segment, GPR64:$dst)>;
+let isBranch = 1, isTerminator = 1, isBarrier = 1 in
+def FARTAILi : BedrockPseudo<(outs),
+                             (ins GPR64:$segment, i64imm:$dst)>;
 
 let hasSideEffects = 1 in {
 def ADJCALLSTACKDOWN : BedrockPseudo<(outs), (ins i64imm:$amt1, i64imm:$amt2),
@@ -939,12 +1025,26 @@ def ADJCALLSTACKUP : BedrockPseudo<(outs), (ins i64imm:$amt1, i64imm:$amt2),
 def : Pat<(BedrockCall (i64 tglobaladdr:$dst)), (CALL tglobaladdr:$dst)>;
 def : Pat<(BedrockCall (i64 texternalsym:$dst)), (CALL texternalsym:$dst)>;
 def : Pat<(BedrockCall GPR64:$dst), (CALLr GPR64:$dst)>;
+def : Pat<(BedrockFarCall GPR64:$segment, (i64 tglobaladdr:$dst)),
+          (FARCALLi GPR64:$segment, tglobaladdr:$dst)>;
+def : Pat<(BedrockFarCall GPR64:$segment, (i64 texternalsym:$dst)),
+          (FARCALLi GPR64:$segment, texternalsym:$dst)>;
+def : Pat<(BedrockFarCall GPR64:$segment, GPR64:$dst),
+          (FARCALLr GPR64:$segment, GPR64:$dst)>;
 def : Pat<(BedrockTailCallCandidate (i64 tglobaladdr:$dst)),
           (CALL_TAIL tglobaladdr:$dst)>;
 def : Pat<(BedrockTailCallCandidate (i64 texternalsym:$dst)),
           (CALL_TAIL texternalsym:$dst)>;
 def : Pat<(BedrockTailCallCandidate GPR64:$dst),
           (CALLr_TAIL GPR64:$dst)>;
+def : Pat<(BedrockFarTailCallCandidate GPR64:$segment,
+           (i64 tglobaladdr:$dst)),
+          (FARCALLi_TAIL GPR64:$segment, tglobaladdr:$dst)>;
+def : Pat<(BedrockFarTailCallCandidate GPR64:$segment,
+           (i64 texternalsym:$dst)),
+          (FARCALLi_TAIL GPR64:$segment, texternalsym:$dst)>;
+def : Pat<(BedrockFarTailCallCandidate GPR64:$segment, GPR64:$dst),
+          (FARCALLr_TAIL GPR64:$segment, GPR64:$dst)>;
 
 def SET_EQ : BedrockSetcc<0x2, "eq">;
 def SET_NE : BedrockSetcc<0x3, "ne">;

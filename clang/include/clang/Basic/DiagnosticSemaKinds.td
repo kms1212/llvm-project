@@ -781,6 +781,8 @@ def err_falloff_nonvoid : Error<
 def warn_const_attr_with_pure_attr : Warning<
   "'const' attribute imposes more restrictions; 'pure' attribute ignored">,
   InGroup<IgnoredAttributes>;
+def err_bedrock_cross_segment_memory_attr : Error<
+  "'%0' cannot be combined with cross-segment access">;
 def warn_pure_function_returns_void : Warning<
   "'%select{pure|const}0' attribute on function returning 'void'; attribute ignored">,
   InGroup<IgnoredAttributes>;

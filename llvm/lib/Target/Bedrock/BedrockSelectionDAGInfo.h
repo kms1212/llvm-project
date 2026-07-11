@@ -11,11 +11,15 @@
 
 #include "llvm/CodeGen/SelectionDAGTargetInfo.h"
 
+#define GET_SDNODE_ENUM
+#include "BedrockGenSDNodeInfo.inc"
+
 namespace llvm {
 
-class BedrockSelectionDAGInfo : public SelectionDAGTargetInfo {
+class BedrockSelectionDAGInfo : public SelectionDAGGenTargetInfo {
 public:
-  explicit BedrockSelectionDAGInfo() = default;
+  BedrockSelectionDAGInfo();
+  ~BedrockSelectionDAGInfo() override;
 };
 
 } // namespace llvm
