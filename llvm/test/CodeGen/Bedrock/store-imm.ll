@@ -45,7 +45,8 @@ define void @store_imm_abs_offset() {
 define void @store_imm_stack() {
 ; CHECK-LABEL: store_imm_stack:
 ; CHECK: mov.q 5, [sp
-; CHECK: jmp use
+; CHECK: call use
+; CHECK: ret
   %slot = alloca i64, align 8
   store i64 5, ptr %slot, align 8
   call void @use(ptr %slot)
@@ -76,6 +77,6 @@ define void @zero_memset_before_call() {
 ; CHECK-NEXT: clr.q [r6 - 16]
 ; CHECK-NEXT: jmp clobber
   call void @llvm.memset.p0.i64(ptr @g64_triple, i8 0, i64 24, i1 false)
-  call void @clobber()
+  tail call void @clobber()
   ret void
 }

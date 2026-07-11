@@ -63,7 +63,7 @@ define i64 @compact_tail_call(i64 %x) minsize optsize {
 ; CHECK-NOT: push
 ; CHECK-NOT: pop
 ; CHECK: jmp callee
-  %v = call i64 @callee(i64 %x)
+  %v = tail call i64 @callee(i64 %x)
   ret i64 %v
 }
 

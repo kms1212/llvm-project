@@ -43,6 +43,19 @@ class BedrockTargetCodeGenInfo : public TargetCodeGenInfo {
 public:
   BedrockTargetCodeGenInfo(CodeGenTypes &CGT)
       : TargetCodeGenInfo(std::make_unique<BedrockABIInfo>(CGT)) {}
+
+  bool isNoProtoCallVariadic(const CallArgList &args,
+                             const FunctionNoProtoType *fnType) const override {
+    return true;
+  }
+
+  unsigned getNoProtoCallRequiredArgs(
+      const CallArgList &args,
+      const FunctionNoProtoType *fnType) const override {
+    // Bedrock's no-prototype rule puts every actual argument in the unnamed
+    // 16-byte slot sequence.
+    return 0;
+  }
 };
 
 } // namespace

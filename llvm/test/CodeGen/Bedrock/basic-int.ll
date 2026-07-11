@@ -22,7 +22,7 @@ define i64 @call2(i64 %a, i64 %b) {
 ; CHECK-LABEL: call2:
 ; CHECK: jmp callee
 ; CHECK-NOT: ret
-  %r = call i64 @callee(i64 %a, i64 %b)
+  %r = tail call i64 @callee(i64 %a, i64 %b)
   ret i64 %r
 }
 

@@ -289,6 +289,12 @@ public:
   virtual bool isNoProtoCallVariadic(const CodeGen::CallArgList &args,
                                      const FunctionNoProtoType *fnType) const;
 
+  /// Number of leading arguments that retain fixed-argument ABI placement
+  /// when an unprototyped call is represented as variadic IR.
+  virtual unsigned
+  getNoProtoCallRequiredArgs(const CodeGen::CallArgList &args,
+                             const FunctionNoProtoType *fnType) const;
+
   /// Gets the linker options necessary to link a dependent library on this
   /// platform.
   virtual void getDependentLibraryOption(llvm::StringRef Lib,

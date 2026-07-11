@@ -677,11 +677,13 @@ arrangeFreeFunctionLikeCall(CodeGenTypes &CGT, CodeGenModule &CGM,
 
   // If we don't have a prototype at all, but we're supposed to
   // explicitly use the variadic convention for unprototyped calls,
-  // treat all of the arguments as required but preserve the nominal
+  // let the target select the fixed prefix while preserving the nominal
   // possibility of variadics.
   } else if (CGM.getTargetCodeGenInfo().isNoProtoCallVariadic(
                  args, cast<FunctionNoProtoType>(fnType))) {
-    required = RequiredArgs(args.size());
+    required = RequiredArgs(CGM.getTargetCodeGenInfo()
+                                .getNoProtoCallRequiredArgs(
+                                    args, cast<FunctionNoProtoType>(fnType)));
   }
 
   CanQualTypeList argTypes;

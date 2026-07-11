@@ -14,6 +14,6 @@ define void @tail_call_void(i32 %x) {
 ; OBJ-LABEL: <tail_call_void>:
 ; OBJ: jmp
 ; OBJ-NOT: ret
-  call void @sink(i32 %x)
+  tail call void @sink(i32 %x)
   ret void
 }

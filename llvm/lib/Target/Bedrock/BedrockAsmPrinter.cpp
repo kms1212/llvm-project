@@ -5460,10 +5460,12 @@ BedrockAsmPrinter::getInstSizeForBranchLayout(const MachineInstr &MI) const {
   case Bedrock::SETCC:
     return RepgHeaderSize + 2;
   case Bedrock::CALL:
+  case Bedrock::CALL_TAIL:
     return RepgHeaderSize + 7;
   case Bedrock::TAILCALL:
     return RepgHeaderSize + 7;
   case Bedrock::CALLr:
+  case Bedrock::CALLr_TAIL:
   case Bedrock::BRIND:
     return RepgHeaderSize + 4;
   default:
@@ -8265,12 +8267,14 @@ void BedrockAsmPrinter::emitInstruction(const MachineInstr *MI) {
     emitSetCC(MI);
     return;
   case Bedrock::CALL:
+  case Bedrock::CALL_TAIL:
     emitCall(MI);
     return;
   case Bedrock::TAILCALL:
     emitTailCall(MI);
     return;
   case Bedrock::CALLr:
+  case Bedrock::CALLr_TAIL:
     emitIndirectCall(MI);
     return;
   }

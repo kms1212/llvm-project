@@ -2781,6 +2781,7 @@ def isBedrock : RuntimeLibcallPredicate<"TT.getArch() == Triple::bedrock">;
 
 def BedrockSystemLibrary
     : SystemRuntimeLibrary<isBedrock, (add DefaultRuntimeLibcallImpls,
+                                          Int128RTLibcalls,
                                           __stack_chk_fail,
                                           __stack_chk_guard)>;
 

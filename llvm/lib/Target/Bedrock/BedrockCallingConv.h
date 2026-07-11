@@ -104,6 +104,18 @@ inline bool CC_Bedrock(unsigned ValNo, MVT ValVT, MVT LocVT,
   }
 
   const bool IsGeneralPair = OrigTy && OrigTy->isIntegerTy(128);
+  // The fixed and variable portions intentionally use different placement
+  // rules. Every unnamed argument occupies one complete 16-byte stack slot;
+  // it neither consumes nor exhausts either register cursor.
+  if (ArgFlags.isVarArg()) {
+    int64_t Offset = State.AllocateStack(16, Align(16));
+    if (IsGeneralPair)
+      BState.setPendingPairOffset(Offset + 8);
+    State.addLoc(CCValAssign::getMem(ValNo, ValVT, Offset, LocVT,
+                                     CCValAssign::Full));
+    return false;
+  }
+
   if (IsGeneralPair) {
     unsigned PairStart = alignTo(BState.getGeneralCursor(), 2u);
     if (!BState.isGeneralExhausted() && PairStart + 1 < std::size(GPRs)) {

@@ -40,6 +40,9 @@ def SDT_BedrockUnaryInt : SDTypeProfile<1, 1, [SDTCisSameAs<0, 1>,
 def BedrockCall : SDNode<"BedrockISD::CALL", SDT_BedrockCall,
                          [SDNPHasChain, SDNPOptInGlue, SDNPOutGlue,
                           SDNPVariadic]>;
+def BedrockTailCallCandidate
+    : SDNode<"BedrockISD::TAIL_CALL_CANDIDATE", SDT_BedrockCall,
+             [SDNPHasChain, SDNPOptInGlue, SDNPOutGlue, SDNPVariadic]>;
 def BedrockRetFlag : SDNode<"BedrockISD::RET_FLAG", SDTNone,
                             [SDNPHasChain, SDNPOptInGlue, SDNPVariadic]>;
 def BedrockCmp : SDNode<"BedrockISD::CMP", SDT_BedrockCmp, [SDNPOutGlue]>;
@@ -915,6 +918,10 @@ let isCall = 1, Defs = [R0, R1, R2, R3, R4, R5, R6, R7,
                         F0, F1, F2, F3, F4, F5, F6, F7] in {
 def CALL : BedrockPseudo<(outs), (ins i64imm:$dst)>;
 def CALLr : BedrockPseudo<(outs), (ins GPR64:$dst)>;
+// These retain ordinary call semantics until the late pass verifies that the
+// generated epilogue restores the frame immediately before the transfer.
+def CALL_TAIL : BedrockPseudo<(outs), (ins i64imm:$dst)>;
+def CALLr_TAIL : BedrockPseudo<(outs), (ins GPR64:$dst)>;
 }
 
 let isBranch = 1, isTerminator = 1, isBarrier = 1 in
@@ -932,6 +939,12 @@ def ADJCALLSTACKUP : BedrockPseudo<(outs), (ins i64imm:$amt1, i64imm:$amt2),
 def : Pat<(BedrockCall (i64 tglobaladdr:$dst)), (CALL tglobaladdr:$dst)>;
 def : Pat<(BedrockCall (i64 texternalsym:$dst)), (CALL texternalsym:$dst)>;
 def : Pat<(BedrockCall GPR64:$dst), (CALLr GPR64:$dst)>;
+def : Pat<(BedrockTailCallCandidate (i64 tglobaladdr:$dst)),
+          (CALL_TAIL tglobaladdr:$dst)>;
+def : Pat<(BedrockTailCallCandidate (i64 texternalsym:$dst)),
+          (CALL_TAIL texternalsym:$dst)>;
+def : Pat<(BedrockTailCallCandidate GPR64:$dst),
+          (CALLr_TAIL GPR64:$dst)>;
 
 def SET_EQ : BedrockSetcc<0x2, "eq">;
 def SET_NE : BedrockSetcc<0x3, "ne">;

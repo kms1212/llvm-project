@@ -61,6 +61,13 @@ BedrockTargetLowering::BedrockTargetLowering(const TargetMachine &TM,
     setLoadExtAction(ISD::ZEXTLOAD, VT, MVT::i16, Legal);
   }
   setOperationAction(ISD::MULHU, MVT::i32, Expand);
+  setOperationAction(ISD::MULHS, MVT::i32, Expand);
+  setOperationAction(ISD::UMUL_LOHI, MVT::i32, Expand);
+  setOperationAction(ISD::SMUL_LOHI, MVT::i32, Expand);
+  setOperationAction(ISD::MULHU, MVT::i64, Expand);
+  setOperationAction(ISD::MULHS, MVT::i64, Expand);
+  setOperationAction(ISD::UMUL_LOHI, MVT::i64, Expand);
+  setOperationAction(ISD::SMUL_LOHI, MVT::i64, Expand);
 
   setLoadExtAction(ISD::EXTLOAD, MVT::i64, MVT::i32, Legal);
   setLoadExtAction(ISD::SEXTLOAD, MVT::i64, MVT::i32, Legal);
@@ -82,6 +89,7 @@ BedrockTargetLowering::BedrockTargetLowering(const TargetMachine &TM,
     setOperationAction(ISD::UINT_TO_FP, VT, Legal);
   }
   setOperationAction(ISD::BR_JT, MVT::Other, Expand);
+  setOperationAction(ISD::VASTART, MVT::Other, Custom);
   setMinimumJumpTableEntries(16);
 
   computeRegisterProperties(Subtarget.getRegisterInfo());
@@ -93,6 +101,8 @@ const char *BedrockTargetLowering::getTargetNodeName(unsigned Opcode) const {
     return "BedrockISD::RET_FLAG";
   case BedrockISD::CALL:
     return "BedrockISD::CALL";
+  case BedrockISD::TAIL_CALL_CANDIDATE:
+    return "BedrockISD::TAIL_CALL_CANDIDATE";
   case BedrockISD::CMP:
     return "BedrockISD::CMP";
   case BedrockISD::TEST:
@@ -217,6 +227,8 @@ SDValue BedrockTargetLowering::LowerOperation(SDValue Op,
     return LowerMinMax(Op, DAG);
   case ISD::SIGN_EXTEND_INREG:
     return LowerSIGN_EXTEND_INREG(Op, DAG);
+  case ISD::VASTART:
+    return LowerVASTART(Op, DAG);
   default:
     llvm_unreachable("unhandled Bedrock lowering operation");
   }
@@ -547,15 +559,24 @@ static bool isSupportedCallingConv(CallingConv::ID CallConv) {
   return CallConv == CallingConv::C || CallConv == CallingConv::Fast;
 }
 
+static bool referencesFrameIndex(SDValue Value,
+                                 SmallPtrSetImpl<SDNode *> &Visited) {
+  SDNode *Node = Value.getNode();
+  if (!Node || !Visited.insert(Node).second)
+    return false;
+  if (isa<FrameIndexSDNode>(Node))
+    return true;
+  return any_of(Node->ops(), [&](const SDUse &Use) {
+    return referencesFrameIndex(Use.get(), Visited);
+  });
+}
+
 SDValue BedrockTargetLowering::LowerFormalArguments(
     SDValue Chain, CallingConv::ID CallConv, bool IsVarArg,
     const SmallVectorImpl<ISD::InputArg> &Ins, const SDLoc &DL,
     SelectionDAG &DAG, SmallVectorImpl<SDValue> &InVals) const {
   if (!isSupportedCallingConv(CallConv))
     report_fatal_error("Bedrock only supports C-compatible calling conventions");
-  if (IsVarArg)
-    report_fatal_error("Bedrock varargs lowering is not implemented yet");
-
   MachineFunction &MF = DAG.getMachineFunction();
   MachineFrameInfo &MFI = MF.getFrameInfo();
   MachineRegisterInfo &RegInfo = MF.getRegInfo();
@@ -563,6 +584,16 @@ SDValue BedrockTargetLowering::LowerFormalArguments(
   SmallVector<CCValAssign, 16> ArgLocs;
   BedrockCCState CCInfo(CallConv, IsVarArg, MF, ArgLocs, *DAG.getContext());
   CCInfo.AnalyzeFormalArguments(Ins, CC_Bedrock);
+
+  if (IsVarArg) {
+    // Named stack arguments precede the unnamed area. The fixed object uses
+    // the callee's entry-SP view, where both near and far ABIs start ordinary
+    // arguments at entry SP + 16.
+    int64_t EntryOffset = 16 + CCInfo.getStackSize();
+    int FI = MFI.CreateFixedObject(1, EntryOffset, /*IsImmutable=*/true);
+    MFI.setObjectAlignment(FI, commonAlignment(Align(16), EntryOffset));
+    MF.getInfo<BedrockMachineFunctionInfo>()->setVarArgsFrameIndex(FI);
+  }
 
   SmallVector<SDValue, 8> ArgChains;
   for (unsigned I = 0, E = ArgLocs.size(); I != E; ++I) {
@@ -619,18 +650,53 @@ BedrockTargetLowering::LowerCall(TargetLowering::CallLoweringInfo &CLI,
   SDValue Callee = CLI.Callee;
   CallingConv::ID CallConv = CLI.CallConv;
   bool IsVarArg = CLI.IsVarArg;
-
+  bool TailCallRequested = CLI.IsTailCall;
   CLI.IsTailCall = false;
 
   if (!isSupportedCallingConv(CallConv))
     report_fatal_error("Bedrock only supports C-compatible calling conventions");
-  if (IsVarArg)
-    report_fatal_error("Bedrock vararg calls are not implemented yet");
 
+  // Opaque pointers allow hand-written IR to omit the variadic call type even
+  // when the directly referenced declaration is variadic. Recover the fixed
+  // prefix so such calls still obey the target ABI.
+  if (auto *G = dyn_cast<GlobalAddressSDNode>(Callee)) {
+    if (const auto *F = dyn_cast<Function>(G->getGlobal());
+        F && F->isVarArg()) {
+      IsVarArg = true;
+      for (ISD::OutputArg &Out : Outs)
+        if (Out.OrigArgIndex >= F->arg_size())
+          Out.Flags.setVarArg();
+    }
+  }
   MachineFunction &MF = DAG.getMachineFunction();
   SmallVector<CCValAssign, 16> ArgLocs;
   BedrockCCState CCInfo(CallConv, IsVarArg, MF, ArgLocs, *DAG.getContext());
   CCInfo.AnalyzeCallOperands(Outs, CC_Bedrock);
+
+  bool HasByVal = any_of(Outs, [](const ISD::OutputArg &Out) {
+    return Out.Flags.isByVal();
+  });
+  bool CalleeUsesSRet = any_of(Outs, [](const ISD::OutputArg &Out) {
+    return Out.Flags.isSRet();
+  });
+  bool PassesCallerFrameAddress = false;
+  for (unsigned I = 0, E = Outs.size(); I != E; ++I) {
+    if (!Outs[I].OrigTy || !Outs[I].OrigTy->isPointerTy())
+      continue;
+    SmallPtrSet<SDNode *, 8> Visited;
+    PassesCallerFrameAddress |= referencesFrameIndex(OutVals[I], Visited);
+  }
+  const Function &Caller = MF.getFunction();
+  bool TailCallEligible =
+      TailCallRequested && CallConv == Caller.getCallingConv() &&
+      CCInfo.getStackSize() == 0 && !HasByVal && !PassesCallerFrameAddress &&
+      Caller.hasStructRetAttr() == CalleeUsesSRet &&
+      CLI.OrigRetTy == Caller.getReturnType() &&
+      Caller.hasRetAttribute(Attribute::SExt) == CLI.RetSExt &&
+      Caller.hasRetAttribute(Attribute::ZExt) == CLI.RetZExt;
+  if (!TailCallEligible && CLI.CB && CLI.CB->isMustTailCall())
+    report_fatal_error("failed to perform Bedrock tail call elimination on a "
+                       "call site marked musttail");
 
   SmallVector<SDValue, 16> ArgValues(OutVals.begin(), OutVals.end());
   for (unsigned I = 0, E = Outs.size(); I != E; ++I) {
@@ -708,7 +774,9 @@ BedrockTargetLowering::LowerCall(TargetLowering::CallLoweringInfo &CLI,
   if (InGlue.getNode())
     Ops.push_back(InGlue);
 
-  Chain = DAG.getNode(BedrockISD::CALL, DL, NodeTys, Ops);
+  unsigned CallOpcode = TailCallEligible ? BedrockISD::TAIL_CALL_CANDIDATE
+                                         : BedrockISD::CALL;
+  Chain = DAG.getNode(CallOpcode, DL, NodeTys, Ops);
   InGlue = Chain.getValue(1);
 
   Chain = DAG.getCALLSEQ_END(Chain, CallFrameSize, 0, InGlue, DL);
@@ -716,6 +784,21 @@ BedrockTargetLowering::LowerCall(TargetLowering::CallLoweringInfo &CLI,
 
   return LowerCallResult(Chain, InGlue, CallConv, IsVarArg, Ins, DL, DAG,
                          InVals);
+}
+
+SDValue BedrockTargetLowering::LowerVASTART(SDValue Op,
+                                             SelectionDAG &DAG) const {
+  MachineFunction &MF = DAG.getMachineFunction();
+  auto *FuncInfo = MF.getInfo<BedrockMachineFunctionInfo>();
+  if (!FuncInfo->hasVarArgsFrameIndex())
+    report_fatal_error("va_start used in a non-variadic Bedrock function");
+  int FI = FuncInfo->getVarArgsFrameIndex();
+
+  SDValue ListAddress = Op.getOperand(1);
+  SDValue FirstUnnamed = DAG.getFrameIndex(FI, ListAddress.getValueType());
+  const Value *SV = cast<SrcValueSDNode>(Op.getOperand(2))->getValue();
+  return DAG.getStore(Op.getOperand(0), SDLoc(Op), FirstUnnamed, ListAddress,
+                      MachinePointerInfo(SV));
 }
 
 SDValue BedrockTargetLowering::LowerCallResult(

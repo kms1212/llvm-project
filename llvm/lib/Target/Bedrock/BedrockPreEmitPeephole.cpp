@@ -6757,8 +6757,8 @@ bool BedrockPreEmitPeephole::foldTailCall(MachineBasicBlock::iterator I,
                                           MachineBasicBlock &MBB,
                                           const TargetInstrInfo &TII) {
   MachineInstr &CallMI = *I;
-  if (CallMI.getOpcode() != Bedrock::CALL &&
-      CallMI.getOpcode() != Bedrock::CALLr)
+  if (CallMI.getOpcode() != Bedrock::CALL_TAIL &&
+      CallMI.getOpcode() != Bedrock::CALLr_TAIL)
     return false;
 
   MachineInstr *CallPadDown = nullptr;
@@ -6793,6 +6793,8 @@ bool BedrockPreEmitPeephole::foldTailCall(MachineBasicBlock::iterator I,
       AfterCallI->getOperand(0).isImm() &&
       AfterCallI->getOperand(0).getImm() == 8)
     CallPadUp = &*AfterCallI;
+  if ((CallPadDown == nullptr) != (CallPadUp == nullptr))
+    return false;
 
   while (RetI != MBB.end() &&
          (RetI->isDebugInstr() || isTailCallEpilogueInstr(*RetI)))
@@ -6800,8 +6802,17 @@ bool BedrockPreEmitPeephole::foldTailCall(MachineBasicBlock::iterator I,
   if (RetI == MBB.end() || RetI->getOpcode() != Bedrock::RET)
     return false;
 
+  // An indirect target may be allocated in a callee-saved register. Reject a
+  // fold if restoring the caller would overwrite it before the final jump.
+  if (CallMI.getOpcode() == Bedrock::CALLr_TAIL) {
+    Register TargetReg = CallMI.getOperand(0).getReg();
+    for (auto Scan = std::next(I); Scan != RetI; ++Scan)
+      if (!Scan->isDebugInstr() && instructionTouchesReg(*Scan, TargetReg))
+        return false;
+  }
+
   DebugLoc DL = CallMI.getDebugLoc();
-  unsigned TailOpcode = CallMI.getOpcode() == Bedrock::CALL
+  unsigned TailOpcode = CallMI.getOpcode() == Bedrock::CALL_TAIL
                             ? Bedrock::TAILCALL
                             : Bedrock::BRIND;
   BuildMI(MBB, RetI, DL, TII.get(TailOpcode)).add(CallMI.getOperand(0));

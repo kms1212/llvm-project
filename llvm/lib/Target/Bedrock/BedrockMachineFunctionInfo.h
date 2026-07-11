@@ -15,6 +15,8 @@ namespace llvm {
 
 class BedrockMachineFunctionInfo final : public MachineFunctionInfo {
   Register SRetReturnReg;
+  int VarArgsFrameIndex = 0;
+  bool HasVarArgsFrameIndex = false;
 
 public:
   BedrockMachineFunctionInfo(const Function &F,
@@ -29,6 +31,13 @@ public:
 
   Register getSRetReturnReg() const { return SRetReturnReg; }
   void setSRetReturnReg(Register Reg) { SRetReturnReg = Reg; }
+
+  int getVarArgsFrameIndex() const { return VarArgsFrameIndex; }
+  bool hasVarArgsFrameIndex() const { return HasVarArgsFrameIndex; }
+  void setVarArgsFrameIndex(int Index) {
+    VarArgsFrameIndex = Index;
+    HasVarArgsFrameIndex = true;
+  }
 };
 
 } // namespace llvm
