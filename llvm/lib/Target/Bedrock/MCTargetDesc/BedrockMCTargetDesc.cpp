@@ -36,7 +36,7 @@ static MCInstrInfo *createBedrockMCInstrInfo() {
 
 static MCRegisterInfo *createBedrockMCRegisterInfo(const Triple &TT) {
   MCRegisterInfo *X = new MCRegisterInfo();
-  InitBedrockMCRegisterInfo(X, Bedrock::R0);
+  InitBedrockMCRegisterInfo(X, Bedrock::PC, 0, 0, Bedrock::PC);
   return X;
 }
 

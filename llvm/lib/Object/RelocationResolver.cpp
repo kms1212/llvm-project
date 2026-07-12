@@ -103,6 +103,34 @@ static uint64_t resolveAArch64(uint64_t Type, uint64_t Offset, uint64_t S,
   }
 }
 
+static bool supportsBedrock(uint64_t Type) {
+  switch (Type) {
+  case ELF::R_BEDROCK_ABS32S:
+  case ELF::R_BEDROCK_ABS64:
+  case ELF::R_BEDROCK_PCREL32S:
+  case ELF::R_BEDROCK_PCREL64:
+    return true;
+  default:
+    return false;
+  }
+}
+
+static uint64_t resolveBedrock(uint64_t Type, uint64_t Offset, uint64_t S,
+                               uint64_t /*LocData*/, int64_t Addend) {
+  switch (Type) {
+  case ELF::R_BEDROCK_ABS32S:
+    return (S + Addend) & 0xffffffff;
+  case ELF::R_BEDROCK_ABS64:
+    return S + Addend;
+  case ELF::R_BEDROCK_PCREL32S:
+    return (S + Addend - Offset) & 0xffffffff;
+  case ELF::R_BEDROCK_PCREL64:
+    return S + Addend - Offset;
+  default:
+    llvm_unreachable("invalid Bedrock relocation type");
+  }
+}
+
 static bool supportsBPF(uint64_t Type) {
   switch (Type) {
   case ELF::R_BPF_64_ABS32:
@@ -797,6 +825,8 @@ getRelocationResolver(const ObjectFile &Obj) {
       case Triple::bpfel:
       case Triple::bpfeb:
         return {supportsBPF, resolveBPF};
+      case Triple::bedrock:
+        return {supportsBedrock, resolveBedrock};
       case Triple::loongarch64:
         return {supportsLoongArch, resolveLoongArch};
       case Triple::mips64el:

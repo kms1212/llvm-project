@@ -94,6 +94,7 @@ BedrockTargetLowering::BedrockTargetLowering(const TargetMachine &TM,
   setOperationAction(ISD::BR_JT, MVT::Other, Expand);
   setOperationAction(ISD::BRCOND, MVT::Other, Custom);
   setOperationAction(ISD::VASTART, MVT::Other, Custom);
+  setOperationAction(ISD::DYNAMIC_STACKALLOC, MVT::i64, Custom);
   setOperationAction(ISD::GlobalTLSAddress, MVT::i64, Custom);
   // AS1 pointers are 128-bit address/image carriers. Custom lowering must
   // split them before the integer type legalizer sees them as load/store
@@ -302,11 +303,32 @@ SDValue BedrockTargetLowering::LowerOperation(SDValue Op,
     return LowerSIGN_EXTEND_INREG(Op, DAG);
   case ISD::VASTART:
     return LowerVASTART(Op, DAG);
+  case ISD::DYNAMIC_STACKALLOC:
+    return LowerDYNAMIC_STACKALLOC(Op, DAG);
   case ISD::GlobalTLSAddress:
     return LowerGlobalTLSAddress(Op, DAG);
   default:
     llvm_unreachable("unhandled Bedrock lowering operation");
   }
+}
+
+SDValue
+BedrockTargetLowering::LowerDYNAMIC_STACKALLOC(SDValue Op,
+                                               SelectionDAG &DAG) const {
+  SDLoc DL(Op);
+  SDValue Chain = Op.getOperand(0);
+  SDValue Size = Op.getOperand(1);
+  uint64_t Alignment = Op.getConstantOperandVal(2);
+
+  SDValue SP = DAG.getCopyFromReg(Chain, DL, Bedrock::SP, MVT::i64);
+  Chain = SP.getValue(1);
+  SDValue Result = DAG.getNode(ISD::SUB, DL, MVT::i64, SP, Size);
+  if (Alignment > 16)
+    Result =
+        DAG.getNode(ISD::AND, DL, MVT::i64, Result,
+                    DAG.getSignedConstant(-int64_t(Alignment), DL, MVT::i64));
+  Chain = DAG.getCopyToReg(Chain, DL, Bedrock::SP, Result);
+  return DAG.getMergeValues({Result, Chain}, DL);
 }
 
 static std::pair<SDValue, SDValue>
