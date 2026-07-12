@@ -6,6 +6,7 @@
 //
 //===----------------------------------------------------------------------===//
 
+#include "InputFiles.h"
 #include "OutputSections.h"
 #include "Symbols.h"
 #include "SyntheticSections.h"
@@ -25,6 +26,8 @@ public:
   Bedrock(Ctx &);
   RelExpr getRelExpr(RelType type, const Symbol &s,
                      const uint8_t *loc) const override;
+  RelType getDynRel(RelType type) const override;
+  void scanSection(InputSectionBase &sec) override;
   void relocate(uint8_t *loc, const Relocation &rel,
                 uint64_t val) const override;
   void writeGotPltHeader(uint8_t *buf) const override;
@@ -37,6 +40,207 @@ public:
                             RelType type) const override;
 };
 } // namespace
+
+bool elf::hasBedrockFarAttributeNote(const InputFile &file) {
+  for (InputSectionBase *sec : file.getSections()) {
+    if (!sec || sec == &InputSection::discarded || sec->name != ".note.bedrock")
+      continue;
+    ArrayRef<uint8_t> data = sec->content();
+    if (data.size() == 28 && read32le(data.data()) == 8 &&
+        read32le(data.data() + 4) == 8 &&
+        read32le(data.data() + 8) == NT_BEDROCK_ABI_ATTRIBUTES &&
+        StringRef(reinterpret_cast<const char *>(data.data() + 12), 8) ==
+            StringRef("BEDROCK\0", 8) &&
+        read32le(data.data() + 20) == TAG_BEDROCK_FAR_MODEL &&
+        read32le(data.data() + 24) == 0)
+      return true;
+  }
+  return false;
+}
+
+static uint64_t getFarDomainImage(Ctx &ctx, const Symbol &sym) {
+  const auto *defined = dyn_cast<Defined>(&sym);
+  if (!defined || !defined->file ||
+      defined->file->kind() != InputFile::ObjKind) {
+    Err(ctx) << "far relocation target '" << &sym
+             << "' has no defining segment domain";
+    return 0;
+  }
+
+  auto sections = defined->file->getSections();
+  unsigned matches = 0;
+  uint64_t image = 0;
+  for (InputSectionBase *meta : sections) {
+    if (!meta || meta == &InputSection::discarded ||
+        meta->name != ".bedrock.segdomains")
+      continue;
+    ArrayRef<uint8_t> data = meta->content();
+    if (meta->type != SHT_PROGBITS || meta->flags != 0 || meta->entsize != 16 ||
+        data.size() % 16 != 0) {
+      Err(ctx) << meta << ": malformed .bedrock.segdomains section";
+      continue;
+    }
+    for (size_t off = 0; off != data.size(); off += 16) {
+      uint32_t index = read32le(data.data() + off);
+      uint32_t id = read32le(data.data() + off + 4);
+      if (index >= sections.size() || sections[index] != defined->section)
+        continue;
+      ++matches;
+      image = read64le(data.data() + off + 8);
+      if (id == 0)
+        Err(ctx) << meta << ": segment domain identifier must be nonzero";
+      if (!(defined->section->flags & SHF_ALLOC) ||
+          (defined->section->flags & SHF_TLS))
+        Err(ctx) << meta
+                 << ": segment domain must name an allocatable non-TLS section";
+      if (image != 0 && ((image & 1) == 0 || ((image >> 1) & 0x3f) == 0))
+        Err(ctx) << meta
+                 << ": translated-window segment image is not permitted";
+    }
+  }
+  if (matches != 1) {
+    Err(ctx) << "far relocation target '" << &sym << "' is assigned to "
+             << matches << " segment domains";
+    return 0;
+  }
+  return image;
+}
+
+uint32_t elf::getBedrockOutputDomainID(Ctx &ctx, const ELFFileBase *wantedFile,
+                                       uint32_t wantedInputID) {
+  SmallVector<std::pair<const ELFFileBase *, uint32_t>, 0> seen;
+  for (ELFFileBase *file : ctx.objectFiles) {
+    for (InputSectionBase *meta : file->getSections()) {
+      if (!meta || meta == &InputSection::discarded ||
+          meta->name != ".bedrock.segdomains" || meta->entsize != 16)
+        continue;
+      ArrayRef<uint8_t> data = meta->content();
+      for (size_t off = 0; off + 16 <= data.size(); off += 16) {
+        uint32_t inputID = read32le(data.data() + off + 4);
+        std::pair<const ELFFileBase *, uint32_t> key{file, inputID};
+        if (!llvm::is_contained(seen, key))
+          seen.push_back(key);
+        if (file == wantedFile && inputID == wantedInputID)
+          return llvm::find(seen, key) - seen.begin() + 1;
+      }
+    }
+  }
+  return 0;
+}
+
+uint32_t elf::getBedrockOutputDomainID(Ctx &ctx, const Symbol &sym) {
+  const auto *defined = dyn_cast<Defined>(&sym);
+  if (!defined || !defined->file || !defined->section)
+    return 0;
+  ArrayRef<InputSectionBase *> sections = defined->file->getSections();
+  for (InputSectionBase *meta : sections) {
+    if (!meta || meta == &InputSection::discarded ||
+        meta->name != ".bedrock.segdomains" || meta->entsize != 16)
+      continue;
+    ArrayRef<uint8_t> data = meta->content();
+    for (size_t off = 0; off + 16 <= data.size(); off += 16) {
+      uint32_t sectionIndex = read32le(data.data() + off);
+      if (sectionIndex < sections.size() &&
+          sections[sectionIndex] == defined->section)
+        return getBedrockOutputDomainID(ctx, cast<ELFFileBase>(defined->file),
+                                        read32le(data.data() + off + 4));
+    }
+  }
+  return 0;
+}
+
+static uint64_t encodeFarDomainImage(const PhdrEntry &phdr) {
+  uint64_t pages = phdr.p_memsz / 4096;
+  unsigned exponent = 0;
+  while (pages > 63) {
+    pages = alignTo(pages, 2) / 2;
+    ++exponent;
+  }
+  return (phdr.p_vaddr & ~uint64_t(4095)) | (uint64_t(exponent) << 7) |
+         (pages << 1) | 1;
+}
+
+static uint64_t getFinalFarDomainImage(Ctx &ctx, const Symbol &sym) {
+  const auto *defined = dyn_cast<Defined>(&sym);
+  if (!defined || !defined->section)
+    return 0;
+  for (const std::unique_ptr<PhdrEntry> &phdr : ctx.mainPart->phdrs) {
+    if (phdr->p_type != PT_BEDROCK_SEGDOM)
+      continue;
+    if (llvm::is_contained(phdr->bedrockDomainSections, defined->section))
+      return encodeFarDomainImage(*phdr);
+  }
+  Err(ctx) << "far relocation target '" << &sym
+           << "' has no output segment domain";
+  return 0;
+}
+
+static uint64_t getFinalFarDomainImage(Ctx &ctx, uint32_t domainID) {
+  for (const std::unique_ptr<PhdrEntry> &phdr : ctx.mainPart->phdrs)
+    if (phdr->p_type == PT_BEDROCK_SEGDOM && phdr->p_paddr == domainID)
+      return encodeFarDomainImage(*phdr);
+  Err(ctx) << "unknown Bedrock output segment domain " << domainID;
+  return 0;
+}
+
+template <class ELFT>
+static void validateFarRelocations(Ctx &ctx, InputSectionBase &sec) {
+  auto rels = sec.template relsOrRelas<ELFT>();
+  if (rels.areRelocsRel())
+    return;
+  ArrayRef<typename ELFT::Rela> entries = rels.relas;
+  bool checkedNote = false;
+  for (size_t i = 0; i != entries.size(); ++i) {
+    const auto &rel = entries[i];
+    RelType type = rel.getType(false);
+    if (type.v < R_BEDROCK_FAR_ADDR64 || type.v > R_BEDROCK_FAR_IRELATIVE)
+      continue;
+    if (!checkedNote) {
+      checkedNote = true;
+      if (!hasBedrockFarAttributeNote(*sec.file))
+        Err(ctx) << sec.file
+                 << ": far ELF construct requires Tag_Bedrock_Far_Model=1";
+    }
+
+    Symbol &sym = sec.getFile<ELFT>()->getSymbol(rel.getSymbol(false));
+    if (sym.isTls())
+      Err(ctx) << getErrorLoc(ctx, sec.content().data() + rel.r_offset)
+               << "far relocation cannot target TLS symbol '" << &sym << "'";
+
+    if (type == R_BEDROCK_FAR_ADDR64) {
+      const typename ELFT::Rela *mate =
+          i + 1 != entries.size() ? &entries[i + 1] : nullptr;
+      if ((rel.r_offset & 15) != 0 || !mate || mate->r_addend != 0)
+        Err(ctx)
+            << getErrorLoc(ctx, sec.content().data() + rel.r_offset)
+            << "R_BEDROCK_FAR_ADDR64 requires an aligned adjacent "
+               "R_BEDROCK_FAR_SEGMENT64 relocation against the same symbol";
+      else if (mate->r_offset != rel.r_offset + 8 ||
+               mate->getType(false) != R_BEDROCK_FAR_SEGMENT64 ||
+               mate->getSymbol(false) != rel.getSymbol(false))
+        Err(ctx) << getErrorLoc(ctx, sec.content().data() + rel.r_offset)
+                 << "R_BEDROCK_FAR_ADDR64 relocation pair must be adjacent "
+                    "and name the same symbol";
+      if (rel.r_addend < 0 ||
+          (sym.getSize() != 0 && uint64_t(rel.r_addend) > sym.getSize()) ||
+          (uint64_t(rel.r_addend) == sym.getSize() && sym.getSize() != 0 &&
+           sym.type != STT_OBJECT))
+        Err(ctx) << "far relocation addend is outside symbol '" << &sym
+                 << "' (only one-past STT_OBJECT is permitted)";
+      if (isa<Defined>(sym))
+        (void)getFarDomainImage(ctx, sym);
+    } else if (type == R_BEDROCK_FAR_SEGMENT64) {
+      bool hasAddress = llvm::any_of(entries, [&](const auto &candidate) {
+        return candidate.r_offset + 8 == rel.r_offset &&
+               candidate.getType(false) == R_BEDROCK_FAR_ADDR64 &&
+               candidate.getSymbol(false) == rel.getSymbol(false);
+      });
+      if (!hasAddress)
+        Err(ctx) << getErrorLoc(ctx, sec.content().data() + rel.r_offset)
+                 << "orphan R_BEDROCK_FAR_SEGMENT64 relocation";
+    }
+  }
+}
 
 Bedrock::Bedrock(Ctx &ctx) : TargetInfo(ctx) {
   copyRel = R_BEDROCK_COPY;
@@ -57,6 +261,22 @@ Bedrock::Bedrock(Ctx &ctx) : TargetInfo(ctx) {
   trapInstr = {0x20, 0x42, 0x20, 0x42};
 }
 
+void Bedrock::scanSection(InputSectionBase &sec) {
+  validateFarRelocations<object::ELF64LE>(ctx, sec);
+  TargetInfo::scanSection(sec);
+}
+
+RelType Bedrock::getDynRel(RelType type) const {
+  switch (type) {
+  case R_BEDROCK_FAR_GLOB_DAT:
+  case R_BEDROCK_FAR_JUMP_SLOT:
+  case R_BEDROCK_FAR_IRELATIVE:
+    return type;
+  default:
+    return type == symbolicRel ? type : R_BEDROCK_NONE;
+  }
+}
+
 int64_t Bedrock::getImplicitAddend(const uint8_t *buf, RelType type) const {
   switch (type) {
   case R_BEDROCK_NONE:
@@ -65,6 +285,9 @@ int64_t Bedrock::getImplicitAddend(const uint8_t *buf, RelType type) const {
   case R_BEDROCK_GLOB_DAT:
   case R_BEDROCK_JUMP_SLOT:
   case R_BEDROCK_IRELATIVE:
+  case R_BEDROCK_FAR_GLOB_DAT:
+  case R_BEDROCK_FAR_JUMP_SLOT:
+  case R_BEDROCK_FAR_IRELATIVE:
     return 0;
   case R_BEDROCK_TLSDESC:
     return read64le(buf + 8);
@@ -114,6 +337,14 @@ RelExpr Bedrock::getRelExpr(RelType type, const Symbol &s,
     return R_TLSDESC_CALL;
   case R_BEDROCK_TLSDESC:
     return R_TLSDESC;
+  case R_BEDROCK_FAR_ADDR64:
+  case R_BEDROCK_FAR_SEGMENT64:
+  case R_BEDROCK_FAR_GLOB_DAT:
+  case R_BEDROCK_FAR_JUMP_SLOT:
+  case R_BEDROCK_FAR_IRELATIVE:
+    return R_ABS;
+  case R_BEDROCK_FAR_DOMAIN64:
+    return R_ADDEND;
   default:
     return R_ABS;
   }
@@ -254,6 +485,24 @@ void Bedrock::relocate(uint8_t *loc, const Relocation &rel,
     // Dynamic loaders consume a two-word descriptor. The RELA addend is
     // represented in its second word for static relocation processing.
     write64le(loc + 8, val);
+    break;
+  case R_BEDROCK_FAR_ADDR64:
+    write64le(loc, val);
+    break;
+  case R_BEDROCK_FAR_SEGMENT64:
+    write64le(loc, rel.sym ? getFinalFarDomainImage(ctx, *rel.sym) : 0);
+    break;
+  case R_BEDROCK_FAR_DOMAIN64:
+    write64le(loc, getFinalFarDomainImage(ctx, rel.addend));
+    break;
+  case R_BEDROCK_FAR_GLOB_DAT:
+  case R_BEDROCK_FAR_JUMP_SLOT:
+    write64le(loc, val);
+    write64le(loc + 8, rel.sym ? getFinalFarDomainImage(ctx, *rel.sym) : 0);
+    break;
+  case R_BEDROCK_FAR_IRELATIVE:
+    write64le(loc, val);
+    write64le(loc + 8, 0);
     break;
   default:
     Err(ctx) << getErrorLoc(ctx, loc) << "unrecognized relocation " << rel.type;

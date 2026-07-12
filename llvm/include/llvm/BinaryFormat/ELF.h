@@ -328,6 +328,16 @@ enum {
   EM_BEDROCK = 0xffb0,    // Bedrock
 };
 
+// Bedrock processor-specific ELF constants.
+enum {
+  STT_BEDROCK_FAR_FUNC = 13,
+  STT_BEDROCK_FAR_IFUNC = 14,
+  PT_BEDROCK_SEGDOM = 0x70000000,
+  PF_BEDROCK_BOUNDS_ONLY = 0x10000000,
+  NT_BEDROCK_ABI_ATTRIBUTES = 1,
+  TAG_BEDROCK_FAR_MODEL = 1,
+};
+
 // Object file classes.
 enum {
   ELFCLASSNONE = 0,

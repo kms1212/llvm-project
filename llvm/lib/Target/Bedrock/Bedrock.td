@@ -15,6 +15,8 @@ def FeatureFPU : SubtargetFeature<"fpu", "HasFPU", "true",
                                   "Enable floating-point instructions">;
 def FeatureVirtAccel : SubtargetFeature<"virtaccel", "HasVirtAccel", "true",
                                         "Enable virtualization acceleration">;
+def FeatureFarELF : SubtargetFeature<"far-elf", "HasFarELF", "true",
+                                     "Enable the bedrock-elf-far profile">;
 
 def : Proc<"generic", [FeatureFPU]>;
 

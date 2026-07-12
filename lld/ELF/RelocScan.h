@@ -97,6 +97,31 @@ void RelocScan::scan(typename Relocs<RelTy>::const_iterator &it, RelType type,
       maybeReportUndefined(cast<Undefined>(sym), offset))
     return;
 
+  // A local far pair in ET_DYN needs two loader operations: load bias on the
+  // address word and construction of the output domain image. An interposable
+  // pair is represented by one eager 128-bit relocation; there is no far PLT.
+  // Bedrock pair validation guarantees that the next entry is the matching
+  // segment word.
+  if (ctx.arg.emachine == EM_BEDROCK && ctx.arg.isPic &&
+      type == R_BEDROCK_FAR_ADDR64) {
+    Partition &part = sec->getPartition(ctx);
+    if (sym.isPreemptible) {
+      part.relaDyn->addReloc(
+          {R_BEDROCK_FAR_GLOB_DAT, sec, offset, true, sym, addend, R_ADDEND});
+    } else {
+      part.relaDyn->addReloc(
+          {ctx.target->relativeRel, sec, offset, false, sym, addend, R_ABS});
+      uint32_t domainID = getBedrockOutputDomainID(ctx, sym);
+      if (!domainID)
+        Err(ctx) << "far relocation target '" << &sym
+                 << "' has no output segment domain";
+      part.relaDyn->addReloc(
+          {R_BEDROCK_FAR_DOMAIN64, sec, offset + 8, domainID});
+    }
+    ++it;
+    return;
+  }
+
   // Ensure GOT or GOTPLT is created for relocations that reference their base
   // addresses without directly creating entries.
   if (oneof<R_GOTPLTONLY_PC, R_GOTPLTREL, R_GOTPLT, R_PLT_GOTPLT,

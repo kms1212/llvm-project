@@ -26,6 +26,10 @@ class InputFile;
 class Symbol;
 template <class RelTy> struct Relocs;
 
+uint32_t getBedrockOutputDomainID(Ctx &, const ELFFileBase *, uint32_t);
+uint32_t getBedrockOutputDomainID(Ctx &, const Symbol &);
+bool hasBedrockFarAttributeNote(const InputFile &);
+
 std::string toStr(Ctx &, RelType type);
 
 class TargetInfo {

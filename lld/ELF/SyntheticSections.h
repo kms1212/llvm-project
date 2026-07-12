@@ -1480,6 +1480,12 @@ struct PhdrEntry {
   bool hasLMA = false;
 
   uint64_t lmaOffset = 0;
+
+  // Input sections covered by a Bedrock segment-domain header. Unlike a
+  // PT_LOAD, a PT_BEDROCK_SEGDOM describes the exact domain span and carries
+  // no file range, so it cannot in general be represented by whole output
+  // sections.
+  SmallVector<InputSectionBase *, 0> bedrockDomainSections;
 };
 
 // Linker generated per-partition sections.

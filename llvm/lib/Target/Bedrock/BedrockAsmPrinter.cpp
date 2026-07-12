@@ -23,8 +23,10 @@
 #include "llvm/IR/Function.h"
 #include "llvm/IR/GlobalVariable.h"
 #include "llvm/MC/MCAsmInfo.h"
+#include "llvm/MC/MCContext.h"
 #include "llvm/MC/MCExpr.h"
 #include "llvm/MC/MCInst.h"
+#include "llvm/MC/MCSectionELF.h"
 #include "llvm/MC/MCStreamer.h"
 #include "llvm/MC/MCSymbolELF.h"
 #include "llvm/MC/TargetRegistry.h"
@@ -95,7 +97,10 @@ private:
   DenseMap<const MachineInstr *, int64_t> MediumBranchDisplacements;
   DenseMap<const MachineInstr *, int64_t> CmpTestJumpDisplacements;
   DenseMap<const MachineInstr *, int64_t> DJDisplacements;
+  bool EmittedFarNote = false;
 
+  void emitFunctionEntryLabel() override;
+  void emitFarABINote();
   MCOperand lowerOperand(const MachineOperand &MO) const;
   const MCExpr *lowerSymbolOperand(const MachineOperand &MO) const;
 
@@ -5902,6 +5907,34 @@ bool BedrockAsmPrinter::runOnMachineFunction(MachineFunction &MF) {
   collectRepeatGroups(MF);
   computeShortBranches(MF);
   return AsmPrinter::runOnMachineFunction(MF) || Changed;
+}
+
+void BedrockAsmPrinter::emitFarABINote() {
+  if (EmittedFarNote)
+    return;
+  EmittedFarNote = true;
+
+  MCSection *Note =
+      OutContext.getELFSection(".note.bedrock", ELF::SHT_NOTE, ELF::SHF_ALLOC);
+  OutStreamer->pushSection();
+  OutStreamer->switchSection(Note);
+  OutStreamer->emitInt32(8);
+  OutStreamer->emitInt32(8);
+  OutStreamer->emitInt32(ELF::NT_BEDROCK_ABI_ATTRIBUTES);
+  OutStreamer->emitBytes(StringRef("BEDROCK\0", 8));
+  OutStreamer->emitValueToAlignment(Align(4));
+  OutStreamer->emitInt32(ELF::TAG_BEDROCK_FAR_MODEL);
+  OutStreamer->emitInt32(0);
+  OutStreamer->popSection();
+}
+
+void BedrockAsmPrinter::emitFunctionEntryLabel() {
+  AsmPrinter::emitFunctionEntryLabel();
+  if (MF->getFunction().getCallingConv() != CallingConv::Bedrock_Far)
+    return;
+
+  static_cast<MCSymbolELF *>(CurrentFnSym)->setType(ELF::STT_BEDROCK_FAR_FUNC);
+  emitFarABINote();
 }
 
 const MCExpr *

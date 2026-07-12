@@ -11,6 +11,7 @@
 #include "MCTargetDesc/BedrockMCTargetDesc.h"
 #include "TargetInfo/BedrockTargetInfo.h"
 #include "llvm/ADT/StringSwitch.h"
+#include "llvm/BinaryFormat/ELF.h"
 #include "llvm/MC/MCContext.h"
 #include "llvm/MC/MCExpr.h"
 #include "llvm/MC/MCInst.h"
@@ -18,8 +19,11 @@
 #include "llvm/MC/MCParser/AsmLexer.h"
 #include "llvm/MC/MCParser/MCParsedAsmOperand.h"
 #include "llvm/MC/MCParser/MCTargetAsmParser.h"
+#include "llvm/MC/MCSectionELF.h"
 #include "llvm/MC/MCStreamer.h"
 #include "llvm/MC/MCSubtargetInfo.h"
+#include "llvm/MC/MCSymbolELF.h"
+#include "llvm/MC/MCValue.h"
 #include "llvm/MC/TargetRegistry.h"
 #include "llvm/Support/Casting.h"
 #include "llvm/Support/Compiler.h"
@@ -37,6 +41,7 @@ namespace {
 
 class BedrockAsmParser : public MCTargetAsmParser {
   MCAsmParser &Parser;
+  bool EmittedFarNote = false;
 
 #define GET_ASSEMBLER_HEADER
 #include "BedrockGenAsmMatcher.inc"
@@ -53,9 +58,11 @@ class BedrockAsmParser : public MCTargetAsmParser {
   bool parseInstruction(ParseInstructionInfo &Info, StringRef Name,
                         SMLoc NameLoc, OperandVector &Operands) override;
 
-  ParseStatus parseDirective(AsmToken DirectiveID) override {
-    return ParseStatus::NoMatch;
-  }
+  ParseStatus parseDirective(AsmToken DirectiveID) override;
+  ParseStatus parseDirectiveFarPtr(SMLoc Loc);
+  ParseStatus parseDirectiveSegmentDomain(SMLoc Loc);
+  ParseStatus parseDirectiveFarSymbol(SMLoc Loc, bool IsIFunc);
+  void emitFarABINote();
 
   bool parseOperand(OperandVector &Operands);
   bool parseMemoryOperand(OperandVector &Operands);
@@ -72,6 +79,107 @@ public:
     setAvailableFeatures(ComputeAvailableFeatures(STI.getFeatureBits()));
   }
 };
+
+void BedrockAsmParser::emitFarABINote() {
+  if (EmittedFarNote)
+    return;
+  EmittedFarNote = true;
+
+  MCStreamer &Out = getStreamer();
+  MCSection *Note = getContext().getELFSection(".note.bedrock", ELF::SHT_NOTE,
+                                               ELF::SHF_ALLOC);
+  Out.pushSection();
+  Out.switchSection(Note);
+  Out.emitInt32(8);
+  Out.emitInt32(8);
+  Out.emitInt32(ELF::NT_BEDROCK_ABI_ATTRIBUTES);
+  Out.emitBytes(StringRef("BEDROCK\0", 8));
+  Out.emitValueToAlignment(Align(4));
+  Out.emitInt32(ELF::TAG_BEDROCK_FAR_MODEL);
+  Out.emitInt32(0);
+  Out.popSection();
+}
+
+ParseStatus BedrockAsmParser::parseDirectiveFarPtr(SMLoc Loc) {
+  if (!getSTI().hasFeature(Bedrock::FeatureFarELF))
+    return Error(Loc, ".farptr requires the +far-elf target feature");
+
+  const MCExpr *Expr = nullptr;
+  if (Parser.parseExpression(Expr))
+    return ParseStatus::Failure;
+  MCValue Value;
+  if (!Expr->evaluateAsRelocatable(Value, nullptr) || !Value.getAddSym() ||
+      Value.getSubSym())
+    return Error(Loc, ".farptr requires a symbol with an optional addend");
+  if (Parser.parseEOL())
+    return ParseStatus::Failure;
+
+  emitFarABINote();
+  MCStreamer &Out = getStreamer();
+  Out.emitValueToAlignment(Align(16));
+  MCSymbol *Pair = getContext().createTempSymbol("farptr", true);
+  Out.emitLabel(Pair);
+  Out.emitZeros(16);
+
+  const MCExpr *Base = MCSymbolRefExpr::create(Pair, getContext());
+  const MCExpr *SegmentField = MCBinaryExpr::createAdd(
+      Base, MCConstantExpr::create(8, getContext()), getContext());
+  const MCExpr *Symbol =
+      MCSymbolRefExpr::create(Value.getAddSym(), getContext());
+  Out.emitRelocDirective(*Base, "R_BEDROCK_FAR_ADDR64", Expr, Loc);
+  Out.emitRelocDirective(*SegmentField, "R_BEDROCK_FAR_SEGMENT64", Symbol, Loc);
+  return ParseStatus::Success;
+}
+
+ParseStatus BedrockAsmParser::parseDirectiveSegmentDomain(SMLoc Loc) {
+  if (!getSTI().hasFeature(Bedrock::FeatureFarELF))
+    return Error(Loc,
+                 ".bedrock_segdomain requires the +far-elf target feature");
+  int64_t SectionIndex, DomainID, Image;
+  if (Parser.parseAbsoluteExpression(SectionIndex) || Parser.parseComma() ||
+      Parser.parseAbsoluteExpression(DomainID) || Parser.parseComma() ||
+      Parser.parseAbsoluteExpression(Image) || Parser.parseEOL())
+    return ParseStatus::Failure;
+  if (!isUInt<32>(SectionIndex) || !isUInt<32>(DomainID) || DomainID == 0)
+    return Error(Loc, "invalid Bedrock segment-domain index or identifier");
+
+  emitFarABINote();
+  MCSection *Meta = getContext().getELFSection(".bedrock.segdomains",
+                                               ELF::SHT_PROGBITS, 0, 16);
+  MCStreamer &Out = getStreamer();
+  Out.pushSection();
+  Out.switchSection(Meta);
+  Out.emitInt32(SectionIndex);
+  Out.emitInt32(DomainID);
+  Out.emitInt64(Image);
+  Out.popSection();
+  return ParseStatus::Success;
+}
+
+ParseStatus BedrockAsmParser::parseDirectiveFarSymbol(SMLoc Loc, bool IsIFunc) {
+  if (!getSTI().hasFeature(Bedrock::FeatureFarELF))
+    return Error(Loc, "far symbol type requires the +far-elf target feature");
+  MCSymbol *Symbol = nullptr;
+  if (Parser.parseSymbol(Symbol) || Parser.parseEOL())
+    return ParseStatus::Failure;
+  static_cast<MCSymbolELF *>(Symbol)->setType(
+      IsIFunc ? ELF::STT_BEDROCK_FAR_IFUNC : ELF::STT_BEDROCK_FAR_FUNC);
+  emitFarABINote();
+  return ParseStatus::Success;
+}
+
+ParseStatus BedrockAsmParser::parseDirective(AsmToken DirectiveID) {
+  StringRef Name = DirectiveID.getIdentifier();
+  if (Name == ".farptr")
+    return parseDirectiveFarPtr(DirectiveID.getLoc());
+  if (Name == ".bedrock_segdomain")
+    return parseDirectiveSegmentDomain(DirectiveID.getLoc());
+  if (Name == ".bedrock_far_func")
+    return parseDirectiveFarSymbol(DirectiveID.getLoc(), false);
+  if (Name == ".bedrock_far_ifunc")
+    return parseDirectiveFarSymbol(DirectiveID.getLoc(), true);
+  return ParseStatus::NoMatch;
+}
 
 class BedrockOperand : public MCParsedAsmOperand {
 public:
