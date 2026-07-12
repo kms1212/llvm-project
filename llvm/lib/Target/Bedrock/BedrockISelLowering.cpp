@@ -52,6 +52,14 @@ BedrockTargetLowering::BedrockTargetLowering(const TargetMachine &TM,
     setOperationAction(ISD::UMAX, VT, Custom);
     setOperationAction(ISD::UMIN, VT, Custom);
     setOperationAction(ISD::SIGN_EXTEND_INREG, VT, Custom);
+    // compiler-rt's integer helpers expose these operations after inlining.
+    // Bedrock has no dedicated instructions, so let SelectionDAG synthesize
+    // them from the legal integer operations instead of selecting an
+    // unsupported target opcode.
+    setOperationAction(ISD::CTLZ, VT, Expand);
+    setOperationAction(ISD::CTTZ, VT, Expand);
+    setOperationAction(ISD::CTPOP, VT, Expand);
+    setOperationAction(ISD::BSWAP, VT, Expand);
 
     setLoadExtAction(ISD::EXTLOAD, VT, MVT::i1, Promote);
     setLoadExtAction(ISD::SEXTLOAD, VT, MVT::i1, Promote);
@@ -71,6 +79,9 @@ BedrockTargetLowering::BedrockTargetLowering(const TargetMachine &TM,
   setOperationAction(ISD::MULHS, MVT::i64, Expand);
   setOperationAction(ISD::UMUL_LOHI, MVT::i64, Expand);
   setOperationAction(ISD::SMUL_LOHI, MVT::i64, Expand);
+  setOperationAction(ISD::SHL_PARTS, MVT::i64, Expand);
+  setOperationAction(ISD::SRA_PARTS, MVT::i64, Expand);
+  setOperationAction(ISD::SRL_PARTS, MVT::i64, Expand);
 
   setLoadExtAction(ISD::EXTLOAD, MVT::i64, MVT::i32, Legal);
   setLoadExtAction(ISD::SEXTLOAD, MVT::i64, MVT::i32, Legal);
@@ -95,6 +106,8 @@ BedrockTargetLowering::BedrockTargetLowering(const TargetMachine &TM,
   setOperationAction(ISD::BRCOND, MVT::Other, Custom);
   setOperationAction(ISD::VASTART, MVT::Other, Custom);
   setOperationAction(ISD::DYNAMIC_STACKALLOC, MVT::i64, Custom);
+  setOperationAction(ISD::ADDRSPACECAST, MVT::i64, Custom);
+  setOperationAction(ISD::ADDRSPACECAST, MVT::i128, Custom);
   setOperationAction(ISD::GlobalTLSAddress, MVT::i64, Custom);
   // AS1 pointers are 128-bit address/image carriers. Custom lowering must
   // split them before the integer type legalizer sees them as load/store
@@ -305,11 +318,47 @@ SDValue BedrockTargetLowering::LowerOperation(SDValue Op,
     return LowerVASTART(Op, DAG);
   case ISD::DYNAMIC_STACKALLOC:
     return LowerDYNAMIC_STACKALLOC(Op, DAG);
+  case ISD::ADDRSPACECAST:
+    return LowerADDRSPACECAST(Op, DAG);
   case ISD::GlobalTLSAddress:
     return LowerGlobalTLSAddress(Op, DAG);
   default:
     llvm_unreachable("unhandled Bedrock lowering operation");
   }
+}
+
+void BedrockTargetLowering::ReplaceNodeResults(
+    SDNode *N, SmallVectorImpl<SDValue> &Results, SelectionDAG &DAG) const {
+  if (N->getOpcode() == ISD::ADDRSPACECAST && N->getValueType(0) == MVT::i128) {
+    Results.push_back(LowerADDRSPACECAST(SDValue(N, 0), DAG));
+    return;
+  }
+  if (N->getOpcode() != ISD::LOAD || N->getValueType(0) != MVT::i128)
+    llvm_unreachable("unhandled Bedrock custom result legalization");
+  SDValue Lowered = LowerFarLoad(SDValue(N, 0), DAG);
+  if (!Lowered)
+    llvm_unreachable("failed to split Bedrock i128 load");
+  Results.push_back(Lowered);
+  Results.push_back(Lowered.getValue(1));
+}
+
+SDValue BedrockTargetLowering::LowerADDRSPACECAST(SDValue Op,
+                                                  SelectionDAG &DAG) const {
+  const auto *Cast = cast<AddrSpaceCastSDNode>(Op);
+  SDLoc DL(Op);
+  SDValue Source = Op.getOperand(0);
+  if (Cast->getSrcAddressSpace() == 1 && Cast->getDestAddressSpace() == 0)
+    return DAG.getNode(ISD::TRUNCATE, DL, MVT::i64, Source);
+
+  if (Cast->getSrcAddressSpace() != 0 || Cast->getDestAddressSpace() != 1)
+    report_fatal_error("unsupported Bedrock address-space cast");
+  SDValue Image = DAG.getConstant(0, DL, MVT::i64);
+  if (!isNullConstant(Source)) {
+    SDNode *ReadDS = DAG.getMachineNode(Bedrock::BEDROCK_RDSEG, DL, MVT::i64,
+                                        DAG.getTargetConstant(1, DL, MVT::i32));
+    Image = SDValue(ReadDS, 0);
+  }
+  return DAG.getNode(ISD::BUILD_PAIR, DL, MVT::i128, Source, Image);
 }
 
 SDValue
@@ -345,8 +394,27 @@ splitFarPointer(SDValue Pointer, const SDLoc &DL, SelectionDAG &DAG) {
 SDValue BedrockTargetLowering::LowerFarLoad(SDValue Op,
                                             SelectionDAG &DAG) const {
   auto *Load = cast<LoadSDNode>(Op);
-  if (Load->getAddressSpace() != 1)
-    return {};
+  if (Load->getAddressSpace() != 1) {
+    if (Load->getValueType(0) != MVT::i128 || !Load->isUnindexed())
+      return {};
+
+    // An AS1 pointer value stored in ordinary memory is a two-word carrier.
+    // Split it before the type legalizer asks the target to replace an illegal
+    // i128 load result.
+    SDLoc DL(Op);
+    SDValue Base = Load->getBasePtr();
+    SDValue HighPtr = DAG.getMemBasePlusOffset(Base, TypeSize::getFixed(8), DL);
+    MachineMemOperand::Flags Flags = Load->getMemOperand()->getFlags();
+    SDValue Low = DAG.getLoad(MVT::i64, DL, Load->getChain(), Base,
+                              Load->getPointerInfo(), Load->getBaseAlign(),
+                              Flags, Load->getAAInfo());
+    SDValue High = DAG.getLoad(MVT::i64, DL, Low.getValue(1), HighPtr,
+                               Load->getPointerInfo().getWithOffset(8),
+                               commonAlignment(Load->getBaseAlign(), 8), Flags,
+                               Load->getAAInfo());
+    SDValue Carrier = DAG.getNode(ISD::BUILD_PAIR, DL, MVT::i128, Low, High);
+    return DAG.getMergeValues({Carrier, High.getValue(1)}, DL);
+  }
   if (!Load->isUnindexed())
     report_fatal_error("indexed Bedrock far loads are unsupported");
 
@@ -364,8 +432,22 @@ SDValue BedrockTargetLowering::LowerFarLoad(SDValue Op,
 SDValue BedrockTargetLowering::LowerFarStore(SDValue Op,
                                              SelectionDAG &DAG) const {
   auto *Store = cast<StoreSDNode>(Op);
-  if (Store->getAddressSpace() != 1)
-    return {};
+  if (Store->getAddressSpace() != 1) {
+    if (Store->getValue().getValueType() != MVT::i128 || !Store->isUnindexed())
+      return {};
+
+    SDLoc DL(Op);
+    auto [Low, High] = splitFarPointer(Store->getValue(), DL, DAG);
+    SDValue Base = Store->getBasePtr();
+    SDValue HighPtr = DAG.getMemBasePlusOffset(Base, TypeSize::getFixed(8), DL);
+    MachineMemOperand::Flags Flags = Store->getMemOperand()->getFlags();
+    SDValue LowStore =
+        DAG.getStore(Store->getChain(), DL, Low, Base, Store->getPointerInfo(),
+                     Store->getBaseAlign(), Flags, Store->getAAInfo());
+    return DAG.getStore(
+        LowStore, DL, High, HighPtr, Store->getPointerInfo().getWithOffset(8),
+        commonAlignment(Store->getBaseAlign(), 8), Flags, Store->getAAInfo());
+  }
   if (!Store->isUnindexed())
     report_fatal_error("indexed Bedrock far stores are unsupported");
 

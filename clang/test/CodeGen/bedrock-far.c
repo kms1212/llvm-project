@@ -1,5 +1,7 @@
 // REQUIRES: bedrock-registered-target
 // RUN: %clang_cc1 -triple bedrock -std=c11 -emit-llvm -o - %s | FileCheck %s
+// RUN: %clang_cc1 -triple bedrock -std=c11 -emit-obj -o %t.o %s
+// RUN: llvm-objdump -dr %t.o | FileCheck %s --check-prefix=OBJ
 
 typedef int * __far far_int_ptr;
 typedef int (* __far far_fn)(int);
@@ -17,9 +19,15 @@ int call_remote(int x) { return remote(x); }
 // CHECK: call bedrock_farcc addrspace(1) i32 %{{.*}}(i32 noundef signext %{{.*}})
 int call_indirect(far_fn fn, int x) { return fn(x); }
 
+// OBJ-LABEL: <call_indirect>:
+// OBJ: lcall {{r[0-9]+}}, {{r[0-9]+}}
+
 // CHECK-LABEL: define dso_local ptr addrspace(1) @widen(ptr noundef %p)
 // CHECK: addrspacecast ptr %{{.*}} to ptr addrspace(1)
 far_int_ptr widen(int *p) { return (far_int_ptr)p; }
+
+// OBJ-LABEL: <widen>:
+// OBJ: rdseg ds, {{r[0-9]+}}
 
 // CHECK-LABEL: define dso_local ptr @narrow(ptr addrspace(1) noundef %p)
 // CHECK: addrspacecast ptr addrspace(1) %{{.*}} to ptr

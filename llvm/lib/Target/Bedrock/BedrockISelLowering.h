@@ -46,6 +46,8 @@ public:
 
 private:
   SDValue LowerOperation(SDValue Op, SelectionDAG &DAG) const override;
+  void ReplaceNodeResults(SDNode *N, SmallVectorImpl<SDValue> &Results,
+                          SelectionDAG &DAG) const override;
 
   SDValue LowerFormalArguments(SDValue Chain, CallingConv::ID CallConv,
                                bool IsVarArg,
@@ -80,6 +82,7 @@ private:
   SDValue LowerSIGN_EXTEND_INREG(SDValue Op, SelectionDAG &DAG) const;
   SDValue LowerVASTART(SDValue Op, SelectionDAG &DAG) const;
   SDValue LowerDYNAMIC_STACKALLOC(SDValue Op, SelectionDAG &DAG) const;
+  SDValue LowerADDRSPACECAST(SDValue Op, SelectionDAG &DAG) const;
   SDValue LowerGlobalTLSAddress(SDValue Op, SelectionDAG &DAG) const;
   SDValue LowerFarLoad(SDValue Op, SelectionDAG &DAG) const;
   SDValue LowerFarStore(SDValue Op, SelectionDAG &DAG) const;

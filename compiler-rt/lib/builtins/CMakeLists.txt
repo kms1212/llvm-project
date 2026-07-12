@@ -730,6 +730,82 @@ endif()
 
 set(amdgcn_SOURCES ${GENERIC_SOURCES})
 
+# Bedrock has native single- and double-precision floating point.  Keep its
+# compiler-rt target library focused on the integer ABI helpers, including the
+# i128 routines emitted by SelectionDAG.  The generic floating-point sources
+# implement soft-float by bitcasting FP values through integer registers, which
+# is neither the Bedrock ABI nor a legal Bedrock operation.
+set(bedrock_SOURCES
+  absvdi2.c
+  absvsi2.c
+  absvti2.c
+  addvdi3.c
+  addvsi3.c
+  addvti3.c
+  ashldi3.c
+  ashlti3.c
+  ashrdi3.c
+  ashrti3.c
+  bswapdi2.c
+  bswapsi2.c
+  clzdi2.c
+  clzsi2.c
+  clzti2.c
+  cmpdi2.c
+  cmpti2.c
+  ctzdi2.c
+  ctzsi2.c
+  ctzti2.c
+  divdi3.c
+  divmoddi4.c
+  divmodsi4.c
+  divmodti4.c
+  divsi3.c
+  divti3.c
+  ffsdi2.c
+  ffssi2.c
+  ffsti2.c
+  int_util.c
+  lshrdi3.c
+  lshrti3.c
+  moddi3.c
+  modsi3.c
+  modti3.c
+  muldi3.c
+  mulodi4.c
+  mulosi4.c
+  muloti4.c
+  multi3.c
+  mulvdi3.c
+  mulvsi3.c
+  mulvti3.c
+  negdi2.c
+  negti2.c
+  negvdi2.c
+  negvsi2.c
+  negvti2.c
+  paritydi2.c
+  paritysi2.c
+  parityti2.c
+  popcountdi2.c
+  popcountsi2.c
+  popcountti2.c
+  subvdi3.c
+  subvsi3.c
+  subvti3.c
+  ucmpdi2.c
+  ucmpti2.c
+  udivdi3.c
+  udivmoddi4.c
+  udivmodsi4.c
+  udivmodti4.c
+  udivsi3.c
+  udivti3.c
+  umoddi3.c
+  umodsi3.c
+  umodti3.c
+)
+
 set(armv4t_SOURCES ${arm_min_SOURCES})
 set(armv5te_SOURCES ${arm_min_SOURCES})
 set(armv6_SOURCES ${arm_min_SOURCES})
