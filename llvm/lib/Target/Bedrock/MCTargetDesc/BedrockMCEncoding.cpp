@@ -1196,6 +1196,15 @@ bool decodeLongPayload(uint32_t Payload, ArrayRef<uint8_t> Tail,
     return true;
   }
 
+  constexpr StringLiteral FClassPattern = "1111010111z0000ssss010dddd";
+  if (matchPattern(FClassPattern, Payload)) {
+    unsigned Size = extractPatternField(FClassPattern, Payload, 'z');
+    unsigned Src = extractPatternField(FClassPattern, Payload, 's');
+    unsigned Dst = extractPatternField(FClassPattern, Payload, 'd');
+    Text = formatv("fclass.{0}\tf{1}, r{2}", Size ? 'd' : 's', Src, Dst).str();
+    return true;
+  }
+
   enum class LongDir { RnEA, EARn };
   struct LongRegEAForm {
     StringRef Mnemonic;

@@ -1233,6 +1233,23 @@ public:
                                                              destTy);
     }
 
+    case CK_IntegralToPointer: {
+      Expr::EvalResult Result;
+      if (!subExpr->EvaluateAsInt(Result, CGM.getContext()) ||
+          !Result.Val.isInt())
+        return nullptr;
+      llvm::Constant *C =
+          llvm::ConstantInt::get(CGM.getLLVMContext(), Result.Val.getInt());
+      auto *DestTy = cast<llvm::PointerType>(ConvertType(E->getType()));
+      llvm::Type *IntPtrTy = CGM.getDataLayout().getIntPtrType(DestTy);
+      C = llvm::ConstantFoldIntegerCast(
+          C, IntPtrTy, subExpr->getType()->isSignedIntegerOrEnumerationType(),
+          CGM.getDataLayout());
+      if (!C)
+        return nullptr;
+      return llvm::ConstantExpr::getIntToPtr(C, DestTy);
+    }
+
     case CK_LValueToRValue: {
       // We don't really support doing lvalue-to-rvalue conversions here; any
       // interesting conversions should be done in Evaluate().  But as a
@@ -1318,7 +1335,6 @@ public:
     case CK_PointerToIntegral:
     case CK_PointerToBoolean:
     case CK_BooleanToSignedIntegral:
-    case CK_IntegralToPointer:
     case CK_IntegralToBoolean:
     case CK_IntegralToFloating:
     case CK_FloatingToIntegral:

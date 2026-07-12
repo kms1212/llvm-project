@@ -783,6 +783,13 @@ def warn_const_attr_with_pure_attr : Warning<
   InGroup<IgnoredAttributes>;
 def err_bedrock_cross_segment_memory_attr : Error<
   "'%0' cannot be combined with cross-segment access">;
+def err_bedrock_builtin_requires_far_pointer : Error<
+  "bedrock builtin requires a far pointer operand">;
+def err_bedrock_builtin_incompatible_far_pointers : Error<
+  "bedrock builtin requires compatible far pointer operands">;
+def err_bedrock_builtin_requires_integer : Error<
+  "argument %0 to bedrock far pointer builtin must have integer type (has "
+  "type %1)">;
 def warn_pure_function_returns_void : Warning<
   "'%select{pure|const}0' attribute on function returning 'void'; attribute ignored">,
   InGroup<IgnoredAttributes>;

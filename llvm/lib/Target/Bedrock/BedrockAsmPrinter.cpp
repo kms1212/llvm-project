@@ -212,6 +212,7 @@ private:
   void emitIndirectJump(const MachineInstr *MI);
   void emitFarCall(const MachineInstr *MI);
   void emitFarTailCall(const MachineInstr *MI);
+  void emitPublicIntrinsic(const MachineInstr *MI);
 };
 
 } // namespace
@@ -5501,6 +5502,29 @@ BedrockAsmPrinter::getInstSizeForBranchLayout(const MachineInstr &MI) const {
   case Bedrock::FAR_FSTORES:
   case Bedrock::FAR_FSTORED:
     return RepgHeaderSize + 9;
+  case Bedrock::BEDROCK_CPUID:
+    return RepgHeaderSize + 3;
+  case Bedrock::BEDROCK_TRACE:
+    return RepgHeaderSize + 5;
+  case Bedrock::BEDROCK_RDPMC:
+    return RepgHeaderSize + 6;
+  case Bedrock::BEDROCK_RDSTATUS:
+  case Bedrock::BEDROCK_RDFSTATUS:
+  case Bedrock::BEDROCK_WRFSTATUS:
+  case Bedrock::BEDROCK_RDFFLAGS:
+  case Bedrock::BEDROCK_WRFFLAGS:
+  case Bedrock::BEDROCK_CLMUL_B:
+  case Bedrock::BEDROCK_CLMUL_W:
+  case Bedrock::BEDROCK_CLMUL_L:
+  case Bedrock::BEDROCK_CLMUL_Q:
+  case Bedrock::BEDROCK_FCLASS_S:
+  case Bedrock::BEDROCK_FCLASS_D:
+    return RepgHeaderSize + 4;
+  case Bedrock::BEDROCK_MOVNT_B:
+  case Bedrock::BEDROCK_MOVNT_W:
+  case Bedrock::BEDROCK_MOVNT_L:
+  case Bedrock::BEDROCK_MOVNT_Q:
+    return RepgHeaderSize + 5;
   default:
     break;
   }
@@ -7528,6 +7552,123 @@ void BedrockAsmPrinter::emitFarTailCall(const MachineInstr *MI) {
   emitRawExpr(Bytes, 4, FK_Data_4, lowerSymbolOperand(Target));
 }
 
+void BedrockAsmPrinter::emitPublicIntrinsic(const MachineInstr *MI) {
+  SmallVector<uint8_t, 8> Tail;
+  SmallVector<uint8_t, 16> Bytes;
+  uint32_t Payload = 0;
+  bool IsMedium = false;
+
+  switch (MI->getOpcode()) {
+  case Bedrock::BEDROCK_CPUID:
+    Payload = applyPatternValues("00001001110000rrrr",
+                                 {{'r', getGPRNo(MI->getOperand(0).getReg())}});
+    IsMedium = true;
+    break;
+  case Bedrock::BEDROCK_TRACE:
+    Payload = applyPatternValues("000010011110000100", {});
+    appendLE(Tail, MI->getOperand(0).getImm(), 2);
+    IsMedium = true;
+    break;
+  case Bedrock::BEDROCK_RDPMC:
+    Payload = applyPatternValues("1111101111010001111010dddd",
+                                 {{'d', getGPRNo(MI->getOperand(0).getReg())}});
+    appendLE(Tail, MI->getOperand(1).getImm(), 2);
+    break;
+  case Bedrock::BEDROCK_RDSTATUS:
+  case Bedrock::BEDROCK_RDFSTATUS:
+  case Bedrock::BEDROCK_RDFFLAGS: {
+    StringRef Pattern = MI->getOpcode() == Bedrock::BEDROCK_RDSTATUS
+                            ? "1111101111010001110110dddd"
+                        : MI->getOpcode() == Bedrock::BEDROCK_RDFSTATUS
+                            ? "1111101111010001111000dddd"
+                            : "1111101111010001110100dddd";
+    Payload = applyPatternValues(Pattern,
+                                 {{'d', getGPRNo(MI->getOperand(0).getReg())}});
+    break;
+  }
+  case Bedrock::BEDROCK_WRFSTATUS:
+  case Bedrock::BEDROCK_WRFFLAGS: {
+    StringRef Pattern = MI->getOpcode() == Bedrock::BEDROCK_WRFSTATUS
+                            ? "1111101111010001111001ssss"
+                            : "1111101111010001110101ssss";
+    Payload = applyPatternValues(Pattern,
+                                 {{'s', getGPRNo(MI->getOperand(0).getReg())}});
+    break;
+  }
+  case Bedrock::BEDROCK_CLMUL_B:
+  case Bedrock::BEDROCK_CLMUL_W:
+  case Bedrock::BEDROCK_CLMUL_L:
+  case Bedrock::BEDROCK_CLMUL_Q: {
+    unsigned Size = 0;
+    switch (MI->getOpcode()) {
+    case Bedrock::BEDROCK_CLMUL_B:
+      Size = 0;
+      break;
+    case Bedrock::BEDROCK_CLMUL_W:
+      Size = 1;
+      break;
+    case Bedrock::BEDROCK_CLMUL_L:
+      Size = 2;
+      break;
+    case Bedrock::BEDROCK_CLMUL_Q:
+      Size = 3;
+      break;
+    default:
+      llvm_unreachable("not a CLMUL pseudo");
+    }
+    Payload = applyPatternValues("1111000010zz011ddddeeeeeee",
+                                 {{'z', Size},
+                                  {'d', getGPRNo(MI->getOperand(0).getReg())},
+                                  {'e', getRegEA(MI->getOperand(2).getReg())}});
+    break;
+  }
+  case Bedrock::BEDROCK_MOVNT_B:
+  case Bedrock::BEDROCK_MOVNT_W:
+  case Bedrock::BEDROCK_MOVNT_L:
+  case Bedrock::BEDROCK_MOVNT_Q: {
+    unsigned Size = 0;
+    switch (MI->getOpcode()) {
+    case Bedrock::BEDROCK_MOVNT_B:
+      Size = 0;
+      break;
+    case Bedrock::BEDROCK_MOVNT_W:
+      Size = 1;
+      break;
+    case Bedrock::BEDROCK_MOVNT_L:
+      Size = 2;
+      break;
+    case Bedrock::BEDROCK_MOVNT_Q:
+      Size = 3;
+      break;
+    default:
+      llvm_unreachable("not a MOVNT pseudo");
+    }
+    uint8_t EA;
+    getMemEAForReg(MI->getOperand(1).getReg(), EA, Tail);
+    Payload = applyPatternValues(
+        "1111001000zz000sssseeeeeee",
+        {{'z', Size}, {'s', getGPRNo(MI->getOperand(0).getReg())}, {'e', EA}});
+    break;
+  }
+  case Bedrock::BEDROCK_FCLASS_S:
+  case Bedrock::BEDROCK_FCLASS_D:
+    Payload =
+        applyPatternValues("1111010111z0000ssss010dddd",
+                           {{'z', MI->getOpcode() == Bedrock::BEDROCK_FCLASS_D},
+                            {'s', getFPRNo(MI->getOperand(1).getReg())},
+                            {'d', getGPRNo(MI->getOperand(0).getReg())}});
+    break;
+  default:
+    llvm_unreachable("not a Bedrock public intrinsic pseudo");
+  }
+
+  bool Encoded = IsMedium ? BedrockMC::encodeMedium(Payload, Tail, Bytes)
+                          : BedrockMC::encodeLong(Payload, Tail, Bytes);
+  if (!Encoded)
+    report_fatal_error("failed to encode Bedrock public intrinsic");
+  emitRaw(Bytes);
+}
+
 void BedrockAsmPrinter::emitInstruction(const MachineInstr *MI) {
   if (auto It = RepgStarts.find(MI); It != RepgStarts.end())
     emitRepgHeader(It->second.CounterReg, It->second.BodyBytes);
@@ -8489,6 +8630,26 @@ void BedrockAsmPrinter::emitInstruction(const MachineInstr *MI) {
   case Bedrock::FARTAILr:
   case Bedrock::FARTAILi:
     emitFarTailCall(MI);
+    return;
+  case Bedrock::BEDROCK_CPUID:
+  case Bedrock::BEDROCK_RDSTATUS:
+  case Bedrock::BEDROCK_RDPMC:
+  case Bedrock::BEDROCK_TRACE:
+  case Bedrock::BEDROCK_RDFSTATUS:
+  case Bedrock::BEDROCK_WRFSTATUS:
+  case Bedrock::BEDROCK_RDFFLAGS:
+  case Bedrock::BEDROCK_WRFFLAGS:
+  case Bedrock::BEDROCK_CLMUL_B:
+  case Bedrock::BEDROCK_CLMUL_W:
+  case Bedrock::BEDROCK_CLMUL_L:
+  case Bedrock::BEDROCK_CLMUL_Q:
+  case Bedrock::BEDROCK_MOVNT_B:
+  case Bedrock::BEDROCK_MOVNT_W:
+  case Bedrock::BEDROCK_MOVNT_L:
+  case Bedrock::BEDROCK_MOVNT_Q:
+  case Bedrock::BEDROCK_FCLASS_S:
+  case Bedrock::BEDROCK_FCLASS_D:
+    emitPublicIntrinsic(MI);
     return;
   }
 

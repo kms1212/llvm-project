@@ -22,6 +22,7 @@
 namespace llvm {
 
 class BedrockSubtarget : public BedrockGenSubtargetInfo {
+  bool HasFPU = false;
   BedrockInstrInfo InstrInfo;
   BedrockFrameLowering FrameLowering;
   BedrockTargetLowering TLInfo;
@@ -35,6 +36,8 @@ public:
   void ParseSubtargetFeatures(StringRef CPU, StringRef TuneCPU, StringRef FS);
   BedrockSubtarget &initializeSubtargetDependencies(StringRef CPU,
                                                     StringRef FS);
+
+  bool hasFPU() const { return HasFPU; }
 
   const BedrockInstrInfo *getInstrInfo() const override { return &InstrInfo; }
   const TargetFrameLowering *getFrameLowering() const override {

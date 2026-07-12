@@ -11,7 +11,10 @@ include "llvm/Target/Target.td"
 class Proc<string Name, list<SubtargetFeature> Features>
     : Processor<Name, NoItineraries, Features>;
 
-def : Proc<"generic", []>;
+def FeatureFPU : SubtargetFeature<"fpu", "HasFPU", "true",
+                                  "Enable floating-point instructions">;
+
+def : Proc<"generic", [FeatureFPU]>;
 
 include "BedrockRegisterInfo.td"
 include "BedrockCallingConv.td"

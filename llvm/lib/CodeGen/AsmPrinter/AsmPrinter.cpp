@@ -4278,6 +4278,21 @@ static void emitGlobalConstantImpl(const DataLayout &DL, const Constant *CV,
   emitGlobalAliasInline(AP, Offset, AliasList);
   uint64_t Size = DL.getTypeAllocSize(CV->getType());
 
+  // A target may use pointers wider than the MC expression integer width.
+  // Emit an absolute wide inttoptr initializer as raw integer bytes instead
+  // of routing it through lowerConstant(), whose MCConstantExpr carrier is
+  // limited to 64 bits.
+  if (Size > 8)
+    if (const auto *CE = dyn_cast<ConstantExpr>(CV))
+      if (CE->getOpcode() == Instruction::IntToPtr)
+        if (const auto *CI = dyn_cast<ConstantInt>(CE->getOperand(0))) {
+          emitGlobalConstantLargeInt(CI, AP);
+          uint64_t StoreSize = DL.getTypeStoreSize(CI->getType());
+          if (Size > StoreSize)
+            AP.OutStreamer->emitZeros(Size - StoreSize);
+          return;
+        }
+
   // Globals with sub-elements such as combinations of arrays and structs
   // are handled recursively by emitGlobalConstantImpl. Keep track of the
   // constant symbol base and the current position with BaseCV and Offset.

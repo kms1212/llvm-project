@@ -53,6 +53,7 @@
 #include "clang/Basic/SourceManager.h"
 #include "clang/Basic/Specifiers.h"
 #include "clang/Basic/SyncScope.h"
+#include "clang/Basic/TargetBuiltins.h"
 #include "clang/Basic/TargetInfo.h"
 #include "clang/Basic/TypeTraits.h"
 #include "clang/Lex/Lexer.h" // TODO: Extract static functions to fix layering.
@@ -2071,6 +2072,24 @@ static void CheckNonNullArgument(Sema &S, const Expr *ArgExpr,
 
 bool Sema::CheckTSBuiltinFunctionCall(const TargetInfo &TI, unsigned BuiltinID,
                                       CallExpr *TheCall) {
+  auto CheckBedrockFarPointer = [&](Expr *Arg) {
+    const auto *PT = Arg->getType()->getAs<PointerType>();
+    if (PT && Context.getTargetAddressSpace(
+                  PT->getPointeeType().getAddressSpace()) == 1)
+      return false;
+    Diag(Arg->getExprLoc(), diag::err_bedrock_builtin_requires_far_pointer)
+        << Arg->getSourceRange();
+    return true;
+  };
+  auto CheckBedrockInteger = [&](CallExpr *Call, unsigned ArgNo) {
+    Expr *Arg = Call->getArg(ArgNo);
+    if (Arg->getType()->isIntegerType())
+      return false;
+    Diag(Arg->getExprLoc(), diag::err_bedrock_builtin_requires_integer)
+        << ArgNo + 1 << Arg->getType() << Arg->getSourceRange();
+    return true;
+  };
+
   switch (TI.getTriple().getArch()) {
   default:
     // Some builtins don't require additional checking, so just consider these
@@ -2088,6 +2107,50 @@ bool Sema::CheckTSBuiltinFunctionCall(const TargetInfo &TI, unsigned BuiltinID,
   case llvm::Triple::bpfeb:
   case llvm::Triple::bpfel:
     return BPF().CheckBPFBuiltinFunctionCall(BuiltinID, TheCall);
+  case llvm::Triple::bedrock:
+    switch (BuiltinID) {
+    case Bedrock::BI__builtin_bedrock_far_ptr_init:
+    case Bedrock::BI__builtin_bedrock_far_ptr_from_segment:
+      if (checkArgCount(TheCall, 3) ||
+          CheckBedrockFarPointer(TheCall->getArg(0)) ||
+          CheckBedrockInteger(TheCall, 1) || CheckBedrockInteger(TheCall, 2))
+        return true;
+      TheCall->setType(TheCall->getArg(0)->getType());
+      return false;
+    case Bedrock::BI__builtin_bedrock_far_flat_ptr_init:
+      if (checkArgCount(TheCall, 2) ||
+          CheckBedrockFarPointer(TheCall->getArg(0)) ||
+          CheckBedrockInteger(TheCall, 1))
+        return true;
+      TheCall->setType(TheCall->getArg(0)->getType());
+      return false;
+    case Bedrock::BI__builtin_bedrock_far_null:
+      if (checkArgCount(TheCall, 1) ||
+          CheckBedrockFarPointer(TheCall->getArg(0)))
+        return true;
+      TheCall->setType(TheCall->getArg(0)->getType());
+      return false;
+    case Bedrock::BI__builtin_bedrock_far_address:
+      return checkArgCount(TheCall, 1) ||
+             CheckBedrockFarPointer(TheCall->getArg(0));
+    case Bedrock::BI__builtin_bedrock_far_same_encoding:
+      if (checkArgCount(TheCall, 2) ||
+          CheckBedrockFarPointer(TheCall->getArg(0)) ||
+          CheckBedrockFarPointer(TheCall->getArg(1)))
+        return true;
+      if (!Context.hasSameType(TheCall->getArg(0)->getType(),
+                               TheCall->getArg(1)->getType())) {
+        Diag(TheCall->getExprLoc(),
+             diag::err_bedrock_builtin_incompatible_far_pointers);
+        return true;
+      }
+      return false;
+    case Bedrock::BI__builtin_bedrock_rdpmc:
+    case Bedrock::BI__builtin_bedrock_trace:
+      return BuiltinConstantArgRange(TheCall, 0, 0, 65535);
+    default:
+      return false;
+    }
   case llvm::Triple::dxil:
     return DirectX().CheckDirectXBuiltinFunctionCall(BuiltinID, TheCall);
   case llvm::Triple::hexagon:

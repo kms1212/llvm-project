@@ -20,6 +20,7 @@ namespace targets {
 class LLVM_LIBRARY_VISIBILITY BedrockTargetInfo : public TargetInfo {
   static const char *const GCCRegNames[];
   static const TargetInfo::GCCRegAlias GCCRegAliases[];
+  bool HasFPU = true;
 
 public:
   BedrockTargetInfo(const llvm::Triple &Triple, const TargetOptions &)
@@ -49,9 +50,17 @@ public:
   void getTargetDefines(const LangOptions &Opts,
                         MacroBuilder &Builder) const override;
 
-  llvm::SmallVector<Builtin::InfosShard> getTargetBuiltins() const override {
-    return {};
+  llvm::SmallVector<Builtin::InfosShard> getTargetBuiltins() const override;
+
+  bool hasFeature(StringRef Feature) const override {
+    return Feature == "bedrock" || (Feature == "fpu" && HasFPU);
   }
+  bool
+  initFeatureMap(llvm::StringMap<bool> &Features, DiagnosticsEngine &Diags,
+                 StringRef CPU,
+                 const std::vector<std::string> &FeaturesVec) const override;
+  bool handleTargetFeatures(std::vector<std::string> &Features,
+                            DiagnosticsEngine &Diags) override;
 
   ArrayRef<const char *> getGCCRegNames() const override;
   ArrayRef<TargetInfo::GCCRegAlias> getGCCRegAliases() const override;

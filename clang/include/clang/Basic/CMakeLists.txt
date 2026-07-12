@@ -94,6 +94,10 @@ clang_tablegen(BuiltinsBPF.inc -gen-clang-builtins
   SOURCE BuiltinsBPF.td
   TARGET ClangBuiltinsBPF)
 
+clang_tablegen(BuiltinsBedrock.inc -gen-clang-builtins
+  SOURCE BuiltinsBedrock.td
+  TARGET ClangBuiltinsBedrock)
+
 clang_tablegen(BuiltinsDirectX.inc -gen-clang-builtins
   SOURCE BuiltinsDirectX.td
   TARGET ClangBuiltinsDirectX)

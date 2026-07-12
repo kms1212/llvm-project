@@ -10225,8 +10225,16 @@ bool PointerExprEvaluator::VisitCastExpr(const CastExpr *E) {
 
     if (Value.isInt()) {
       unsigned Size = Info.Ctx.getTypeSize(E->getType());
-      uint64_t N = Value.getInt().extOrTrunc(Size).getZExtValue();
-      if (N == Info.Ctx.getTargetNullPointerValue(E->getType())) {
+      llvm::APInt PointerBits = Value.getInt().extOrTrunc(Size);
+      // APValue represents an absolute pointer as a CharUnits offset, which
+      // cannot retain the segment image of a Bedrock 128-bit far pointer.
+      // Preserve the canonical low address here for constant-initializer
+      // validation. CodeGen emits the complete integer-to-pointer constant
+      // directly, before consulting this APValue.
+      uint64_t N = PointerBits.getLoBits(std::min(Size, 64u)).getZExtValue();
+      llvm::APInt NullBits(
+          Size, Info.Ctx.getTargetNullPointerValue(E->getType()));
+      if (PointerBits == NullBits) {
         Result.setNull(Info.Ctx, E->getType());
       } else {
         Result.Base = (Expr *)nullptr;
@@ -18155,8 +18163,8 @@ EvaluateComparisonBinaryOperator(EvalInfo &Info, const BinaryOperator *E,
     unsigned PtrSize = Info.Ctx.getTypeSize(LHSTy);
     uint64_t CompareLHS = LHSOffset.getQuantity();
     uint64_t CompareRHS = RHSOffset.getQuantity();
-    assert(PtrSize <= 64 && "Unexpected pointer width");
-    uint64_t Mask = ~0ULL >> (64 - PtrSize);
+    unsigned CompareSize = std::min(PtrSize, 64u);
+    uint64_t Mask = ~0ULL >> (64 - CompareSize);
     CompareLHS &= Mask;
     CompareRHS &= Mask;
 

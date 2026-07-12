@@ -300,6 +300,15 @@ set(gpu_files
   spirvintrin.h
   )
 
+set(bedrock_files
+  bedrockfarintrin.h
+  bedrockcoreintrin.h
+  bedrockmemoryintrin.h
+  bedrockintegerintrin.h
+  bedrockfpuintrin.h
+  bedrockintrin.h
+  )
+
 set(windows_only_files
   intrin0.h
   intrin.h
@@ -330,6 +339,7 @@ set(files
   ${ve_files}
   ${x86_files}
   ${gpu_files}
+  ${bedrock_files}
   ${webassembly_files}
   ${windows_only_files}
   ${utility_files}

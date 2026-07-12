@@ -110,6 +110,17 @@ namespace clang {
   };
   }
 
+  /// Bedrock builtins
+  namespace Bedrock {
+  enum {
+    LastTIBuiltin = clang::Builtin::FirstTSBuiltin - 1,
+#define GET_BUILTIN_ENUMERATORS
+#include "clang/Basic/BuiltinsBedrock.inc"
+#undef GET_BUILTIN_ENUMERATORS
+    LastTSBuiltin
+  };
+  } // namespace Bedrock
+
   /// PPC builtins
   namespace PPC {
     enum {
@@ -473,10 +484,11 @@ namespace clang {
 
   static constexpr uint64_t LargestBuiltinID = std::max<uint64_t>(
       {ARM::LastTSBuiltin, AArch64::LastTSBuiltin, BPF::LastTSBuiltin,
-       PPC::LastTSBuiltin, NVPTX::LastTSBuiltin, AMDGPU::LastTSBuiltin,
-       X86::LastTSBuiltin, VE::LastTSBuiltin, RISCV::LastTSBuiltin,
-       Hexagon::LastTSBuiltin, Mips::LastTSBuiltin, XCore::LastTSBuiltin,
-       SystemZ::LastTSBuiltin, WebAssembly::LastTSBuiltin});
+       Bedrock::LastTSBuiltin, PPC::LastTSBuiltin, NVPTX::LastTSBuiltin,
+       AMDGPU::LastTSBuiltin, X86::LastTSBuiltin, VE::LastTSBuiltin,
+       RISCV::LastTSBuiltin, Hexagon::LastTSBuiltin, Mips::LastTSBuiltin,
+       XCore::LastTSBuiltin, SystemZ::LastTSBuiltin,
+       WebAssembly::LastTSBuiltin});
 
 } // end namespace clang.
 

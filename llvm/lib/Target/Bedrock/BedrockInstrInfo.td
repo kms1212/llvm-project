@@ -264,6 +264,68 @@ def WFENCE : BedrockShort<0x204c, (outs), (ins), "wfence">;
 def AFENCE : BedrockShort<0x204d, (outs), (ins), "afence">;
 def RESET : BedrockShort<0x204e, (outs), (ins), "reset">;
 
+let hasSideEffects = 1 in {
+def BEDROCK_CPUID : BedrockPseudo<(outs GPR64:$dst), (ins GPR64:$src),
+                                  [(set i64:$dst,
+                                        (int_bedrock_cpuid i64:$src))]> {
+  let Constraints = "$dst = $src";
+}
+def BEDROCK_RDSTATUS : BedrockPseudo<(outs GPR64:$dst), (ins),
+                                     [(set i64:$dst,
+                                           (int_bedrock_read_status))]>;
+def BEDROCK_RDPMC : BedrockPseudo<(outs GPR64:$dst), (ins i32imm:$selector),
+                                  [(set i64:$dst,
+                                        (int_bedrock_rdpmc timm:$selector))]>;
+def BEDROCK_TRACE : BedrockPseudo<(outs), (ins i32imm:$marker),
+                                  [(int_bedrock_trace timm:$marker)]>;
+def BEDROCK_RDFSTATUS : BedrockPseudo<(outs GPR64:$dst), (ins),
+                                      [(set i64:$dst,
+                                            (int_bedrock_read_fstatus))]>;
+def BEDROCK_WRFSTATUS : BedrockPseudo<(outs), (ins GPR64:$src),
+                                      [(int_bedrock_write_fstatus
+                                            i64:$src)]>;
+def BEDROCK_RDFFLAGS : BedrockPseudo<(outs GPR64:$dst), (ins),
+                                     [(set i64:$dst,
+                                           (int_bedrock_read_fflags))]>;
+def BEDROCK_WRFFLAGS : BedrockPseudo<(outs), (ins GPR64:$src),
+                                     [(int_bedrock_write_fflags i64:$src)]>;
+}
+
+class BedrockClmulPseudo<Intrinsic intrinsic>
+    : BedrockPseudo<(outs GPR64:$dst),
+                    (ins GPR64:$lhs, GPR64:$rhs),
+                    [(set i64:$dst, (intrinsic i64:$lhs, i64:$rhs))]> {
+  let Constraints = "$dst = $lhs";
+}
+def BEDROCK_CLMUL_B : BedrockClmulPseudo<int_bedrock_clmul_u8>;
+def BEDROCK_CLMUL_W : BedrockClmulPseudo<int_bedrock_clmul_u16>;
+def BEDROCK_CLMUL_L : BedrockClmulPseudo<int_bedrock_clmul_u32>;
+def BEDROCK_CLMUL_Q : BedrockClmulPseudo<int_bedrock_clmul_u64>;
+
+class BedrockMovNTPseudo<Intrinsic intrinsic>
+    : BedrockPseudo<(outs), (ins GPR64:$src, GPR64:$address),
+                    [(intrinsic GPR64:$address, i64:$src)]> {
+  let mayStore = 1;
+}
+def BEDROCK_MOVNT_B : BedrockMovNTPseudo<int_bedrock_nontemporal_store_u8>;
+def BEDROCK_MOVNT_W : BedrockMovNTPseudo<int_bedrock_nontemporal_store_u16>;
+def BEDROCK_MOVNT_L : BedrockMovNTPseudo<int_bedrock_nontemporal_store_u32>;
+def BEDROCK_MOVNT_Q : BedrockMovNTPseudo<int_bedrock_nontemporal_store_u64>;
+
+def BEDROCK_FCLASS_S
+    : BedrockPseudo<(outs GPR64:$dst), (ins FPR64:$src),
+                    [(set i64:$dst, (int_bedrock_fclass_f32 f32:$src))]>;
+def BEDROCK_FCLASS_D
+    : BedrockPseudo<(outs GPR64:$dst), (ins FPR64:$src),
+                    [(set i64:$dst, (int_bedrock_fclass_f64 f64:$src))]>;
+
+def : Pat<(int_bedrock_breakpoint), (BKPT)>;
+def : Pat<(int_bedrock_yield), (YIELD)>;
+def : Pat<(int_bedrock_wait), (WAIT)>;
+def : Pat<(int_bedrock_read_fence), (RFENCE)>;
+def : Pat<(int_bedrock_write_fence), (WFENCE)>;
+def : Pat<(int_bedrock_address_fence), (AFENCE)>;
+
 def MOVLrr : BedrockRR<0x00, "mov.l">;
 def MOVQrr : BedrockRR<0x01, "mov.q">;
 def ADDLrr : BedrockRR<0x02, "add.l">;

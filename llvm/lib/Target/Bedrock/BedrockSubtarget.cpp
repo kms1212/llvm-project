@@ -12,6 +12,7 @@ using namespace llvm;
 
 #define DEBUG_TYPE "bedrock-subtarget"
 
+#define GET_SUBTARGETINFO_ENUM
 #define GET_SUBTARGETINFO_TARGET_DESC
 #define GET_SUBTARGETINFO_CTOR
 #include "BedrockGenSubtargetInfo.inc"
