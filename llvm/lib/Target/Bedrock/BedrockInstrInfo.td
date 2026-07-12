@@ -19,6 +19,8 @@ class BedrockInst<dag outs, dag ins, string asm, list<dag> pattern = []>
   field bits<16> Inst;
 }
 
+def HasVirtAccel : Predicate<"Subtarget->hasVirtAccel()">;
+
 def SDT_BedrockCallSeqStart : SDCallSeqStart<[SDTCisVT<0, i64>,
                                                SDTCisVT<1, i64>]>;
 def SDT_BedrockCallSeqEnd : SDCallSeqEnd<[SDTCisVT<0, i64>,
@@ -325,6 +327,98 @@ def : Pat<(int_bedrock_wait), (WAIT)>;
 def : Pat<(int_bedrock_read_fence), (RFENCE)>;
 def : Pat<(int_bedrock_write_fence), (WFENCE)>;
 def : Pat<(int_bedrock_address_fence), (AFENCE)>;
+
+let hasSideEffects = 1 in {
+def BEDROCK_WRSTATUS : BedrockPseudo<(outs), (ins GPR64:$src),
+                                     [(int_bedrock_write_status i64:$src)]>;
+def BEDROCK_RDCR : BedrockPseudo<(outs GPR64:$dst), (ins i32imm:$selector),
+                                 [(set i64:$dst,
+                                       (int_bedrock_read_control_register
+                                            timm:$selector))]>;
+def BEDROCK_WRCR : BedrockPseudo<(outs),
+                                 (ins GPR64:$src, i32imm:$selector),
+                                 [(int_bedrock_write_control_register
+                                      timm:$selector, i64:$src)]>;
+def BEDROCK_RDSEG : BedrockPseudo<(outs GPR64:$dst), (ins i32imm:$selector),
+                                  [(set i64:$dst,
+                                        (int_bedrock_read_segment_register
+                                             timm:$selector))]>;
+def BEDROCK_WRSEG : BedrockPseudo<(outs),
+                                  (ins GPR64:$src, i32imm:$selector),
+                                  [(int_bedrock_write_segment_register
+                                       timm:$selector, i64:$src)]>;
+
+class BedrockCacheRangePseudo<Intrinsic intrinsic>
+    : BedrockPseudo<(outs), (ins GPR64:$address, GPR64:$length),
+                    [(intrinsic GPR64:$address, i64:$length)]> {
+  let mayLoad = 1;
+  let mayStore = 1;
+}
+def BEDROCK_FLSHDCACHE :
+    BedrockCacheRangePseudo<int_bedrock_flush_dcache>;
+def BEDROCK_INVDCACHE :
+    BedrockCacheRangePseudo<int_bedrock_invalidate_dcache>;
+def BEDROCK_INVICACHE :
+    BedrockCacheRangePseudo<int_bedrock_invalidate_icache>;
+def BEDROCK_WRBKDCACHE :
+    BedrockCacheRangePseudo<int_bedrock_writeback_dcache>;
+def BEDROCK_SYNCCACHE :
+    BedrockCacheRangePseudo<int_bedrock_sync_cache>;
+
+def BEDROCK_INVTLB : BedrockPseudo<(outs), (ins),
+                                   [(int_bedrock_invalidate_tlb)]>;
+def BEDROCK_INVPAGE :
+    BedrockPseudo<(outs), (ins GPR64:$address),
+                  [(int_bedrock_invalidate_page GPR64:$address)]>;
+def BEDROCK_INVASID :
+    BedrockPseudo<(outs), (ins i32imm:$asid),
+                  [(int_bedrock_invalidate_asid timm:$asid)]>;
+def BEDROCK_SWPT : BedrockPseudo<(outs), (ins GPR64:$ptcr),
+                                 [(int_bedrock_switch_page_table i64:$ptcr)]>;
+def BEDROCK_SWPTA :
+    BedrockPseudo<(outs), (ins GPR64:$ptcr, GPR64:$asid),
+                  [(int_bedrock_switch_page_table_asid i64:$ptcr,
+                                                        i64:$asid)]>;
+def BEDROCK_VTOP :
+    BedrockPseudo<(outs GPR64:$dst, GPR64:$flags),
+                  (ins GPR64:$address),
+                  [(set i64:$dst, i64:$flags,
+                        (int_bedrock_virtual_to_physical i64:$address))]> {
+  let Constraints = "$dst = $address";
+}
+def BEDROCK_PTQUERY :
+    BedrockPseudo<(outs GPR64:$dst, GPR64:$flags),
+                  (ins GPR64:$address, i32imm:$level),
+                  [(set i64:$dst, i64:$flags,
+                        (int_bedrock_page_table_query timm:$level,
+                                                       i64:$address))]>;
+
+def BEDROCK_SAVE :
+    BedrockPseudo<(outs), (ins GPR64:$address),
+                  [(int_bedrock_save_processor_state GPR64:$address)]>;
+def BEDROCK_RESTORE :
+    BedrockPseudo<(outs), (ins GPR64:$address),
+                  [(int_bedrock_restore_processor_state GPR64:$address)]> {
+  let Defs = [R0, R1, R2, R3, R4, R5, R6, R7, R8, R9, R10, R11, R12, R13,
+              R14, R15, FLAGS, STATUS, GS0, GS1, GS2, GS3, GS4, F0, F1, F2,
+              F3, F4, F5, F6, F7, F8, F9, F10, F11, F12, F13, F14, F15,
+              FSTATUS, FFLAGS];
+  let mayLoad = 1;
+}
+
+let Predicates = [HasVirtAccel] in
+def BEDROCK_ENCINST :
+    BedrockPseudo<(outs R0Only:$dst),
+                  (ins GPR64NoR0R3:$address, R0Only:$control, R1Only:$operand1,
+                       R2Only:$operand2, R3Only:$operand3),
+                  [(set i64:$dst,
+                        (int_bedrock_encode_instruction GPR64NoR0R3:$address,
+                            i64:$control, i64:$operand1, i64:$operand2,
+                            i64:$operand3))]> {
+  let Constraints = "$dst = $control";
+  let mayStore = 1;
+}
+}
 
 def MOVLrr : BedrockRR<0x00, "mov.l">;
 def MOVQrr : BedrockRR<0x01, "mov.q">;

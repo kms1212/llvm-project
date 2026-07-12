@@ -307,6 +307,12 @@ set(bedrock_files
   bedrockintegerintrin.h
   bedrockfpuintrin.h
   bedrockintrin.h
+  bedrocksysregintrin.h
+  bedrockcacheintrin.h
+  bedrockmmuintrin.h
+  bedrockstateintrin.h
+  bedrockvirtintrin.h
+  bedrocksystemintrin.h
   )
 
 set(windows_only_files

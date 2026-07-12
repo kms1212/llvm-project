@@ -2148,6 +2148,16 @@ bool Sema::CheckTSBuiltinFunctionCall(const TargetInfo &TI, unsigned BuiltinID,
     case Bedrock::BI__builtin_bedrock_rdpmc:
     case Bedrock::BI__builtin_bedrock_trace:
       return BuiltinConstantArgRange(TheCall, 0, 0, 65535);
+    case Bedrock::BI__builtin_bedrock_read_control_register:
+    case Bedrock::BI__builtin_bedrock_write_control_register:
+    case Bedrock::BI__builtin_bedrock_invalidate_asid:
+      return BuiltinConstantArgRange(TheCall, 0, 0, 65535);
+    case Bedrock::BI__builtin_bedrock_read_segment_register:
+      return BuiltinConstantArgRange(TheCall, 0, 0, 7);
+    case Bedrock::BI__builtin_bedrock_write_segment_register:
+      return BuiltinConstantArgRange(TheCall, 0, 1, 7);
+    case Bedrock::BI__builtin_bedrock_page_table_query:
+      return BuiltinConstantArgRange(TheCall, 0, 0, 7);
     default:
       return false;
     }

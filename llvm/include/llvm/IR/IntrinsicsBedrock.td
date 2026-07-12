@@ -65,4 +65,59 @@ let TargetPrefix = "bedrock" in {
       Intrinsic<[llvm_i64_ty], [llvm_float_ty], [IntrNoMem]>;
   def int_bedrock_fclass_f64 :
       Intrinsic<[llvm_i64_ty], [llvm_double_ty], [IntrNoMem]>;
+
+  def int_bedrock_write_status :
+      Intrinsic<[], [llvm_i64_ty], [IntrNoMem, IntrHasSideEffects]>;
+  def int_bedrock_read_control_register :
+      Intrinsic<[llvm_i64_ty], [llvm_i32_ty],
+                [IntrNoMem, IntrHasSideEffects, ImmArg<ArgIndex<0>>]>;
+  def int_bedrock_write_control_register :
+      Intrinsic<[], [llvm_i32_ty, llvm_i64_ty],
+                [IntrHasSideEffects, ImmArg<ArgIndex<0>>]>;
+  def int_bedrock_read_segment_register :
+      Intrinsic<[llvm_i64_ty], [llvm_i32_ty],
+                [IntrNoMem, IntrHasSideEffects, ImmArg<ArgIndex<0>>]>;
+  def int_bedrock_write_segment_register :
+      Intrinsic<[], [llvm_i32_ty, llvm_i64_ty],
+                [IntrHasSideEffects, ImmArg<ArgIndex<0>>]>;
+
+  def int_bedrock_flush_dcache :
+      Intrinsic<[], [llvm_ptr_ty, llvm_i64_ty], [IntrHasSideEffects]>;
+  def int_bedrock_invalidate_dcache :
+      Intrinsic<[], [llvm_ptr_ty, llvm_i64_ty], [IntrHasSideEffects]>;
+  def int_bedrock_invalidate_icache :
+      Intrinsic<[], [llvm_ptr_ty, llvm_i64_ty], [IntrHasSideEffects]>;
+  def int_bedrock_writeback_dcache :
+      Intrinsic<[], [llvm_ptr_ty, llvm_i64_ty], [IntrHasSideEffects]>;
+  def int_bedrock_sync_cache :
+      Intrinsic<[], [llvm_ptr_ty, llvm_i64_ty], [IntrHasSideEffects]>;
+
+  def int_bedrock_invalidate_tlb :
+      Intrinsic<[], [], [IntrHasSideEffects]>;
+  def int_bedrock_invalidate_page :
+      Intrinsic<[], [llvm_ptr_ty], [IntrHasSideEffects]>;
+  def int_bedrock_invalidate_asid :
+      Intrinsic<[], [llvm_i32_ty],
+                [IntrHasSideEffects, ImmArg<ArgIndex<0>>]>;
+  def int_bedrock_switch_page_table :
+      Intrinsic<[], [llvm_i64_ty], [IntrHasSideEffects]>;
+  def int_bedrock_switch_page_table_asid :
+      Intrinsic<[], [llvm_i64_ty, llvm_i64_ty], [IntrHasSideEffects]>;
+  def int_bedrock_virtual_to_physical :
+      Intrinsic<[llvm_i64_ty, llvm_i64_ty], [llvm_i64_ty],
+                [IntrNoMem, IntrHasSideEffects]>;
+  def int_bedrock_page_table_query :
+      Intrinsic<[llvm_i64_ty, llvm_i64_ty], [llvm_i32_ty, llvm_i64_ty],
+                [IntrNoMem, IntrHasSideEffects, ImmArg<ArgIndex<0>>]>;
+
+  def int_bedrock_save_processor_state :
+      Intrinsic<[], [llvm_ptr_ty], [IntrHasSideEffects]>;
+  def int_bedrock_restore_processor_state :
+      Intrinsic<[], [llvm_ptr_ty], [IntrHasSideEffects]>;
+  def int_bedrock_encode_instruction :
+      Intrinsic<[llvm_i64_ty],
+                [llvm_ptr_ty, llvm_i64_ty, llvm_i64_ty, llvm_i64_ty,
+                 llvm_i64_ty],
+                [IntrWriteMem, IntrArgMemOnly, IntrHasSideEffects,
+                 NoCapture<ArgIndex<0>>]>;
 }

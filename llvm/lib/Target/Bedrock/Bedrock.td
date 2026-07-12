@@ -13,6 +13,8 @@ class Proc<string Name, list<SubtargetFeature> Features>
 
 def FeatureFPU : SubtargetFeature<"fpu", "HasFPU", "true",
                                   "Enable floating-point instructions">;
+def FeatureVirtAccel : SubtargetFeature<"virtaccel", "HasVirtAccel", "true",
+                                        "Enable virtualization acceleration">;
 
 def : Proc<"generic", [FeatureFPU]>;
 

@@ -127,7 +127,7 @@ void BedrockInstrInfo::storeRegToStackSlot(
     return;
   }
 
-  if (RC != &Bedrock::GPR64RegClass)
+  if (!Bedrock::GPR64RegClass.hasSubClassEq(RC))
     report_fatal_error("Bedrock only supports GPR/FPR stack-slot stores");
 
   BuildMI(MBB, MI, DL, get(Bedrock::STOREQfi))
@@ -153,7 +153,7 @@ void BedrockInstrInfo::loadRegFromStackSlot(MachineBasicBlock &MBB,
     return;
   }
 
-  if (RC != &Bedrock::GPR64RegClass)
+  if (!Bedrock::GPR64RegClass.hasSubClassEq(RC))
     report_fatal_error("Bedrock only supports GPR/FPR stack-slot loads");
 
   BuildMI(MBB, MI, DL, get(Bedrock::LOADQfi), DestReg)

@@ -54,3 +54,39 @@ def clmul_u64 : BedrockBuiltin<"uint64_t(uint64_t, uint64_t)">;
 def fclass_f32 : BedrockBuiltin<"unsigned short(float)", "fpu">;
 def fclass_f64 : BedrockBuiltin<"unsigned short(double)", "fpu">;
 }
+
+let Attributes = [NoThrow] in {
+def write_status : BedrockBuiltin<"void(unsigned short)">;
+def read_control_register :
+    BedrockBuiltin<"uint64_t(_Constant unsigned int)">;
+def write_control_register :
+    BedrockBuiltin<"void(_Constant unsigned int, uint64_t)">;
+def read_segment_register :
+    BedrockBuiltin<"uint64_t(_Constant unsigned int)">;
+def write_segment_register :
+    BedrockBuiltin<"void(_Constant unsigned int, uint64_t)">;
+
+def flush_dcache : BedrockBuiltin<"void(void *, unsigned long int)">;
+def invalidate_dcache : BedrockBuiltin<"void(void *, unsigned long int)">;
+def invalidate_icache : BedrockBuiltin<"void(void *, unsigned long int)">;
+def writeback_dcache : BedrockBuiltin<"void(void *, unsigned long int)">;
+def sync_cache : BedrockBuiltin<"void(void *, unsigned long int)">;
+
+def invalidate_tlb : BedrockBuiltin<"void()">;
+def invalidate_page : BedrockBuiltin<"void(void const *)">;
+def invalidate_asid :
+    BedrockBuiltin<"void(_Constant unsigned int)">;
+def switch_page_table : BedrockBuiltin<"void(uint64_t)">;
+def switch_page_table_asid :
+    BedrockBuiltin<"void(uint64_t, unsigned short)">;
+def virtual_to_physical :
+    BedrockBuiltin<"void(uint64_t, uint64_t *, unsigned short *)">;
+def page_table_query :
+    BedrockBuiltin<"void(_Constant unsigned int, uint64_t, uint64_t *, unsigned short *)">;
+
+def save_processor_state : BedrockBuiltin<"void(void *)">;
+def restore_processor_state : BedrockBuiltin<"void(void const *)">;
+def encode_instruction :
+    BedrockBuiltin<"long int(void *, uint64_t, uint64_t, uint64_t, uint64_t)",
+                   "virtaccel">;
+}

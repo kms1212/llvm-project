@@ -8,6 +8,7 @@
 
 #include "Bedrock.h"
 #include "BedrockISelLowering.h"
+#include "BedrockSubtarget.h"
 #include "BedrockTargetMachine.h"
 #include "MCTargetDesc/BedrockMCTargetDesc.h"
 #include "llvm/CodeGen/SelectionDAGISel.h"
@@ -23,10 +24,17 @@ using namespace llvm;
 namespace {
 
 class BedrockDAGToDAGISel : public SelectionDAGISel {
+  const BedrockSubtarget *Subtarget = nullptr;
+
 public:
   BedrockDAGToDAGISel() = delete;
   BedrockDAGToDAGISel(BedrockTargetMachine &TM, CodeGenOptLevel OptLevel)
       : SelectionDAGISel(TM, OptLevel) {}
+
+  bool runOnMachineFunction(MachineFunction &MF) override {
+    Subtarget = &MF.getSubtarget<BedrockSubtarget>();
+    return SelectionDAGISel::runOnMachineFunction(MF);
+  }
 
   void Select(SDNode *N) override;
 

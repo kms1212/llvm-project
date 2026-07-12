@@ -75,6 +75,13 @@ def GPR64 : RegisterClass<"Bedrock", [i32, i64], 64, (sequence "R%u", 0, 15)> {
   let DecoderMethod = "DecodeGPR64RegisterClass";
 }
 
+def R0Only : RegisterClass<"Bedrock", [i64], 64, (add R0)>;
+def R1Only : RegisterClass<"Bedrock", [i64], 64, (add R1)>;
+def R2Only : RegisterClass<"Bedrock", [i64], 64, (add R2)>;
+def R3Only : RegisterClass<"Bedrock", [i64], 64, (add R3)>;
+def GPR64NoR0R3 :
+    RegisterClass<"Bedrock", [i64], 64, (sequence "R%u", 4, 15)>;
+
 def SPReg : RegisterClass<"Bedrock", [i64], 64, (add SP)>;
 
 def FPR64 : RegisterClass<"Bedrock", [f32, f64], 64, (sequence "F%u", 0, 15)>;

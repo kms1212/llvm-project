@@ -21,6 +21,7 @@ class LLVM_LIBRARY_VISIBILITY BedrockTargetInfo : public TargetInfo {
   static const char *const GCCRegNames[];
   static const TargetInfo::GCCRegAlias GCCRegAliases[];
   bool HasFPU = true;
+  bool HasVirtAccel = false;
 
 public:
   BedrockTargetInfo(const llvm::Triple &Triple, const TargetOptions &)
@@ -53,7 +54,8 @@ public:
   llvm::SmallVector<Builtin::InfosShard> getTargetBuiltins() const override;
 
   bool hasFeature(StringRef Feature) const override {
-    return Feature == "bedrock" || (Feature == "fpu" && HasFPU);
+    return Feature == "bedrock" || (Feature == "fpu" && HasFPU) ||
+           (Feature == "virtaccel" && HasVirtAccel);
   }
   bool
   initFeatureMap(llvm::StringMap<bool> &Features, DiagnosticsEngine &Diags,

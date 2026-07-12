@@ -213,6 +213,7 @@ private:
   void emitFarCall(const MachineInstr *MI);
   void emitFarTailCall(const MachineInstr *MI);
   void emitPublicIntrinsic(const MachineInstr *MI);
+  void emitSystemIntrinsic(const MachineInstr *MI);
 };
 
 } // namespace
@@ -5525,6 +5526,29 @@ BedrockAsmPrinter::getInstSizeForBranchLayout(const MachineInstr &MI) const {
   case Bedrock::BEDROCK_MOVNT_L:
   case Bedrock::BEDROCK_MOVNT_Q:
     return RepgHeaderSize + 5;
+  case Bedrock::BEDROCK_RDCR:
+  case Bedrock::BEDROCK_WRCR:
+  case Bedrock::BEDROCK_INVASID:
+    return RepgHeaderSize + 6;
+  case Bedrock::BEDROCK_VTOP:
+  case Bedrock::BEDROCK_PTQUERY:
+    return RepgHeaderSize + 8;
+  case Bedrock::BEDROCK_WRSTATUS:
+  case Bedrock::BEDROCK_RDSEG:
+  case Bedrock::BEDROCK_WRSEG:
+  case Bedrock::BEDROCK_FLSHDCACHE:
+  case Bedrock::BEDROCK_INVDCACHE:
+  case Bedrock::BEDROCK_INVICACHE:
+  case Bedrock::BEDROCK_WRBKDCACHE:
+  case Bedrock::BEDROCK_SYNCCACHE:
+  case Bedrock::BEDROCK_INVTLB:
+  case Bedrock::BEDROCK_INVPAGE:
+  case Bedrock::BEDROCK_SWPT:
+  case Bedrock::BEDROCK_SWPTA:
+  case Bedrock::BEDROCK_SAVE:
+  case Bedrock::BEDROCK_RESTORE:
+  case Bedrock::BEDROCK_ENCINST:
+    return RepgHeaderSize + 4;
   default:
     break;
   }
@@ -7669,6 +7693,138 @@ void BedrockAsmPrinter::emitPublicIntrinsic(const MachineInstr *MI) {
   emitRaw(Bytes);
 }
 
+void BedrockAsmPrinter::emitSystemIntrinsic(const MachineInstr *MI) {
+  auto EmitLong = [&](uint32_t Payload, ArrayRef<uint8_t> Tail = {}) {
+    SmallVector<uint8_t, 16> Bytes;
+    if (!BedrockMC::encodeLong(Payload, Tail, Bytes))
+      report_fatal_error("failed to encode Bedrock system intrinsic");
+    emitRaw(Bytes);
+  };
+  auto RegEA = [&](Register Reg, SmallVectorImpl<uint8_t> &Tail) {
+    uint8_t EA;
+    getMemEAForReg(Reg, EA, Tail);
+    return EA;
+  };
+
+  SmallVector<uint8_t, 8> Tail;
+  uint32_t Payload = 0;
+  switch (MI->getOpcode()) {
+  case Bedrock::BEDROCK_WRSTATUS:
+    Payload = applyPatternValues("1111101111010001110111ssss",
+                                 {{'s', getGPRNo(MI->getOperand(0).getReg())}});
+    break;
+  case Bedrock::BEDROCK_RDCR:
+    Payload = applyPatternValues("1111101111010001110000dddd",
+                                 {{'d', getGPRNo(MI->getOperand(0).getReg())}});
+    appendLE(Tail, MI->getOperand(1).getImm(), 2);
+    break;
+  case Bedrock::BEDROCK_WRCR:
+    Payload = applyPatternValues("1111101111010001110001ssss",
+                                 {{'s', getGPRNo(MI->getOperand(0).getReg())}});
+    appendLE(Tail, MI->getOperand(1).getImm(), 2);
+    break;
+  case Bedrock::BEDROCK_RDSEG:
+    Payload = applyPatternValues("1111101111010000000sssdddd",
+                                 {{'s', unsigned(MI->getOperand(1).getImm())},
+                                  {'d', getGPRNo(MI->getOperand(0).getReg())}});
+    break;
+  case Bedrock::BEDROCK_WRSEG:
+    Payload = applyPatternValues("1111101111010000001sssdddd",
+                                 {{'s', unsigned(MI->getOperand(1).getImm())},
+                                  {'d', getGPRNo(MI->getOperand(0).getReg())}});
+    break;
+  case Bedrock::BEDROCK_FLSHDCACHE:
+  case Bedrock::BEDROCK_INVDCACHE:
+  case Bedrock::BEDROCK_INVICACHE:
+  case Bedrock::BEDROCK_WRBKDCACHE:
+  case Bedrock::BEDROCK_SYNCCACHE: {
+    StringRef Pattern;
+    switch (MI->getOpcode()) {
+    case Bedrock::BEDROCK_FLSHDCACHE:
+      Pattern = "1111101111010000011eeeeeee";
+      break;
+    case Bedrock::BEDROCK_INVDCACHE:
+      Pattern = "1111101111010000100eeeeeee";
+      break;
+    case Bedrock::BEDROCK_INVICACHE:
+      Pattern = "1111101111010000101eeeeeee";
+      break;
+    case Bedrock::BEDROCK_SYNCCACHE:
+      Pattern = "1111101111010000111eeeeeee";
+      break;
+    case Bedrock::BEDROCK_WRBKDCACHE:
+      Pattern = "1111101111010001000eeeeeee";
+      break;
+    default:
+      llvm_unreachable("not a cache pseudo");
+    }
+    Payload = applyPatternValues(
+        Pattern, {{'e', RegEA(MI->getOperand(0).getReg(), Tail)}});
+    break;
+  }
+  case Bedrock::BEDROCK_INVTLB:
+    Payload = applyPatternValues("11111011110100011000000001", {});
+    break;
+  case Bedrock::BEDROCK_INVPAGE:
+    Payload =
+        applyPatternValues("1111101111010000010eeeeeee",
+                           {{'e', RegEA(MI->getOperand(0).getReg(), Tail)}});
+    break;
+  case Bedrock::BEDROCK_INVASID:
+    Payload = applyPatternValues("11111011110100011000000000", {});
+    appendLE(Tail, MI->getOperand(0).getImm(), 2);
+    break;
+  case Bedrock::BEDROCK_SWPT:
+    Payload = applyPatternValues("1111101111010001111011pppp",
+                                 {{'p', getGPRNo(MI->getOperand(0).getReg())}});
+    break;
+  case Bedrock::BEDROCK_SWPTA:
+    Payload = applyPatternValues("111110111101001aaaa001pppp",
+                                 {{'p', getGPRNo(MI->getOperand(0).getReg())},
+                                  {'a', getGPRNo(MI->getOperand(1).getReg())}});
+    break;
+  case Bedrock::BEDROCK_VTOP: {
+    Payload = applyPatternValues("111110111101001vvvv000pppp",
+                                 {{'v', getGPRNo(MI->getOperand(2).getReg())},
+                                  {'p', getGPRNo(MI->getOperand(0).getReg())}});
+    EmitLong(Payload);
+    Payload = applyPatternValues("1111101111010001110010dddd",
+                                 {{'d', getGPRNo(MI->getOperand(1).getReg())}});
+    EmitLong(Payload);
+    return;
+  }
+  case Bedrock::BEDROCK_PTQUERY: {
+    uint8_t EA = RegEA(MI->getOperand(2).getReg(), Tail);
+    Payload = applyPatternValues("111110111100iiiddddeeeeeee",
+                                 {{'i', unsigned(MI->getOperand(3).getImm())},
+                                  {'d', getGPRNo(MI->getOperand(0).getReg())},
+                                  {'e', EA}});
+    EmitLong(Payload, Tail);
+    Payload = applyPatternValues("1111101111010001110010dddd",
+                                 {{'d', getGPRNo(MI->getOperand(1).getReg())}});
+    EmitLong(Payload);
+    return;
+  }
+  case Bedrock::BEDROCK_SAVE:
+  case Bedrock::BEDROCK_RESTORE: {
+    StringRef Pattern = MI->getOpcode() == Bedrock::BEDROCK_SAVE
+                            ? "1111101111010001001eeeeeee"
+                            : "1111101111010001010eeeeeee";
+    Payload = applyPatternValues(
+        Pattern, {{'e', RegEA(MI->getOperand(0).getReg(), Tail)}});
+    break;
+  }
+  case Bedrock::BEDROCK_ENCINST:
+    Payload =
+        applyPatternValues("1111101111010001100eeeeeee",
+                           {{'e', RegEA(MI->getOperand(1).getReg(), Tail)}});
+    break;
+  default:
+    llvm_unreachable("not a Bedrock system intrinsic pseudo");
+  }
+  EmitLong(Payload, Tail);
+}
+
 void BedrockAsmPrinter::emitInstruction(const MachineInstr *MI) {
   if (auto It = RepgStarts.find(MI); It != RepgStarts.end())
     emitRepgHeader(It->second.CounterReg, It->second.BodyBytes);
@@ -8650,6 +8806,28 @@ void BedrockAsmPrinter::emitInstruction(const MachineInstr *MI) {
   case Bedrock::BEDROCK_FCLASS_S:
   case Bedrock::BEDROCK_FCLASS_D:
     emitPublicIntrinsic(MI);
+    return;
+  case Bedrock::BEDROCK_WRSTATUS:
+  case Bedrock::BEDROCK_RDCR:
+  case Bedrock::BEDROCK_WRCR:
+  case Bedrock::BEDROCK_RDSEG:
+  case Bedrock::BEDROCK_WRSEG:
+  case Bedrock::BEDROCK_FLSHDCACHE:
+  case Bedrock::BEDROCK_INVDCACHE:
+  case Bedrock::BEDROCK_INVICACHE:
+  case Bedrock::BEDROCK_WRBKDCACHE:
+  case Bedrock::BEDROCK_SYNCCACHE:
+  case Bedrock::BEDROCK_INVTLB:
+  case Bedrock::BEDROCK_INVPAGE:
+  case Bedrock::BEDROCK_INVASID:
+  case Bedrock::BEDROCK_SWPT:
+  case Bedrock::BEDROCK_SWPTA:
+  case Bedrock::BEDROCK_VTOP:
+  case Bedrock::BEDROCK_PTQUERY:
+  case Bedrock::BEDROCK_SAVE:
+  case Bedrock::BEDROCK_RESTORE:
+  case Bedrock::BEDROCK_ENCINST:
+    emitSystemIntrinsic(MI);
     return;
   }
 
