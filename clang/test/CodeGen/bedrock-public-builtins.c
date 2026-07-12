@@ -5,6 +5,24 @@
 
 typedef int *__far far_int_ptr;
 
+// CHECK: @packed_segment_image ={{.*}} global i64 305418371, align 8
+// CHECK: @based_segment_image ={{.*}} global i64 305418502, align 8
+// CHECK: @disabled_segment_image ={{.*}} global i64 0, align 8
+uint64_t packed_segment_image =
+    __BEDROCK_SEGMENT_IMAGE(0x12345, 33, 65, 2);
+uint64_t based_segment_image =
+    __BEDROCK_SEGMENT_IMAGE_FOR_BASE(0x12345fff, 2, 3, 0);
+uint64_t disabled_segment_image = __BEDROCK_SEGMENT_DISABLED;
+
+_Static_assert(__BEDROCK_SEGMENT_IMAGE(0x12345, 33, 65, 2) ==
+                   UINT64_C(0x12345083),
+               "segment fields must be masked and packed");
+_Static_assert(__BEDROCK_SEGMENT_IMAGE_FOR_BASE(0x12345fff, 2, 3, 0) ==
+                   UINT64_C(0x12345106),
+               "byte bases must be converted to page bases");
+_Static_assert(__BEDROCK_SEGMENT_DISABLED == 0,
+               "the disabled image must be canonical");
+
 // CHECK: @far_constant ={{.*}} global ptr addrspace(1) inttoptr (i128 -136023984058069262664334284085100382328 to ptr addrspace(1)), align 16
 // CHECK: @far_translated_constant ={{.*}} global ptr addrspace(1) inttoptr (i128 19342868454066287925032840 to ptr addrspace(1)), align 16
 // CHECK: @far_null_constant ={{.*}} global ptr addrspace(1) null, align 16
@@ -18,6 +36,15 @@ far_int_ptr far_null_constant =
     __BEDROCK_FAR_PTR_INIT(far_int_ptr, 0, 0x0000000000100002ULL);
 far_int_ptr far_overflow_constant = __BEDROCK_FAR_PTR_FROM_SEGMENT(
     far_int_ptr, 0x1000ULL, 0xfffffffffffff002ULL);
+
+// CHECK-LABEL: define{{.*}} i64 @segment_image_single_evaluation
+// CHECK-COUNT-4: store i64
+// CHECK-NOT: store i64
+// CHECK: ret i64
+uint64_t segment_image_single_evaluation(uint64_t *values) {
+  return __BEDROCK_SEGMENT_IMAGE(values[0]++, values[1]++, values[2]++,
+                                 values[3]++);
+}
 
 // CHECK-LABEL: define{{.*}} ptr addrspace(1) @far_init_runtime
 // CHECK: and i64 %image, 126
