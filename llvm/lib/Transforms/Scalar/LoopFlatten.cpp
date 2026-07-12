@@ -51,6 +51,7 @@
 
 #include "llvm/Transforms/Scalar/LoopFlatten.h"
 
+#include "llvm/ADT/DenseMap.h"
 #include "llvm/ADT/Statistic.h"
 #include "llvm/Analysis/AssumptionCache.h"
 #include "llvm/Analysis/LoopAccessAnalysis.h"
@@ -129,6 +130,8 @@ struct FlattenInfo {
   SmallPtrSet<Value *, 4> LinearIVUses;  // Contains the linear expressions
                                          // of the form i*M+j that will be
                                          // replaced.
+  DenseMap<Value *, Value *> LinearIVBases; // Optional loop-invariant bases
+                                             // in base+i*M+j expressions.
 
   BinaryOperator *InnerIncrement = nullptr;  // Uses of induction variables in
   BinaryOperator *OuterIncrement = nullptr;  // loop control statements that
@@ -221,6 +224,46 @@ struct FlattenInfo {
                  match(MatchedMul, m_c_Mul(m_Specific(OuterInductionPHI),
                                            m_Value(MatchedItCount)));
 
+    // Also accept a loop-invariant integer base folded into the linear
+    // expression, e.g. j + (i * M + base).  This commonly appears when C code
+    // performs arithmetic on an integer MMIO address before inttoptr.
+    Value *MatchedBase = nullptr;
+    Value *Combined = nullptr;
+    bool IsAddWithBase = false;
+    bool IsAddTruncWithBase = false;
+    auto MatchMulAndBase = [&](Value *V, bool WithTrunc) {
+      auto *Add = dyn_cast<BinaryOperator>(V);
+      if (!Add || Add->getOpcode() != Instruction::Add)
+        return false;
+      Value *A = Add->getOperand(0);
+      Value *B = Add->getOperand(1);
+      auto MatchMul = [&](Value *Mul, Value *Base) {
+        Value *ItCount = nullptr;
+        bool Matches =
+            WithTrunc
+                ? match(Mul,
+                        m_c_Mul(m_Trunc(m_Specific(OuterInductionPHI)),
+                                m_Value(ItCount)))
+                : match(Mul, m_c_Mul(m_Specific(OuterInductionPHI),
+                                     m_Value(ItCount)));
+        if (!Matches || !OuterLoop->isLoopInvariant(Base))
+          return false;
+        MatchedMul = Mul;
+        MatchedItCount = ItCount;
+        MatchedBase = Base;
+        return true;
+      };
+      return MatchMul(A, B) || MatchMul(B, A);
+    };
+
+    if (match(U, m_c_Add(m_Specific(InnerInductionPHI),
+                         m_Value(Combined))))
+      IsAddWithBase = MatchMulAndBase(Combined, /*WithTrunc=*/false);
+    if (!IsAddWithBase &&
+        match(U, m_c_Add(m_Trunc(m_Specific(InnerInductionPHI)),
+                         m_Value(Combined))))
+      IsAddTruncWithBase = MatchMulAndBase(Combined, /*WithTrunc=*/true);
+
     if (!MatchedItCount)
       return false;
 
@@ -250,10 +293,14 @@ struct FlattenInfo {
     LLVM_DEBUG(dbgs() << "Looking for inner trip count: ";
                InnerTripCount->dump());
 
-    if ((IsAdd || IsAddTrunc || IsGEP) && MatchedItCount == InnerTripCount) {
+    if ((IsAdd || IsAddTrunc || IsGEP || IsAddWithBase ||
+         IsAddTruncWithBase) &&
+        MatchedItCount == InnerTripCount) {
       LLVM_DEBUG(dbgs() << "Found. This sse is optimisable\n");
       ValidOuterPHIUses.insert(MatchedMul);
       LinearIVUses.insert(U);
+      if (MatchedBase)
+        LinearIVBases[U] = MatchedBase;
       return true;
     }
 
@@ -802,6 +849,9 @@ static bool DoFlattenLoopPair(FlattenInfo &FI, DominatorTree *DT, LoopInfo *LI,
     if (FI.Widened)
       OuterValue = Builder.CreateTrunc(FI.OuterInductionPHI, V->getType(),
                                        "flatten.trunciv");
+
+    if (Value *Base = FI.LinearIVBases.lookup(V))
+      OuterValue = Builder.CreateAdd(Base, OuterValue, "flatten.offset");
 
     if (auto *GEP = dyn_cast<GetElementPtrInst>(V)) {
       // Replace the GEP with one that uses OuterValue as the offset.

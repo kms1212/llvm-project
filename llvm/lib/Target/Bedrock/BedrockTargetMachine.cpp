@@ -13,17 +13,122 @@
 #include "BedrockTargetTransformInfo.h"
 #include "TargetInfo/BedrockTargetInfo.h"
 #include "llvm/Analysis/TargetTransformInfo.h"
+#include "llvm/Analysis/MemorySSA.h"
+#include "llvm/ADT/SmallVector.h"
 #include "llvm/CodeGen/GlobalMerge.h"
 #include "llvm/CodeGen/Passes.h"
 #include "llvm/CodeGen/TargetLoweringObjectFileImpl.h"
 #include "llvm/CodeGen/TargetPassConfig.h"
 #include "llvm/MC/TargetRegistry.h"
 #include "llvm/Passes/PassBuilder.h"
+#include "llvm/IR/Constants.h"
+#include "llvm/IR/IRBuilder.h"
+#include "llvm/IR/Instructions.h"
 #include "llvm/Support/CommandLine.h"
 #include "llvm/Support/Compiler.h"
+#include "llvm/Transforms/Scalar/LoopFlatten.h"
+#include "llvm/Transforms/Scalar/LoopIdiomRecognize.h"
+#include "llvm/Transforms/Scalar/LoopPassManager.h"
 #include <optional>
 
 using namespace llvm;
+
+namespace {
+
+static void collectAddTerms(Value *V, APInt &Base,
+                            SmallVectorImpl<Value *> &Terms,
+                            bool &SawConstant) {
+  if (auto *BO = dyn_cast<BinaryOperator>(V);
+      BO && BO->getOpcode() == Instruction::Add) {
+    collectAddTerms(BO->getOperand(0), Base, Terms, SawConstant);
+    collectAddTerms(BO->getOperand(1), Base, Terms, SawConstant);
+    return;
+  }
+  if (auto *C = dyn_cast<ConstantInt>(V)) {
+    Base += C->getValue().zextOrTrunc(Base.getBitWidth());
+    SawConstant = true;
+    return;
+  }
+  Terms.push_back(V);
+}
+
+// Bedrock uses integral flat pointers.  Recover a GEP from integer address
+// arithmetic so SCEV and the loop optimizers can see the affine recurrence.
+static bool canonicalizeIntToPtr(ArrayRef<BasicBlock *> Blocks) {
+  if (Blocks.empty())
+    return false;
+  const DataLayout &DL = Blocks.front()->getDataLayout();
+  SmallVector<IntToPtrInst *, 8> Casts;
+  for (BasicBlock *BB : Blocks)
+    for (Instruction &I : *BB)
+      if (auto *Cast = dyn_cast<IntToPtrInst>(&I))
+        Casts.push_back(Cast);
+
+  bool Changed = false;
+  for (IntToPtrInst *Cast : Casts) {
+    auto *IntTy = dyn_cast<IntegerType>(Cast->getOperand(0)->getType());
+    auto *PtrTy = dyn_cast<PointerType>(Cast->getType());
+    if (!IntTy || !PtrTy || PtrTy->getAddressSpace() != 0 ||
+        DL.isNonIntegralPointerType(PtrTy) ||
+        IntTy->getBitWidth() != DL.getPointerSizeInBits(0))
+      continue;
+
+    APInt Base(IntTy->getBitWidth(), 0);
+    SmallVector<Value *, 4> Terms;
+    bool SawConstant = false;
+    collectAddTerms(Cast->getOperand(0), Base, Terms, SawConstant);
+    if (!SawConstant || Base.isZero() || Terms.empty())
+      continue;
+
+    IRBuilder<> Builder(Cast);
+    Value *Offset = Terms.front();
+    for (Value *Term : ArrayRef(Terms).drop_front())
+      Offset = Builder.CreateAdd(Offset, Term, "bedrock.addr.offset");
+
+    Constant *BaseInt = ConstantInt::get(IntTy, Base);
+    Constant *BasePtr = ConstantExpr::getIntToPtr(BaseInt, PtrTy);
+    Value *GEP = Builder.CreateGEP(Builder.getInt8Ty(), BasePtr, Offset,
+                                   "bedrock.addr");
+    Cast->replaceAllUsesWith(GEP);
+    Cast->eraseFromParent();
+    Changed = true;
+  }
+  return Changed;
+}
+
+class BedrockCanonicalizeIntToPtrPass
+    : public PassInfoMixin<BedrockCanonicalizeIntToPtrPass> {
+public:
+  PreservedAnalyses run(Function &F, FunctionAnalysisManager &) {
+    SmallVector<BasicBlock *, 16> Blocks;
+    for (BasicBlock &BB : F)
+      Blocks.push_back(&BB);
+    bool Changed = canonicalizeIntToPtr(Blocks);
+
+    if (!Changed)
+      return PreservedAnalyses::all();
+    PreservedAnalyses PA;
+    PA.preserveSet<CFGAnalyses>();
+    return PA;
+  }
+};
+
+class BedrockCanonicalizeIntToPtrLoopPass
+    : public PassInfoMixin<BedrockCanonicalizeIntToPtrLoopPass> {
+public:
+  PreservedAnalyses run(Loop &L, LoopAnalysisManager &,
+                        LoopStandardAnalysisResults &AR, LPMUpdater &) {
+    if (!canonicalizeIntToPtr(L.getBlocks()))
+      return PreservedAnalyses::all();
+    AR.SE.forgetLoop(&L);
+    auto PA = getLoopPassPreservedAnalyses();
+    if (AR.MSSA)
+      PA.preserve<MemorySSAAnalysis>();
+    return PA;
+  }
+};
+
+} // namespace
 
 static cl::opt<cl::boolOrDefault>
     EnableGlobalMerge("bedrock-enable-global-merge", cl::Hidden,
@@ -83,6 +188,19 @@ void BedrockTargetMachine::registerPassBuilderCallbacks(PassBuilder &PB) {
     AAM.registerFunctionAnalysis<BedrockAA>();
     return true;
   });
+  PB.registerPeepholeEPCallback(
+      [](FunctionPassManager &FPM, OptimizationLevel Level) {
+        if (Level != OptimizationLevel::O0)
+          FPM.addPass(BedrockCanonicalizeIntToPtrPass());
+      });
+  PB.registerLateLoopOptimizationsEPCallback(
+      [](LoopPassManager &LPM, OptimizationLevel Level) {
+        if (Level == OptimizationLevel::O0)
+          return;
+        LPM.addPass(LoopFlattenPass());
+        LPM.addPass(BedrockCanonicalizeIntToPtrLoopPass());
+        LPM.addPass(LoopIdiomRecognizePass());
+      });
 }
 
 MachineFunctionInfo *BedrockTargetMachine::createMachineFunctionInfo(

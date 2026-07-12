@@ -20,6 +20,11 @@ class BedrockSelectionDAGInfo : public SelectionDAGGenTargetInfo {
 public:
   BedrockSelectionDAGInfo();
   ~BedrockSelectionDAGInfo() override;
+
+  SDValue EmitTargetCodeForMemset(
+      SelectionDAG &DAG, const SDLoc &DL, SDValue Chain, SDValue Dst,
+      SDValue Value, SDValue Size, Align Alignment, bool IsVolatile,
+      bool AlwaysInline, MachinePointerInfo DstPtrInfo) const override;
 };
 
 } // namespace llvm

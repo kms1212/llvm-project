@@ -33,6 +33,11 @@ def SDT_BedrockFarLoad : SDTypeProfile<1, 3, [SDTCisVT<1, i64>,
                                                    SDTCisVT<3, i32>]>;
 def SDT_BedrockFarStore : SDTypeProfile<0, 3, [SDTCisVT<1, i64>,
                                                     SDTCisVT<2, i64>]>;
+def SDT_BedrockMemset : SDTypeProfile<2, 3, [SDTCisVT<0, i64>,
+                                                 SDTCisVT<1, i64>,
+                                                 SDTCisVT<2, i64>,
+                                                 SDTCisVT<3, i64>,
+                                                 SDTCisVT<4, i64>]>;
 def SDT_BedrockCmp : SDTypeProfile<0, 2, [SDTCisSameAs<0, 1>]>;
 def SDT_BedrockTest : SDTypeProfile<0, 1, [SDTCisInt<0>]>;
 def SDT_BedrockBrCC : SDTypeProfile<0, 2, [SDTCisVT<0, OtherVT>,
@@ -74,6 +79,8 @@ def BedrockFarLoad : SDNode<"BedrockISD::FAR_LOAD", SDT_BedrockFarLoad,
                             [SDNPHasChain, SDNPMayLoad, SDNPMemOperand]>;
 def BedrockFarStore : SDNode<"BedrockISD::FAR_STORE", SDT_BedrockFarStore,
                              [SDNPHasChain, SDNPMayStore, SDNPMemOperand]>;
+def BedrockMemset : SDNode<"BedrockISD::MEMSET", SDT_BedrockMemset,
+                           [SDNPHasChain, SDNPMayStore]>;
 def BedrockRetFlag : SDNode<"BedrockISD::RET_FLAG", SDTNone,
                             [SDNPHasChain, SDNPOptInGlue, SDNPVariadic]>;
 def BedrockFarRetFlag : SDNode<"BedrockISD::FAR_RET_FLAG", SDTNone,
@@ -118,6 +125,12 @@ class BedrockPseudo<dag outs, dag ins, list<dag> pattern = []>
   let isCodeGenOnly = 1;
   let hasNoSchedulingInfo = 1;
 }
+
+let Constraints = "$dst_out = $dst, $count_out = $count",
+    mayStore = 1, hasSideEffects = 1 in
+def REP_MEMSETB : BedrockPseudo<
+    (outs GPR64:$dst_out, GPR64:$count_out),
+    (ins GPR64:$dst, GPR64:$value, GPR64:$count)>;
 
 class BedrockShort<bits<14> payload, dag outs, dag ins, string asm,
                    list<dag> pattern = []>

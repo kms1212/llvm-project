@@ -90,6 +90,10 @@ private:
   DenseSet<const MachineInstr *> DJTestInstrs;
   DenseSet<const MachineInstr *> DJ8Branches;
   DenseSet<const MachineInstr *> DJ16Branches;
+  DenseMap<const MachineInstr *, const MachineInstr *> IJBranches;
+  DenseMap<const MachineInstr *, const MachineInstr *> IJCmps;
+  DenseSet<const MachineInstr *> IJCounterInstrs;
+  DenseSet<const MachineInstr *> IJCompareInstrs;
   DenseMap<const MachineInstr *, RepgStartInfo> RepgStarts;
   DenseSet<const MachineInstr *> RepgSuppressedInstrs;
   DenseSet<const MachineInstr *> RepgEndMarkers;
@@ -127,6 +131,7 @@ private:
   void emitRawExpr(ArrayRef<uint8_t> Bytes, unsigned FixupOffset,
                    MCFixupKind Kind, const MCExpr *Expr);
   void emitRepgHeader(Register CounterReg, uint16_t BodyBytes);
+  void emitRepMemset(const MachineInstr *MI);
   void emitRR(unsigned Opcode, Register DstReg, Register SrcReg);
   void emitConst(const MachineInstr *MI, bool Is64);
   void emitUnaryPseudo(const MachineInstr *MI, unsigned RealOpcode,
@@ -208,6 +213,7 @@ private:
   void emitBranch(const MachineInstr *MI, bool IsCond);
   void emitCmpTestJump(const MachineInstr *MI);
   void emitDJ(const MachineInstr *MI);
+  void emitIJ(const MachineInstr *MI);
   void emitRegOffsetAddress(const MachineInstr *MI);
   void emitScaledIndexAddress(const MachineInstr *MI);
   void emitMemMoveFold(const MachineInstr *LoadMI,
@@ -4093,6 +4099,22 @@ static bool isDJCandidate(const MachineInstr &DecMI, const MachineInstr &TestMI,
          TestMI.getOperand(1).getReg() == CounterReg;
 }
 
+static bool isIJCandidate(const MachineInstr &IncMI, const MachineInstr &CmpMI,
+                          const MachineInstr &BranchMI) {
+  if (IncMI.getOpcode() != Bedrock::INCQ3r ||
+      CmpMI.getOpcode() != Bedrock::CMPQrr ||
+      BranchMI.getOpcode() != Bedrock::BRCC)
+    return false;
+  unsigned Cond = BranchMI.getOperand(1).getImm();
+  if (Cond < 0x2 || Cond > 0xf)
+    return false;
+
+  Register IndexReg = IncMI.getOperand(0).getReg();
+  return IncMI.getOperand(1).getReg() == IndexReg &&
+         CmpMI.getOperand(1).getReg() == IndexReg &&
+         CmpMI.getOperand(0).getReg() != IndexReg;
+}
+
 static bool isRepeatCounterDec(const MachineInstr &MI, Register CounterReg) {
   return MI.getOpcode() == Bedrock::DECQ3r &&
          MI.getNumExplicitOperands() >= 2 && MI.getOperand(0).isReg() &&
@@ -4223,6 +4245,9 @@ static bool isRepgBodyCandidate(const MachineInstr &MI, Register CounterReg,
       MI.getOpcode() == TargetOpcode::INLINEASM_BR ||
       MI.getOpcode() == Bedrock::ADJSP_DOWN ||
       MI.getOpcode() == Bedrock::ADJSP_UP)
+    return false;
+
+  if (MI.mayLoadOrStore() && hasVolatileMemOperand(MI))
     return false;
 
   return AllowCounterDefs || !definesReg(MI, CounterReg);
@@ -4730,6 +4755,10 @@ void BedrockAsmPrinter::collectCmpTestJumpBranches(const MachineFunction &MF) {
   DJ8Branches.clear();
   DJ16Branches.clear();
   DJDisplacements.clear();
+  IJBranches.clear();
+  IJCmps.clear();
+  IJCounterInstrs.clear();
+  IJCompareInstrs.clear();
 
   collectZeroMemStores(MF);
   collectConstStores(MF);
@@ -4790,6 +4819,13 @@ void BedrockAsmPrinter::collectCmpTestJumpBranches(const MachineFunction &MF) {
           DJTests[&*BranchI] = &*I;
           DJCounterInstrs.insert(&*PrevI);
           DJTestInstrs.insert(&*I);
+          continue;
+        }
+        if (!PrevI->isDebugInstr() && isIJCandidate(*PrevI, *I, *BranchI)) {
+          IJBranches[&*BranchI] = &*PrevI;
+          IJCmps[&*BranchI] = &*I;
+          IJCounterInstrs.insert(&*PrevI);
+          IJCompareInstrs.insert(&*I);
           continue;
         }
         const MachineInstr *CopyMI = nullptr;
@@ -5084,7 +5120,7 @@ BedrockAsmPrinter::getInstSizeForBranchLayout(const MachineInstr &MI) const {
 
   if (RepgSuppressedInstrs.contains(&MI))
     return 0;
-  unsigned RepgHeaderSize = RepgStarts.contains(&MI) ? 4 : 0;
+  unsigned RepgHeaderSize = RepgStarts.contains(&MI) ? 5 : 0;
   if (CmpTestJumpCompareInstrs.contains(&MI))
     return RepgHeaderSize;
   if (RedundantFlagTests.contains(&MI))
@@ -5141,6 +5177,12 @@ BedrockAsmPrinter::getInstSizeForBranchLayout(const MachineInstr &MI) const {
     return RepgHeaderSize +
            (DJ8Branches.contains(&MI) ? 5
                                       : (DJ16Branches.contains(&MI) ? 6 : 8));
+  if (IJCounterInstrs.contains(&MI) || IJCompareInstrs.contains(&MI))
+    return RepgHeaderSize;
+  if (IJBranches.contains(&MI))
+    return RepgHeaderSize + 9;
+  if (Opc == Bedrock::REP_MEMSETB)
+    return 9;
 
   unsigned AtomicSize;
   StringRef AtomicPattern;
@@ -5728,6 +5770,10 @@ void BedrockAsmPrinter::computeShortBranches(const MachineFunction &MF) {
     for (const MachineBasicBlock &MBB : MF) {
       uint64_t Offset = BlockOffsets[MBB.getNumber()];
       for (const MachineInstr &MI : MBB) {
+        if (IJBranches.contains(&MI)) {
+          Offset += getInstSizeForBranchLayout(MI);
+          continue;
+        }
         if (DJBranches.contains(&MI)) {
           const MachineBasicBlock *TargetMBB = MI.getOperand(0).getMBB();
           int64_t Disp =
@@ -6048,6 +6094,33 @@ void BedrockAsmPrinter::emitRepgHeader(Register CounterReg, uint16_t BodyBytes) 
   SmallVector<uint8_t, 8> Bytes;
   if (!BedrockMC::encodeMedium(0x2680 | getGPRNo(CounterReg), Tail, Bytes))
     report_fatal_error("failed to encode Bedrock grouped repeat");
+  emitRaw(Bytes);
+}
+
+void BedrockAsmPrinter::emitRepMemset(const MachineInstr *MI) {
+  Register DstReg = MI->getOperand(2).getReg();
+  Register ValueReg = MI->getOperand(3).getReg();
+  Register CountReg = MI->getOperand(4).getReg();
+
+  emitRepgHeader(CountReg, /*BodyBytes=*/4);
+  if (OutStreamer->hasRawTextSupport()) {
+    SmallString<80> Text;
+    raw_svector_ostream OS(Text);
+    OS << "\tmov.b\t" << BedrockInstPrinter::getRegisterName(ValueReg)
+       << ", [" << BedrockInstPrinter::getRegisterName(DstReg) << "++]";
+    OutStreamer->emitRawText(OS.str());
+    OutStreamer->emitRawText("\t}");
+    return;
+  }
+
+  uint8_t EA;
+  SmallVector<uint8_t, 4> Tail;
+  getMemEAForRegPostInc(DstReg, EA, Tail);
+  SmallVector<uint8_t, 8> Bytes;
+  if (!BedrockMC::encodeMedium(
+          getMovPayload(/*IsLoad=*/false, /*Size=*/0, EA, ValueReg), Tail,
+          Bytes))
+    report_fatal_error("failed to encode Bedrock repeated memset");
   emitRaw(Bytes);
 }
 
@@ -7667,6 +7740,44 @@ void BedrockAsmPrinter::emitDJ(const MachineInstr *MI) {
   emitRaw(Bytes);
 }
 
+void BedrockAsmPrinter::emitIJ(const MachineInstr *MI) {
+  const MachineInstr *IncMI = IJBranches.lookup(MI);
+  const MachineInstr *CmpMI = IJCmps.lookup(MI);
+  if (!IncMI || !CmpMI)
+    report_fatal_error("missing Bedrock ij instruction components");
+
+  Register IndexReg = IncMI->getOperand(0).getReg();
+  Register BoundReg = CmpMI->getOperand(0).getReg();
+  unsigned Cond = MI->getOperand(1).getImm();
+  const MCExpr *Expr = lowerSymbolOperand(MI->getOperand(0));
+
+  if (OutStreamer->hasRawTextSupport()) {
+    SmallString<112> Text;
+    raw_svector_ostream OS(Text);
+    OS << "\tij" << getCondSuffix(Cond) << "\t"
+       << BedrockInstPrinter::getRegisterName(IndexReg) << ", "
+       << BedrockInstPrinter::getRegisterName(BoundReg) << ", [pc + ";
+    MAI->printExpr(OS, *Expr);
+    OS << "]";
+    OutStreamer->emitRawText(OS.str());
+    return;
+  }
+
+  constexpr uint8_t EA = 0x66; // [pc + disp32]
+  uint64_t Payload = applyPatternValues64(
+      "111111000101cccciiiibbbb000eeeeeee",
+      {{'c', Cond},
+       {'i', getGPRNo(IndexReg)},
+       {'b', getGPRNo(BoundReg)},
+       {'e', EA}});
+  SmallVector<uint8_t, 4> Tail(4, 0);
+  SmallVector<uint8_t, 12> Bytes;
+  if (!BedrockMC::encodeExtraLong(Payload, Tail, Bytes))
+    report_fatal_error("failed to encode Bedrock ij instruction");
+  emitRawExpr(Bytes, /*FixupOffset=*/5,
+              MCFixupKind(Bedrock::fixup_bedrock_pcrel32), Expr);
+}
+
 void BedrockAsmPrinter::emitSetCC(const MachineInstr *MI) {
   Register DstReg = MI->getOperand(0).getReg();
   unsigned Cond = MI->getOperand(1).getImm();
@@ -8190,6 +8301,8 @@ void BedrockAsmPrinter::emitInstruction(const MachineInstr *MI) {
   }
   if (DJCounterInstrs.contains(MI) || DJTestInstrs.contains(MI))
     return;
+  if (IJCounterInstrs.contains(MI) || IJCompareInstrs.contains(MI))
+    return;
   if (CmpTestJumpCompareInstrs.contains(MI))
     return;
   if (RedundantFlagTests.contains(MI))
@@ -8215,6 +8328,10 @@ void BedrockAsmPrinter::emitInstruction(const MachineInstr *MI) {
   }
   if (MemMoveLoads.contains(MI))
     return;
+  if (MI->getOpcode() == Bedrock::REP_MEMSETB) {
+    emitRepMemset(MI);
+    return;
+  }
   if (const MachineInstr *LoadMI = MemMoveStores.lookup(MI)) {
     unsigned Size;
     MemAddrKind SrcKind;
@@ -9114,6 +9231,10 @@ void BedrockAsmPrinter::emitInstruction(const MachineInstr *MI) {
     emitBranch(MI, /*IsCond=*/false);
     return;
   case Bedrock::BRCC:
+    if (IJBranches.contains(MI)) {
+      emitIJ(MI);
+      return;
+    }
     if (DJBranches.contains(MI)) {
       emitDJ(MI);
       return;

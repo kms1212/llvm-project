@@ -988,6 +988,21 @@ static bool selectCompareImmediate(SelectionDAG *DAG, SDNode *N, SDLoc DL) {
   if (!CN)
     return false;
 
+  // Keep an increment-and-bound comparison in register form so the late
+  // printer can select IJcc.  The constant materialization is loop invariant
+  // and MachineLICM can hoist it out of the loop.
+  auto IsUnitIncrement = [](SDValue V) {
+    if (V.getOpcode() != ISD::ADD)
+      return false;
+    auto IsOne = [](SDValue Op) {
+      auto *C = dyn_cast<ConstantSDNode>(Op);
+      return C && C->isOne();
+    };
+    return IsOne(V.getOperand(0)) || IsOne(V.getOperand(1));
+  };
+  if (IsUnitIncrement(LHS))
+    return false;
+
   MVT VT = LHS.getSimpleValueType();
   if (VT != MVT::i32 && VT != MVT::i64)
     return false;
@@ -999,6 +1014,13 @@ static bool selectCompareImmediate(SelectionDAG *DAG, SDNode *N, SDLoc DL) {
   return true;
 }
 
+static void selectMemoryNode(SelectionDAG *DAG, SDNode *N, unsigned Opcode,
+                             ArrayRef<SDValue> Ops,
+                             MachineMemOperand *MemOperand) {
+  SDNode *Selected = DAG->SelectNodeTo(N, Opcode, N->getVTList(), Ops);
+  DAG->setNodeMemRefs(cast<MachineSDNode>(Selected), {MemOperand});
+}
+
 void BedrockDAGToDAGISel::Select(SDNode *N) {
   if (N->isMachineOpcode()) {
     N->setNodeId(-1);
@@ -1006,6 +1028,14 @@ void BedrockDAGToDAGISel::Select(SDNode *N) {
   }
 
   SDLoc DL(N);
+  if (N->getOpcode() == BedrockISD::MEMSET) {
+    SDValue Ops[] = {N->getOperand(1), N->getOperand(2), N->getOperand(3),
+                     N->getOperand(0)};
+    CurDAG->SelectNodeTo(N, Bedrock::REP_MEMSETB,
+                         CurDAG->getVTList(MVT::i64, MVT::i64, MVT::Other),
+                         Ops);
+    return;
+  }
   if (selectCompareImmediate(CurDAG, N, DL))
     return;
   if (N->getNumValues() > 0) {
@@ -1020,11 +1050,11 @@ void BedrockDAGToDAGISel::Select(SDNode *N) {
     auto ExtType = static_cast<ISD::LoadExtType>(
         cast<ConstantSDNode>(N->getOperand(3))->getZExtValue());
     SDValue Ops[] = {N->getOperand(1), N->getOperand(2), N->getOperand(0)};
-    CurDAG->SelectNodeTo(N,
-                         getFarLoadOpcode(N->getValueType(0).getSimpleVT(),
-                                          Load->getMemoryVT().getSimpleVT(),
-                                          ExtType),
-                         N->getValueType(0), MVT::Other, Ops);
+    selectMemoryNode(CurDAG, N,
+                     getFarLoadOpcode(N->getValueType(0).getSimpleVT(),
+                                      Load->getMemoryVT().getSimpleVT(),
+                                      ExtType),
+                     Ops, Load->getMemOperand());
     return;
   }
 
@@ -1032,9 +1062,9 @@ void BedrockDAGToDAGISel::Select(SDNode *N) {
     auto *Store = cast<MemIntrinsicSDNode>(N);
     SDValue Ops[] = {N->getOperand(1), N->getOperand(2), N->getOperand(3),
                      N->getOperand(0)};
-    CurDAG->SelectNodeTo(N,
-                         getFarStoreOpcode(Store->getMemoryVT().getSimpleVT()),
-                         MVT::Other, Ops);
+    selectMemoryNode(CurDAG, N,
+                     getFarStoreOpcode(Store->getMemoryVT().getSimpleVT()),
+                     Ops, Store->getMemOperand());
     return;
   }
 
@@ -1049,8 +1079,8 @@ void BedrockDAGToDAGISel::Select(SDNode *N) {
           CurDAG->getTargetConstant(Offset, DL, MVT::i64),
           LD->getChain(),
       };
-      CurDAG->SelectNodeTo(N, getLoadOpcode(LD, /*IsFrame=*/true),
-                           LD->getValueType(0), MVT::Other, Ops);
+      selectMemoryNode(CurDAG, N, getLoadOpcode(LD, /*IsFrame=*/true), Ops,
+                       LD->getMemOperand());
       return;
     }
 
@@ -1058,8 +1088,8 @@ void BedrockDAGToDAGISel::Select(SDNode *N) {
     if (useAbsolute32Memory(*CurDAG) &&
         selectSymbolAddress(CurDAG, LD->getBasePtr(), DL, Target)) {
       SDValue Ops[] = {Target, LD->getChain()};
-      CurDAG->SelectNodeTo(N, getLoadAbsOpcode(LD), LD->getValueType(0),
-                           MVT::Other, Ops);
+      selectMemoryNode(CurDAG, N, getLoadAbsOpcode(LD), Ops,
+                       LD->getMemOperand());
       return;
     }
 
@@ -1071,14 +1101,14 @@ void BedrockDAGToDAGISel::Select(SDNode *N) {
           CurDAG->getTargetConstant(Offset, DL, MVT::i64),
           LD->getChain(),
       };
-      CurDAG->SelectNodeTo(N, getLoadOffsetOpcode(LD), LD->getValueType(0),
-                           MVT::Other, Ops);
+      selectMemoryNode(CurDAG, N, getLoadOffsetOpcode(LD), Ops,
+                       LD->getMemOperand());
       return;
     }
 
     SDValue Ops[] = {LD->getBasePtr(), LD->getChain()};
-    CurDAG->SelectNodeTo(N, getLoadOpcode(LD, /*IsFrame=*/false),
-                         LD->getValueType(0), MVT::Other, Ops);
+    selectMemoryNode(CurDAG, N, getLoadOpcode(LD, /*IsFrame=*/false), Ops,
+                     LD->getMemOperand());
     return;
   }
 
@@ -1098,8 +1128,9 @@ void BedrockDAGToDAGISel::Select(SDNode *N) {
             CurDAG->getTargetConstant(Offset, DL, MVT::i64),
             ST->getChain(),
         };
-        CurDAG->SelectNodeTo(N, getStoreImmOpcode(ST, /*IsFrame=*/true),
-                             MVT::Other, Ops);
+        selectMemoryNode(CurDAG, N,
+                         getStoreImmOpcode(ST, /*IsFrame=*/true), Ops,
+                         ST->getMemOperand());
         return;
       }
 
@@ -1109,8 +1140,8 @@ void BedrockDAGToDAGISel::Select(SDNode *N) {
           CurDAG->getTargetConstant(Offset, DL, MVT::i64),
           ST->getChain(),
       };
-      CurDAG->SelectNodeTo(N, getStoreOpcode(ST, /*IsFrame=*/true), MVT::Other,
-                           Ops);
+      selectMemoryNode(CurDAG, N, getStoreOpcode(ST, /*IsFrame=*/true), Ops,
+                       ST->getMemOperand());
       return;
     }
 
@@ -1123,12 +1154,14 @@ void BedrockDAGToDAGISel::Select(SDNode *N) {
             Target,
             ST->getChain(),
         };
-        CurDAG->SelectNodeTo(N, getStoreImmAbsOpcode(ST), MVT::Other, Ops);
+        selectMemoryNode(CurDAG, N, getStoreImmAbsOpcode(ST), Ops,
+                         ST->getMemOperand());
         return;
       }
 
       SDValue Ops[] = {ST->getValue(), Target, ST->getChain()};
-      CurDAG->SelectNodeTo(N, getStoreAbsOpcode(ST), MVT::Other, Ops);
+      selectMemoryNode(CurDAG, N, getStoreAbsOpcode(ST), Ops,
+                       ST->getMemOperand());
       return;
     }
 
@@ -1142,7 +1175,8 @@ void BedrockDAGToDAGISel::Select(SDNode *N) {
             CurDAG->getTargetConstant(Offset, DL, MVT::i64),
             ST->getChain(),
         };
-        CurDAG->SelectNodeTo(N, getStoreImmOffsetOpcode(ST), MVT::Other, Ops);
+        selectMemoryNode(CurDAG, N, getStoreImmOffsetOpcode(ST), Ops,
+                         ST->getMemOperand());
         return;
       }
 
@@ -1152,7 +1186,8 @@ void BedrockDAGToDAGISel::Select(SDNode *N) {
           CurDAG->getTargetConstant(Offset, DL, MVT::i64),
           ST->getChain(),
       };
-      CurDAG->SelectNodeTo(N, getStoreOffsetOpcode(ST), MVT::Other, Ops);
+      selectMemoryNode(CurDAG, N, getStoreOffsetOpcode(ST), Ops,
+                       ST->getMemOperand());
       return;
     }
 
@@ -1162,14 +1197,15 @@ void BedrockDAGToDAGISel::Select(SDNode *N) {
           ST->getBasePtr(),
           ST->getChain(),
       };
-      CurDAG->SelectNodeTo(N, getStoreImmOpcode(ST, /*IsFrame=*/false),
-                           MVT::Other, Ops);
+      selectMemoryNode(CurDAG, N,
+                       getStoreImmOpcode(ST, /*IsFrame=*/false), Ops,
+                       ST->getMemOperand());
       return;
     }
 
     SDValue Ops[] = {ST->getValue(), ST->getBasePtr(), ST->getChain()};
-    CurDAG->SelectNodeTo(N, getStoreOpcode(ST, /*IsFrame=*/false), MVT::Other,
-                         Ops);
+    selectMemoryNode(CurDAG, N, getStoreOpcode(ST, /*IsFrame=*/false), Ops,
+                     ST->getMemOperand());
     return;
   }
 
