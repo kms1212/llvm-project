@@ -29,21 +29,48 @@ Value *CodeGenFunction::EmitBedrockBuiltinExpr(unsigned BuiltinID,
     return ResultTy == V->getType() ? V
                                     : Builder.CreateZExtOrTrunc(V, ResultTy);
   };
-
-  switch (BuiltinID) {
-  case Bedrock::BI__builtin_bedrock_far_ptr_init:
-  case Bedrock::BI__builtin_bedrock_far_ptr_from_segment: {
-    Value *Address = EmitI64(1);
-    Value *Image = EmitI64(2);
+  auto ToBoundsOnlyImage = [&](Value *Image) {
+    Value *HasMantissa = Builder.CreateICmpNE(
+        Builder.CreateAnd(Image, Builder.getInt64(0x7e)), Builder.getInt64(0));
+    return Builder.CreateOr(
+        Image, Builder.CreateZExt(HasMantissa, Builder.getInt64Ty()));
+  };
+  auto EmitFarPointer = [&](Value *Address, Value *Image,
+                            Value *ForceInvalid = nullptr) {
     Value *Raw = Builder.CreateOr(
         Builder.CreateZExt(Address, Builder.getInt128Ty()),
         Builder.CreateShl(Builder.CreateZExt(Image, Builder.getInt128Ty()),
                           64));
+    Value *IsNull = Builder.CreateICmpEQ(Address, Builder.getInt64(0));
+    if (ForceInvalid)
+      IsNull = Builder.CreateAnd(IsNull, Builder.CreateNot(ForceInvalid));
+    Raw = Builder.CreateSelect(IsNull,
+                               ConstantInt::get(Builder.getInt128Ty(), 0), Raw);
+    if (ForceInvalid)
+      Raw = Builder.CreateSelect(
+          ForceInvalid, ConstantInt::getAllOnesValue(Builder.getInt128Ty()),
+          Raw);
     return Builder.CreateIntToPtr(Raw, ConvertType(E->getType()));
+  };
+
+  switch (BuiltinID) {
+  case Bedrock::BI__builtin_bedrock_far_ptr_init: {
+    Value *Address = EmitI64(1);
+    return EmitFarPointer(Address, ToBoundsOnlyImage(EmitI64(2)));
+  }
+  case Bedrock::BI__builtin_bedrock_far_ptr_from_segment: {
+    Value *Offset = EmitI64(1);
+    Value *Image = EmitI64(2);
+    Value *Base = Builder.CreateAnd(
+        Image, Builder.getInt64(UINT64_C(0xfffffffffffff000)));
+    Value *SumAndOverflow = Builder.CreateBinaryIntrinsic(
+        Intrinsic::uadd_with_overflow, Base, Offset);
+    Value *Address = Builder.CreateExtractValue(SumAndOverflow, 0);
+    Value *Overflow = Builder.CreateExtractValue(SumAndOverflow, 1);
+    return EmitFarPointer(Address, ToBoundsOnlyImage(Image), Overflow);
   }
   case Bedrock::BI__builtin_bedrock_far_flat_ptr_init: {
-    Value *Raw = Builder.CreateZExt(EmitI64(1), Builder.getInt128Ty());
-    return Builder.CreateIntToPtr(Raw, ConvertType(E->getType()));
+    return EmitFarPointer(EmitI64(1), Builder.getInt64(0));
   }
   case Bedrock::BI__builtin_bedrock_far_null:
     return ConstantPointerNull::get(

@@ -5,19 +5,56 @@
 
 typedef int *__far far_int_ptr;
 
-// CHECK: @far_constant ={{.*}} global ptr addrspace(1) inttoptr (i128 {{-?[0-9]+}} to ptr addrspace(1)), align 16
+// CHECK: @far_constant ={{.*}} global ptr addrspace(1) inttoptr (i128 -136023984058069262664334284085100382328 to ptr addrspace(1)), align 16
+// CHECK: @far_translated_constant ={{.*}} global ptr addrspace(1) inttoptr (i128 19342868454066287925032840 to ptr addrspace(1)), align 16
+// CHECK: @far_null_constant ={{.*}} global ptr addrspace(1) null, align 16
+// CHECK: @far_overflow_constant ={{.*}} global ptr addrspace(1) inttoptr (i128 -1 to ptr addrspace(1)), align 16
 far_int_ptr far_constant =
     __BEDROCK_FAR_PTR_INIT(far_int_ptr, 0x1122334455667788ULL,
-                          0x99aabbccddeeff00ULL);
+                          0x99aabbccddeeff02ULL);
+far_int_ptr far_translated_constant = __BEDROCK_FAR_PTR_FROM_SEGMENT(
+    far_int_ptr, 0x7788ULL, 0x0000000000100002ULL);
+far_int_ptr far_null_constant =
+    __BEDROCK_FAR_PTR_INIT(far_int_ptr, 0, 0x0000000000100002ULL);
+far_int_ptr far_overflow_constant = __BEDROCK_FAR_PTR_FROM_SEGMENT(
+    far_int_ptr, 0x1000ULL, 0xfffffffffffff002ULL);
 
-// CHECK-LABEL: define{{.*}} ptr addrspace(1) @far_values
-// CHECK: inttoptr i128
+// CHECK-LABEL: define{{.*}} ptr addrspace(1) @far_init_runtime
+// CHECK: and i64 %image, 126
+// CHECK: or i64 %image, %{{.*}}
+// CHECK: icmp eq i64 %address, 0
+// CHECK: select i1 %{{.*}}, ptr addrspace(1) null,
+far_int_ptr far_init_runtime(uint64_t address, uint64_t image) {
+  return __BEDROCK_FAR_PTR_INIT(far_int_ptr, address, image);
+}
+
+// CHECK-LABEL: define{{.*}} ptr addrspace(1) @far_from_segment_runtime
+// CHECK: and i64 %image, -4096
+// CHECK: call { i64, i1 } @llvm.uadd.with.overflow.i64
+// CHECK: and i64 %image, 126
+// CHECK: select i1 %{{.*}}, ptr addrspace(1) inttoptr (i128 -1 to ptr addrspace(1)),
 // CHECK: ret ptr addrspace(1)
-far_int_ptr far_values(uint64_t address, uint64_t image) {
-  far_int_ptr a = __BEDROCK_FAR_FLAT_PTR_INIT(far_int_ptr, address);
-  far_int_ptr b = __BEDROCK_FAR_PTR_FROM_SEGMENT(far_int_ptr, address, image);
-  far_int_ptr n = __BEDROCK_FAR_NULL(far_int_ptr);
-  return __bedrock_far_same_encoding(a, n) ? b : a;
+far_int_ptr far_from_segment_runtime(uint64_t offset, uint64_t image) {
+  return __BEDROCK_FAR_PTR_FROM_SEGMENT(far_int_ptr, offset, image);
+}
+
+// CHECK-LABEL: define{{.*}} ptr addrspace(1) @far_flat_runtime
+// CHECK: zext i64 %address to i128
+// CHECK: inttoptr i128 %{{.*}} to ptr addrspace(1)
+far_int_ptr far_flat_runtime(uint64_t address) {
+  return __BEDROCK_FAR_FLAT_PTR_INIT(far_int_ptr, address);
+}
+
+// CHECK-LABEL: define{{.*}} ptr addrspace(1) @far_null_runtime
+// CHECK: ret ptr addrspace(1) null
+far_int_ptr far_null_runtime(void) {
+  return __BEDROCK_FAR_NULL(far_int_ptr);
+}
+
+// CHECK-LABEL: define{{.*}} i32 @far_same
+// CHECK: icmp eq ptr addrspace(1) %left, %right
+int far_same(far_int_ptr left, far_int_ptr right) {
+  return __bedrock_far_same_encoding(left, right);
 }
 
 // CHECK-LABEL: define{{.*}} i64 @far_address
