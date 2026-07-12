@@ -77,10 +77,13 @@ static bool useFramePointerForTargetByDefault(const llvm::opt::ArgList &Args,
     return true;
 
   switch (Triple.getArch()) {
+  case llvm::Triple::bedrock:
   case llvm::Triple::xcore:
   case llvm::Triple::wasm32:
   case llvm::Triple::wasm64:
   case llvm::Triple::msp430:
+    // Bedrock uses DWARF CFI for its near and far unwind records and only
+    // reserves R15 when the user explicitly requests a frame pointer.
     // XCore never wants frame pointers, regardless of OS.
     // WebAssembly never wants frame pointers.
     return false;
