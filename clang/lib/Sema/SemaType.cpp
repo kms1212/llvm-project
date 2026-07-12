@@ -10199,6 +10199,12 @@ QualType Sema::BuildAtomicType(QualType T, SourceLocation Loc) {
         Diag(Loc, diag::err_bedrock_wide_atomic_type) << T;
         return QualType();
       }
+      uint64_t AtomicBytes = Context.getTypeSize(T) / Context.getCharWidth();
+      if (AtomicBytes != 1 && AtomicBytes != 2 && AtomicBytes != 4 &&
+          AtomicBytes != 8) {
+        Diag(Loc, diag::err_bedrock_atomic_size) << T << AtomicBytes;
+        return QualType();
+      }
     }
 
     int DisallowedKind = -1;

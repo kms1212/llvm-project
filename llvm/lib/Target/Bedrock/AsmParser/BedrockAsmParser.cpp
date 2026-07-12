@@ -412,7 +412,38 @@ bool getSRegNo(StringRef Name, unsigned &RegNo) {
 }
 
 bool getSRegNo(const BedrockOperand &Op, unsigned &RegNo) {
-  return Op.isToken() && getSRegNo(Op.getToken(), RegNo);
+  if (Op.isToken())
+    return getSRegNo(Op.getToken(), RegNo);
+  if (!Op.isReg())
+    return false;
+  switch (Op.getReg()) {
+  case Bedrock::CS:
+    RegNo = 0;
+    return true;
+  case Bedrock::DS:
+    RegNo = 1;
+    return true;
+  case Bedrock::SS:
+    RegNo = 2;
+    return true;
+  case Bedrock::GS0:
+    RegNo = 3;
+    return true;
+  case Bedrock::GS1:
+    RegNo = 4;
+    return true;
+  case Bedrock::GS2:
+    RegNo = 5;
+    return true;
+  case Bedrock::GS3:
+    RegNo = 6;
+    return true;
+  case Bedrock::GS4:
+    RegNo = 7;
+    return true;
+  default:
+    return false;
+  }
 }
 
 bool getCRNo(StringRef Name, unsigned &RegNo) {

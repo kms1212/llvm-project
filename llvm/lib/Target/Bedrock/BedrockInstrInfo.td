@@ -264,6 +264,7 @@ def ILLEGAL : BedrockShort<0x204a, (outs), (ins), "illegal">;
 def RFENCE : BedrockShort<0x204b, (outs), (ins), "rfence">;
 def WFENCE : BedrockShort<0x204c, (outs), (ins), "wfence">;
 def AFENCE : BedrockShort<0x204d, (outs), (ins), "afence">;
+def : Pat<(atomic_fence timm, timm), (AFENCE)>;
 def RESET : BedrockShort<0x204e, (outs), (ins), "reset">;
 
 let hasSideEffects = 1 in {
@@ -320,6 +321,59 @@ def BEDROCK_FCLASS_S
 def BEDROCK_FCLASS_D
     : BedrockPseudo<(outs GPR64:$dst), (ins FPR64:$src),
                     [(set i64:$dst, (int_bedrock_fclass_f64 f64:$src))]>;
+
+// The ordering is carried by the MachineMemOperand and encoded by the
+// assembly printer. FETCH* overwrites its source with the old memory value;
+// CMPXCHG likewise overwrites the expected-value register.
+class BedrockAtomicFetchPseudo<PatFrag Op, ValueType VT>
+    : BedrockPseudo<(outs GPR64:$dst),
+                    (ins GPR64:$address, GPR64:$value),
+                    [(set VT:$dst, (Op i64:$address, VT:$value))]> {
+  let Constraints = "$dst = $value";
+  let mayLoad = 1;
+  let mayStore = 1;
+}
+
+class BedrockAtomicCmpXchgPseudo<PatFrag Op, ValueType VT>
+    : BedrockPseudo<(outs GPR64:$dst),
+                    (ins GPR64:$address, GPR64:$expected,
+                         GPR64:$desired),
+                    [(set VT:$dst,
+                          (Op i64:$address, VT:$expected, VT:$desired))]> {
+  let Constraints = "$dst = $expected";
+  let mayLoad = 1;
+  let mayStore = 1;
+  let Defs = [FLAGS];
+}
+
+multiclass BedrockAtomicFetchPseudos<PatFrag OpB, PatFrag OpW,
+                                     PatFrag OpL, PatFrag OpQ> {
+  def B : BedrockAtomicFetchPseudo<OpB, i32>;
+  def W : BedrockAtomicFetchPseudo<OpW, i32>;
+  def L : BedrockAtomicFetchPseudo<OpL, i32>;
+  def Q : BedrockAtomicFetchPseudo<OpQ, i64>;
+}
+
+defm ATOMIC_FETCHADD : BedrockAtomicFetchPseudos<
+    atomic_load_add_i8, atomic_load_add_i16,
+    atomic_load_add_i32, atomic_load_add_i64>;
+defm ATOMIC_FETCHSUB : BedrockAtomicFetchPseudos<
+    atomic_load_sub_i8, atomic_load_sub_i16,
+    atomic_load_sub_i32, atomic_load_sub_i64>;
+defm ATOMIC_FETCHAND : BedrockAtomicFetchPseudos<
+    atomic_load_and_i8, atomic_load_and_i16,
+    atomic_load_and_i32, atomic_load_and_i64>;
+defm ATOMIC_FETCHOR : BedrockAtomicFetchPseudos<
+    atomic_load_or_i8, atomic_load_or_i16,
+    atomic_load_or_i32, atomic_load_or_i64>;
+defm ATOMIC_FETCHXOR : BedrockAtomicFetchPseudos<
+    atomic_load_xor_i8, atomic_load_xor_i16,
+    atomic_load_xor_i32, atomic_load_xor_i64>;
+
+def ATOMIC_CMPXCHG_B : BedrockAtomicCmpXchgPseudo<atomic_cmp_swap_i8, i32>;
+def ATOMIC_CMPXCHG_W : BedrockAtomicCmpXchgPseudo<atomic_cmp_swap_i16, i32>;
+def ATOMIC_CMPXCHG_L : BedrockAtomicCmpXchgPseudo<atomic_cmp_swap_i32, i32>;
+def ATOMIC_CMPXCHG_Q : BedrockAtomicCmpXchgPseudo<atomic_cmp_swap_i64, i64>;
 
 def : Pat<(int_bedrock_breakpoint), (BKPT)>;
 def : Pat<(int_bedrock_yield), (YIELD)>;
@@ -1060,6 +1114,26 @@ def STOREQ_Immfi : BedrockPseudo<(outs),
                                       i64imm:$offset)>;
 }
 
+// AtomicExpand brackets ordered loads/stores with AFENCE and reduces the
+// memory operation itself to monotonic. Reuse the ordinary naturally aligned
+// load/store encoding for that operation.
+def : Pat<(i32 (atomic_load_azext_8 GPR64:$base)),
+          (LOADB_Zrr GPR64:$base)>;
+def : Pat<(i32 (atomic_load_azext_16 GPR64:$base)),
+          (LOADW_Zrr GPR64:$base)>;
+def : Pat<(i32 (atomic_load_nonext_32 GPR64:$base)),
+          (LOADLrr GPR64:$base)>;
+def : Pat<(i64 (atomic_load_nonext_64 GPR64:$base)),
+          (LOADQrr GPR64:$base)>;
+def : Pat<(atomic_store_8 i32:$src, GPR64:$base),
+          (STOREBrr GPR64:$src, GPR64:$base)>;
+def : Pat<(atomic_store_16 i32:$src, GPR64:$base),
+          (STOREWrr GPR64:$src, GPR64:$base)>;
+def : Pat<(atomic_store_32 i32:$src, GPR64:$base),
+          (STORELrr GPR64:$src, GPR64:$base)>;
+def : Pat<(atomic_store_64 i64:$src, GPR64:$base),
+          (STOREQrr GPR64:$src, GPR64:$base)>;
+
 // A far-memory pseudo is one indivisible scheduling operation. The assembly
 // printer expands it into WRSEG of the image operand to GS4 followed
 // immediately by a GS4-qualified effective-address access using the low word.
@@ -1122,6 +1196,7 @@ let isBarrier = 1, isIndirectBranch = 1 in
 def BRIND : BedrockPseudo<(outs), (ins GPR64:$dst), [(brind GPR64:$dst)]>;
 }
 
+let hasSideEffects = 1 in
 def SETCC : BedrockPseudo<(outs GPR64:$rd), (ins i32imm:$cc),
                           [(set i64:$rd, (BedrockSetCC imm:$cc))]>;
 

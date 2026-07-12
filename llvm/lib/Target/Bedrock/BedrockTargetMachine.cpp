@@ -95,6 +95,7 @@ public:
     return getTM<BedrockTargetMachine>();
   }
 
+  void addIRPasses() override;
   bool addInstSelector() override;
   bool addPreISel() override;
   void addPreEmitPass() override;
@@ -103,6 +104,11 @@ public:
 
 TargetPassConfig *BedrockTargetMachine::createPassConfig(PassManagerBase &PM) {
   return new BedrockPassConfig(*this, PM);
+}
+
+void BedrockPassConfig::addIRPasses() {
+  addPass(createAtomicExpandLegacyPass());
+  TargetPassConfig::addIRPasses();
 }
 
 bool BedrockPassConfig::addInstSelector() {

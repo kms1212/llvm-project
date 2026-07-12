@@ -46,6 +46,7 @@ public:
     LongDoubleFormat = &llvm::APFloat::IEEEdouble();
     HasFloat128 = false;
     HasIbm128 = false;
+    MaxAtomicPromoteWidth = MaxAtomicInlineWidth = 64;
   }
 
   void getTargetDefines(const LangOptions &Opts,

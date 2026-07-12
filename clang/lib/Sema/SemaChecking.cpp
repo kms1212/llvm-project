@@ -4410,6 +4410,54 @@ ExprResult Sema::AtomicOpsOverloaded(ExprResult TheCallResult,
                          Op);
 }
 
+static CharUnits getPresumedAlignmentOfPointer(const Expr *E, Sema &S);
+
+static CharUnits getBedrockAtomicPointerAlignment(const Expr *E, Sema &S) {
+  E = E->IgnoreParens();
+  if (const auto *CE = dyn_cast<CastExpr>(E)) {
+    if (CE->getSubExpr()->getType()->isPointerType())
+      return getBedrockAtomicPointerAlignment(CE->getSubExpr(), S);
+    return S.Context.getTypeAlignInChars(CE->getType()->getPointeeType());
+  }
+
+  if (const auto *UO = dyn_cast<UnaryOperator>(E)) {
+    if (UO->getOpcode() == UO_AddrOf) {
+      const Expr *Object = UO->getSubExpr()->IgnoreParenImpCasts();
+      if (const auto *ME = dyn_cast<MemberExpr>(Object)) {
+        if (const auto *FD = dyn_cast<FieldDecl>(ME->getMemberDecl())) {
+          const ASTRecordLayout &Layout =
+              S.Context.getASTRecordLayout(FD->getParent());
+          CharUnits Offset = S.Context.toCharUnitsFromBits(
+              Layout.getFieldOffset(FD->getFieldIndex()));
+          return Layout.getAlignment().alignmentAtOffset(Offset);
+        }
+      }
+    }
+  }
+
+  if (const auto *BO = dyn_cast<BinaryOperator>(E)) {
+    if (BO->getOpcode() == BO_Add || BO->getOpcode() == BO_Sub) {
+      const Expr *Ptr = BO->getLHS();
+      const Expr *Index = BO->getRHS();
+      if (!Ptr->getType()->isPointerType() && BO->getOpcode() == BO_Add)
+        std::swap(Ptr, Index);
+      if (Ptr->getType()->isPointerType()) {
+        QualType Pointee = Ptr->getType()->getPointeeType();
+        CharUnits Alignment = S.Context.getTypeAlignInChars(Pointee);
+        CharUnits ElementSize = S.Context.getTypeSizeInChars(Pointee);
+        if (std::optional<llvm::APSInt> Value =
+                Index->getIntegerConstantExpr(S.Context)) {
+          CharUnits Offset = ElementSize * Value->getExtValue();
+          return Alignment.alignmentAtOffset(Offset);
+        }
+        return Alignment.alignmentAtOffset(ElementSize);
+      }
+    }
+  }
+
+  return getPresumedAlignmentOfPointer(E, S);
+}
+
 ExprResult Sema::BuildAtomicExpr(SourceRange CallRange, SourceRange ExprRange,
                                  SourceLocation RParenLoc, MultiExprArg Args,
                                  AtomicExpr::AtomicOp Op,
@@ -4708,6 +4756,32 @@ ExprResult Sema::BuildAtomicExpr(SourceRange CallRange, SourceRange ExprRange,
     pointerType = PointerQT->getAs<PointerType>();
     Ptr = ImpCastExprToType(Ptr, PointerQT, CK_BitCast).get();
     ValType = AtomTy;
+  }
+
+  if (Context.getTargetInfo().getTriple().getArch() ==
+      llvm::Triple::bedrock) {
+    uint64_t Width = Context.getTypeSize(ValType);
+    if (Width > 64) {
+      Diag(ExprRange.getBegin(), diag::err_bedrock_wide_atomic_type)
+          << ValType << Ptr->getSourceRange();
+      return ExprError();
+    }
+    uint64_t AtomicBytes = Width / Context.getCharWidth();
+    if (AtomicBytes != 1 && AtomicBytes != 2 && AtomicBytes != 4 &&
+        AtomicBytes != 8) {
+      Diag(ExprRange.getBegin(), diag::err_bedrock_atomic_size)
+          << ValType << AtomicBytes << Ptr->getSourceRange();
+      return ExprError();
+    }
+
+    CharUnits RequiredAlign = Context.getTypeSizeInChars(ValType);
+    CharUnits ActualAlign = getBedrockAtomicPointerAlignment(Args[0], *this);
+    if (ActualAlign < RequiredAlign) {
+      Diag(Ptr->getExprLoc(), diag::err_bedrock_unaligned_atomic_access)
+          << RequiredAlign.getQuantity() << ActualAlign.getQuantity()
+          << Ptr->getSourceRange();
+      return ExprError();
+    }
   }
 
   PointerAuthQualifier PointerAuth = AtomTy.getPointerAuth();

@@ -214,6 +214,7 @@ private:
   void emitFarTailCall(const MachineInstr *MI);
   void emitPublicIntrinsic(const MachineInstr *MI);
   void emitSystemIntrinsic(const MachineInstr *MI);
+  void emitAtomic(const MachineInstr *MI);
 };
 
 } // namespace
@@ -423,6 +424,40 @@ static uint32_t applyPatternValues(StringRef Pattern,
   return Payload;
 }
 
+static uint64_t applyPatternValues64(
+    StringRef Pattern, ArrayRef<PatternFieldValue> FieldValues) {
+  unsigned Counts[256] = {};
+  unsigned Values[256] = {};
+  bool Active[256] = {};
+
+  for (const PatternFieldValue &Field : FieldValues) {
+    Active[static_cast<unsigned char>(Field.Field)] = true;
+    Values[static_cast<unsigned char>(Field.Field)] = Field.Value;
+  }
+  for (char C : Pattern) {
+    unsigned Index = static_cast<unsigned char>(C);
+    if (Active[Index])
+      ++Counts[Index];
+  }
+
+  uint64_t Payload = 0;
+  unsigned Width = Pattern.size();
+  for (unsigned I = 0; I != Width; ++I) {
+    unsigned Bit = Width - I - 1;
+    char C = Pattern[I];
+    if (C == '0')
+      continue;
+    if (C == '1') {
+      Payload |= UINT64_C(1) << Bit;
+      continue;
+    }
+    unsigned Index = static_cast<unsigned char>(C);
+    assert(Active[Index] && "missing Bedrock pattern field");
+    Payload |= uint64_t((Values[Index] >> --Counts[Index]) & 1) << Bit;
+  }
+  return Payload;
+}
+
 static uint32_t getLeaPayload(uint8_t EA, unsigned Size, Register DstReg) {
   return applyPattern("0eeez1zdddd000eeee", EA, Size, getGPRNo(DstReg), 'd');
 }
@@ -463,6 +498,53 @@ static const char *getCondSuffix(unsigned Cond) {
 }
 
 static uint8_t getRegEA(Register Reg) { return getGPRNo(Reg); }
+
+static bool getAtomicEncodingInfo(unsigned Opcode, unsigned &Size,
+                                  StringRef &Pattern, bool &IsCmpXchg) {
+  IsCmpXchg = false;
+  switch (Opcode) {
+#define ATOMIC_FETCH_CASES(OP, PATTERN)                                      \
+  case Bedrock::ATOMIC_##OP##B:                                              \
+    Size = 0;                                                               \
+    Pattern = PATTERN;                                                       \
+    return true;                                                            \
+  case Bedrock::ATOMIC_##OP##W:                                              \
+    Size = 1;                                                               \
+    Pattern = PATTERN;                                                       \
+    return true;                                                            \
+  case Bedrock::ATOMIC_##OP##L:                                              \
+    Size = 2;                                                               \
+    Pattern = PATTERN;                                                       \
+    return true;                                                            \
+  case Bedrock::ATOMIC_##OP##Q:                                              \
+    Size = 3;                                                               \
+    Pattern = PATTERN;                                                       \
+    return true
+    ATOMIC_FETCH_CASES(FETCHADD, "111111000111zz000ooossss000eeeeeee");
+    ATOMIC_FETCH_CASES(FETCHAND, "111111000111zz001ooossss000eeeeeee");
+    ATOMIC_FETCH_CASES(FETCHOR, "111111000111zz010ooossss000eeeeeee");
+    ATOMIC_FETCH_CASES(FETCHSUB, "111111000111zz011ooossss000eeeeeee");
+    ATOMIC_FETCH_CASES(FETCHXOR, "111111000111zz100ooossss000eeeeeee");
+#undef ATOMIC_FETCH_CASES
+  case Bedrock::ATOMIC_CMPXCHG_B:
+    Size = 0;
+    break;
+  case Bedrock::ATOMIC_CMPXCHG_W:
+    Size = 1;
+    break;
+  case Bedrock::ATOMIC_CMPXCHG_L:
+    Size = 2;
+    break;
+  case Bedrock::ATOMIC_CMPXCHG_Q:
+    Size = 3;
+    break;
+  default:
+    return false;
+  }
+  Pattern = "1111110010000zzoooxxxxdddd0eeeeeee";
+  IsCmpXchg = true;
+  return true;
+}
 
 static void getMemEAForReg(Register BaseReg, uint8_t &EA,
                            SmallVectorImpl<uint8_t> &Tail) {
@@ -5035,6 +5117,12 @@ BedrockAsmPrinter::getInstSizeForBranchLayout(const MachineInstr &MI) const {
            (DJ8Branches.contains(&MI) ? 5
                                       : (DJ16Branches.contains(&MI) ? 6 : 8));
 
+  unsigned AtomicSize;
+  StringRef AtomicPattern;
+  bool IsCmpXchg;
+  if (getAtomicEncodingInfo(Opc, AtomicSize, AtomicPattern, IsCmpXchg))
+    return RepgHeaderSize + 5;
+
   switch (Opc) {
   case Bedrock::ILLEGAL:
   case Bedrock::NOP:
@@ -7576,6 +7664,58 @@ void BedrockAsmPrinter::emitFarTailCall(const MachineInstr *MI) {
   emitRawExpr(Bytes, 4, FK_Data_4, lowerSymbolOperand(Target));
 }
 
+static unsigned getBedrockAtomicOrder(AtomicOrdering Order) {
+  switch (Order) {
+  case AtomicOrdering::NotAtomic:
+  case AtomicOrdering::Unordered:
+  case AtomicOrdering::Monotonic:
+    return 0;
+  case AtomicOrdering::Acquire:
+    return 1;
+  case AtomicOrdering::Release:
+    return 2;
+  case AtomicOrdering::AcquireRelease:
+    return 3;
+  case AtomicOrdering::SequentiallyConsistent:
+    return 4;
+  }
+  llvm_unreachable("unknown Bedrock atomic ordering");
+}
+
+void BedrockAsmPrinter::emitAtomic(const MachineInstr *MI) {
+  unsigned Size;
+  StringRef Pattern;
+  bool IsCmpXchg;
+  if (!getAtomicEncodingInfo(MI->getOpcode(), Size, Pattern, IsCmpXchg))
+    report_fatal_error("invalid Bedrock atomic pseudo");
+  if (MI->memoperands_empty())
+    report_fatal_error("Bedrock atomic pseudo has no memory operand");
+
+  unsigned Order =
+      getBedrockAtomicOrder((*MI->memoperands_begin())->getMergedOrdering());
+  unsigned AddressEA = 0x10 | getGPRNo(MI->getOperand(1).getReg());
+  uint64_t Payload;
+  if (IsCmpXchg) {
+    Payload = applyPatternValues64(
+        Pattern, {{'z', Size},
+                  {'o', Order},
+                  {'x', getGPRNo(MI->getOperand(0).getReg())},
+                  {'d', getGPRNo(MI->getOperand(3).getReg())},
+                  {'e', AddressEA}});
+  } else {
+    Payload = applyPatternValues64(
+        Pattern, {{'z', Size},
+                  {'o', Order},
+                  {'s', getGPRNo(MI->getOperand(0).getReg())},
+                  {'e', AddressEA}});
+  }
+
+  SmallVector<uint8_t, 8> Bytes;
+  if (!BedrockMC::encodeExtraLong(Payload, {}, Bytes))
+    report_fatal_error("failed to encode Bedrock atomic instruction");
+  emitRaw(Bytes);
+}
+
 void BedrockAsmPrinter::emitPublicIntrinsic(const MachineInstr *MI) {
   SmallVector<uint8_t, 8> Tail;
   SmallVector<uint8_t, 16> Bytes;
@@ -7892,6 +8032,15 @@ void BedrockAsmPrinter::emitInstruction(const MachineInstr *MI) {
       emitZeroMemStore(MI, Size, AddrKind);
       return;
     }
+  }
+
+  unsigned AtomicSize;
+  StringRef AtomicPattern;
+  bool IsCmpXchg;
+  if (getAtomicEncodingInfo(MI->getOpcode(), AtomicSize, AtomicPattern,
+                            IsCmpXchg)) {
+    emitAtomic(MI);
+    return;
   }
 
   switch (MI->getOpcode()) {

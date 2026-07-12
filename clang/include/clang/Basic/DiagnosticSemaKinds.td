@@ -7352,6 +7352,12 @@ def err_bedrock_far_atomic_type
     : Error<"a Bedrock far pointer cannot be the type of an atomic object">;
 def err_bedrock_wide_atomic_type
     : Error<"bedrock atomic object type %0 is wider than 64 bits">;
+def err_bedrock_atomic_size
+    : Error<"bedrock atomic object type %0 has unsupported size %1 bytes; "
+            "only 1, 2, 4, and 8-byte objects are supported">;
+def err_bedrock_unaligned_atomic_access
+    : Error<"bedrock atomic access requires %0-byte alignment; expression is "
+            "only %1-byte aligned">;
 def warn_atomic_member_access : Warning<
   "accessing a member of an atomic structure or union is undefined behavior">,
   InGroup<DiagGroup<"atomic-access">>, DefaultError;

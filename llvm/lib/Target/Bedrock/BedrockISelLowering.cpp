@@ -18,6 +18,8 @@
 #include "llvm/CodeGen/MachineInstrBuilder.h"
 #include "llvm/CodeGen/MachineRegisterInfo.h"
 #include "llvm/IR/Function.h"
+#include "llvm/IR/IRBuilder.h"
+#include "llvm/IR/Instructions.h"
 #include "llvm/Support/ErrorHandling.h"
 #include "llvm/Target/TargetMachine.h"
 
@@ -89,15 +91,57 @@ BedrockTargetLowering::BedrockTargetLowering(const TargetMachine &TM,
     setOperationAction(ISD::UINT_TO_FP, VT, Legal);
   }
   setOperationAction(ISD::BR_JT, MVT::Other, Expand);
+  setOperationAction(ISD::BRCOND, MVT::Other, Custom);
   setOperationAction(ISD::VASTART, MVT::Other, Custom);
   // AS1 pointers are 128-bit address/image carriers. Custom lowering must
   // split them before the integer type legalizer sees them as load/store
   // address operands.
   setOperationAction(ISD::LOAD, MVT::i128, Custom);
   setOperationAction(ISD::STORE, MVT::i128, Custom);
+  setMaxAtomicSizeInBitsSupported(64);
   setMinimumJumpTableEntries(16);
 
   computeRegisterProperties(Subtarget.getRegisterInfo());
+}
+
+bool BedrockTargetLowering::shouldInsertFencesForAtomic(
+    const Instruction *I) const {
+  // FETCH* and CMPXCHG carry the requested memory order in the instruction.
+  // Plain loads and stores use AFENCE sequences around an otherwise relaxed
+  // memory operation.
+  return isa<LoadInst, StoreInst>(I);
+}
+
+Instruction *BedrockTargetLowering::emitLeadingFence(
+    IRBuilderBase &Builder, Instruction *Inst, AtomicOrdering Ord) const {
+  if ((isa<LoadInst>(Inst) && Ord == AtomicOrdering::SequentiallyConsistent) ||
+      (isa<StoreInst>(Inst) && isReleaseOrStronger(Ord)))
+    return Builder.CreateFence(AtomicOrdering::SequentiallyConsistent);
+  return nullptr;
+}
+
+Instruction *BedrockTargetLowering::emitTrailingFence(
+    IRBuilderBase &Builder, Instruction *Inst, AtomicOrdering Ord) const {
+  if ((isa<LoadInst>(Inst) && isAcquireOrStronger(Ord)) ||
+      (isa<StoreInst>(Inst) && Ord == AtomicOrdering::SequentiallyConsistent))
+    return Builder.CreateFence(AtomicOrdering::SequentiallyConsistent);
+  return nullptr;
+}
+
+TargetLowering::AtomicExpansionKind
+BedrockTargetLowering::shouldExpandAtomicRMWInIR(AtomicRMWInst *RMW) const {
+  switch (RMW->getOperation()) {
+  case AtomicRMWInst::Add:
+  case AtomicRMWInst::Sub:
+  case AtomicRMWInst::And:
+  case AtomicRMWInst::Or:
+  case AtomicRMWInst::Xor:
+    return AtomicExpansionKind::None;
+  default:
+    // Bedrock has no native exchange/min/max/nand operation. AtomicExpand
+    // builds the required retry loop from the native CMPXCHG instruction.
+    return AtomicExpansionKind::CmpXChg;
+  }
 }
 
 const char *BedrockTargetLowering::getTargetNodeName(unsigned Opcode) const {
@@ -231,6 +275,8 @@ SDValue BedrockTargetLowering::LowerOperation(SDValue Op,
     return LowerFarLoad(Op, DAG);
   case ISD::STORE:
     return LowerFarStore(Op, DAG);
+  case ISD::BRCOND:
+    return LowerBRCOND(Op, DAG);
   case ISD::BR_CC:
     return LowerBR_CC(Op, DAG);
   case ISD::SETCC:
@@ -304,6 +350,26 @@ static SDValue emitCompare(SDValue LHS, SDValue RHS, const SDLoc &DL,
   if (isNullConstant(RHS))
     return DAG.getNode(BedrockISD::TEST, DL, MVT::Glue, LHS);
   return DAG.getNode(BedrockISD::CMP, DL, MVT::Glue, LHS, RHS);
+}
+
+SDValue BedrockTargetLowering::LowerBRCOND(SDValue Op,
+                                           SelectionDAG &DAG) const {
+  SDValue Cond = Op.getOperand(1);
+  SDValue Chain = Op.getOperand(0);
+  SDValue Dest = Op.getOperand(2);
+  SDLoc DL(Op);
+  SDValue TargetCC;
+  SDValue Glue;
+  if (Cond.getOpcode() == BedrockISD::SET_CC && Cond.hasOneUse()) {
+    TargetCC = Cond.getOperand(0);
+    Glue = Cond.getOperand(1);
+  } else {
+    TargetCC = DAG.getConstant(getBedrockCondCode(ISD::SETNE), DL, MVT::i32);
+    Glue = emitCompare(Cond, DAG.getConstant(0, DL, Cond.getValueType()), DL,
+                       DAG);
+  }
+  return DAG.getNode(BedrockISD::BR_CC, DL, MVT::Other, Chain, Dest, TargetCC,
+                     Glue);
 }
 
 SDValue BedrockTargetLowering::LowerBR_CC(SDValue Op, SelectionDAG &DAG) const {
