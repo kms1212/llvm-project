@@ -32,6 +32,7 @@ public:
   unsigned getJumpTableEncoding() const override;
   bool isJumpTableRelative() const override { return true; }
   bool ShouldShrinkFPConstant(EVT VT) const override { return false; }
+  bool shouldPreservePtrArith(const Function &F, EVT PtrVT) const override;
   MachineBasicBlock *
   EmitInstrWithCustomInserter(MachineInstr &MI,
                               MachineBasicBlock *MBB) const override;
@@ -83,6 +84,7 @@ private:
   SDValue LowerVASTART(SDValue Op, SelectionDAG &DAG) const;
   SDValue LowerDYNAMIC_STACKALLOC(SDValue Op, SelectionDAG &DAG) const;
   SDValue LowerADDRSPACECAST(SDValue Op, SelectionDAG &DAG) const;
+  SDValue LowerPTRADD(SDValue Op, SelectionDAG &DAG) const;
   SDValue LowerGlobalTLSAddress(SDValue Op, SelectionDAG &DAG) const;
   SDValue LowerFarLoad(SDValue Op, SelectionDAG &DAG) const;
   SDValue LowerFarStore(SDValue Op, SelectionDAG &DAG) const;

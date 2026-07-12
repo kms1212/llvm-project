@@ -108,6 +108,7 @@ BedrockTargetLowering::BedrockTargetLowering(const TargetMachine &TM,
   setOperationAction(ISD::DYNAMIC_STACKALLOC, MVT::i64, Custom);
   setOperationAction(ISD::ADDRSPACECAST, MVT::i64, Custom);
   setOperationAction(ISD::ADDRSPACECAST, MVT::i128, Custom);
+  setOperationAction(ISD::PTRADD, MVT::i128, Custom);
   setOperationAction(ISD::GlobalTLSAddress, MVT::i64, Custom);
   // AS1 pointers are 128-bit address/image carriers. Custom lowering must
   // split them before the integer type legalizer sees them as load/store
@@ -126,6 +127,11 @@ bool BedrockTargetLowering::shouldInsertFencesForAtomic(
   // Plain loads and stores use AFENCE sequences around an otherwise relaxed
   // memory operation.
   return isa<LoadInst, StoreInst>(I);
+}
+
+bool BedrockTargetLowering::shouldPreservePtrArith(const Function &F,
+                                                   EVT PtrVT) const {
+  return PtrVT == MVT::i128;
 }
 
 Instruction *BedrockTargetLowering::emitLeadingFence(
@@ -320,6 +326,8 @@ SDValue BedrockTargetLowering::LowerOperation(SDValue Op,
     return LowerDYNAMIC_STACKALLOC(Op, DAG);
   case ISD::ADDRSPACECAST:
     return LowerADDRSPACECAST(Op, DAG);
+  case ISD::PTRADD:
+    return LowerPTRADD(Op, DAG);
   case ISD::GlobalTLSAddress:
     return LowerGlobalTLSAddress(Op, DAG);
   default:
@@ -331,6 +339,10 @@ void BedrockTargetLowering::ReplaceNodeResults(
     SDNode *N, SmallVectorImpl<SDValue> &Results, SelectionDAG &DAG) const {
   if (N->getOpcode() == ISD::ADDRSPACECAST && N->getValueType(0) == MVT::i128) {
     Results.push_back(LowerADDRSPACECAST(SDValue(N, 0), DAG));
+    return;
+  }
+  if (N->getOpcode() == ISD::PTRADD && N->getValueType(0) == MVT::i128) {
+    Results.push_back(LowerPTRADD(SDValue(N, 0), DAG));
     return;
   }
   if (N->getOpcode() != ISD::LOAD || N->getValueType(0) != MVT::i128)
@@ -389,6 +401,17 @@ splitFarPointer(SDValue Pointer, const SDLoc &DL, SelectionDAG &DAG) {
   SDValue Shifted = DAG.getNode(ISD::SRL, DL, MVT::i128, Pointer, Shift);
   SDValue Image = DAG.getNode(ISD::TRUNCATE, DL, MVT::i64, Shifted);
   return {Address, Image};
+}
+
+SDValue BedrockTargetLowering::LowerPTRADD(SDValue Op,
+                                           SelectionDAG &DAG) const {
+  SDLoc DL(Op);
+  auto [Address, Image] = splitFarPointer(Op.getOperand(0), DL, DAG);
+  SDValue Offset = DAG.getNode(ISD::TRUNCATE, DL, MVT::i64, Op.getOperand(1));
+  SDNodeFlags Flags = Op->getFlags();
+  Flags.setInBounds(false);
+  Address = DAG.getNode(ISD::ADD, DL, MVT::i64, Address, Offset, Flags);
+  return DAG.getNode(ISD::BUILD_PAIR, DL, MVT::i128, Address, Image);
 }
 
 SDValue BedrockTargetLowering::LowerFarLoad(SDValue Op,
