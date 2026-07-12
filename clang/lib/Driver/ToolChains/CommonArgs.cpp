@@ -3175,6 +3175,20 @@ void tools::addMCModel(const Driver &D, const llvm::opt::ArgList &Args,
         CM = "medium";
       Ok = CM == "small" || CM == "medium" ||
            (CM == "large" && Triple.isRISCV64());
+    } else if (Triple.getArch() == llvm::Triple::bedrock) {
+      // Bedrock's public names describe the placement policy. Reuse LLVM's
+      // generic code-model enum for the backend representation.
+      Ok = llvm::is_contained({"low", "small", "medium", "high", "large"},
+                              CM);
+      if ((CM == "low" || CM == "high") &&
+          RelocationModel != llvm::Reloc::Static)
+        D.Diag(diag::err_drv_argument_only_allowed_with)
+            << A->getAsString(Args) << "-fno-pic";
+      if (Ok)
+        CM = llvm::StringSwitch<StringRef>(CM)
+                 .Case("low", "tiny")
+                 .Case("high", "kernel")
+                 .Default(CM);
     } else if (Triple.getArch() == llvm::Triple::x86_64) {
       Ok = llvm::is_contained({"small", "kernel", "medium", "large"}, CM);
     } else if (Triple.isNVPTX() || Triple.isAMDGPU() || Triple.isSPIRV()) {

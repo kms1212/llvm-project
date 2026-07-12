@@ -48,10 +48,19 @@ def SDT_BedrockUnaryInt : SDTypeProfile<1, 1, [SDTCisSameAs<0, 1>,
 def SDT_BedrockBinaryInt : SDTypeProfile<1, 2, [SDTCisSameAs<0, 1>,
                                                 SDTCisSameAs<0, 2>,
                                                 SDTCisInt<0>]>;
+def SDT_BedrockAddress : SDTypeProfile<1, 1, [SDTCisSameAs<0, 1>]>;
+def SDT_BedrockTLSDesc : SDTypeProfile<0, 1, [SDTCisPtrTy<0>]>;
 
 def BedrockCall : SDNode<"BedrockISD::CALL", SDT_BedrockCall,
                          [SDNPHasChain, SDNPOptInGlue, SDNPOutGlue,
                           SDNPVariadic]>;
+def BedrockCallAddress : SDNode<"BedrockISD::CALL_ADDRESS",
+                                SDT_BedrockAddress>;
+def BedrockTLSAddress : SDNode<"BedrockISD::TLS_ADDRESS",
+                               SDT_BedrockAddress>;
+def BedrockTLSDescCall
+    : SDNode<"BedrockISD::TLSDESC_CALL", SDT_BedrockTLSDesc,
+             [SDNPHasChain, SDNPOptInGlue, SDNPOutGlue, SDNPVariadic]>;
 def BedrockTailCallCandidate
     : SDNode<"BedrockISD::TAIL_CALL_CANDIDATE", SDT_BedrockCall,
              [SDNPHasChain, SDNPOptInGlue, SDNPOutGlue, SDNPVariadic]>;
@@ -1235,6 +1244,11 @@ def FARCALLi_TAIL : BedrockPseudo<(outs),
                                   (ins GPR64:$segment, i64imm:$dst)>;
 }
 
+let isCall = 1, hasSideEffects = 1,
+    Defs = [R0, R1, R2, R3, R4, R5, R6, R7,
+            F0, F1, F2, F3, F4, F5, F6, F7, FLAGS, GS4] in
+def TLSDESC_CALL : BedrockPseudo<(outs), (ins i64imm:$sym)>;
+
 let isBranch = 1, isTerminator = 1, isBarrier = 1 in
 def TAILCALL : BedrockPseudo<(outs), (ins i64imm:$dst)>;
 let isBranch = 1, isTerminator = 1, isBarrier = 1 in
@@ -1256,6 +1270,14 @@ def ADJCALLSTACKUP : BedrockPseudo<(outs), (ins i64imm:$amt1, i64imm:$amt2),
 def : Pat<(BedrockCall (i64 tglobaladdr:$dst)), (CALL tglobaladdr:$dst)>;
 def : Pat<(BedrockCall (i64 texternalsym:$dst)), (CALL texternalsym:$dst)>;
 def : Pat<(BedrockCall GPR64:$dst), (CALLr GPR64:$dst)>;
+def : Pat<(BedrockCallAddress (i64 tglobaladdr:$dst)),
+          (CONST64 tglobaladdr:$dst)>;
+def : Pat<(BedrockCallAddress (i64 texternalsym:$dst)),
+          (CONST64 texternalsym:$dst)>;
+def : Pat<(BedrockTLSAddress (i64 tglobaltlsaddr:$sym)),
+          (CONST64 tglobaltlsaddr:$sym)>;
+def : Pat<(BedrockTLSDescCall (i64 tglobaltlsaddr:$sym)),
+          (TLSDESC_CALL tglobaltlsaddr:$sym)>;
 def : Pat<(BedrockFarCall GPR64:$segment, (i64 tglobaladdr:$dst)),
           (FARCALLi GPR64:$segment, tglobaladdr:$dst)>;
 def : Pat<(BedrockFarCall GPR64:$segment, (i64 texternalsym:$dst)),

@@ -560,43 +560,119 @@ static bool selectSymbolAddress(SelectionDAG *DAG, SDValue Addr, SDLoc DL,
   return false;
 }
 
+static unsigned getSymbolAddressFlag(const SelectionDAG &DAG,
+                                     const GlobalValue *GV) {
+  const TargetMachine &TM = DAG.getTarget();
+  CodeModel::Model CM = TM.getCodeModel();
+  bool IsPIC = TM.isPositionIndependent();
+  bool IsLocal = GV && GV->isDSOLocal();
+  bool IsFunction = GV && GV->getValueType()->isFunctionTy();
+
+  if (IsPIC) {
+    if (!IsLocal)
+      return CM == CodeModel::Large ? BedrockII::MO_GOTPCREL64
+                                    : BedrockII::MO_GOTPCREL32;
+    if (CM == CodeModel::Medium && !IsFunction)
+      return BedrockII::MO_GOTPCREL32;
+    return CM == CodeModel::Large ? BedrockII::MO_PCREL64
+                                  : BedrockII::MO_PCREL32;
+  }
+
+  if (CM == CodeModel::Medium)
+    return IsFunction ? BedrockII::MO_PCREL32 : BedrockII::MO_ABS64;
+  if (CM == CodeModel::Large)
+    return BedrockII::MO_ABS64;
+  if (CM == CodeModel::Kernel)
+    return IsLocal ? BedrockII::MO_PCREL32 : BedrockII::MO_ABS64;
+  return BedrockII::MO_ABS32;
+}
+
+static unsigned getLocalAddressFlag(const SelectionDAG &DAG,
+                                    bool IsCodeRelated) {
+  const TargetMachine &TM = DAG.getTarget();
+  CodeModel::Model CM = TM.getCodeModel();
+  if (TM.isPositionIndependent())
+    return CM == CodeModel::Large ? BedrockII::MO_PCREL64
+                                  : BedrockII::MO_PCREL32;
+  if (CM == CodeModel::Large || (CM == CodeModel::Medium && !IsCodeRelated))
+    return BedrockII::MO_ABS64;
+  if (CM == CodeModel::Kernel || (CM == CodeModel::Medium && IsCodeRelated))
+    return BedrockII::MO_PCREL32;
+  return BedrockII::MO_ABS32;
+}
+
+static bool useAbsolute32Memory(const SelectionDAG &DAG) {
+  if (DAG.getTarget().isPositionIndependent())
+    return false;
+  CodeModel::Model CM = DAG.getTarget().getCodeModel();
+  return CM == CodeModel::Tiny || CM == CodeModel::Small;
+}
+
 static bool selectMaterializedSymbolAddress(SelectionDAG *DAG, SDNode *N,
                                             SDLoc DL, SDValue &Target) {
   switch (N->getOpcode()) {
   case ISD::GlobalAddress: {
     auto *GA = cast<GlobalAddressSDNode>(N);
-    Target = DAG->getTargetGlobalAddress(GA->getGlobal(), DL, MVT::i64,
-                                         GA->getOffset());
+    Target = DAG->getTargetGlobalAddress(
+        GA->getGlobal(), DL, MVT::i64, GA->getOffset(),
+        getSymbolAddressFlag(*DAG, GA->getGlobal()));
     return true;
   }
   case ISD::ExternalSymbol: {
     auto *ES = cast<ExternalSymbolSDNode>(N);
-    Target = DAG->getTargetExternalSymbol(ES->getSymbol(), MVT::i64);
+    CodeModel::Model CM = DAG->getTarget().getCodeModel();
+    unsigned Flag = DAG->getTarget().isPositionIndependent()
+                        ? (CM == CodeModel::Large
+                               ? BedrockII::MO_GOTPCREL64
+                               : BedrockII::MO_GOTPCREL32)
+                        : (CM == CodeModel::Large || CM == CodeModel::Medium
+                               ? BedrockII::MO_ABS64
+                               : BedrockII::MO_ABS32);
+    Target = DAG->getTargetExternalSymbol(ES->getSymbol(), MVT::i64, Flag);
     return true;
   }
   case ISD::BlockAddress: {
     auto *BA = cast<BlockAddressSDNode>(N);
     Target = DAG->getTargetBlockAddress(BA->getBlockAddress(), MVT::i64,
-                                        BA->getOffset());
+                                        BA->getOffset(),
+                                        getLocalAddressFlag(*DAG, true));
     return true;
   }
   case ISD::ConstantPool: {
     auto *CP = cast<ConstantPoolSDNode>(N);
     if (CP->isMachineConstantPoolEntry())
       Target = DAG->getTargetConstantPool(CP->getMachineCPVal(), MVT::i64,
-                                          CP->getAlign(), CP->getOffset());
+                                          CP->getAlign(), CP->getOffset(),
+                                          getLocalAddressFlag(*DAG, false));
     else
       Target = DAG->getTargetConstantPool(CP->getConstVal(), MVT::i64,
-                                          CP->getAlign(), CP->getOffset());
+                                          CP->getAlign(), CP->getOffset(),
+                                          getLocalAddressFlag(*DAG, false));
     return true;
   }
   case ISD::JumpTable: {
     auto *JT = cast<JumpTableSDNode>(N);
-    Target = DAG->getTargetJumpTable(JT->getIndex(), MVT::i64);
+    Target = DAG->getTargetJumpTable(JT->getIndex(), MVT::i64,
+                                     getLocalAddressFlag(*DAG, true));
     return true;
   }
-  case ISD::ADD:
-    return selectSymbolAddress(DAG, SDValue(N, 0), DL, Target);
+  case ISD::ADD: {
+    SDValue LHS = N->getOperand(0);
+    SDValue RHS = N->getOperand(1);
+    auto *Offset = dyn_cast<ConstantSDNode>(RHS);
+    auto *GA = dyn_cast<GlobalAddressSDNode>(LHS);
+    if (!GA) {
+      Offset = dyn_cast<ConstantSDNode>(LHS);
+      GA = dyn_cast<GlobalAddressSDNode>(RHS);
+    }
+    if (!GA || !Offset)
+      return false;
+    Target = DAG->getTargetGlobalAddress(
+        GA->getGlobal(), DL, MVT::i64,
+        GA->getOffset() + Offset->getSExtValue(),
+        getSymbolAddressFlag(*DAG, GA->getGlobal()));
+    return true;
+  }
   default:
     return false;
   }
@@ -979,7 +1055,8 @@ void BedrockDAGToDAGISel::Select(SDNode *N) {
     }
 
     SDValue Target;
-    if (selectSymbolAddress(CurDAG, LD->getBasePtr(), DL, Target)) {
+    if (useAbsolute32Memory(*CurDAG) &&
+        selectSymbolAddress(CurDAG, LD->getBasePtr(), DL, Target)) {
       SDValue Ops[] = {Target, LD->getChain()};
       CurDAG->SelectNodeTo(N, getLoadAbsOpcode(LD), LD->getValueType(0),
                            MVT::Other, Ops);
@@ -1038,7 +1115,8 @@ void BedrockDAGToDAGISel::Select(SDNode *N) {
     }
 
     SDValue Target;
-    if (selectSymbolAddress(CurDAG, ST->getBasePtr(), DL, Target)) {
+    if (useAbsolute32Memory(*CurDAG) &&
+        selectSymbolAddress(CurDAG, ST->getBasePtr(), DL, Target)) {
       if (HasStoreImm) {
         SDValue Ops[] = {
             CurDAG->getTargetConstant(StoreImm, DL, MVT::i64),

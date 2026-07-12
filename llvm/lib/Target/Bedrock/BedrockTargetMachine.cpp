@@ -43,6 +43,13 @@ static Reloc::Model getEffectiveRelocModel(std::optional<Reloc::Model> RM) {
   return RM.value_or(Reloc::Static);
 }
 
+static CodeModel::Model
+getBedrockCodeModel(std::optional<CodeModel::Model> CM) {
+  // Bedrock uses Tiny and Kernel as the internal spellings of its public low
+  // and high placement contracts.
+  return CM.value_or(CodeModel::Small);
+}
+
 BedrockTargetMachine::BedrockTargetMachine(const Target &T, const Triple &TT,
                                            StringRef CPU, StringRef FS,
                                            const TargetOptions &Options,
@@ -51,7 +58,7 @@ BedrockTargetMachine::BedrockTargetMachine(const Target &T, const Triple &TT,
                                            CodeGenOptLevel OL, bool JIT)
     : CodeGenTargetMachineImpl(T, TT.computeDataLayout(), TT, CPU, FS, Options,
                                getEffectiveRelocModel(RM),
-                               getEffectiveCodeModel(CM, CodeModel::Small), OL),
+                               getBedrockCodeModel(CM), OL),
       TLOF(std::make_unique<TargetLoweringObjectFileELF>()),
       Subtarget(TT, CPU, FS, *this, Options, getCodeModel(), OL) {
   initAsmInfo();

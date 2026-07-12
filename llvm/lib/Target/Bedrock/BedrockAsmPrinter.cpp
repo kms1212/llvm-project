@@ -15,15 +15,18 @@
 #include "TargetInfo/BedrockTargetInfo.h"
 #include "llvm/ADT/DenseMap.h"
 #include "llvm/ADT/DenseSet.h"
+#include "llvm/BinaryFormat/ELF.h"
 #include "llvm/CodeGen/AsmPrinter.h"
 #include "llvm/CodeGen/MachineBasicBlock.h"
 #include "llvm/CodeGen/MachineInstr.h"
 #include "llvm/CodeGen/TargetInstrInfo.h"
 #include "llvm/IR/Function.h"
+#include "llvm/IR/GlobalVariable.h"
 #include "llvm/MC/MCAsmInfo.h"
 #include "llvm/MC/MCExpr.h"
 #include "llvm/MC/MCInst.h"
 #include "llvm/MC/MCStreamer.h"
+#include "llvm/MC/MCSymbolELF.h"
 #include "llvm/MC/TargetRegistry.h"
 #include "llvm/Support/MathExtras.h"
 #include "llvm/Support/raw_ostream.h"
@@ -207,6 +210,7 @@ private:
                        MemAddrKind SrcKind, MemAddrKind DstKind);
   void emitSetCC(const MachineInstr *MI);
   void emitCall(const MachineInstr *MI);
+  void emitTLSDescCall(const MachineInstr *MI);
   void emitTailCall(const MachineInstr *MI);
   void emitIndirectCall(const MachineInstr *MI);
   void emitIndirectJump(const MachineInstr *MI);
@@ -3787,8 +3791,24 @@ static unsigned getMemAddrTailSize(const MachineInstr &MI, unsigned BaseOp,
 
 static unsigned getConstSize(const MachineInstr &MI) {
   const MachineOperand &ImmOp = MI.getOperand(1);
-  if (!ImmOp.isImm())
-    return 7;
+  if (!ImmOp.isImm()) {
+    switch (ImmOp.getTargetFlags()) {
+    case BedrockII::MO_ABS64:
+    case BedrockII::MO_PCREL64:
+    case BedrockII::MO_PLT64:
+      return 11;
+    case BedrockII::MO_GOTPCREL32:
+      return 10;
+    case BedrockII::MO_GOTPCREL64:
+      return 14;
+    case BedrockII::MO_TLS_LE32:
+      return 8;
+    case BedrockII::MO_TLS_LE64:
+      return 12;
+    default:
+      return 7;
+    }
+  }
   int64_t Imm = ImmOp.getImm();
   if (Imm == 0)
     return 1;
@@ -5148,6 +5168,10 @@ BedrockAsmPrinter::getInstSizeForBranchLayout(const MachineInstr &MI) const {
   case Bedrock::CONST32:
   case Bedrock::CONST64:
     return RepgHeaderSize + getConstSize(MI);
+  case Bedrock::TLSDESC_CALL:
+    return RepgHeaderSize +
+           (MI.getOperand(0).getTargetFlags() == BedrockII::MO_TLSDESC64 ? 25
+                                                                        : 21);
   case Bedrock::EXTSQBrr:
   case Bedrock::EXTSQWrr:
   case Bedrock::EXTZQBrr:
@@ -5891,6 +5915,10 @@ BedrockAsmPrinter::lowerSymbolOperand(const MachineOperand &MO) const {
     break;
   case MachineOperand::MO_GlobalAddress:
     Symbol = getSymbol(MO.getGlobal());
+    if (const auto *GV = dyn_cast<GlobalVariable>(MO.getGlobal());
+        GV && GV->isThreadLocal())
+      static_cast<MCSymbolELF *>(const_cast<MCSymbol *>(Symbol))
+          ->setType(ELF::STT_TLS);
     Offset = MO.getOffset();
     break;
   case MachineOperand::MO_ExternalSymbol:
@@ -6045,21 +6073,106 @@ void BedrockAsmPrinter::emitConst(const MachineInstr *MI, bool Is64) {
   }
 
   const MCExpr *Expr = lowerSymbolOperand(ImmOp);
+  unsigned Flag = ImmOp.getTargetFlags();
+  bool Is64BitField = Flag == BedrockII::MO_ABS64 ||
+                      Flag == BedrockII::MO_PCREL64 ||
+                      Flag == BedrockII::MO_GOTPCREL64 ||
+                      Flag == BedrockII::MO_PLT64;
+  bool IsPCRelative = Flag == BedrockII::MO_PCREL32 ||
+                      Flag == BedrockII::MO_PCREL64 ||
+                      Flag == BedrockII::MO_GOTPCREL32 ||
+                      Flag == BedrockII::MO_GOTPCREL64 ||
+                      Flag == BedrockII::MO_PLT32;
+  bool IsGOT = Flag == BedrockII::MO_GOTPCREL32 ||
+               Flag == BedrockII::MO_GOTPCREL64;
+  bool IsTLSLE = Flag == BedrockII::MO_TLS_LE32 ||
+                 Flag == BedrockII::MO_TLS_LE64;
   if (OutStreamer->hasRawTextSupport()) {
     SmallString<80> Text;
     raw_svector_ostream OS(Text);
     OS << "\tlea." << (Is64 ? 'q' : 'l') << "\t";
+    if (IsTLSLE)
+      OS << "[gs0:0 + ";
+    else if (IsPCRelative)
+      OS << "[pc + ";
     MAI->printExpr(OS, *Expr);
+    if (IsTLSLE || IsPCRelative)
+      OS << "]";
     OS << ", " << BedrockInstPrinter::getRegisterName(DstReg);
     OutStreamer->emitRawText(OS.str());
+    if (IsGOT) {
+      SmallString<48> LoadText;
+      raw_svector_ostream LoadOS(LoadText);
+      LoadOS << "\tmov.q\t["
+             << BedrockInstPrinter::getRegisterName(DstReg) << "], "
+             << BedrockInstPrinter::getRegisterName(DstReg);
+      OutStreamer->emitRawText(LoadOS.str());
+    }
     return;
   }
 
-  SmallVector<uint8_t, 4> Tail(4, 0);
-  SmallVector<uint8_t, 8> Bytes;
-  if (!BedrockMC::encodeMedium(getLeaPayload(0x6e, Size, DstReg), Tail, Bytes))
+  unsigned FieldBytes = Is64BitField || Flag == BedrockII::MO_TLS_LE64 ? 8 : 4;
+  SmallVector<uint8_t, 8> Tail;
+  uint8_t EA;
+  if (IsTLSLE) {
+    // Extended zero-base EA qualified by GS0, followed by the TLS offset.
+    EA = FieldBytes == 8 ? 0x73 : 0x72;
+    Tail.push_back(0xb3);
+  } else {
+    EA = IsPCRelative ? (FieldBytes == 8 ? 0x67 : 0x66)
+                      : (FieldBytes == 8 ? 0x6f : 0x6e);
+  }
+  unsigned FixupOffset = 3 + Tail.size();
+  Tail.append(FieldBytes, 0);
+  SmallVector<uint8_t, 16> Bytes;
+  if (!BedrockMC::encodeMedium(getLeaPayload(EA, Size, DstReg), Tail, Bytes))
     report_fatal_error("failed to encode Bedrock symbolic constant");
-  emitRawExpr(Bytes, 3, MCFixupKind(Bedrock::fixup_bedrock_imm32), Expr);
+
+  MCFixupKind Kind;
+  switch (Flag) {
+  case BedrockII::MO_ABS64:
+    Kind = FK_Data_8;
+    break;
+  case BedrockII::MO_PCREL32:
+    Kind = MCFixupKind(Bedrock::fixup_bedrock_pcrel32);
+    break;
+  case BedrockII::MO_PCREL64:
+    Kind = MCFixupKind(Bedrock::fixup_bedrock_pcrel64);
+    break;
+  case BedrockII::MO_GOTPCREL32:
+    Kind = MCFixupKind(Bedrock::fixup_bedrock_gotpcrel32);
+    break;
+  case BedrockII::MO_GOTPCREL64:
+    Kind = MCFixupKind(Bedrock::fixup_bedrock_gotpcrel64);
+    break;
+  case BedrockII::MO_PLT32:
+    Kind = MCFixupKind(Bedrock::fixup_bedrock_plt32);
+    break;
+  case BedrockII::MO_PLT64:
+    Kind = MCFixupKind(Bedrock::fixup_bedrock_plt64);
+    break;
+  case BedrockII::MO_TLS_LE32:
+    Kind = MCFixupKind(Bedrock::fixup_bedrock_tls_offset32);
+    break;
+  case BedrockII::MO_TLS_LE64:
+    Kind = MCFixupKind(Bedrock::fixup_bedrock_tls_offset64);
+    break;
+  default:
+    Kind = MCFixupKind(Bedrock::fixup_bedrock_imm32);
+    break;
+  }
+  emitRawExpr(Bytes, FixupOffset, Kind, Expr);
+
+  if (IsGOT) {
+    SmallVector<uint8_t, 8> LoadBytes;
+    if (!BedrockMC::encodeMedium(
+            getMovPayload(/*IsLoad=*/true, /*Size=*/3,
+                          0x10 + getGPRNo(DstReg),
+                          DstReg),
+            {}, LoadBytes))
+      report_fatal_error("failed to encode Bedrock GOT load");
+    emitRaw(LoadBytes);
+  }
 }
 
 void BedrockAsmPrinter::emitUnaryPseudo(const MachineInstr *MI,
@@ -7557,7 +7670,10 @@ void BedrockAsmPrinter::emitCall(const MachineInstr *MI) {
     return;
   }
 
-  emitRawExpr(Bytes, 3, MCFixupKind(Bedrock::fixup_bedrock_call32),
+  MCFixupKind Kind = Target.getTargetFlags() == BedrockII::MO_PLT32
+                         ? MCFixupKind(Bedrock::fixup_bedrock_plt32)
+                         : MCFixupKind(Bedrock::fixup_bedrock_call32);
+  emitRawExpr(Bytes, 3, Kind,
               lowerSymbolOperand(Target));
 }
 
@@ -7587,8 +7703,74 @@ void BedrockAsmPrinter::emitTailCall(const MachineInstr *MI) {
     return;
   }
 
-  emitRawExpr(Bytes, 3, MCFixupKind(Bedrock::fixup_bedrock_brdisp32),
+  MCFixupKind Kind = Target.getTargetFlags() == BedrockII::MO_PLT32
+                         ? MCFixupKind(Bedrock::fixup_bedrock_plt32)
+                         : MCFixupKind(Bedrock::fixup_bedrock_brdisp32);
+  emitRawExpr(Bytes, 3, Kind,
               lowerSymbolOperand(Target));
+}
+
+void BedrockAsmPrinter::emitTLSDescCall(const MachineInstr *MI) {
+  const MachineOperand &Symbol = MI->getOperand(0);
+  const MCExpr *Expr = lowerSymbolOperand(Symbol);
+  bool Is64BitField =
+      Symbol.getTargetFlags() == BedrockII::MO_TLSDESC64;
+
+  if (OutStreamer->hasRawTextSupport()) {
+    SmallString<96> Text;
+    raw_svector_ostream OS(Text);
+    OS << "\tlea.q\t[pc + ";
+    MAI->printExpr(OS, *Expr);
+    OS << "], r0\n\tmov.q\t[r0], r1\n\tsub.q\t8, sp\n\t.tlsdesccall\t";
+    MAI->printExpr(OS, *Expr);
+    OS << "\n\tcall\tr1\n\tadd.q\t8, sp\n"
+          "\tlea.q\t[gs0:0 + r0], r0";
+    OutStreamer->emitRawText(OS.str());
+    return;
+  }
+
+  unsigned FieldBytes = Is64BitField ? 8 : 4;
+  SmallVector<uint8_t, 8> Tail(FieldBytes, 0);
+  SmallVector<uint8_t, 16> LeaBytes;
+  if (!BedrockMC::encodeMedium(
+          getLeaPayload(Is64BitField ? 0x67 : 0x66, /*Size=*/3, Bedrock::R0),
+          Tail, LeaBytes))
+    report_fatal_error("failed to encode Bedrock TLSDESC address");
+  emitRawExpr(
+      LeaBytes, 3,
+      MCFixupKind(Is64BitField ? Bedrock::fixup_bedrock_tlsdesc_gotpcrel64
+                               : Bedrock::fixup_bedrock_tlsdesc_gotpcrel32),
+      Expr);
+
+  SmallVector<uint8_t, 8> LoadBytes;
+  if (!BedrockMC::encodeMedium(
+          getMovPayload(/*IsLoad=*/true, /*Size=*/3,
+                        0x10 + getGPRNo(Bedrock::R0),
+                        Bedrock::R1),
+          {}, LoadBytes))
+    report_fatal_error("failed to encode Bedrock TLSDESC resolver load");
+  emitRaw(LoadBytes);
+
+  // A near CALL pushes an 8-byte return PC. Maintain the baseline ABI's
+  // 16-byte callee entry alignment around the specialized resolver call.
+  emitRaw({0x0f});
+
+  SmallVector<uint8_t, 4> CallBytes;
+  uint32_t CallPayload = applyPatternValues(
+      "1111000011100010000eeeeeee", {{'e', getRegEA(Bedrock::R1)}});
+  if (!BedrockMC::encodeLong(CallPayload, {}, CallBytes))
+    report_fatal_error("failed to encode Bedrock TLSDESC resolver call");
+  emitRawExpr(CallBytes, 0,
+              MCFixupKind(Bedrock::fixup_bedrock_tlsdesc_call), Expr);
+  emitRaw({0x0e});
+
+  SmallVector<uint8_t, 2> GSTail = {0xb9, 0x20};
+  SmallVector<uint8_t, 8> ResultBytes;
+  if (!BedrockMC::encodeMedium(
+          getLeaPayload(/*EXT0=*/0x74, /*Size=*/3, Bedrock::R0), GSTail,
+          ResultBytes))
+    report_fatal_error("failed to encode Bedrock GS0 TLS address");
+  emitRaw(ResultBytes);
 }
 
 void BedrockAsmPrinter::emitIndirectCall(const MachineInstr *MI) {
@@ -8925,6 +9107,9 @@ void BedrockAsmPrinter::emitInstruction(const MachineInstr *MI) {
   case Bedrock::CALLr:
   case Bedrock::CALLr_TAIL:
     emitIndirectCall(MI);
+    return;
+  case Bedrock::TLSDESC_CALL:
+    emitTLSDescCall(MI);
     return;
   case Bedrock::FARCALLr:
   case Bedrock::FARCALLr_TAIL:

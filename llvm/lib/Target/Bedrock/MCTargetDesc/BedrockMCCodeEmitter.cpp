@@ -148,7 +148,13 @@ void BedrockMCCodeEmitter::encodeInstruction(const MCInst &MI,
                      Kind == Bedrock::fixup_bedrock_brdisp16 ||
                      Kind == Bedrock::fixup_bedrock_brdisp32 ||
                      Kind == Bedrock::fixup_bedrock_call16 ||
-                     Kind == Bedrock::fixup_bedrock_call32;
+                     Kind == Bedrock::fixup_bedrock_call32 ||
+                     Kind == Bedrock::fixup_bedrock_pcrel64 ||
+                     Kind == Bedrock::fixup_bedrock_gotpcrel32 ||
+                     Kind == Bedrock::fixup_bedrock_gotpcrel64 ||
+                     Kind == Bedrock::fixup_bedrock_plt32 ||
+                     Kind == Bedrock::fixup_bedrock_tlsdesc_gotpcrel32 ||
+                     Kind == Bedrock::fixup_bedrock_tlsdesc_gotpcrel64;
       Fixups.push_back(
           MCFixup::create(OffsetOp.getImm(), ExprOp.getExpr(), Kind, IsPCRel));
     }

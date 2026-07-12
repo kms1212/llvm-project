@@ -7,6 +7,7 @@
 //===----------------------------------------------------------------------===//
 
 #include "BedrockISelLowering.h"
+#include "Bedrock.h"
 #include "BedrockCallingConv.h"
 #include "BedrockMachineFunctionInfo.h"
 #include "BedrockSubtarget.h"
@@ -93,6 +94,7 @@ BedrockTargetLowering::BedrockTargetLowering(const TargetMachine &TM,
   setOperationAction(ISD::BR_JT, MVT::Other, Expand);
   setOperationAction(ISD::BRCOND, MVT::Other, Custom);
   setOperationAction(ISD::VASTART, MVT::Other, Custom);
+  setOperationAction(ISD::GlobalTLSAddress, MVT::i64, Custom);
   // AS1 pointers are 128-bit address/image carriers. Custom lowering must
   // split them before the integer type legalizer sees them as load/store
   // address operands.
@@ -152,6 +154,12 @@ const char *BedrockTargetLowering::getTargetNodeName(unsigned Opcode) const {
     return "BedrockISD::FAR_RET_FLAG";
   case BedrockISD::CALL:
     return "BedrockISD::CALL";
+  case BedrockISD::CALL_ADDRESS:
+    return "BedrockISD::CALL_ADDRESS";
+  case BedrockISD::TLS_ADDRESS:
+    return "BedrockISD::TLS_ADDRESS";
+  case BedrockISD::TLSDESC_CALL:
+    return "BedrockISD::TLSDESC_CALL";
   case BedrockISD::TAIL_CALL_CANDIDATE:
     return "BedrockISD::TAIL_CALL_CANDIDATE";
   case BedrockISD::FAR_CALL:
@@ -294,6 +302,8 @@ SDValue BedrockTargetLowering::LowerOperation(SDValue Op,
     return LowerSIGN_EXTEND_INREG(Op, DAG);
   case ISD::VASTART:
     return LowerVASTART(Op, DAG);
+  case ISD::GlobalTLSAddress:
+    return LowerGlobalTLSAddress(Op, DAG);
   default:
     llvm_unreachable("unhandled Bedrock lowering operation");
   }
@@ -902,11 +912,46 @@ BedrockTargetLowering::LowerCall(TargetLowering::CallLoweringInfo &CLI,
       std::tie(Callee, FarSegment) = splitFarPointer(Callee, DL, DAG);
     }
   } else if (auto *G = dyn_cast<GlobalAddressSDNode>(Callee)) {
-    Callee = DAG.getTargetGlobalAddress(
-        G->getGlobal(), DL, getPointerTy(DAG.getDataLayout()), G->getOffset());
+    bool IsLarge = DAG.getTarget().getCodeModel() == CodeModel::Large;
+    if (IsLarge) {
+      unsigned Flag;
+      if (!DAG.getTarget().isPositionIndependent())
+        Flag = BedrockII::MO_ABS64;
+      else if (G->getGlobal()->isDSOLocal())
+        Flag = BedrockII::MO_PCREL64;
+      else
+        Flag = BedrockII::MO_GOTPCREL64;
+      SDValue Symbol = DAG.getTargetGlobalAddress(
+          G->getGlobal(), DL, getPointerTy(DAG.getDataLayout()),
+          G->getOffset(), Flag);
+      Callee = DAG.getNode(BedrockISD::CALL_ADDRESS, DL,
+                           getPointerTy(DAG.getDataLayout()), Symbol);
+    } else {
+      unsigned Flag = DAG.getTarget().isPositionIndependent() &&
+                              !G->getGlobal()->isDSOLocal()
+                          ? BedrockII::MO_PLT32
+                          : BedrockII::MO_NONE;
+      Callee = DAG.getTargetGlobalAddress(
+          G->getGlobal(), DL, getPointerTy(DAG.getDataLayout()),
+          G->getOffset(), Flag);
+    }
   } else if (auto *E = dyn_cast<ExternalSymbolSDNode>(Callee)) {
-    Callee = DAG.getTargetExternalSymbol(E->getSymbol(),
-                                         getPointerTy(DAG.getDataLayout()));
+    bool IsLarge = DAG.getTarget().getCodeModel() == CodeModel::Large;
+    if (IsLarge) {
+      unsigned Flag = DAG.getTarget().isPositionIndependent()
+                          ? BedrockII::MO_GOTPCREL64
+                          : BedrockII::MO_ABS64;
+      SDValue Symbol = DAG.getTargetExternalSymbol(
+          E->getSymbol(), getPointerTy(DAG.getDataLayout()), Flag);
+      Callee = DAG.getNode(BedrockISD::CALL_ADDRESS, DL,
+                           getPointerTy(DAG.getDataLayout()), Symbol);
+    } else {
+      unsigned Flag = DAG.getTarget().isPositionIndependent()
+                          ? BedrockII::MO_PLT32
+                          : BedrockII::MO_NONE;
+      Callee = DAG.getTargetExternalSymbol(
+          E->getSymbol(), getPointerTy(DAG.getDataLayout()), Flag);
+    }
   }
 
   const BedrockRegisterInfo *TRI = Subtarget.getRegisterInfo();
@@ -955,6 +1000,33 @@ SDValue BedrockTargetLowering::LowerVASTART(SDValue Op,
   const Value *SV = cast<SrcValueSDNode>(Op.getOperand(2))->getValue();
   return DAG.getStore(Op.getOperand(0), SDLoc(Op), FirstUnnamed, ListAddress,
                       MachinePointerInfo(SV));
+}
+
+SDValue BedrockTargetLowering::LowerGlobalTLSAddress(
+    SDValue Op, SelectionDAG &DAG) const {
+  auto *GA = cast<GlobalAddressSDNode>(Op);
+  const GlobalValue *GV = GA->getGlobal();
+  SDLoc DL(Op);
+  EVT PtrVT = getPointerTy(DAG.getDataLayout());
+  TLSModel::Model Model = getTargetMachine().getTLSModel(GV);
+  bool Is64BitField = DAG.getTarget().getCodeModel() == CodeModel::Large;
+
+  if (Model == TLSModel::LocalExec) {
+    unsigned Flag = Is64BitField ? BedrockII::MO_TLS_LE64
+                                 : BedrockII::MO_TLS_LE32;
+    SDValue Symbol =
+        DAG.getTargetGlobalAddress(GV, DL, PtrVT, GA->getOffset(), Flag);
+    return DAG.getNode(BedrockISD::TLS_ADDRESS, DL, PtrVT, Symbol);
+  }
+
+  unsigned Flag = Is64BitField ? BedrockII::MO_TLSDESC64
+                               : BedrockII::MO_TLSDESC32;
+  SDValue Symbol =
+      DAG.getTargetGlobalAddress(GV, DL, PtrVT, GA->getOffset(), Flag);
+  SDVTList NodeTys = DAG.getVTList(MVT::Other, MVT::Glue);
+  SDValue Chain = DAG.getNode(BedrockISD::TLSDESC_CALL, DL, NodeTys,
+                              DAG.getEntryNode(), Symbol);
+  return DAG.getCopyFromReg(Chain, DL, Bedrock::R0, PtrVT, Chain.getValue(1));
 }
 
 SDValue BedrockTargetLowering::LowerCallResult(

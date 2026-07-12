@@ -35,9 +35,9 @@ protected:
     case FK_Data_2:
       return ELF::R_BEDROCK_ABS16;
     case FK_Data_4:
-      return ELF::R_BEDROCK_ABS32S;
+      return IsPCRel ? ELF::R_BEDROCK_PCREL32S : ELF::R_BEDROCK_ABS32S;
     case FK_Data_8:
-      return ELF::R_BEDROCK_ABS64;
+      return IsPCRel ? ELF::R_BEDROCK_PCREL64 : ELF::R_BEDROCK_ABS64;
     case Bedrock::fixup_bedrock_imm32:
       return ELF::R_BEDROCK_IMM32S;
     case Bedrock::fixup_bedrock_disp32:
@@ -54,6 +54,26 @@ protected:
       return ELF::R_BEDROCK_CALL16S;
     case Bedrock::fixup_bedrock_call32:
       return ELF::R_BEDROCK_CALL32S;
+    case Bedrock::fixup_bedrock_pcrel64:
+      return ELF::R_BEDROCK_PCREL64;
+    case Bedrock::fixup_bedrock_gotpcrel32:
+      return ELF::R_BEDROCK_GOTPCREL32S;
+    case Bedrock::fixup_bedrock_gotpcrel64:
+      return ELF::R_BEDROCK_GOTPCREL64;
+    case Bedrock::fixup_bedrock_plt32:
+      return ELF::R_BEDROCK_PLT32S;
+    case Bedrock::fixup_bedrock_plt64:
+      return ELF::R_BEDROCK_PLT64;
+    case Bedrock::fixup_bedrock_tls_offset32:
+      return ELF::R_BEDROCK_TLS_OFFSET32S;
+    case Bedrock::fixup_bedrock_tls_offset64:
+      return ELF::R_BEDROCK_TLS_OFFSET64;
+    case Bedrock::fixup_bedrock_tlsdesc_gotpcrel32:
+      return ELF::R_BEDROCK_TLSDESC_GOTPCREL32S;
+    case Bedrock::fixup_bedrock_tlsdesc_gotpcrel64:
+      return ELF::R_BEDROCK_TLSDESC_GOTPCREL64;
+    case Bedrock::fixup_bedrock_tlsdesc_call:
+      return ELF::R_BEDROCK_TLSDESC_CALL;
     }
   }
 };

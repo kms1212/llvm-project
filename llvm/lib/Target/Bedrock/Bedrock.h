@@ -13,6 +13,25 @@
 
 namespace llvm {
 
+namespace BedrockII {
+enum TargetOperandFlag : unsigned {
+  MO_NONE,
+  MO_ABS32,
+  MO_ABS64,
+  MO_PCREL32,
+  MO_PCREL64,
+  MO_GOTPCREL32,
+  MO_GOTPCREL64,
+  MO_PLT32,
+  MO_PLT64,
+  MO_TLS_LE32,
+  MO_TLS_LE64,
+  MO_TLSDESC32,
+  MO_TLSDESC64,
+  MO_TLSDESC_CALL,
+};
+} // namespace BedrockII
+
 class BedrockTargetMachine;
 class FunctionPass;
 class PassRegistry;

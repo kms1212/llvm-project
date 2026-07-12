@@ -1290,7 +1290,12 @@ unsigned RelocScan::handleTlsRelocation(RelExpr expr, RelType type,
     // R_RISCV_TLSDESC_{LOAD_LO12,ADD_LO12_I,CALL} reference a non-preemptible
     // label, so TLSDESC=>IE will be categorized as R_RELAX_TLS_GD_TO_LE. We fix
     // the categorization in RISCV::relocateAllosec->
-    if (sym.isPreemptible) {
+    if (ctx.arg.emachine == EM_BEDROCK && sym.isPreemptible) {
+      // Bedrock has no separate initial-exec sequence: an interposable TLS
+      // definition continues to use its two-word TLSDESC entry.
+      sym.setFlags(NEEDS_TLSDESC);
+      sec->addReloc({expr, type, offset, addend, &sym});
+    } else if (sym.isPreemptible) {
       sym.setFlags(NEEDS_TLSIE);
       sec->addReloc({ctx.target->adjustTlsExpr(type, R_RELAX_TLS_GD_TO_IE),
                      type, offset, addend, &sym});

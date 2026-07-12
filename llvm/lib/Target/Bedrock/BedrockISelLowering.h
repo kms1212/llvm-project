@@ -79,6 +79,7 @@ private:
   SDValue LowerMinMax(SDValue Op, SelectionDAG &DAG) const;
   SDValue LowerSIGN_EXTEND_INREG(SDValue Op, SelectionDAG &DAG) const;
   SDValue LowerVASTART(SDValue Op, SelectionDAG &DAG) const;
+  SDValue LowerGlobalTLSAddress(SDValue Op, SelectionDAG &DAG) const;
   SDValue LowerFarLoad(SDValue Op, SelectionDAG &DAG) const;
   SDValue LowerFarStore(SDValue Op, SelectionDAG &DAG) const;
 };

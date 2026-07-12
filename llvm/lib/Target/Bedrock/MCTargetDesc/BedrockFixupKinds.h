@@ -23,6 +23,16 @@ enum Fixups {
   fixup_bedrock_brdisp32,
   fixup_bedrock_call16,
   fixup_bedrock_call32,
+  fixup_bedrock_pcrel64,
+  fixup_bedrock_gotpcrel32,
+  fixup_bedrock_gotpcrel64,
+  fixup_bedrock_plt32,
+  fixup_bedrock_plt64,
+  fixup_bedrock_tls_offset32,
+  fixup_bedrock_tls_offset64,
+  fixup_bedrock_tlsdesc_gotpcrel32,
+  fixup_bedrock_tlsdesc_gotpcrel64,
+  fixup_bedrock_tlsdesc_call,
   fixup_bedrock_invalid,
   NumTargetFixupKinds = fixup_bedrock_invalid - FirstTargetFixupKind,
 };
@@ -41,6 +51,15 @@ enum RelocationType : unsigned {
   R_BEDROCK_BRDISP32S = ELF::R_BEDROCK_BRDISP32S,
   R_BEDROCK_CALL16S = ELF::R_BEDROCK_CALL16S,
   R_BEDROCK_CALL32S = ELF::R_BEDROCK_CALL32S,
+  R_BEDROCK_GOTPCREL32S = ELF::R_BEDROCK_GOTPCREL32S,
+  R_BEDROCK_GOTPCREL64 = ELF::R_BEDROCK_GOTPCREL64,
+  R_BEDROCK_PLT32S = ELF::R_BEDROCK_PLT32S,
+  R_BEDROCK_PLT64 = ELF::R_BEDROCK_PLT64,
+  R_BEDROCK_TLS_OFFSET32S = ELF::R_BEDROCK_TLS_OFFSET32S,
+  R_BEDROCK_TLS_OFFSET64 = ELF::R_BEDROCK_TLS_OFFSET64,
+  R_BEDROCK_TLSDESC_GOTPCREL32S = ELF::R_BEDROCK_TLSDESC_GOTPCREL32S,
+  R_BEDROCK_TLSDESC_GOTPCREL64 = ELF::R_BEDROCK_TLSDESC_GOTPCREL64,
+  R_BEDROCK_TLSDESC_CALL = ELF::R_BEDROCK_TLSDESC_CALL,
 };
 
 } // namespace llvm::Bedrock

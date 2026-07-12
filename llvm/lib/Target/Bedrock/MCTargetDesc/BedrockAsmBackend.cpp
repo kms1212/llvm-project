@@ -8,6 +8,7 @@
 
 #include "BedrockFixupKinds.h"
 #include "MCTargetDesc/BedrockMCTargetDesc.h"
+#include "llvm/ADT/StringSwitch.h"
 #include "llvm/BinaryFormat/ELF.h"
 #include "llvm/MC/MCAsmBackend.h"
 #include "llvm/MC/MCAssembler.h"
@@ -32,6 +33,17 @@ public:
   BedrockAsmBackend() : MCAsmBackend(llvm::endianness::little) {}
   ~BedrockAsmBackend() override = default;
 
+  std::optional<MCFixupKind> getFixupKind(StringRef Name) const override {
+    unsigned Type = StringSwitch<unsigned>(Name)
+#define ELF_RELOC(X, Y) .Case(#X, Y)
+#include "llvm/BinaryFormat/ELFRelocs/Bedrock.def"
+#undef ELF_RELOC
+                        .Default(-1u);
+    if (Type != -1u)
+      return static_cast<MCFixupKind>(FirstLiteralRelocationKind + Type);
+    return MCAsmBackend::getFixupKind(Name);
+  }
+
   MCFixupKindInfo getFixupKindInfo(MCFixupKind Kind) const override {
     static const MCFixupKindInfo Infos[Bedrock::NumTargetFixupKinds] = {
         {"fixup_bedrock_imm32", 0, 32, 0},
@@ -42,6 +54,16 @@ public:
         {"fixup_bedrock_brdisp32", 0, 32, 0},
         {"fixup_bedrock_call16", 0, 16, 0},
         {"fixup_bedrock_call32", 0, 32, 0},
+        {"fixup_bedrock_pcrel64", 0, 64, 0},
+        {"fixup_bedrock_gotpcrel32", 0, 32, 0},
+        {"fixup_bedrock_gotpcrel64", 0, 64, 0},
+        {"fixup_bedrock_plt32", 0, 32, 0},
+        {"fixup_bedrock_plt64", 0, 64, 0},
+        {"fixup_bedrock_tls_offset32", 0, 32, 0},
+        {"fixup_bedrock_tls_offset64", 0, 64, 0},
+        {"fixup_bedrock_tlsdesc_gotpcrel32", 0, 32, 0},
+        {"fixup_bedrock_tlsdesc_gotpcrel64", 0, 64, 0},
+        {"fixup_bedrock_tlsdesc_call", 0, 0, 0},
     };
 
     if (Kind < FirstTargetFixupKind)
