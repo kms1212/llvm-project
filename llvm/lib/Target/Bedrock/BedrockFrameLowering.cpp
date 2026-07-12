@@ -12,6 +12,7 @@
 #include "llvm/CodeGen/MachineFunction.h"
 #include "llvm/CodeGen/MachineInstrBuilder.h"
 #include "llvm/CodeGen/TargetInstrInfo.h"
+#include "llvm/IR/Module.h"
 #include "llvm/MC/MCDwarf.h"
 #include "llvm/Support/ErrorHandling.h"
 #include "llvm/Target/TargetMachine.h"
@@ -26,7 +27,13 @@ static bool needsStackRealignment(const MachineFunction &MF) {
 }
 
 static bool needsDwarfCFI(const MachineFunction &MF) {
-  return MF.needsFrameMoves() && MF.getFunction().hasUWTable();
+  // Runtime unwind tables are function properties, while -g requests the
+  // non-allocating .debug_frame through a module compile unit.  Do not use
+  // needsFrameMoves() alone: llc may force frame moves for textual assembly
+  // even when neither output is requested.
+  const Function &F = MF.getFunction();
+  return F.hasUWTable() || MF.getTarget().Options.ForceDwarfFrameSection ||
+         !F.getParent()->debug_compile_units().empty();
 }
 
 BedrockFrameLowering::BedrockFrameLowering(const BedrockSubtarget &STI)
