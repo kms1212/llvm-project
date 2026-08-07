@@ -23,6 +23,21 @@ using namespace llvm;
 
 namespace llvm {
 
+static bool needsFieldOffsetAddend(MCFixupKind Kind) {
+  switch (Kind) {
+  case Bedrock::fixup_bedrock_pcrel16:
+  case Bedrock::fixup_bedrock_pcrel32:
+  case Bedrock::fixup_bedrock_pcrel64:
+  case Bedrock::fixup_bedrock_gotpcrel32:
+  case Bedrock::fixup_bedrock_gotpcrel64:
+  case Bedrock::fixup_bedrock_tlsdesc_gotpcrel32:
+  case Bedrock::fixup_bedrock_tlsdesc_gotpcrel64:
+    return true;
+  default:
+    return false;
+  }
+}
+
 class BedrockMCCodeEmitter : public MCCodeEmitter {
   MCContext &Ctx;
 
@@ -149,6 +164,10 @@ void BedrockMCCodeEmitter::encodeInstruction(const MCInst &MI,
       const MCOperand &ExprOp = MI.getOperand(3 + I * 3);
       assert(ExprOp.isExpr() && "expected Bedrock RAW_EXPR fixup expression");
       auto Kind = static_cast<MCFixupKind>(KindOp.getImm());
+      const MCExpr *Expr = ExprOp.getExpr();
+      if (needsFieldOffsetAddend(Kind))
+        Expr = MCBinaryExpr::createAdd(
+            Expr, MCConstantExpr::create(OffsetOp.getImm(), Ctx), Ctx);
       bool IsPCRel = Kind == Bedrock::fixup_bedrock_pcrel16 ||
                      Kind == Bedrock::fixup_bedrock_pcrel32 ||
                      Kind == Bedrock::fixup_bedrock_brdisp16 ||
@@ -161,8 +180,7 @@ void BedrockMCCodeEmitter::encodeInstruction(const MCInst &MI,
                      Kind == Bedrock::fixup_bedrock_plt32 ||
                      Kind == Bedrock::fixup_bedrock_tlsdesc_gotpcrel32 ||
                      Kind == Bedrock::fixup_bedrock_tlsdesc_gotpcrel64;
-      Fixups.push_back(
-          MCFixup::create(OffsetOp.getImm(), ExprOp.getExpr(), Kind, IsPCRel));
+      Fixups.push_back(MCFixup::create(OffsetOp.getImm(), Expr, Kind, IsPCRel));
     }
     return;
   }
