@@ -2089,23 +2089,51 @@ bool Sema::CheckTSBuiltinFunctionCall(const TargetInfo &TI, unsigned BuiltinID,
   case llvm::Triple::bpfeb:
   case llvm::Triple::bpfel:
     return BPF().CheckBPFBuiltinFunctionCall(BuiltinID, TheCall);
-  case llvm::Triple::bedrock:
+  case llvm::Triple::bedrock: {
+    auto CheckControlRegisterSelector = [&]() -> bool {
+      if (isConstantEvaluatedContext())
+        return false;
+
+      Expr *Arg = TheCall->getArg(0);
+      if (Arg->isTypeDependent() || Arg->isValueDependent())
+        return false;
+
+      llvm::APSInt Selector;
+      if (BuiltinConstantArg(TheCall, 0, Selector))
+        return true;
+
+      constexpr uint64_t DefinedSelectors[] = {
+          0x0000, 0x0001, 0x0002, 0x0100, 0x0101, 0x0102, 0x0108,
+          0x0109, 0x010a, 0x010b, 0x010c, 0x010d, 0x0110, 0x0111,
+          0x0112, 0x0200, 0x0201, 0x0210, 0x0211, 0x0220, 0x0221,
+          0x0230, 0x0231, 0x1000, 0x1001, 0x1100,
+      };
+      uint64_t Value = Selector.getZExtValue();
+      if (llvm::is_contained(DefinedSelectors, Value))
+        return false;
+      return Diag(TheCall->getBeginLoc(),
+                  diag::err_bedrock_invalid_control_register_selector)
+             << toString(Selector, 10) << Arg->getSourceRange();
+    };
+
     switch (BuiltinID) {
     case Bedrock::BI__builtin_bedrock_rdpmc:
     case Bedrock::BI__builtin_bedrock_trace:
       return BuiltinConstantArgRange(TheCall, 0, 0, 65535);
     case Bedrock::BI__builtin_bedrock_read_control_register:
     case Bedrock::BI__builtin_bedrock_write_control_register:
+      return CheckControlRegisterSelector();
     case Bedrock::BI__builtin_bedrock_invalidate_asid:
       return BuiltinConstantArgRange(TheCall, 0, 0, 65535);
     case Bedrock::BI__builtin_bedrock_read_segment_register:
     case Bedrock::BI__builtin_bedrock_write_segment_register:
       return BuiltinConstantArgRange(TheCall, 0, 0, 7);
     case Bedrock::BI__builtin_bedrock_page_table_query:
-      return BuiltinConstantArgRange(TheCall, 0, 0, 7);
+      return BuiltinConstantArgRange(TheCall, 0, 1, 5);
     default:
       return false;
     }
+  }
   case llvm::Triple::dxil:
     return DirectX().CheckDirectXBuiltinFunctionCall(BuiltinID, TheCall);
   case llvm::Triple::hexagon:

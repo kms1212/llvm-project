@@ -11217,6 +11217,8 @@ def err_invalid_neon_type_code : Error<
   "incompatible constant for this __builtin_neon function">;
 def err_argument_invalid_range : Error<
   "argument value %0 is outside the valid range [%1, %2]">;
+def err_bedrock_invalid_control_register_selector : Error<
+  "argument value %0 is not a defined Bedrock control-register selector">;
 def warn_argument_invalid_range : Warning<
   "argument value %0 is outside the valid range [%1, %2]">, DefaultError,
   InGroup<DiagGroup<"argument-outside-range">>;

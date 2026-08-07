@@ -49,12 +49,15 @@ _Static_assert(__BEDROCK_CR_PMC == 0x1100, "");
 
 void bad_immediates(unsigned value, uint64_t image) {
   (void)__bedrock_read_control_register(value); // expected-error {{must be a constant integer}}
-  (void)__bedrock_read_control_register(65536); // expected-error {{outside the valid range [0, 65535]}}
+  (void)__bedrock_read_control_register(3); // expected-error {{argument value 3 is not a defined Bedrock control-register selector}}
+  (void)__bedrock_read_control_register(65536); // expected-error {{argument value 65536 is not a defined Bedrock control-register selector}}
   __bedrock_write_control_register(value, image); // expected-error {{must be a constant integer}}
+  __bedrock_write_control_register(65535, image); // expected-error {{argument value 65535 is not a defined Bedrock control-register selector}}
   (void)__bedrock_read_segment_register(8); // expected-error {{outside the valid range [0, 7]}}
   __bedrock_write_segment_register(8, image); // expected-error {{outside the valid range [0, 7]}}
   __bedrock_invalidate_asid(value); // expected-error {{must be a constant integer}}
   __bedrock_invalidate_asid(65536); // expected-error {{outside the valid range [0, 65535]}}
   (void)__bedrock_page_table_query(value, 0); // expected-error {{must be a constant integer}}
-  (void)__bedrock_page_table_query(8, 0); // expected-error {{outside the valid range [0, 7]}}
+  (void)__bedrock_page_table_query(0, 0); // expected-error {{outside the valid range [1, 5]}}
+  (void)__bedrock_page_table_query(6, 0); // expected-error {{outside the valid range [1, 5]}}
 }
