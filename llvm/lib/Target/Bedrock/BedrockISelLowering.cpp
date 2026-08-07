@@ -1851,7 +1851,12 @@ BedrockTargetLowering::LowerCall(TargetLowering::CallLoweringInfo &CLI,
   Chain = DAG.getCALLSEQ_START(Chain, CallFrameSize, 0, DL);
 
   SmallVector<std::pair<Register, SDValue>, 8> RegsToPass;
-  SmallVector<SDValue, 8> MemOpChains;
+  struct StackArgStore {
+    int64_t Offset;
+    SDValue Value;
+    SDValue Address;
+  };
+  SmallVector<StackArgStore, 8> StackArgs;
   SDValue StackPtr;
   for (unsigned I = 0, E = ArgLocs.size(); I != E; ++I) {
     const CCValAssign &VA = ArgLocs[I];
@@ -1869,12 +1874,20 @@ BedrockTargetLowering::LowerCall(TargetLowering::CallLoweringInfo &CLI,
     SDValue Address = DAG.getNode(
         ISD::ADD, DL, getPointerTy(DAG.getDataLayout()), StackPtr,
         DAG.getIntPtrConstant(CallerOffset, DL));
-    MemOpChains.push_back(DAG.getStore(Chain, DL, ArgValue, Address,
-                                       MachinePointerInfo()));
+    StackArgs.push_back({CallerOffset, ArgValue, Address});
   }
 
-  if (!MemOpChains.empty())
-    Chain = DAG.getNode(ISD::TokenFactor, DL, MVT::Other, MemOpChains);
+  // The C ABI makes the right-to-left materialization order observable even
+  // though the stack slots do not alias. Chain the stores so later scheduling
+  // cannot reorder them as independent memory operations.
+  llvm::sort(StackArgs, [](const StackArgStore &LHS,
+                           const StackArgStore &RHS) {
+    return LHS.Offset > RHS.Offset;
+  });
+  for (const StackArgStore &Store : StackArgs)
+    Chain = DAG.getStore(Chain, DL, Store.Value, Store.Address,
+                         MachinePointerInfo(), std::nullopt,
+                         MachineMemOperand::MOVolatile);
 
   SDValue InGlue;
   for (const auto &[Reg, Value] : RegsToPass) {
