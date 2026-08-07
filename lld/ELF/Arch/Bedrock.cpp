@@ -68,6 +68,10 @@ static uint32_t getEFlags(ELFFileBase *file) {
 }
 
 uint32_t Bedrock::calcEFlags() const {
+  if (ctx.arg.androidPackDynRelocs || ctx.arg.relrPackDynRelocs)
+    ErrAlways(ctx) << "Bedrock ELF permits only unpacked SHT_RELA dynamic "
+                      "relocations";
+
   auto checkHeader = [&](ELFFileBase *file) {
     const object::ELF64LE::Ehdr &hdr =
         file->getObj<object::ELF64LE>().getHeader();
