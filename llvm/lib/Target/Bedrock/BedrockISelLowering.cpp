@@ -192,6 +192,7 @@ BedrockTargetLowering::BedrockTargetLowering(const TargetMachine &TM,
   setOperationAction(ISD::GlobalTLSAddress, MVT::i64, Custom);
   setMaxAtomicSizeInBitsSupported(64);
   setMinimumJumpTableEntries(16);
+  setMinFunctionAlignment(Align(16));
 
   computeRegisterProperties(Subtarget.getRegisterInfo());
 }
