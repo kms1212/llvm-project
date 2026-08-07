@@ -35,8 +35,8 @@ fptransa_c_api:
 # round-trip set is an intentional inventory change.
 mc_form_inventory:
   round_trip:
-    count: 239
-    sha256: 53fd4424afcbf1d35ecf0595a1d070cf61e322f734d78e2e304a6f3cb70ab919
+    count: 257
+    sha256: d808cc2f0797501d59d77b3d4f371edead4c2c46c7586d7326f86ac813817457
   decoder_only:
     count: 3
     sha256: 93efca5b67cf28f7936198020a920aaee8c5906f23070d4aaa3b0081778d3f2e
