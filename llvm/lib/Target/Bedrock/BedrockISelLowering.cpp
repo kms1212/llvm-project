@@ -70,6 +70,8 @@ BedrockTargetLowering::BedrockTargetLowering(const TargetMachine &TM,
     setOperationAction(ISD::CLMUL, VT, Legal);
     setOperationAction(ISD::SADDO, VT, Custom);
     setOperationAction(ISD::SSUBO, VT, Custom);
+    setOperationAction(ISD::UADDO, VT, Custom);
+    setOperationAction(ISD::USUBO, VT, Custom);
 
     setLoadExtAction(ISD::EXTLOAD, VT, MVT::i1, Promote);
     setLoadExtAction(ISD::SEXTLOAD, VT, MVT::i1, Promote);
@@ -130,6 +132,7 @@ BedrockTargetLowering::BedrockTargetLowering(const TargetMachine &TM,
     setOperationAction(ISD::FFLOOR, VT, Legal);
     setOperationAction(ISD::FRINT, VT, Legal);
     setOperationAction(ISD::FLDEXP, VT, Legal);
+    setOperationAction(ISD::FFREXP, VT, Custom);
     setOperationAction(ISD::IS_FPCLASS, VT, Custom);
     setOperationAction(ISD::SETCC, VT, Custom);
     setOperationAction(ISD::SELECT, VT, Custom);
@@ -568,6 +571,10 @@ const char *BedrockTargetLowering::getTargetNodeName(unsigned Opcode) const {
     return "BedrockISD::FCLR_D";
   case BedrockISD::FMOVCR_D:
     return "BedrockISD::FMOVCR_D";
+  case BedrockISD::FGETEXP:
+    return "BedrockISD::FGETEXP";
+  case BedrockISD::FGETMAN:
+    return "BedrockISD::FGETMAN";
   case BedrockISD::EXTRACT:
     return "BedrockISD::EXTRACT";
   case BedrockISD::MULHSU:
@@ -726,9 +733,13 @@ SDValue BedrockTargetLowering::LowerOperation(SDValue Op,
     return LowerFSHR(Op, DAG);
   case ISD::FSHL:
     return LowerFSHL(Op, DAG);
+  case ISD::FFREXP:
+    return LowerFFREXP(Op, DAG);
   case ISD::SADDO:
   case ISD::SSUBO:
-    return LowerSignedOverflow(Op, DAG);
+  case ISD::UADDO:
+  case ISD::USUBO:
+    return LowerOverflow(Op, DAG);
   case ISD::VASTART:
     return LowerVASTART(Op, DAG);
   case ISD::DYNAMIC_STACKALLOC:
@@ -740,15 +751,20 @@ SDValue BedrockTargetLowering::LowerOperation(SDValue Op,
   }
 }
 
-SDValue BedrockTargetLowering::LowerSignedOverflow(SDValue Op,
-                                                   SelectionDAG &DAG) const {
+SDValue BedrockTargetLowering::LowerOverflow(SDValue Op,
+                                             SelectionDAG &DAG) const {
   SDLoc DL(Op);
   EVT VT = Op->getValueType(0);
-  unsigned Opcode = Op.getOpcode() == ISD::SADDO ? ISD::ADDC : ISD::SUBC;
+  bool IsAdd = Op.getOpcode() == ISD::SADDO || Op.getOpcode() == ISD::UADDO;
+  bool IsSigned =
+      Op.getOpcode() == ISD::SADDO || Op.getOpcode() == ISD::SSUBO;
+  unsigned Opcode = IsAdd ? ISD::ADDC : ISD::SUBC;
   SDValue Arithmetic = DAG.getNode(Opcode, DL, DAG.getVTList(VT, MVT::Glue),
                                    Op.getOperand(0), Op.getOperand(1));
   SDValue Overflow = DAG.getNode(BedrockISD::SET_CC, DL, MVT::i64,
-                                 DAG.getConstant(/*VS=*/0x8, DL, MVT::i32),
+                                 DAG.getConstant(IsSigned ? /*VS=*/0x8
+                                                          : /*ULT/CS=*/0x4,
+                                                 DL, MVT::i32),
                                  Arithmetic.getValue(1));
   assert(Op->getValueType(1) == MVT::i64 &&
          "expected promoted Bedrock overflow result");
@@ -781,6 +797,65 @@ SDValue BedrockTargetLowering::LowerFSHL(SDValue Op, SelectionDAG &DAG) const {
   return DAG.getNode(BedrockISD::EXTRACT, DL, VT, Op.getOperand(0),
                      Op.getOperand(1),
                      DAG.getTargetConstant(Offset, DL, MVT::i64));
+}
+
+SDValue BedrockTargetLowering::LowerFFREXP(SDValue Op,
+                                           SelectionDAG &DAG) const {
+  SDLoc DL(Op);
+  SDValue Value = Op.getOperand(0);
+  EVT VT = Value.getValueType();
+  EVT ResultExpVT = Op->getValueType(1);
+
+  Intrinsic::ID ClassIID = VT == MVT::f32 ? Intrinsic::bedrock_fclass_f32
+                                          : Intrinsic::bedrock_fclass_f64;
+  SDValue Class = DAG.getNode(
+      ISD::INTRINSIC_WO_CHAIN, DL, MVT::i64,
+      DAG.getTargetConstant(ClassIID, DL, MVT::i32), Value);
+  SDValue Zero = DAG.getConstant(0, DL, MVT::i64);
+  auto TestClassMask = [&](uint64_t Mask) {
+    SDValue Masked = DAG.getNode(ISD::AND, DL, MVT::i64, Class,
+                                 DAG.getConstant(Mask, DL, MVT::i64));
+    return DAG.getSetCC(DL, MVT::i64, Masked, Zero, ISD::SETNE);
+  };
+
+  // FGETMAN preserves subnormal encodings instead of normalizing them. Scale
+  // subnormals into the normal range first, then compensate the exponent.
+  // Non-finite values are replaced before the FPU operations so that frexp
+  // does not acquire exceptions from speculative FGETEXP/FGETMAN execution.
+  SDValue IsSubnormal = TestClassMask((1u << 2) | (1u << 5));
+  SDValue IsFiniteNonzero =
+      TestClassMask((1u << 1) | (1u << 2) | (1u << 5) | (1u << 6));
+  unsigned FClrOpcode =
+      VT == MVT::f32 ? BedrockISD::FCLR_S : BedrockISD::FCLR_D;
+  SDValue SafeZero = DAG.getNode(FClrOpcode, DL, VT);
+  SDValue SafeValue = DAG.getNode(ISD::SELECT, DL, VT, IsFiniteNonzero, Value,
+                                  SafeZero);
+
+  int64_t SubnormalScale = VT == MVT::f32 ? 24 : 54;
+  SDValue Scale = DAG.getNode(
+      ISD::SELECT, DL, MVT::i64, IsSubnormal,
+      DAG.getConstant(SubnormalScale, DL, MVT::i64), Zero);
+  SDValue Normalized =
+      DAG.getNode(ISD::FLDEXP, DL, VT, SafeValue, Scale);
+
+  SDValue Mantissa =
+      DAG.getNode(BedrockISD::FGETMAN, DL, VT, Normalized);
+  Mantissa = DAG.getNode(ISD::FMUL, DL, VT, Mantissa,
+                         DAG.getConstantFP(0.5, DL, VT));
+
+  SDValue ExponentFP =
+      DAG.getNode(BedrockISD::FGETEXP, DL, VT, Normalized);
+  SDValue Exponent = DAG.getNode(ISD::FP_TO_SINT, DL, MVT::i64, ExponentFP);
+  Exponent = DAG.getNode(ISD::ADD, DL, MVT::i64, Exponent,
+                         DAG.getConstant(1, DL, MVT::i64));
+  Exponent = DAG.getNode(ISD::SUB, DL, MVT::i64, Exponent, Scale);
+
+  Mantissa = DAG.getNode(ISD::SELECT, DL, VT, IsFiniteNonzero, Mantissa,
+                         Value);
+  Exponent = DAG.getNode(ISD::SELECT, DL, MVT::i64, IsFiniteNonzero,
+                         Exponent, Zero);
+  Exponent = DAG.getSExtOrTrunc(Exponent, DL, ResultExpVT);
+  return DAG.getMergeValues({Mantissa, Exponent}, DL);
 }
 
 static unsigned getBedrockFClassMask(unsigned Test) {

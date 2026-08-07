@@ -118,6 +118,8 @@ def BedrockSMinZero : SDNode<"BedrockISD::SMIN_ZERO", SDT_BedrockUnaryInt>;
 def BedrockFClrS : SDNode<"BedrockISD::FCLR_S", SDT_BedrockFClrS>;
 def BedrockFClrD : SDNode<"BedrockISD::FCLR_D", SDT_BedrockFClrD>;
 def BedrockFMovCrD : SDNode<"BedrockISD::FMOVCR_D", SDT_BedrockFMovCrD>;
+def BedrockFGetExp : SDNode<"BedrockISD::FGETEXP", SDTFPUnaryOp>;
+def BedrockFGetMan : SDNode<"BedrockISD::FGETMAN", SDTFPUnaryOp>;
 def BedrockParity : SDNode<"ISD::PARITY", SDTIntUnaryOp>;
 def BedrockExtract : SDNode<"BedrockISD::EXTRACT", SDTIntShiftDOp>;
 def BedrockMulHSU : SDNode<"BedrockISD::MULHSU", SDT_BedrockBinaryInt>;
@@ -898,6 +900,8 @@ defm BEDROCK_FTRUNC : BedrockFpuUnaryPseudo<ftrunc>;
 defm BEDROCK_FCEIL : BedrockFpuUnaryPseudo<fceil>;
 defm BEDROCK_FFLOOR : BedrockFpuUnaryPseudo<ffloor>;
 defm BEDROCK_FINT : BedrockFpuUnaryPseudo<frint>;
+defm BEDROCK_FGETEXP : BedrockFpuUnaryPseudo<BedrockFGetExp>;
+defm BEDROCK_FGETMAN : BedrockFpuUnaryPseudo<BedrockFGetMan>;
 
 multiclass BedrockFusedPseudo {
   let Constraints = "$rd = $acc", Size = 4 in {

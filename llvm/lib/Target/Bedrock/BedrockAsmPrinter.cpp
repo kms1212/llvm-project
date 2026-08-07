@@ -5579,6 +5579,10 @@ BedrockAsmPrinter::getInstSizeForBranchLayout(const MachineInstr &MI) const {
     return RepgHeaderSize + 3;
   case Bedrock::BEDROCK_FINT_S:
   case Bedrock::BEDROCK_FINT_D:
+  case Bedrock::BEDROCK_FGETEXP_S:
+  case Bedrock::BEDROCK_FGETEXP_D:
+  case Bedrock::BEDROCK_FGETMAN_S:
+  case Bedrock::BEDROCK_FGETMAN_D:
     return RepgHeaderSize + 4;
 #define FUSED_SIZE_CASES(NAME)                                               \
   case Bedrock::BEDROCK_##NAME##_S:                                         \
@@ -9653,6 +9657,22 @@ void BedrockAsmPrinter::emitInstruction(const MachineInstr *MI) {
     return;
   case Bedrock::BEDROCK_FINT_D:
     emitFpuUnaryPseudo(MI, "FINT", "1111010101z1111dddd000ssss",
+                       /*IsDouble=*/true, /*IsLong=*/true);
+    return;
+  case Bedrock::BEDROCK_FGETEXP_S:
+    emitFpuUnaryPseudo(MI, "FGETEXP", "1111010110z0001dddd000ssss",
+                       /*IsDouble=*/false, /*IsLong=*/true);
+    return;
+  case Bedrock::BEDROCK_FGETEXP_D:
+    emitFpuUnaryPseudo(MI, "FGETEXP", "1111010110z0001dddd000ssss",
+                       /*IsDouble=*/true, /*IsLong=*/true);
+    return;
+  case Bedrock::BEDROCK_FGETMAN_S:
+    emitFpuUnaryPseudo(MI, "FGETMAN", "1111010110z0010dddd000ssss",
+                       /*IsDouble=*/false, /*IsLong=*/true);
+    return;
+  case Bedrock::BEDROCK_FGETMAN_D:
+    emitFpuUnaryPseudo(MI, "FGETMAN", "1111010110z0010dddd000ssss",
                        /*IsDouble=*/true, /*IsLong=*/true);
     return;
 #define EMIT_FUSED(NAME, PATTERN)                                            \
