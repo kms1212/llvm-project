@@ -50,6 +50,8 @@ Bedrock::Bedrock(Ctx &ctx) : TargetInfo(ctx) {
   tlsGotRel = R_BEDROCK_TLS_OFFSET64;
   gotBaseSymInGotPlt = true;
   gotEntrySize = 8;
+  gotSectionAlignment = 16;
+  tlsDescEntryAlignment = 16;
   gotPltHeaderEntriesNum = 3;
   pltHeaderSize = 0;
   pltEntrySize = 32;

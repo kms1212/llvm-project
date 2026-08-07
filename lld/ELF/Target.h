@@ -151,6 +151,8 @@ public:
   RelType tlsModuleIndexRel = 0;
   RelType tlsOffsetRel = 0;
   unsigned gotEntrySize = ctx.arg.wordsize;
+  unsigned gotSectionAlignment = 0;
+  unsigned tlsDescEntryAlignment = 1;
   unsigned pltEntrySize = 0;
   unsigned pltHeaderSize = 0;
   unsigned ipltEntrySize = 0;

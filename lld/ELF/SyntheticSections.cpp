@@ -670,7 +670,8 @@ bool EhFrameHeader::isNeeded() const {
 
 GotSection::GotSection(Ctx &ctx)
     : SyntheticSection(ctx, ".got", SHT_PROGBITS, SHF_ALLOC | SHF_WRITE,
-                       ctx.target->gotEntrySize) {
+                       std::max(ctx.target->gotEntrySize,
+                                ctx.target->gotSectionAlignment)) {
   numEntries = ctx.target->gotHeaderEntriesNum;
 }
 
@@ -686,6 +687,13 @@ void GotSection::addAuthEntry(const Symbol &sym) {
 
 bool GotSection::addTlsDescEntry(const Symbol &sym) {
   assert(sym.auxIdx == ctx.symAux.size() - 1);
+  if (ctx.target->tlsDescEntryAlignment > 1) {
+    uint64_t offset = alignTo(numEntries * ctx.target->gotEntrySize,
+                              ctx.target->tlsDescEntryAlignment);
+    assert(offset % ctx.target->gotEntrySize == 0 &&
+           "TLSDESC alignment must preserve GOT entry indexing");
+    numEntries = offset / ctx.target->gotEntrySize;
+  }
   ctx.symAux.back().tlsDescIdx = numEntries;
   numEntries += 2;
   return true;
