@@ -39,6 +39,10 @@ declare float @llvm.experimental.constrained.ldexp.f32.i32(float, i32,
 declare double @llvm.ldexp.f64.i64(double, i64)
 declare i1 @llvm.experimental.constrained.fcmp.f32(float, float, metadata,
                                                     metadata)
+declare i1 @llvm.experimental.constrained.fcmps.f32(float, float, metadata,
+                                                     metadata)
+declare i1 @llvm.experimental.constrained.fcmps.f64(double, double, metadata,
+                                                     metadata)
 
 define i64 @state_access(i64 %status, i64 %flags) {
 ; CHECK-LABEL: name: state_access
@@ -208,6 +212,32 @@ define i64 @strict_compound_comparison(float %lhs, float %rhs) strictfp {
 ; CHECK-NEXT: {{.*}}ANDQ3rr
   %condition = call i1 @llvm.experimental.constrained.fcmp.f32(
       float %lhs, float %rhs, metadata !"one", metadata !"fpexcept.strict")
+  %result = zext i1 %condition to i64
+  ret i64 %result
+}
+
+define i64 @strict_signaling_comparison(float %lhs, float %rhs) strictfp {
+; CHECK-LABEL: name: strict_signaling_comparison
+; CHECK-NOT: nofpexcept
+; CHECK: BEDROCK_FCLASS_S
+; CHECK: BEDROCK_FCLASS_S
+; CHECK: FCVTStoQrr {{.*}}, implicit-def dead $fflags, implicit $fstatus, implicit $fflags
+; CHECK-NEXT: FCMPSrr {{.*}}, implicit-def $flags, implicit-def dead $fflags, implicit $fstatus, implicit $fflags
+  %condition = call i1 @llvm.experimental.constrained.fcmps.f32(
+      float %lhs, float %rhs, metadata !"oeq", metadata !"fpexcept.strict")
+  %result = zext i1 %condition to i64
+  ret i64 %result
+}
+
+define i64 @strict_signaling_compound(double %lhs, double %rhs) strictfp {
+; CHECK-LABEL: name: strict_signaling_compound
+; CHECK-NOT: nofpexcept
+; CHECK: BEDROCK_FCLASS_D
+; CHECK: BEDROCK_FCLASS_D
+; CHECK: FCVTDtoQrr {{.*}}, implicit-def dead $fflags, implicit $fstatus, implicit $fflags
+; CHECK-NEXT: FCMPDrr {{.*}}, implicit-def $flags, implicit-def $fflags, implicit $fstatus, implicit $fflags
+  %condition = call i1 @llvm.experimental.constrained.fcmps.f64(
+      double %lhs, double %rhs, metadata !"one", metadata !"fpexcept.strict")
   %result = zext i1 %condition to i64
   ret i64 %result
 }

@@ -146,6 +146,7 @@ BedrockTargetLowering::BedrockTargetLowering(const TargetMachine &TM,
     setOperationAction(ISD::IS_FPCLASS, VT, Custom);
     setOperationAction(ISD::SETCC, VT, Custom);
     setOperationAction(ISD::STRICT_FSETCC, VT, Custom);
+    setOperationAction(ISD::STRICT_FSETCCS, VT, Custom);
     setOperationAction(ISD::SELECT, VT, Custom);
     setOperationAction(ISD::SELECT_CC, VT, Custom);
     for (unsigned Opcode :
@@ -790,6 +791,7 @@ SDValue BedrockTargetLowering::LowerOperation(SDValue Op,
   case ISD::SETCC:
     return LowerSETCC(Op, DAG);
   case ISD::STRICT_FSETCC:
+  case ISD::STRICT_FSETCCS:
     return LowerSETCC(Op, DAG);
   case ISD::SELECT:
     return LowerSELECT(Op, DAG);
@@ -1140,6 +1142,40 @@ static SDValue lowerStrictFPSetCC(SDValue Chain, SDValue LHS, SDValue RHS,
   return DAG.getMergeValues({Result, Compare}, DL);
 }
 
+static SDValue lowerStrictFPSignalingSetCC(
+    SDValue Chain, SDValue LHS, SDValue RHS, ISD::CondCode CC,
+    const SDLoc &DL, SelectionDAG &DAG) {
+  EVT VT = LHS.getValueType();
+  Intrinsic::ID ClassIID = VT == MVT::f32 ? Intrinsic::bedrock_fclass_f32
+                                          : Intrinsic::bedrock_fclass_f64;
+  auto Classify = [&](SDValue Value) {
+    return DAG.getNode(ISD::INTRINSIC_WO_CHAIN, DL, MVT::i64,
+                       DAG.getTargetConstant(ClassIID, DL, MVT::i32), Value);
+  };
+  auto IsNaN = [&](SDValue Value) {
+    SDValue Class = Classify(Value);
+    SDValue NaNClass = DAG.getNode(
+        ISD::AND, DL, MVT::i64, Class,
+        DAG.getConstant((1u << 8) | (1u << 9), DL, MVT::i64));
+    return DAG.getSetCC(DL, MVT::i64, NaNClass,
+                        DAG.getConstant(0, DL, MVT::i64), ISD::SETNE);
+  };
+
+  unsigned FClrOpcode =
+      VT == MVT::f32 ? BedrockISD::FCLR_S : BedrockISD::FCLR_D;
+  SDValue SafeZero = DAG.getNode(FClrOpcode, DL, VT);
+  SDValue NaNOrZero =
+      DAG.getNode(ISD::SELECT, DL, VT, IsNaN(RHS), RHS, SafeZero);
+  NaNOrZero = DAG.getNode(ISD::SELECT, DL, VT, IsNaN(LHS), LHS, NaNOrZero);
+
+  // FCVT raises NV for either quiet or signaling NaNs. Selecting +0 for the
+  // all-numeric case avoids conversion-specific NX/NV side effects.
+  SDValue Probe = DAG.getNode(ISD::STRICT_FP_TO_SINT, DL,
+                              DAG.getVTList(MVT::i64, MVT::Other), Chain,
+                              NaNOrZero);
+  return lowerStrictFPSetCC(Probe.getValue(1), LHS, RHS, CC, DL, DAG);
+}
+
 SDValue BedrockTargetLowering::LowerBRCOND(SDValue Op,
                                            SelectionDAG &DAG) const {
   SDValue Cond = Op.getOperand(1);
@@ -1199,10 +1235,16 @@ SDValue BedrockTargetLowering::LowerBR_CC(SDValue Op, SelectionDAG &DAG) const {
 }
 
 SDValue BedrockTargetLowering::LowerSETCC(SDValue Op, SelectionDAG &DAG) const {
-  if (Op.getOpcode() == ISD::STRICT_FSETCC) {
+  if (Op.getOpcode() == ISD::STRICT_FSETCC ||
+      Op.getOpcode() == ISD::STRICT_FSETCCS) {
     SDValue LHS = Op.getOperand(1);
     SDValue RHS = Op.getOperand(2);
-    ISD::CondCode CC = getCondCodeOperand(Op.getOperand(3), "STRICT_FSETCC");
+    bool IsSignaling = Op.getOpcode() == ISD::STRICT_FSETCCS;
+    ISD::CondCode CC = getCondCodeOperand(
+        Op.getOperand(3), IsSignaling ? "STRICT_FSETCCS" : "STRICT_FSETCC");
+    if (IsSignaling)
+      return lowerStrictFPSignalingSetCC(Op.getOperand(0), LHS, RHS, CC,
+                                         SDLoc(Op), DAG);
     return lowerStrictFPSetCC(Op.getOperand(0), LHS, RHS, CC, SDLoc(Op), DAG);
   }
 
