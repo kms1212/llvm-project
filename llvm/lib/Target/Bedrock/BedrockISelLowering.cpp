@@ -111,6 +111,9 @@ BedrockTargetLowering::BedrockTargetLowering(const TargetMachine &TM,
   setTruncStoreAction(MVT::i64, MVT::i16, Legal);
   setTruncStoreAction(MVT::i64, MVT::i32, Legal);
   setOperationAction(ISD::SIGN_EXTEND_INREG, MVT::i1, Custom);
+  setOperationAction(ISD::TRAP, MVT::Other, Legal);
+  setOperationAction(ISD::DEBUGTRAP, MVT::Other, Legal);
+  setOperationAction(ISD::READCYCLECOUNTER, MVT::i64, Legal);
   for (MVT VT : {MVT::f32, MVT::f64}) {
     setOperationAction(ISD::BR_CC, VT, Custom);
     setOperationAction(ISD::ConstantFP, VT, Expand);

@@ -343,10 +343,12 @@ def LRET : BedrockExtraShort<0x03, (outs), (ins), "lret">;
 def SYSCALL : BedrockExtraShort<0x05, (outs), (ins), "syscall">;
 def SYSRET : BedrockExtraShort<0x06, (outs), (ins), "sysret">;
 def ERET : BedrockExtraShort<0x04, (outs), (ins), "eret">;
+let isTrap = 1 in
 def BKPT : BedrockExtraShort<0x07, (outs), (ins), "bkpt">;
 def WAIT : BedrockExtraShort<0x08, (outs), (ins), "wait">;
 def YIELD : BedrockExtraShort<0x09, (outs), (ins), "yield">;
 def HALT : BedrockShort<0x2049, (outs), (ins), "halt">;
+let isTrap = 1 in
 def ILLEGAL : BedrockExtraShort<0x00, (outs), (ins), "illegal">;
 def RFENCE : BedrockExtraShort<0x0a, (outs), (ins), "rfence">;
 def WFENCE : BedrockExtraShort<0x0b, (outs), (ins), "wfence">;
@@ -465,6 +467,9 @@ def ATOMIC_CMPXCHG_Q : BedrockAtomicCmpXchgPseudo<atomic_cmp_swap_i64, i64>;
 def : Pat<(int_bedrock_breakpoint), (BKPT)>;
 def : Pat<(int_bedrock_yield), (YIELD)>;
 def : Pat<(int_bedrock_wait), (WAIT)>;
+def : Pat<(trap), (ILLEGAL)>;
+def : Pat<(debugtrap), (BKPT)>;
+def : Pat<(i64 (readcyclecounter)), (BEDROCK_RDPMC 1)>;
 def : Pat<(int_bedrock_read_fence), (RFENCE)>;
 def : Pat<(int_bedrock_write_fence), (WFENCE)>;
 def : Pat<(int_bedrock_address_fence), (AFENCE)>;
