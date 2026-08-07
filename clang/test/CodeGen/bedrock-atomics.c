@@ -83,3 +83,31 @@ _Bool compare_exchange64(atomic_u64 *p, unsigned long *expected,
 }
 
 // CHECK-NOT: __atomic_
+
+// Bedrock's complete lock-free set is known without a runtime helper. A null
+// pointer requests the natural-alignment answer; otherwise the queried address
+// must satisfy the size's natural alignment.
+// CHECK-LABEL: define{{.*}} i1 @dynamic_lock_free(
+// CHECK: add i64 %size, -1
+// CHECK: icmp ult i64 %{{.*}}, 2
+// CHECK: icmp eq i64 %{{.*}}, 4
+// CHECK: icmp eq i64 %{{.*}}, 8
+// CHECK: ptrtoint ptr %{{.*}} to i64
+// CHECK: and i64
+// CHECK-NOT: call i1 @__atomic_is_lock_free
+// CHECK: ret i1
+_Bool dynamic_lock_free(unsigned long size, void *pointer) {
+  return __atomic_is_lock_free(size, pointer);
+}
+
+// The C11 form assumes the object has its required natural alignment.
+// CHECK-LABEL: define{{.*}} i1 @dynamic_c11_lock_free(
+// CHECK: icmp ult i64 %{{.*}}, 2
+// CHECK: icmp eq i64 %{{.*}}, 4
+// CHECK: icmp eq i64 %{{.*}}, 8
+// CHECK-NOT: ptrtoint
+// CHECK-NOT: call i1 @__atomic_is_lock_free
+// CHECK: ret i1
+_Bool dynamic_c11_lock_free(unsigned long size) {
+  return __c11_atomic_is_lock_free(size);
+}

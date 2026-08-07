@@ -5052,6 +5052,34 @@ RValue CodeGenFunction::EmitBuiltinExpr(const GlobalDecl GD, unsigned BuiltinID,
     return RValue::get(EmitNontemporalStore(*this, E));
   case Builtin::BI__c11_atomic_is_lock_free:
   case Builtin::BI__atomic_is_lock_free: {
+    if (getTarget().getTriple().getArch() == llvm::Triple::bedrock) {
+      llvm::Value *Size = EmitScalarExpr(E->getArg(0));
+      llvm::Type *SizeTy = Size->getType();
+      llvm::Value *Supported = Builder.CreateICmpEQ(
+          Size, llvm::ConstantInt::get(SizeTy, 1), "atomic.size1");
+      for (unsigned Bytes : {2u, 4u, 8u})
+        Supported = Builder.CreateOr(
+            Supported,
+            Builder.CreateICmpEQ(Size,
+                                 llvm::ConstantInt::get(SizeTy, Bytes)),
+            "atomic.size.supported");
+
+      if (BuiltinID == Builtin::BI__c11_atomic_is_lock_free)
+        return RValue::get(Supported);
+
+      llvm::Value *Ptr = EmitScalarExpr(E->getArg(1));
+      llvm::Value *PtrIsNull = Builder.CreateIsNull(Ptr, "atomic.ptr.null");
+      llvm::Value *PtrBits = Builder.CreatePtrToInt(Ptr, SizeTy);
+      llvm::Value *AlignMask = Builder.CreateSub(
+          Size, llvm::ConstantInt::get(SizeTy, 1), "atomic.align.mask");
+      llvm::Value *IsAligned = Builder.CreateICmpEQ(
+          Builder.CreateAnd(PtrBits, AlignMask),
+          llvm::ConstantInt::get(SizeTy, 0), "atomic.ptr.aligned");
+      return RValue::get(Builder.CreateAnd(
+          Supported, Builder.CreateOr(PtrIsNull, IsAligned),
+          "atomic.lock.free"));
+    }
+
     // Call "bool __atomic_is_lock_free(size_t size, void *ptr)". For the
     // __c11 builtin, ptr is 0 (indicating a properly-aligned object), since
     // _Atomic(T) is always properly-aligned.
