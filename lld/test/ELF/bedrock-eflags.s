@@ -11,6 +11,9 @@
 # RUN: llvm-mc -triple=bedrock -filetype=obj %s -o %t.identver.o
 # RUN: %python -c "with open(r'%t.identver.o', 'r+b') as f: f.seek(6); f.write(b'\x00')"
 # RUN: not ld.lld %t.identver.o -o /dev/null 2>&1 | FileCheck %s --check-prefix=IDENTVER
+# RUN: llvm-mc -triple=bedrock -filetype=obj %s -o %t.hdrver.o
+# RUN: %python -c "with open(r'%t.hdrver.o', 'r+b') as f: f.seek(20); f.write(b'\x00\x00\x00\x00')"
+# RUN: not ld.lld %t.hdrver.o -o /dev/null 2>&1 | FileCheck %s --check-prefix=HDRVER
 # RUN: llvm-mc -triple=bedrock -filetype=obj %s -o %t.entry.o
 # RUN: %python -c "with open(r'%t.entry.o', 'r+b') as f: f.seek(24); f.write(b'\x01\x00\x00\x00\x00\x00\x00\x00')"
 # RUN: not ld.lld %t.entry.o -o /dev/null 2>&1 | FileCheck %s --check-prefix=ENTRY
@@ -28,6 +31,7 @@
 # OSABI: error: {{.*}}.osabi.o: unrecognized ELF OSABI: 3
 # ABIVER: error: {{.*}}.abiver.o: unrecognized ELF ABI version: 1
 # IDENTVER: error: {{.*}}.identver.o: unrecognized ELF identification version: 0
+# HDRVER: error: {{.*}}.hdrver.o: unrecognized ELF header version: 0
 # ENTRY: error: {{.*}}.entry.o: ET_REL e_entry must be zero
 # EHSIZE: error: {{.*}}.ehsize.o: invalid e_ehsize: 0
 # PHENTSIZE: error: {{.*}}.phentsize.o: invalid e_phentsize: 0

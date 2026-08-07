@@ -71,6 +71,9 @@ uint32_t Bedrock::calcEFlags() const {
     if (hdr.e_ident[EI_VERSION] != EV_CURRENT)
       ErrAlways(ctx) << file << ": unrecognized ELF identification version: "
                      << static_cast<unsigned>(hdr.e_ident[EI_VERSION]);
+    if (hdr.e_version != EV_CURRENT)
+      ErrAlways(ctx) << file << ": unrecognized ELF header version: "
+                     << hdr.e_version;
     if (file->osabi != ELFOSABI_NONE)
       ErrAlways(ctx) << file << ": unrecognized ELF OSABI: "
                      << static_cast<unsigned>(file->osabi);
