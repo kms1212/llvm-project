@@ -94,6 +94,10 @@ public:
 
   virtual void sortRelocs(std::vector<ELFRelocationEntry> &Relocs);
 
+  /// Return the value written to e_phentsize for relocatable objects. Most
+  /// ELF targets leave it zero because ET_REL files have no program headers.
+  virtual uint16_t getEPhEntSize() const { return 0; }
+
   /// \name Accessors
   /// @{
   uint8_t getOSABI() const { return OSABI; }

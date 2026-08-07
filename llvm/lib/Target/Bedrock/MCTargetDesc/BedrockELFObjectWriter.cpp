@@ -24,6 +24,8 @@ public:
       : MCELFObjectTargetWriter(/*Is64Bit=*/true, OSABI, ELF::EM_BEDROCK,
                                 /*HasRelocationAddend=*/true) {}
 
+  uint16_t getEPhEntSize() const override { return sizeof(ELF::Elf64_Phdr); }
+
 protected:
   unsigned getRelocType(const MCFixup &Fixup, const MCValue &Target,
                         bool IsPCRel) const override {

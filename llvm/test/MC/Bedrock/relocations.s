@@ -56,7 +56,14 @@ mov.q [pc + local_target], r0
 ; ASM: fixup A - offset: 3, value: local_target+3, kind: fixup_bedrock_pcrel32
 
 ; HEADER: OS/ABI:                            UNIX - System V
+; HEADER: ABI Version:                       0
 ; HEADER: Machine:                           Bedrock
+; HEADER: Version:                           0x1
+; HEADER: Entry point address:               0x0
+; HEADER: Flags:                             0x0
+; HEADER: Size of this header:               64 (bytes)
+; HEADER: Size of program headers:           56 (bytes)
+; HEADER: Size of section headers:           64 (bytes)
 
 ; RELOC: Relocation section '.rela.text'
 ; RELOC-DAG: 0000000000000011  {{[0-9a-f]+}}00000013 R_BEDROCK_BRDISP32S {{.*}} ext_target + 0

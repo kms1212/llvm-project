@@ -63,6 +63,11 @@ static uint32_t getEFlags(ELFFileBase *file) {
 
 uint32_t Bedrock::calcEFlags() const {
   auto checkHeader = [&](ELFFileBase *file) {
+    const object::ELF64LE::Ehdr &hdr =
+        file->getObj<object::ELF64LE>().getHeader();
+    if (hdr.e_ident[EI_VERSION] != EV_CURRENT)
+      ErrAlways(ctx) << file << ": unrecognized ELF identification version: "
+                     << static_cast<unsigned>(hdr.e_ident[EI_VERSION]);
     if (file->osabi != ELFOSABI_NONE)
       ErrAlways(ctx) << file << ": unrecognized ELF OSABI: "
                      << static_cast<unsigned>(file->osabi);
@@ -72,6 +77,14 @@ uint32_t Bedrock::calcEFlags() const {
                      << static_cast<unsigned>(file->abiVersion);
     if (uint32_t flags = getEFlags(file))
       ErrAlways(ctx) << file << ": unrecognized e_flags: " << flags;
+    if (hdr.e_type == ET_REL && hdr.e_entry != 0)
+      ErrAlways(ctx) << file << ": ET_REL e_entry must be zero";
+    if (hdr.e_ehsize != sizeof(object::ELF64LE::Ehdr))
+      ErrAlways(ctx) << file << ": invalid e_ehsize: " << hdr.e_ehsize;
+    if (hdr.e_phentsize != sizeof(object::ELF64LE::Phdr))
+      ErrAlways(ctx) << file << ": invalid e_phentsize: " << hdr.e_phentsize;
+    if (hdr.e_shentsize != sizeof(object::ELF64LE::Shdr))
+      ErrAlways(ctx) << file << ": invalid e_shentsize: " << hdr.e_shentsize;
     for (const object::ELF64LE::Shdr &sec :
          file->getELFShdrs<object::ELF64LE>())
       if (sec.sh_type == SHT_REL)

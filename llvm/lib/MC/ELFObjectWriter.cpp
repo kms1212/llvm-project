@@ -328,7 +328,8 @@ void ELFWriter::writeHeader() {
   W.write<uint16_t>(is64Bit() ? sizeof(ELF::Elf64_Ehdr)
                               : sizeof(ELF::Elf32_Ehdr));
 
-  W.write<uint16_t>(0);                  // e_phentsize = prog header entry size
+  // e_phentsize = prog header entry size
+  W.write<uint16_t>(OWriter.TargetObjectWriter->getEPhEntSize());
   W.write<uint16_t>(0);                  // e_phnum = # prog header entries = 0
 
   // e_shentsize = Section header entry size
