@@ -23,6 +23,7 @@ namespace {
 class Bedrock final : public TargetInfo {
 public:
   Bedrock(Ctx &);
+  uint32_t calcEFlags() const override;
   RelExpr getRelExpr(RelType type, const Symbol &s,
                      const uint8_t *loc) const override;
   void relocate(uint8_t *loc, const Relocation &rel,
@@ -54,6 +55,20 @@ Bedrock::Bedrock(Ctx &ctx) : TargetInfo(ctx) {
   ipltEntrySize = 32;
   defaultImageBase = 0x10000;
   trapInstr = {0x00, 0x00, 0x00, 0x00};
+}
+
+static uint32_t getEFlags(ELFFileBase *file) {
+  return file->getObj<object::ELF64LE>().getHeader().e_flags;
+}
+
+uint32_t Bedrock::calcEFlags() const {
+  for (ELFFileBase *file : ctx.objectFiles)
+    if (uint32_t flags = getEFlags(file))
+      ErrAlways(ctx) << file << ": unrecognized e_flags: " << flags;
+  for (ELFFileBase *file : ctx.sharedFiles)
+    if (uint32_t flags = getEFlags(file))
+      ErrAlways(ctx) << file << ": unrecognized e_flags: " << flags;
+  return 0;
 }
 
 int64_t Bedrock::getImplicitAddend(const uint8_t *buf, RelType type) const {
