@@ -145,6 +145,8 @@ private:
   void emitCarryPseudo(const MachineInstr *MI, StringRef Mnemonic,
                        StringRef Pattern, unsigned Size);
   void emitCarryStartPseudo(const MachineInstr *MI, bool IsAdd, unsigned Size);
+  void emitFlagUnaryPseudo(const MachineInstr *MI, StringRef Mnemonic,
+                           StringRef Pattern, unsigned Size);
   void emitExtQRegPseudo(const MachineInstr *MI, StringRef Pattern);
   void emitLongZeroMinMaxPseudo(const MachineInstr *MI, StringRef Pattern,
                                 unsigned Size);
@@ -5242,6 +5244,11 @@ BedrockAsmPrinter::getInstSizeForBranchLayout(const MachineInstr &MI) const {
   case Bedrock::EXTZQBrr:
   case Bedrock::EXTZQWrr:
     return RepgHeaderSize + 3;
+  case Bedrock::INCFL3r:
+  case Bedrock::INCFQ3r:
+  case Bedrock::DECFL3r:
+  case Bedrock::DECFQ3r:
+    return RepgHeaderSize + getOptionalRegCopySize(MI, 0, 1) + 3;
   case Bedrock::INCL3r:
   case Bedrock::INCQ3r:
   case Bedrock::DECL3r:
@@ -6534,7 +6541,7 @@ void BedrockAsmPrinter::emitExtractPseudo(const MachineInstr *MI,
 
 void BedrockAsmPrinter::emitClearCarry() {
   if (OutStreamer->hasRawTextSupport()) {
-    OutStreamer->emitRawText("\tclrf\t2");
+    OutStreamer->emitRawText("\tclc");
     return;
   }
 
@@ -6592,6 +6599,31 @@ void BedrockAsmPrinter::emitCarryStartPseudo(const MachineInstr *MI, bool IsAdd,
   emitCarryInstruction(DstReg, RHSReg, IsAdd ? "adc" : "sbb",
                        IsAdd ? "1100zz1ssss000dddd" : "1101zz1ssss000dddd",
                        Size);
+}
+
+void BedrockAsmPrinter::emitFlagUnaryPseudo(const MachineInstr *MI,
+                                            StringRef Mnemonic,
+                                            StringRef Pattern, unsigned Size) {
+  Register DstReg = MI->getOperand(0).getReg();
+  Register SrcReg = MI->getOperand(1).getReg();
+  if (DstReg != SrcReg)
+    emitRR(Size == 2 ? Bedrock::MOVLrr : Bedrock::MOVQrr, DstReg, SrcReg);
+
+  if (OutStreamer->hasRawTextSupport()) {
+    SmallString<48> Text;
+    raw_svector_ostream OS(Text);
+    OS << "\t" << Mnemonic << "." << getSizeSuffix(Size) << "\t"
+       << BedrockInstPrinter::getRegisterName(DstReg);
+    OutStreamer->emitRawText(OS.str());
+    return;
+  }
+
+  uint32_t Payload = applyPatternValues(
+      Pattern, {{'z', Size}, {'r', getGPRNo(DstReg)}});
+  SmallVector<uint8_t, 3> Bytes;
+  if (!BedrockMC::encodeMedium(Payload, {}, Bytes))
+    report_fatal_error("failed to encode Bedrock flag-unary pseudo");
+  emitRaw(Bytes);
 }
 
 void BedrockAsmPrinter::emitExtQRegPseudo(const MachineInstr *MI,
@@ -9111,6 +9143,18 @@ void BedrockAsmPrinter::emitInstruction(const MachineInstr *MI) {
     return;
   case Bedrock::SUBCQ3rr:
     emitCarryStartPseudo(MI, /*IsAdd=*/false, 3);
+    return;
+  case Bedrock::INCFL3r:
+    emitFlagUnaryPseudo(MI, "incf", "000010z0z01000rrrr", 2);
+    return;
+  case Bedrock::INCFQ3r:
+    emitFlagUnaryPseudo(MI, "incf", "000010z0z01000rrrr", 3);
+    return;
+  case Bedrock::DECFL3r:
+    emitFlagUnaryPseudo(MI, "decf", "000010z0z11000rrrr", 2);
+    return;
+  case Bedrock::DECFQ3r:
+    emitFlagUnaryPseudo(MI, "decf", "000010z0z11000rrrr", 3);
     return;
   case Bedrock::ADCL3rr:
     emitCarryPseudo(MI, "adc", "1100zz1ssss000dddd", 2);

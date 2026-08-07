@@ -575,6 +575,10 @@ const char *BedrockTargetLowering::getTargetNodeName(unsigned Opcode) const {
     return "BedrockISD::FGETEXP";
   case BedrockISD::FGETMAN:
     return "BedrockISD::FGETMAN";
+  case BedrockISD::INCF:
+    return "BedrockISD::INCF";
+  case BedrockISD::DECF:
+    return "BedrockISD::DECF";
   case BedrockISD::EXTRACT:
     return "BedrockISD::EXTRACT";
   case BedrockISD::MULHSU:
@@ -759,8 +763,31 @@ SDValue BedrockTargetLowering::LowerOverflow(SDValue Op,
   bool IsSigned =
       Op.getOpcode() == ISD::SADDO || Op.getOpcode() == ISD::SSUBO;
   unsigned Opcode = IsAdd ? ISD::ADDC : ISD::SUBC;
-  SDValue Arithmetic = DAG.getNode(Opcode, DL, DAG.getVTList(VT, MVT::Glue),
-                                   Op.getOperand(0), Op.getOperand(1));
+  SDValue Arithmetic;
+  SDValue LHS = Op.getOperand(0);
+  SDValue RHS = Op.getOperand(1);
+  auto *Constant = dyn_cast<ConstantSDNode>(RHS);
+  if (IsAdd && !Constant) {
+    Constant = dyn_cast<ConstantSDNode>(LHS);
+    if (Constant)
+      std::swap(LHS, RHS);
+  }
+
+  unsigned UnaryOpcode = 0;
+  if (Constant && Constant->isOne() &&
+      (IsSigned || Op.getOpcode() == ISD::UADDO))
+    UnaryOpcode = BedrockISD::INCF;
+  else if (Constant && Constant->isOne() && Op.getOpcode() == ISD::USUBO)
+    UnaryOpcode = BedrockISD::DECF;
+  else if (Constant && Constant->isAllOnes() && IsSigned && IsAdd)
+    UnaryOpcode = BedrockISD::DECF;
+
+  if (UnaryOpcode)
+    Arithmetic =
+        DAG.getNode(UnaryOpcode, DL, DAG.getVTList(VT, MVT::Glue), LHS);
+  else
+    Arithmetic = DAG.getNode(Opcode, DL, DAG.getVTList(VT, MVT::Glue), LHS,
+                             RHS);
   SDValue Overflow = DAG.getNode(BedrockISD::SET_CC, DL, MVT::i64,
                                  DAG.getConstant(IsSigned ? /*VS=*/0x8
                                                           : /*ULT/CS=*/0x4,

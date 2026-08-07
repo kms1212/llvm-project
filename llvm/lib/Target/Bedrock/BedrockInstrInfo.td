@@ -120,6 +120,10 @@ def BedrockFClrD : SDNode<"BedrockISD::FCLR_D", SDT_BedrockFClrD>;
 def BedrockFMovCrD : SDNode<"BedrockISD::FMOVCR_D", SDT_BedrockFMovCrD>;
 def BedrockFGetExp : SDNode<"BedrockISD::FGETEXP", SDTFPUnaryOp>;
 def BedrockFGetMan : SDNode<"BedrockISD::FGETMAN", SDTFPUnaryOp>;
+def BedrockIncF : SDNode<"BedrockISD::INCF", SDT_BedrockUnaryInt,
+                         [SDNPOutGlue]>;
+def BedrockDecF : SDNode<"BedrockISD::DECF", SDT_BedrockUnaryInt,
+                         [SDNPOutGlue]>;
 def BedrockParity : SDNode<"ISD::PARITY", SDTIntUnaryOp>;
 def BedrockExtract : SDNode<"BedrockISD::EXTRACT", SDTIntShiftDOp>;
 def BedrockMulHSU : SDNode<"BedrockISD::MULHSU", SDT_BedrockBinaryInt>;
@@ -600,6 +604,17 @@ def SUBCQ3rr : BedrockPseudo<(outs GPR64:$rd),
                              (ins GPR64:$lhs, GPR64:$rhs),
                              [(set i64:$rd,
                                    (subc i64:$lhs, i64:$rhs))]>;
+}
+
+let Constraints = "$rd = $src", Defs = [FLAGS], hasSideEffects = 1 in {
+def INCFL3r : BedrockPseudo<(outs GPR64:$rd), (ins GPR64:$src),
+                            [(set i32:$rd, (BedrockIncF i32:$src))]>;
+def INCFQ3r : BedrockPseudo<(outs GPR64:$rd), (ins GPR64:$src),
+                            [(set i64:$rd, (BedrockIncF i64:$src))]>;
+def DECFL3r : BedrockPseudo<(outs GPR64:$rd), (ins GPR64:$src),
+                            [(set i32:$rd, (BedrockDecF i32:$src))]>;
+def DECFQ3r : BedrockPseudo<(outs GPR64:$rd), (ins GPR64:$src),
+                            [(set i64:$rd, (BedrockDecF i64:$src))]>;
 }
 
 let Constraints = "$rd = $lhs", Uses = [FLAGS], Defs = [FLAGS],
