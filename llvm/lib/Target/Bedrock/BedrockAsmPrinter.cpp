@@ -4179,36 +4179,33 @@ getLayoutNextBlock(const MachineBasicBlock &MBB) {
   return &*NextI;
 }
 
-static bool isOnlyNonDebugInstr(const MachineBasicBlock &MBB,
-                                const MachineInstr *OnlyMI) {
+static bool getCounterSourceDef(const MachineBasicBlock &MBB,
+                                Register CounterReg, Register &SourceReg) {
+  const MachineInstr *CounterDef = nullptr;
   for (const MachineInstr &MI : MBB) {
     if (MI.isDebugInstr())
       continue;
-    if (&MI != OnlyMI)
+    if (MI.isCall() || MI.isTerminator() ||
+        MI.getOpcode() == TargetOpcode::INLINEASM ||
+        MI.getOpcode() == TargetOpcode::INLINEASM_BR)
+      return false;
+
+    bool IsCounterCopy =
+        (MI.getOpcode() == Bedrock::EXTZQLrr ||
+         MI.getOpcode() == Bedrock::MOVQrr) &&
+        MI.getNumExplicitOperands() >= 2 && MI.getOperand(0).isReg() &&
+        MI.getOperand(1).isReg() && MI.getOperand(0).getReg() == CounterReg;
+    if (IsCounterCopy) {
+      if (CounterDef)
+        return false;
+      CounterDef = &MI;
+      SourceReg = MI.getOperand(1).getReg();
+      continue;
+    }
+    if (hasRegOperand(MI, CounterReg))
       return false;
   }
-  return true;
-}
-
-static bool getCounterSourceDef(const MachineBasicBlock &MBB,
-                                Register CounterReg, Register &SourceReg) {
-  auto I = firstNonDebug(MBB);
-  if (I == MBB.end())
-    return false;
-
-  if (!isOnlyNonDebugInstr(MBB, &*I) || I->getNumExplicitOperands() < 2 ||
-      !I->getOperand(0).isReg() || !I->getOperand(1).isReg() ||
-      I->getOperand(0).getReg() != CounterReg)
-    return false;
-
-  switch (I->getOpcode()) {
-  case Bedrock::EXTZQLrr:
-  case Bedrock::MOVQrr:
-    SourceReg = I->getOperand(1).getReg();
-    return true;
-  default:
-    return false;
-  }
+  return CounterDef != nullptr;
 }
 
 static bool isCounterSelfTest(const MachineInstr &MI, Register Reg) {

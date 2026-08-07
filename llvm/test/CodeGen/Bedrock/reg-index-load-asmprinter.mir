@@ -100,6 +100,6 @@ body:             |
     liveins: $r1, $r2, $r3
 
     $r0 = LOADLrx $r1, $r2 :: (load (s32))
-    CMPLrr $r3, killed $r0
+    CMPLrr $r3, killed $r0, implicit-def $flags
     RET
 ...

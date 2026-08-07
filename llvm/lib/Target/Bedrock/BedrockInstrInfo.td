@@ -321,6 +321,7 @@ class BedrockSet<bits<4> cc, string asm>
   let Inst{13 -8} = 0b100001;
   let Inst{7 -4} = r;
   let Inst{3 -0} = cc;
+  let Uses = [FLAGS];
 }
 
 class BedrockImm8<Operand immop, bits<6> opcode, string asm>
@@ -352,6 +353,7 @@ class BedrockJcc<bits<4> cc, string suffix>
   let Inst{13 -12} = 0b11;
   let Inst{11 -8} = cc;
   let Inst{7 -0} = i;
+  let Uses = [FLAGS];
 }
 
 class BedrockSetcc<bits<4> cc, string suffix>
@@ -556,13 +558,16 @@ def BEDROCK_VTOP :
                   [(set i64:$dst, i64:$flags,
                         (int_bedrock_virtual_to_physical i64:$address))]> {
   let Constraints = "$dst = $address";
+  let Defs = [FLAGS];
 }
 def BEDROCK_PTQUERY :
     BedrockPseudo<(outs GPR64:$dst, GPR64:$flags),
                   (ins GPR64:$address, i32imm:$level),
                   [(set i64:$dst, i64:$flags,
                         (int_bedrock_page_table_query timm:$level,
-                                                       i64:$address))]>;
+                                                       i64:$address))]> {
+  let Defs = [FLAGS];
+}
 
 def BEDROCK_SAVE :
     BedrockPseudo<(outs), (ins GPR64:$address),
@@ -585,7 +590,7 @@ def ADDLrr : BedrockRR<0x02, "add.l">;
 def ADDQrr : BedrockRR<0x03, "add.q">;
 def SUBLrr : BedrockRR<0x04, "sub.l">;
 def SUBQrr : BedrockRR<0x05, "sub.q">;
-let isCompare = 1, hasSideEffects = 1 in {
+let isCompare = 1, hasSideEffects = 1, Defs = [FLAGS] in {
 def CMPLrr : BedrockRRNoOut<0x06, "cmp.l",
                             [(BedrockCmp i32:$rd, i32:$rs)]>;
 def CMPQrr : BedrockRRNoOut<0x07, "cmp.q",
@@ -599,13 +604,13 @@ def ORLrr : BedrockRR<0x0a, "or.l">;
 def ORQrr : BedrockRR<0x0b, "or.q">;
 def XORLrr : BedrockRR<0x0c, "xor.l">;
 def XORQrr : BedrockRR<0x0d, "xor.q">;
-let isCompare = 1, hasSideEffects = 1 in {
+let isCompare = 1, hasSideEffects = 1, Defs = [FLAGS] in {
 def TESTLrr : BedrockRRNoOut<0x0e, "test.l">;
 def TESTQrr : BedrockRRNoOut<0x0f, "test.q">;
 }
 def : Pat<(BedrockTest i32:$src), (TESTLrr GPR64:$src, GPR64:$src)>;
 def : Pat<(BedrockTest i64:$src), (TESTQrr GPR64:$src, GPR64:$src)>;
-let isCompare = 1, hasSideEffects = 1 in {
+let isCompare = 1, hasSideEffects = 1, Defs = [FLAGS] in {
 def BTESTLri : BedrockPseudo<(outs), (ins GPR64:$src, i64imm:$bit),
                              [(BedrockBTest i32:$src,
                                             (i64 timm:$bit))]>;
@@ -748,7 +753,7 @@ def BEDROCK_FMOVCR_D
     : BedrockPseudo<(outs FPR64:$rd), (ins i32imm:$constant_id),
                     [(set f64:$rd, (BedrockFMovCrD timm:$constant_id))]>;
 
-let isCompare = 1, hasSideEffects = 1 in {
+let isCompare = 1, hasSideEffects = 1, Defs = [FLAGS] in {
 def FCMPSrr : BedrockPseudo<(outs), (ins FPR64:$lhs, FPR64:$rhs),
                             [(BedrockFCmp f32:$lhs, f32:$rhs)]>;
 def FCMPDrr : BedrockPseudo<(outs), (ins FPR64:$lhs, FPR64:$rhs),
@@ -759,7 +764,7 @@ def FTESTDr : BedrockPseudo<(outs), (ins FPR64:$src),
                             [(BedrockFTest f64:$src)]>;
 }
 
-let Constraints = "$rd = $fval" in {
+let Constraints = "$rd = $fval", Defs = [FLAGS] in {
 def FP_SELECT_CC_S
     : BedrockPseudo<(outs FPR64:$rd),
                     (ins FPR64:$lhs, FPR64:$rhs, FPR64:$tval,
@@ -790,7 +795,7 @@ def FP_SELECT_CC_DS
                                              f32:$fval, imm:$cc))]>;
 }
 
-let Constraints = "$rd = $fval" in {
+let Constraints = "$rd = $fval", Defs = [FLAGS] in {
 def FP_SELECT_TEST_SS
     : BedrockPseudo<(outs FPR64:$rd),
                     (ins FPR64:$src, FPR64:$tval, FPR64:$fval, i32imm:$cc),
@@ -1193,25 +1198,25 @@ def EXTRACTQrrri
                                           (i64 timm:$offset)))]>;
 }
 
-let Constraints = "$rd = $src" in
+let Constraints = "$rd = $src", Defs = [FLAGS] in
 def BSETL3ri : BedrockPseudo<(outs GPR64:$rd),
                              (ins GPR64:$src, i64imm:$imm)>;
-let Constraints = "$rd = $src" in
+let Constraints = "$rd = $src", Defs = [FLAGS] in
 def BSETQ3ri : BedrockPseudo<(outs GPR64:$rd),
                              (ins GPR64:$src, i64imm:$imm)>;
-let Constraints = "$rd = $src" in
+let Constraints = "$rd = $src", Defs = [FLAGS] in
 def BSET2Q3ri : BedrockPseudo<(outs GPR64:$rd),
                               (ins GPR64:$src, i64imm:$imm0, i64imm:$imm1)>;
-let Constraints = "$rd = $src" in
+let Constraints = "$rd = $src", Defs = [FLAGS] in
 def BCLRL3ri : BedrockPseudo<(outs GPR64:$rd),
                              (ins GPR64:$src, i64imm:$imm)>;
-let Constraints = "$rd = $src" in
+let Constraints = "$rd = $src", Defs = [FLAGS] in
 def BCLRQ3ri : BedrockPseudo<(outs GPR64:$rd),
                              (ins GPR64:$src, i64imm:$imm)>;
-let Constraints = "$rd = $src" in
+let Constraints = "$rd = $src", Defs = [FLAGS] in
 def BCHGL3ri : BedrockPseudo<(outs GPR64:$rd),
                              (ins GPR64:$src, i64imm:$imm)>;
-let Constraints = "$rd = $src" in
+let Constraints = "$rd = $src", Defs = [FLAGS] in
 def BCHGQ3ri : BedrockPseudo<(outs GPR64:$rd),
                              (ins GPR64:$src, i64imm:$imm)>;
 
@@ -1468,6 +1473,7 @@ defm MAXSQ3 : BedrockBinaryMemDestPseudos;
 }
 
 multiclass BedrockCmpMemPseudos {
+  let Defs = [FLAGS] in {
   def mr : BedrockPseudo<(outs), (ins GPR64:$base, GPR64:$rhs)>;
   def mxr : BedrockPseudo<(outs),
                           (ins GPR64:$base, GPR64:$index, GPR64:$rhs)>;
@@ -1484,12 +1490,14 @@ multiclass BedrockCmpMemPseudos {
   def rmabs : BedrockPseudo<(outs), (ins GPR64:$lhs, i64imm:$addr)>;
   def rmfi : BedrockPseudo<(outs),
                            (ins GPR64:$lhs, i64imm:$base, i64imm:$offset)>;
+  }
 }
 
 let mayLoad = 1 in {
 defm CMPL : BedrockCmpMemPseudos;
 defm CMPQ : BedrockCmpMemPseudos;
 
+let Defs = [FLAGS] in {
 def CMPLmfmf : BedrockPseudo<(outs), (ins i64imm:$srcbase,
                                            i64imm:$srcoffset,
                                            i64imm:$dstbase,
@@ -1498,6 +1506,7 @@ def CMPQmfmf : BedrockPseudo<(outs), (ins i64imm:$srcbase,
                                            i64imm:$srcoffset,
                                            i64imm:$dstbase,
                                            i64imm:$dstoffset)>;
+}
 }
 
 let mayLoad = 1 in {
@@ -1738,13 +1747,14 @@ def ADJSP_UP : BedrockPseudo<(outs), (ins i64imm:$amount)>;
 let isBranch = 1, isTerminator = 1 in {
 let isBarrier = 1 in
 def BR : BedrockPseudo<(outs), (ins brtarget:$dst), [(br bb:$dst)]>;
+let Uses = [FLAGS] in
 def BRCC : BedrockPseudo<(outs), (ins brtarget:$dst, i32imm:$cc),
                          [(BedrockBrCC bb:$dst, imm:$cc)]>;
 let isBarrier = 1, isIndirectBranch = 1 in
 def BRIND : BedrockPseudo<(outs), (ins GPR64:$dst), [(brind GPR64:$dst)]>;
 }
 
-let hasSideEffects = 1 in
+let hasSideEffects = 1, Uses = [FLAGS] in
 def SETCC : BedrockPseudo<(outs GPR64:$rd), (ins i32imm:$cc),
                           [(set i64:$rd, (BedrockSetCC imm:$cc))]>;
 

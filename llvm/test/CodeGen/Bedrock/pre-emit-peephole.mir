@@ -424,7 +424,7 @@ body:             |
     $r3 = MOVQrr $r2
     $r3 = INCQ3r killed $r3
     STOREQabs killed $r3, @counter
-    TESTQrr $r2, $r2
+    TESTQrr $r2, $r2, implicit-def $flags
     RET implicit $r2
 ...
 ---
@@ -442,7 +442,7 @@ body:             |
     $r2 = LOADQabs @counter
     $r2 = INCQ3r killed $r2
     STOREQabs $r2, @counter
-    TESTQrr $r2, $r2
+    TESTQrr $r2, $r2, implicit-def $flags
     RET implicit $r2
 ...
 ---
@@ -462,8 +462,8 @@ body:             |
     $r2 = LOADQabs @counter
     $r2 = INCQ3r killed $r2
     STOREQabs $r2, @counter
-    TESTQrr $r1, $r1
-    BRCC %bb.2, 2
+    TESTQrr $r1, $r1, implicit-def $flags
+    BRCC %bb.2, 2, implicit $flags
 
   bb.1:
     liveins: $r1
@@ -501,8 +501,8 @@ body:             |
     successors: %bb.1
     liveins: $r1
 
-    CMPLri $r1, 1
-    BRCC %bb.1, 12
+    CMPLri $r1, 1, implicit-def $flags
+    BRCC %bb.1, 12, implicit $flags
 
   bb.1:
     $r0 = CONST32 0
@@ -519,8 +519,8 @@ body:             |
     ; CHECK-NOT: CMPQri
     liveins: $r1
 
-    CMPQri $r1, 1
-    $r0 = SETCC 13
+    CMPQri $r1, 1, implicit-def $flags
+    $r0 = SETCC 13, implicit $flags
     RET implicit $r0
 ...
 ---
@@ -538,8 +538,8 @@ body:             |
 
     $r2 = CONST64 0
     $r1 = MOVQrr killed $r3
-    CMPQrr killed $r2, $r1
-    BRCC %bb.1, 2
+    CMPQrr killed $r2, $r1, implicit-def $flags
+    BRCC %bb.1, 2, implicit $flags
 
   bb.1:
     $r0 = CONST32 0
@@ -559,9 +559,9 @@ body:             |
     liveins: $r0, $r2
 
     $r1 = CONST64 0
-    CMPQrr $r1, $r2
+    CMPQrr $r1, $r2, implicit-def $flags
     $r1 = MOVQrr killed $r0
-    BRCC %bb.1, 2
+    BRCC %bb.1, 2, implicit $flags
 
   bb.1:
     $r0 = CONST32 0
@@ -580,8 +580,8 @@ body:             |
     liveins: $r1
 
     $r3 = CONST32 10
-    CMPLrr killed $r3, killed $r1
-    BRCC %bb.1, 10
+    CMPLrr killed $r3, killed $r1, implicit-def $flags
+    BRCC %bb.1, 10, implicit $flags
 
   bb.1:
     $r0 = CONST32 0
@@ -600,8 +600,8 @@ body:             |
     liveins: $r1
 
     $r3 = CONST64 @cmp_symbol
-    CMPQrr killed $r3, killed $r1
-    BRCC %bb.1, 2
+    CMPQrr killed $r3, killed $r1, implicit-def $flags
+    BRCC %bb.1, 2, implicit $flags
 
   bb.1:
     $r0 = CONST32 0
@@ -619,8 +619,8 @@ body:             |
     liveins: $r1
 
     $r3 = CONST32 1
-    CMPLrr killed $r3, killed $r1
-    BRCC %bb.1, 10
+    CMPLrr killed $r3, killed $r1, implicit-def $flags
+    BRCC %bb.1, 10, implicit $flags
 
   bb.1:
     $r0 = CONST32 0
@@ -653,7 +653,7 @@ body:             |
     liveins: $r1
 
     $r1 = ANDQ3rr $r1, $r1
-    BRCC %bb.1, 2
+    BRCC %bb.1, 2, implicit $flags
 
   bb.1:
     liveins: $r1
@@ -922,7 +922,7 @@ body:             |
   bb.1:
     liveins: $r0, $r1, $r3
 
-    CMPQrr $r0, $r3
+    CMPQrr $r0, $r3, implicit-def $flags
     RET implicit $r1
 ...
 ---
@@ -944,7 +944,7 @@ body:             |
   bb.1:
     liveins: $r1, $r3
 
-    CMPQrr $r1, $r3
+    CMPQrr $r1, $r3, implicit-def $flags
     RET implicit $r1
 ...
 ---
@@ -994,17 +994,17 @@ body:             |
     liveins: $r0, $r1
 
     $r2 = LEAro $r0, 4
-    TESTQrr $r1, $r1
-    BRCC %bb.2, 2
+    TESTQrr $r1, $r1, implicit-def $flags
+    BRCC %bb.2, 2, implicit $flags
 
   bb.1:
     successors: %bb.0, %bb.3
     liveins: $r0, $r1, $r2
 
     $r0 = LOADLrr killed $r0 :: (load (s32))
-    CMPLrr $r1, killed $r0
+    CMPLrr $r1, killed $r0, implicit-def $flags
     $r0 = MOVQrr killed $r2
-    BRCC %bb.0, 12
+    BRCC %bb.0, 12, implicit $flags
 
   bb.3:
     liveins: $r0
@@ -1031,7 +1031,7 @@ body:             |
 
     $r2 = EXTZLBrr killed $r2
     $r1 = ANDL3rr killed $r1, $r2
-    CMPLri $r0, 0
+    CMPLri $r0, 0, implicit-def $flags
     $r1 = EXTZQLrr killed $r1
     RET implicit $r1
 ...
@@ -1051,7 +1051,7 @@ body:             |
     $r2 = EXTZLBrr killed $r2
     $r1 = ANDL3rr killed $r1, $r2
     $r1 = EXTZQLrr killed $r1
-    BRCC %bb.1, 2
+    BRCC %bb.1, 2, implicit $flags
 
   bb.1:
     liveins: $r1
@@ -1136,8 +1136,8 @@ body:             |
     $r2 = MOVQrr $r1
     $r2 = ADDL3ri killed $r2, 55
     $r0 = ORL3ri killed $r0, 48
-    CMPLri killed $r1, 10
-    BRCC %bb.2, 4
+    CMPLri killed $r1, 10, implicit-def $flags
+    BRCC %bb.2, 4, implicit $flags
 
   bb.1:
     successors: %bb.2
@@ -1171,8 +1171,8 @@ body:             |
     $r1 = ANDL3ri killed $r1, 15
     $r0 = MOVQrr $r1
     $r0 = ORL3ri killed $r0, 48
-    CMPLri $r1, 10
-    BRCC %bb.2, 4
+    CMPLri $r1, 10, implicit-def $flags
+    BRCC %bb.2, 4, implicit $flags
 
   bb.1:
     successors: %bb.2
@@ -1220,8 +1220,8 @@ body:             |
     $r1 = MOVQrr $r2
     $r1 = ORL3ri killed $r1, 48
     $r12 = CONST32 10
-    CMPLrr $r12, $r2
-    BRCC %bb.2, 4
+    CMPLrr $r12, $r2, implicit-def $flags
+    BRCC %bb.2, 4, implicit $flags
 
   bb.1:
     successors: %bb.2
@@ -1238,8 +1238,8 @@ body:             |
     $r11 = ANDL3ri killed $r11, 15
     $r1 = MOVQrr $r11
     $r1 = ORL3ri killed $r1, 48
-    CMPLrr killed $r12, $r11
-    BRCC %bb.4, 4
+    CMPLrr killed $r12, $r11, implicit-def $flags
+    BRCC %bb.4, 4, implicit $flags
 
   bb.3:
     successors: %bb.4
@@ -1608,8 +1608,8 @@ body:             |
     $r0 = CONST64 0
     CALL @callee, csr_bedrock, implicit-def $r0, implicit-def dead $r1, implicit-def dead $r2, implicit-def dead $r3, implicit-def dead $r4, implicit-def dead $r5, implicit-def dead $r6, implicit-def dead $r7, implicit-def dead $f0, implicit-def dead $f1, implicit-def dead $f2, implicit-def dead $f3, implicit-def dead $f4, implicit-def dead $f5, implicit-def dead $f6, implicit-def dead $f7, implicit $r0
     $r0 = ANDL3ri killed $r0, 1
-    TESTLrr killed $r0, $r0
-    BRCC %bb.2, 2
+    TESTLrr killed $r0, $r0, implicit-def $flags
+    BRCC %bb.2, 2, implicit $flags
 
   bb.1:
     successors: %bb.2

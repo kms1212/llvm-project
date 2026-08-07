@@ -48,8 +48,8 @@ body:             |
     ; CHECK-NEXT: jeq
     ; CHECK-NOT: test.q r1, r1
     $r1 = DECQ3r killed $r1
-    TESTQrr $r1, $r1
-    BRCC %bb.1, 2
+    TESTQrr $r1, $r1, implicit-def $flags
+    BRCC %bb.1, 2, implicit $flags
     RET
 
   bb.1:
@@ -65,8 +65,8 @@ body:             |
     ; CHECK-NEXT: jeq
     ; CHECK-NOT: test.q r1, r1
     $r1 = ANDQ3ri killed $r1, 1
-    TESTQrr $r1, $r1
-    BRCC %bb.1, 2
+    TESTQrr $r1, $r1, implicit-def $flags
+    BRCC %bb.1, 2, implicit $flags
     RET
 
   bb.1:
@@ -86,8 +86,8 @@ body:             |
     ; CHECK-NOT: test.q r0, r0
     $r0 = MOVQrr killed $r1
     $r0 = ANDQ3ri killed $r0, 1
-    TESTQrr $r0, $r0
-    BRCC %bb.1, 2
+    TESTQrr $r0, $r0, implicit-def $flags
+    BRCC %bb.1, 2, implicit $flags
     RET
 
   bb.1:
@@ -132,8 +132,8 @@ body:             |
     ; CHECK: dec.q r1
     ; CHECK-NEXT: testjlt.q r1, r1,
     $r1 = DECQ3r killed $r1
-    TESTQrr $r1, $r1
-    BRCC %bb.1, 12
+    TESTQrr $r1, $r1, implicit-def $flags
+    BRCC %bb.1, 12, implicit $flags
     RET
 
   bb.1:
@@ -149,8 +149,8 @@ body:             |
     ; CHECK: and.q 1, r1
     ; CHECK-NEXT: testjlt.q r1, r1,
     $r1 = ANDQ3ri killed $r1, 1
-    TESTQrr $r1, $r1
-    BRCC %bb.1, 12
+    TESTQrr $r1, $r1, implicit-def $flags
+    BRCC %bb.1, 12, implicit $flags
     RET
 
   bb.1:
@@ -167,8 +167,8 @@ body:             |
     ; CHECK-NEXT: jeq
     ; CHECK-NOT: test.q r1, r1
     $r1 = DECQ3r killed $r1
-    TESTQrr $r1, $r1
-    BRCC %bb.1, 2
+    TESTQrr $r1, $r1, implicit-def $flags
+    BRCC %bb.1, 2, implicit $flags
     RET
 
   bb.1:

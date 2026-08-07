@@ -87,6 +87,9 @@ define void @cache(ptr %address) {
 ; DIS-NEXT: {{.*}}rdflags
 ; DIS: ptquery 3
 ; DIS-NEXT: {{.*}}rdflags
+; MIR-LABEL: name: mmu
+; MIR: BEDROCK_VTOP {{.*}}, implicit-def dead $flags
+; MIR: BEDROCK_PTQUERY {{.*}}, implicit-def dead $flags
 define i64 @mmu(i64 %address) {
   call void @llvm.bedrock.invalidate.tlb()
   %pointer = inttoptr i64 %address to ptr
