@@ -96,6 +96,7 @@ BedrockTargetLowering::BedrockTargetLowering(const TargetMachine &TM,
   setTruncStoreAction(MVT::i64, MVT::i32, Legal);
   setOperationAction(ISD::SIGN_EXTEND_INREG, MVT::i1, Custom);
   for (MVT VT : {MVT::f32, MVT::f64}) {
+    setOperationAction(ISD::BR_CC, VT, Custom);
     setOperationAction(ISD::ConstantFP, VT, Expand);
     setOperationAction(ISD::FADD, VT, Legal);
     setOperationAction(ISD::FSUB, VT, Legal);
@@ -109,6 +110,9 @@ BedrockTargetLowering::BedrockTargetLowering(const TargetMachine &TM,
     setOperationAction(ISD::FTRUNC, VT, Legal);
     setOperationAction(ISD::FCEIL, VT, Legal);
     setOperationAction(ISD::FFLOOR, VT, Legal);
+    setOperationAction(ISD::SETCC, VT, Custom);
+    setOperationAction(ISD::SELECT, VT, Custom);
+    setOperationAction(ISD::SELECT_CC, VT, Custom);
     for (unsigned Opcode :
          {ISD::FACOS, ISD::FASIN, ISD::FATAN, ISD::FCOS, ISD::FCOSH,
           ISD::FEXP, ISD::FEXP2, ISD::FEXP10, ISD::FLOG, ISD::FLOG2,
@@ -301,6 +305,8 @@ const char *BedrockTargetLowering::getTargetNodeName(unsigned Opcode) const {
     return "BedrockISD::TAIL_CALL_CANDIDATE";
   case BedrockISD::CMP:
     return "BedrockISD::CMP";
+  case BedrockISD::FCMP:
+    return "BedrockISD::FCMP";
   case BedrockISD::TEST:
     return "BedrockISD::TEST";
   case BedrockISD::BR_CC:
@@ -309,6 +315,10 @@ const char *BedrockTargetLowering::getTargetNodeName(unsigned Opcode) const {
     return "BedrockISD::SET_CC";
   case BedrockISD::SELECT_CC:
     return "BedrockISD::SELECT_CC";
+  case BedrockISD::FP_SELECT_CC:
+    return "BedrockISD::FP_SELECT_CC";
+  case BedrockISD::FP_SET_CC:
+    return "BedrockISD::FP_SET_CC";
   case BedrockISD::SMAX:
     return "BedrockISD::SMAX";
   case BedrockISD::SMIN:
@@ -393,6 +403,50 @@ static unsigned getBedrockCondCode(ISD::CondCode CC) {
   }
 }
 
+static constexpr unsigned BedrockFPOneCond = 0x10;
+static constexpr unsigned BedrockFPEqualOrUnorderedCond = 0x11;
+
+static unsigned getBedrockFPCondCode(ISD::CondCode CC) {
+  switch (CC) {
+  case ISD::SETFALSE:
+  case ISD::SETFALSE2:
+    return 0x1;
+  case ISD::SETOEQ:
+    return 0x2;
+  case ISD::SETOGT:
+    return 0xf;
+  case ISD::SETOGE:
+    return 0xd;
+  case ISD::SETOLT:
+    return 0x4;
+  case ISD::SETOLE:
+    return 0xa;
+  case ISD::SETONE:
+    return BedrockFPOneCond;
+  case ISD::SETO:
+    return 0x9;
+  case ISD::SETUO:
+    return 0x8;
+  case ISD::SETUEQ:
+    return BedrockFPEqualOrUnorderedCond;
+  case ISD::SETUGT:
+    return 0xb;
+  case ISD::SETUGE:
+    return 0x5;
+  case ISD::SETULT:
+    return 0xc;
+  case ISD::SETULE:
+    return 0xe;
+  case ISD::SETUNE:
+    return 0x3;
+  case ISD::SETTRUE:
+  case ISD::SETTRUE2:
+    return 0x0;
+  default:
+    report_fatal_error("unsupported Bedrock floating-point condition code");
+  }
+}
+
 static ISD::CondCode getCondCodeOperand(SDValue Op, StringRef Context) {
   if (auto *CC = dyn_cast<CondCodeSDNode>(Op))
     return CC->get();
@@ -457,9 +511,26 @@ BedrockTargetLowering::LowerDYNAMIC_STACKALLOC(SDValue Op,
 
 static SDValue emitCompare(SDValue LHS, SDValue RHS, const SDLoc &DL,
                            SelectionDAG &DAG) {
+  if (LHS.getValueType().isFloatingPoint())
+    return DAG.getNode(BedrockISD::FCMP, DL, MVT::Glue, LHS, RHS);
   if (isNullConstant(RHS))
     return DAG.getNode(BedrockISD::TEST, DL, MVT::Glue, LHS);
   return DAG.getNode(BedrockISD::CMP, DL, MVT::Glue, LHS, RHS);
+}
+
+static SDValue lowerFPSetCC(SDValue LHS, SDValue RHS, ISD::CondCode CC,
+                            const SDLoc &DL, SelectionDAG &DAG) {
+  unsigned TargetCC = getBedrockFPCondCode(CC);
+  if (TargetCC == 0x0 || TargetCC == 0x1)
+    return DAG.getConstant(TargetCC == 0x0, DL, MVT::i64);
+  if (TargetCC == BedrockFPOneCond ||
+      TargetCC == BedrockFPEqualOrUnorderedCond)
+    return DAG.getNode(BedrockISD::FP_SET_CC, DL, MVT::i64, LHS, RHS,
+                       DAG.getConstant(TargetCC, DL, MVT::i32));
+
+  SDValue Glue = emitCompare(LHS, RHS, DL, DAG);
+  SDValue Target = DAG.getConstant(TargetCC, DL, MVT::i32);
+  return DAG.getNode(BedrockISD::SET_CC, DL, MVT::i64, Target, Glue);
 }
 
 SDValue BedrockTargetLowering::LowerBRCOND(SDValue Op,
@@ -490,6 +561,28 @@ SDValue BedrockTargetLowering::LowerBR_CC(SDValue Op, SelectionDAG &DAG) const {
   SDValue Dest = Op.getOperand(4);
   SDLoc DL(Op);
 
+  if (LHS.getValueType().isFloatingPoint()) {
+    unsigned FPCC = getBedrockFPCondCode(CC);
+    if (FPCC == 0x1)
+      return Chain;
+    if (FPCC == 0x0)
+      return DAG.getNode(ISD::BR, DL, Op.getValueType(), Chain, Dest);
+    if (FPCC == BedrockFPOneCond ||
+        FPCC == BedrockFPEqualOrUnorderedCond) {
+      SDValue Cond = lowerFPSetCC(LHS, RHS, CC, DL, DAG);
+      SDValue TargetCC =
+          DAG.getConstant(getBedrockCondCode(ISD::SETNE), DL, MVT::i32);
+      SDValue Glue = emitCompare(Cond, DAG.getConstant(0, DL, MVT::i64), DL,
+                                 DAG);
+      return DAG.getNode(BedrockISD::BR_CC, DL, Op.getValueType(), Chain,
+                         Dest, TargetCC, Glue);
+    }
+    SDValue TargetCC = DAG.getConstant(FPCC, DL, MVT::i32);
+    SDValue Glue = emitCompare(LHS, RHS, DL, DAG);
+    return DAG.getNode(BedrockISD::BR_CC, DL, Op.getValueType(), Chain, Dest,
+                       TargetCC, Glue);
+  }
+
   SDValue TargetCC = DAG.getConstant(getBedrockCondCode(CC), DL, MVT::i32);
   SDValue Glue = emitCompare(LHS, RHS, DL, DAG);
   return DAG.getNode(BedrockISD::BR_CC, DL, Op.getValueType(), Chain, Dest,
@@ -501,6 +594,9 @@ SDValue BedrockTargetLowering::LowerSETCC(SDValue Op, SelectionDAG &DAG) const {
   SDValue RHS = Op.getOperand(1);
   ISD::CondCode CC = getCondCodeOperand(Op.getOperand(2), "SETCC");
   SDLoc DL(Op);
+
+  if (LHS.getValueType().isFloatingPoint())
+    return lowerFPSetCC(LHS, RHS, CC, DL, DAG);
 
   SDValue TargetCC = DAG.getConstant(getBedrockCondCode(CC), DL, MVT::i32);
   SDValue Glue = emitCompare(LHS, RHS, DL, DAG);
@@ -558,7 +654,8 @@ static SDValue lowerSelectCCToMinMax(SDValue LHS, SDValue RHS,
                                      ISD::CondCode CC, const SDLoc &DL,
                                      SelectionDAG &DAG) {
   EVT VT = TrueValue.getValueType();
-  if (FalseValue.getValueType() != VT || LHS.getValueType() != VT ||
+  if (!VT.isInteger() || FalseValue.getValueType() != VT ||
+      LHS.getValueType() != VT ||
       RHS.getValueType() != VT)
     return SDValue();
 
@@ -637,11 +734,36 @@ static SDValue lowerRegisterSelectCC(SDValue LHS, SDValue RHS,
                                      SelectionDAG &DAG) {
   EVT CmpVT = LHS.getValueType();
   EVT VT = TrueValue.getValueType();
-  if ((CmpVT != MVT::i32 && CmpVT != MVT::i64) ||
-      (VT != MVT::i32 && VT != MVT::i64))
+  bool IntegerCompare = CmpVT == MVT::i32 || CmpVT == MVT::i64;
+  bool IntegerResult = VT == MVT::i32 || VT == MVT::i64;
+  bool FPCompare = CmpVT == MVT::f32 || CmpVT == MVT::f64;
+  bool FPResult = VT == MVT::f32 || VT == MVT::f64;
+  if ((!IntegerCompare && !FPCompare) || (!IntegerResult && !FPResult))
     return SDValue();
-  if (!isNonConstantRegisterValue(TrueValue) ||
-      !isNonConstantRegisterValue(FalseValue))
+
+  if (FPCompare && FPResult) {
+    unsigned TargetCC = getBedrockFPCondCode(CC);
+    if (TargetCC == 0x0)
+      return TrueValue;
+    if (TargetCC == 0x1)
+      return FalseValue;
+
+    auto MakeSelect = [&](SDValue TVal, SDValue FVal,
+                          unsigned Cond) -> SDValue {
+      return DAG.getNode(BedrockISD::FP_SELECT_CC, DL, VT, LHS, RHS, TVal,
+                         FVal, DAG.getConstant(Cond, DL, MVT::i32));
+    };
+    if (TargetCC == BedrockFPOneCond)
+      return MakeSelect(FalseValue, TrueValue,
+                        BedrockFPEqualOrUnorderedCond);
+    return MakeSelect(TrueValue, FalseValue, TargetCC);
+  }
+
+  if (FPCompare || !IntegerCompare)
+    return SDValue();
+  if (IntegerResult &&
+      (!isNonConstantRegisterValue(TrueValue) ||
+       !isNonConstantRegisterValue(FalseValue)))
     return SDValue();
 
   SDValue TargetCC = DAG.getConstant(getBedrockCondCode(CC), DL, MVT::i32);
@@ -665,6 +787,15 @@ SDValue BedrockTargetLowering::LowerSELECT(SDValue Op,
             Cond.getOperand(0), Cond.getOperand(1), TrueValue, FalseValue,
             getCondCodeOperand(Cond.getOperand(2), "SELECT"), DL, DAG))
       return Select;
+  }
+
+  if (TrueValue.getValueType().isFloatingPoint()) {
+    Cond = fitIntegerToVT(Cond, MVT::i64, DL, DAG);
+    SDValue Zero = DAG.getConstant(0, DL, MVT::i64);
+    SDValue TargetCC =
+        DAG.getConstant(getBedrockCondCode(ISD::SETNE), DL, MVT::i32);
+    return DAG.getNode(BedrockISD::SELECT_CC, DL, TrueValue.getValueType(),
+                       Cond, Zero, TrueValue, FalseValue, TargetCC);
   }
 
   return lowerSelectFromZeroOrOne(Op.getOperand(0), Op.getOperand(1),
@@ -697,8 +828,47 @@ SDValue BedrockTargetLowering::LowerSELECT_CC(SDValue Op,
 
 MachineBasicBlock *BedrockTargetLowering::EmitInstrWithCustomInserter(
     MachineInstr &MI, MachineBasicBlock *MBB) const {
+  if (MI.getOpcode() == Bedrock::FP_SET_CC_S ||
+      MI.getOpcode() == Bedrock::FP_SET_CC_D) {
+    const TargetInstrInfo &TII = *Subtarget.getInstrInfo();
+    MachineRegisterInfo &MRI = MBB->getParent()->getRegInfo();
+    DebugLoc DL = MI.getDebugLoc();
+    Register Dst = MI.getOperand(0).getReg();
+    Register LHS = MI.getOperand(1).getReg();
+    Register RHS = MI.getOperand(2).getReg();
+    int64_t CC = MI.getOperand(3).getImm();
+    Register LHSResult = MRI.createVirtualRegister(&Bedrock::GPR64RegClass);
+    Register RHSResult = MRI.createVirtualRegister(&Bedrock::GPR64RegClass);
+
+    BuildMI(*MBB, MI, DL,
+            TII.get(MI.getOpcode() == Bedrock::FP_SET_CC_D
+                        ? Bedrock::FCMPDrr
+                        : Bedrock::FCMPSrr))
+        .addReg(LHS)
+        .addReg(RHS);
+    if (CC == BedrockFPOneCond) {
+      BuildMI(*MBB, MI, DL, TII.get(Bedrock::SETCC), LHSResult).addImm(0x3);
+      BuildMI(*MBB, MI, DL, TII.get(Bedrock::SETCC), RHSResult).addImm(0x9);
+      BuildMI(*MBB, MI, DL, TII.get(Bedrock::ANDQ3rr), Dst)
+          .addReg(LHSResult)
+          .addReg(RHSResult);
+    } else {
+      assert(CC == BedrockFPEqualOrUnorderedCond &&
+             "unexpected compound floating-point condition");
+      BuildMI(*MBB, MI, DL, TII.get(Bedrock::SETCC), LHSResult).addImm(0x2);
+      BuildMI(*MBB, MI, DL, TII.get(Bedrock::SETCC), RHSResult).addImm(0x8);
+      BuildMI(*MBB, MI, DL, TII.get(Bedrock::ORQ3rr), Dst)
+          .addReg(LHSResult)
+          .addReg(RHSResult);
+    }
+    MI.eraseFromParent();
+    return MBB;
+  }
+
   assert((MI.getOpcode() == Bedrock::SELECT_CC_L ||
-          MI.getOpcode() == Bedrock::SELECT_CC_Q) &&
+          MI.getOpcode() == Bedrock::SELECT_CC_Q ||
+          MI.getOpcode() == Bedrock::SELECT_CC_S ||
+          MI.getOpcode() == Bedrock::SELECT_CC_D) &&
          "unexpected Bedrock custom inserter opcode");
 
   const TargetInstrInfo &TII = *Subtarget.getInstrInfo();
@@ -727,9 +897,9 @@ MachineBasicBlock *BedrockTargetLowering::EmitInstrWithCustomInserter(
   Register TrueValue = MI.getOperand(3).getReg();
   Register FalseValue = MI.getOperand(4).getReg();
   int64_t CC = MI.getOperand(5).getImm();
-  unsigned CmpOpcode =
-      MI.getOpcode() == Bedrock::SELECT_CC_Q ? Bedrock::CMPQrr
-                                             : Bedrock::CMPLrr;
+  unsigned CmpOpcode = MI.getOpcode() == Bedrock::SELECT_CC_L
+                           ? Bedrock::CMPLrr
+                           : Bedrock::CMPQrr;
 
   BuildMI(*MBB, MI, DL, TII.get(CmpOpcode)).addReg(RHS).addReg(LHS);
   BuildMI(*MBB, MI, DL, TII.get(Bedrock::BRCC)).addMBB(SinkMBB).addImm(CC);

@@ -32,6 +32,8 @@ def SDT_BedrockMemset : SDTypeProfile<2, 3, [SDTCisVT<0, i64>,
                                                  SDTCisVT<3, i64>,
                                                  SDTCisVT<4, i64>]>;
 def SDT_BedrockCmp : SDTypeProfile<0, 2, [SDTCisSameAs<0, 1>]>;
+def SDT_BedrockFCmp : SDTypeProfile<0, 2, [SDTCisSameAs<0, 1>,
+                                          SDTCisFP<0>]>;
 def SDT_BedrockTest : SDTypeProfile<0, 1, [SDTCisInt<0>]>;
 def SDT_BedrockBrCC : SDTypeProfile<0, 2, [SDTCisVT<0, OtherVT>,
                                            SDTCisVT<1, i32>]>;
@@ -41,6 +43,16 @@ def SDT_BedrockSelectCC : SDTypeProfile<1, 5, [SDTCisSameAs<1, 2>,
                                                SDTCisSameAs<0, 3>,
                                                SDTCisSameAs<0, 4>,
                                                SDTCisVT<5, i32>]>;
+def SDT_BedrockFPSelectCC : SDTypeProfile<1, 5, [SDTCisSameAs<1, 2>,
+                                                 SDTCisSameAs<0, 3>,
+                                                 SDTCisSameAs<0, 4>,
+                                                 SDTCisVT<5, i32>,
+                                                 SDTCisFP<0>,
+                                                 SDTCisFP<1>]>;
+def SDT_BedrockFPSetCC : SDTypeProfile<1, 3, [SDTCisVT<0, i64>,
+                                              SDTCisSameAs<1, 2>,
+                                              SDTCisVT<3, i32>,
+                                              SDTCisFP<1>]>;
 def SDT_BedrockUnaryInt : SDTypeProfile<1, 1, [SDTCisSameAs<0, 1>,
                                                SDTCisInt<0>]>;
 def SDT_BedrockBinaryInt : SDTypeProfile<1, 2, [SDTCisSameAs<0, 1>,
@@ -67,6 +79,8 @@ def BedrockMemset : SDNode<"BedrockISD::MEMSET", SDT_BedrockMemset,
 def BedrockRetFlag : SDNode<"BedrockISD::RET_FLAG", SDTNone,
                             [SDNPHasChain, SDNPOptInGlue, SDNPVariadic]>;
 def BedrockCmp : SDNode<"BedrockISD::CMP", SDT_BedrockCmp, [SDNPOutGlue]>;
+def BedrockFCmp : SDNode<"BedrockISD::FCMP", SDT_BedrockFCmp,
+                         [SDNPOutGlue]>;
 def BedrockTest : SDNode<"BedrockISD::TEST", SDT_BedrockTest, [SDNPOutGlue]>;
 def BedrockBrCC : SDNode<"BedrockISD::BR_CC", SDT_BedrockBrCC,
                          [SDNPHasChain, SDNPInGlue]>;
@@ -74,6 +88,9 @@ def BedrockSetCC : SDNode<"BedrockISD::SET_CC", SDT_BedrockSetCC,
                           [SDNPInGlue]>;
 def BedrockSelectCC : SDNode<"BedrockISD::SELECT_CC",
                              SDT_BedrockSelectCC>;
+def BedrockFPSelectCC : SDNode<"BedrockISD::FP_SELECT_CC",
+                               SDT_BedrockFPSelectCC>;
+def BedrockFPSetCC : SDNode<"BedrockISD::FP_SET_CC", SDT_BedrockFPSetCC>;
 def BedrockSMax : SDNode<"BedrockISD::SMAX", SDT_BedrockBinaryInt>;
 def BedrockSMin : SDNode<"BedrockISD::SMIN", SDT_BedrockBinaryInt>;
 def BedrockUMax : SDNode<"BedrockISD::UMAX", SDT_BedrockBinaryInt>;
@@ -606,6 +623,43 @@ def : Pat<(i64 (anyext i32:$src)), (COPY_TO_REGCLASS $src, GPR64)>;
 def : Pat<(i32 (trunc i64:$src)), (COPY_TO_REGCLASS $src, GPR64)>;
 
 def FMOVDrr : BedrockPseudo<(outs FPR64:$rd), (ins FPR64:$src)>;
+
+let isCompare = 1, hasSideEffects = 1 in {
+def FCMPSrr : BedrockPseudo<(outs), (ins FPR64:$lhs, FPR64:$rhs),
+                            [(BedrockFCmp f32:$lhs, f32:$rhs)]>;
+def FCMPDrr : BedrockPseudo<(outs), (ins FPR64:$lhs, FPR64:$rhs),
+                            [(BedrockFCmp f64:$lhs, f64:$rhs)]>;
+}
+
+let Constraints = "$rd = $fval" in {
+def FP_SELECT_CC_S
+    : BedrockPseudo<(outs FPR64:$rd),
+                    (ins FPR64:$lhs, FPR64:$rhs, FPR64:$tval,
+                         FPR64:$fval, i32imm:$cc),
+                    [(set f32:$rd,
+                          (BedrockFPSelectCC f32:$lhs, f32:$rhs, f32:$tval,
+                                             f32:$fval, imm:$cc))]>;
+def FP_SELECT_CC_D
+    : BedrockPseudo<(outs FPR64:$rd),
+                    (ins FPR64:$lhs, FPR64:$rhs, FPR64:$tval,
+                         FPR64:$fval, i32imm:$cc),
+                    [(set f64:$rd,
+                          (BedrockFPSelectCC f64:$lhs, f64:$rhs, f64:$tval,
+                                             f64:$fval, imm:$cc))]>;
+}
+
+let usesCustomInserter = 1, hasSideEffects = 1 in {
+def FP_SET_CC_S
+    : BedrockPseudo<(outs GPR64:$rd),
+                    (ins FPR64:$lhs, FPR64:$rhs, i32imm:$cc),
+                    [(set i64:$rd,
+                          (BedrockFPSetCC f32:$lhs, f32:$rhs, imm:$cc))]>;
+def FP_SET_CC_D
+    : BedrockPseudo<(outs GPR64:$rd),
+                    (ins FPR64:$lhs, FPR64:$rhs, i32imm:$cc),
+                    [(set i64:$rd,
+                          (BedrockFPSetCC f64:$lhs, f64:$rhs, imm:$cc))]>;
+}
 
 let Constraints = "$rd = $lhs" in {
 def FADDSrr : BedrockPseudo<(outs FPR64:$rd), (ins FPR64:$lhs, FPR64:$rhs),
@@ -1328,6 +1382,20 @@ def SELECT_CC_Q : BedrockPseudo<(outs GPR64:$rd),
                                 [(set i64:$rd,
                                       (BedrockSelectCC i64:$lhs, i64:$rhs,
                                                        i64:$tval, i64:$fval,
+                                                       imm:$cc))]>;
+def SELECT_CC_S : BedrockPseudo<(outs FPR64:$rd),
+                                (ins GPR64:$lhs, GPR64:$rhs, FPR64:$tval,
+                                     FPR64:$fval, i32imm:$cc),
+                                [(set f32:$rd,
+                                      (BedrockSelectCC i64:$lhs, i64:$rhs,
+                                                       f32:$tval, f32:$fval,
+                                                       imm:$cc))]>;
+def SELECT_CC_D : BedrockPseudo<(outs FPR64:$rd),
+                                (ins GPR64:$lhs, GPR64:$rhs, FPR64:$tval,
+                                     FPR64:$fval, i32imm:$cc),
+                                [(set f64:$rd,
+                                      (BedrockSelectCC i64:$lhs, i64:$rhs,
+                                                       f64:$tval, f64:$fval,
                                                        imm:$cc))]>;
 }
 
