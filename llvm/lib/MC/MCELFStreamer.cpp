@@ -199,7 +199,8 @@ bool MCELFStreamer::emitSymbolAttribute(MCSymbol *S, MCSymbolAttr Attribute) {
 
   case MCSA_ELF_TypeIndFunction:
     Symbol->setType(CombineSymbolTypes(Symbol->getType(), ELF::STT_GNU_IFUNC));
-    getWriter().markGnuAbi();
+    if (getWriter().TargetObjectWriter->usesGnuIFuncOSABI())
+      getWriter().markGnuAbi();
     break;
 
   case MCSA_ELF_TypeObject:

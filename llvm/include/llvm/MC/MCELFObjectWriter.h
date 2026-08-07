@@ -92,6 +92,10 @@ public:
     return false;
   }
 
+  /// Return whether STT_GNU_IFUNC use selects ELFOSABI_GNU when the target's
+  /// default OSABI is ELFOSABI_NONE.
+  virtual bool usesGnuIFuncOSABI() const { return true; }
+
   virtual void sortRelocs(std::vector<ELFRelocationEntry> &Relocs);
 
   /// Return the value written to e_phentsize for relocatable objects. Most

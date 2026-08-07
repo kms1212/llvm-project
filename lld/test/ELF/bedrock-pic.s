@@ -20,6 +20,10 @@
 # RUN: ld.lld %t/tls-ref-large.o %t/tls-def.o -e tls_ref_large -o %t/tls-large.exe
 # RUN: llvm-readobj -r %t/tls-large.exe | FileCheck %s --check-prefix=RELAX-RELOC
 # RUN: llvm-objdump -d %t/tls-large.exe | FileCheck %s --check-prefix=RELAX64
+# RUN: llvm-mc -triple=bedrock -filetype=obj %t/ifunc.s -o %t/ifunc.o
+# RUN: llvm-readelf -h -s %t/ifunc.o | FileCheck %s --check-prefix=IFUNC-OBJ
+# RUN: ld.lld -shared %t/ifunc.o -o %t/ifunc.so
+# RUN: llvm-readobj -r %t/ifunc.so | FileCheck %s --check-prefix=IFUNC-LINK
 
 # SHARED: Name: .rela.dyn
 # SHARED: Type: SHT_RELA
@@ -71,6 +75,10 @@
 # RELAX64-NEXT: lea.q	[gs0:0 + r0], r0
 # RELAX64: ret
 
+# IFUNC-OBJ: OS/ABI:                            UNIX - System V
+# IFUNC-OBJ: IFUNC   GLOBAL HIDDEN
+# IFUNC-LINK: R_BEDROCK_IRELATIVE
+
 #--- shared.s
 .text
 .globl entry
@@ -92,6 +100,24 @@ entry:
 .globl data_pointer
 data_pointer:
   .quad data
+
+#--- ifunc.s
+.text
+.globl resolver
+.hidden resolver
+.type resolver,@function
+resolver:
+  ret
+
+.globl indirect
+.hidden indirect
+.type indirect,@gnu_indirect_function
+.set indirect,resolver
+
+.data
+.globl indirect_pointer
+indirect_pointer:
+  .quad indirect
 
 #--- tls-ref.s
 .text

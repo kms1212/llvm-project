@@ -25,6 +25,7 @@ public:
                                 /*HasRelocationAddend=*/true) {}
 
   uint16_t getEPhEntSize() const override { return sizeof(ELF::Elf64_Phdr); }
+  bool usesGnuIFuncOSABI() const override { return false; }
 
 protected:
   unsigned getRelocType(const MCFixup &Fixup, const MCValue &Target,
