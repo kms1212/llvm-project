@@ -188,7 +188,6 @@ private:
                           MemAddrKind AddrKind);
   void emitZeroMemStore(const MachineInstr *MI, unsigned Size,
                         MemAddrKind AddrKind);
-  void emitFpuRaw(uint16_t Primary, uint16_t Ext, ArrayRef<uint8_t> Tail);
   void emitFpuMove(Register DstReg, Register SrcReg);
   void emitFpuMove(const MachineInstr *MI);
   void emitFpuBinaryPseudo(const MachineInstr *MI, StringRef Mnemonic,
@@ -198,7 +197,9 @@ private:
   void emitApproxUnaryPseudo(const MachineInstr *MI, StringRef Mnemonic,
                              StringRef Pattern, bool IsDouble);
   void emitSincosPseudo(const MachineInstr *MI, bool IsDouble);
-  void emitFpuConvert(const MachineInstr *MI, bool IsUnsigned);
+  void emitFpuConvert(const MachineInstr *MI, StringRef Mnemonic,
+                      StringRef Pattern, bool IsDouble, bool SrcIsFPR,
+                      bool DstIsFPR);
   void emitFpuAbsLoad(const MachineInstr *MI, bool IsDouble);
   void emitFpuAbsStore(const MachineInstr *MI, bool IsDouble);
   void emitFpuLoad(const MachineInstr *MI, bool IsFrame, bool IsDouble);
@@ -343,11 +344,6 @@ static unsigned getFPRNo(Register Reg) {
   default:
     report_fatal_error("expected Bedrock FPR");
   }
-}
-
-static void appendBE16(SmallVectorImpl<uint8_t> &Bytes, uint16_t Value) {
-  Bytes.push_back((Value >> 8) & 0xff);
-  Bytes.push_back(Value & 0xff);
 }
 
 static uint32_t applyPattern(StringRef Pattern, uint8_t EA, unsigned Z,
@@ -5448,8 +5444,16 @@ BedrockAsmPrinter::getInstSizeForBranchLayout(const MachineInstr &MI) const {
   case Bedrock::FDIVDrr:
     return RepgHeaderSize +
            (MI.getOperand(0).getReg() == MI.getOperand(1).getReg() ? 3 : 6);
+  case Bedrock::FCVTSQSrr:
   case Bedrock::FCVTSQDrr:
+  case Bedrock::FCVTUQSrr:
   case Bedrock::FCVTUQDrr:
+  case Bedrock::FCVTStoQrr:
+  case Bedrock::FCVTDtoQrr:
+  case Bedrock::FCVTUStoQrr:
+  case Bedrock::FCVTUDtoQrr:
+  case Bedrock::FCVTDtoSrr:
+  case Bedrock::FCVTStoDrr:
     return RepgHeaderSize + 4;
 #define FUSED_SIZE_CASES(NAME)                                               \
   case Bedrock::BEDROCK_##NAME##_S:                                         \
@@ -7258,15 +7262,6 @@ void BedrockAsmPrinter::emitImmStoreAbs(const MachineInstr *MI,
   emitRawExpr(Bytes, 4 + getSignedAutoSize(Imm), FK_Data_4, Expr);
 }
 
-void BedrockAsmPrinter::emitFpuRaw(uint16_t Primary, uint16_t Ext,
-                                   ArrayRef<uint8_t> Tail) {
-  SmallVector<uint8_t, 16> Bytes;
-  appendBE16(Bytes, Primary);
-  appendBE16(Bytes, Ext);
-  Bytes.append(Tail.begin(), Tail.end());
-  emitRaw(Bytes);
-}
-
 void BedrockAsmPrinter::emitFpuMove(Register DstReg, Register SrcReg) {
   if (OutStreamer->hasRawTextSupport()) {
     SmallString<64> Text;
@@ -7406,22 +7401,30 @@ void BedrockAsmPrinter::emitSincosPseudo(const MachineInstr *MI,
 }
 
 void BedrockAsmPrinter::emitFpuConvert(const MachineInstr *MI,
-                                       bool IsUnsigned) {
+                                       StringRef Mnemonic, StringRef Pattern,
+                                       bool IsDouble, bool SrcIsFPR,
+                                       bool DstIsFPR) {
   Register DstReg = MI->getOperand(0).getReg();
   Register SrcReg = MI->getOperand(1).getReg();
   if (OutStreamer->hasRawTextSupport()) {
     SmallString<64> Text;
     raw_svector_ostream OS(Text);
-    OS << "\t" << (IsUnsigned ? "FCVTU" : "FCVT") << "\t"
+    OS << "\t" << Mnemonic << "." << (IsDouble ? 'D' : 'S') << "\t"
        << BedrockInstPrinter::getRegisterName(SrcReg) << ", "
        << BedrockInstPrinter::getRegisterName(DstReg);
     OutStreamer->emitRawText(OS.str());
     return;
   }
 
-  uint16_t Ext =
-      (IsUnsigned ? 0x0680 : 0x0280) | (getFPRNo(DstReg) << 3) | getGPRNo(SrcReg);
-  emitFpuRaw(0x1f65, Ext, {});
+  PatternFieldValue Fields[] = {
+      {'z', IsDouble},
+      {'s', SrcIsFPR ? getFPRNo(SrcReg) : getGPRNo(SrcReg)},
+      {'d', DstIsFPR ? getFPRNo(DstReg) : getGPRNo(DstReg)},
+  };
+  SmallVector<uint8_t, 4> Bytes;
+  if (!BedrockMC::encodeLong(applyPatternValues(Pattern, Fields), {}, Bytes))
+    report_fatal_error("failed to encode Bedrock floating-point conversion");
+  emitRaw(Bytes);
 }
 
 void BedrockAsmPrinter::emitFpuAbsLoad(const MachineInstr *MI,
@@ -8843,11 +8846,45 @@ void BedrockAsmPrinter::emitInstruction(const MachineInstr *MI) {
   case Bedrock::BEDROCK_FSINCOSA_D:
     emitSincosPseudo(MI, /*IsDouble=*/true);
     return;
+  case Bedrock::FCVTSQSrr:
+    emitFpuConvert(MI, "FCVT", "1111010111z0101ssss010dddd",
+                   /*IsDouble=*/false, /*SrcIsFPR=*/false, /*DstIsFPR=*/true);
+    return;
   case Bedrock::FCVTSQDrr:
-    emitFpuConvert(MI, /*IsUnsigned=*/false);
+    emitFpuConvert(MI, "FCVT", "1111010111z0101ssss010dddd",
+                   /*IsDouble=*/true, /*SrcIsFPR=*/false, /*DstIsFPR=*/true);
+    return;
+  case Bedrock::FCVTUQSrr:
+    emitFpuConvert(MI, "FCVTU", "1111010111z0110ssss010dddd",
+                   /*IsDouble=*/false, /*SrcIsFPR=*/false, /*DstIsFPR=*/true);
     return;
   case Bedrock::FCVTUQDrr:
-    emitFpuConvert(MI, /*IsUnsigned=*/true);
+    emitFpuConvert(MI, "FCVTU", "1111010111z0110ssss010dddd",
+                   /*IsDouble=*/true, /*SrcIsFPR=*/false, /*DstIsFPR=*/true);
+    return;
+  case Bedrock::FCVTStoQrr:
+    emitFpuConvert(MI, "FCVT", "1111010111z0011ssss010dddd",
+                   /*IsDouble=*/false, /*SrcIsFPR=*/true, /*DstIsFPR=*/false);
+    return;
+  case Bedrock::FCVTDtoQrr:
+    emitFpuConvert(MI, "FCVT", "1111010111z0011ssss010dddd",
+                   /*IsDouble=*/true, /*SrcIsFPR=*/true, /*DstIsFPR=*/false);
+    return;
+  case Bedrock::FCVTUStoQrr:
+    emitFpuConvert(MI, "FCVTU", "1111010111z0100ssss010dddd",
+                   /*IsDouble=*/false, /*SrcIsFPR=*/true, /*DstIsFPR=*/false);
+    return;
+  case Bedrock::FCVTUDtoQrr:
+    emitFpuConvert(MI, "FCVTU", "1111010111z0100ssss010dddd",
+                   /*IsDouble=*/true, /*SrcIsFPR=*/true, /*DstIsFPR=*/false);
+    return;
+  case Bedrock::FCVTDtoSrr:
+    emitFpuConvert(MI, "FCVT", "1111010111z0001ssss010dddd",
+                   /*IsDouble=*/false, /*SrcIsFPR=*/true, /*DstIsFPR=*/true);
+    return;
+  case Bedrock::FCVTStoDrr:
+    emitFpuConvert(MI, "FCVT", "1111010111z0001ssss010dddd",
+                   /*IsDouble=*/true, /*SrcIsFPR=*/true, /*DstIsFPR=*/true);
     return;
   case Bedrock::LEAfi:
     emitFrameAddress(MI);

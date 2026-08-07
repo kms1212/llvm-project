@@ -1278,6 +1278,33 @@ bool decodeLongPayload(uint32_t Payload, ArrayRef<uint8_t> Tail,
     return true;
   }
 
+  struct LongFpuConvertForm {
+    StringRef Mnemonic;
+    StringRef Pattern;
+    bool SrcIsFPR;
+    bool DstIsFPR;
+  };
+  static const LongFpuConvertForm FpuConvertForms[] = {
+      {"fcvt", "1111010111z0001ssss010dddd", true, true},
+      {"fcvtu", "1111010111z0010ssss010dddd", true, true},
+      {"fcvt", "1111010111z0011ssss010dddd", true, false},
+      {"fcvtu", "1111010111z0100ssss010dddd", true, false},
+      {"fcvt", "1111010111z0101ssss010dddd", false, true},
+      {"fcvtu", "1111010111z0110ssss010dddd", false, true},
+  };
+  for (const LongFpuConvertForm &F : FpuConvertForms) {
+    if (!matchPattern(F.Pattern, Payload))
+      continue;
+    unsigned Size = extractPatternField(F.Pattern, Payload, 'z');
+    unsigned Src = extractPatternField(F.Pattern, Payload, 's');
+    unsigned Dst = extractPatternField(F.Pattern, Payload, 'd');
+    Text = formatv("{0}.{1}\t{2}{3}, {4}{5}", F.Mnemonic,
+                   Size ? 'd' : 's', F.SrcIsFPR ? 'f' : 'r', Src,
+                   F.DstIsFPR ? 'f' : 'r', Dst)
+               .str();
+    return true;
+  }
+
   struct LongFpuMemoryForm {
     StringRef Pattern;
     bool IsLoad;

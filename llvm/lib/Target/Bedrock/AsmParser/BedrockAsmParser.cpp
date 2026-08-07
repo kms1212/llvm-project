@@ -1938,6 +1938,39 @@ bool tryEncodeMediumInstruction(OperandVector &Operands,
   }
 
   if (Operands.size() == 3 && GetOp(1).isReg() && GetOp(2).isReg()) {
+    struct FpuConvertForm {
+      StringRef Mnemonic;
+      StringRef Pattern;
+      bool SrcIsFPR;
+      bool DstIsFPR;
+    };
+    static const FpuConvertForm Forms[] = {
+        {"fcvt", "1111010111z0001ssss010dddd", true, true},
+        {"fcvtu", "1111010111z0010ssss010dddd", true, true},
+        {"fcvt", "1111010111z0011ssss010dddd", true, false},
+        {"fcvtu", "1111010111z0100ssss010dddd", true, false},
+        {"fcvt", "1111010111z0101ssss010dddd", false, true},
+        {"fcvtu", "1111010111z0110ssss010dddd", false, true},
+    };
+    for (const FpuConvertForm &Form : Forms) {
+      unsigned Size;
+      unsigned SrcReg;
+      unsigned DstReg;
+      bool ValidSrc = Form.SrcIsFPR ? getFRegNo(GetOp(1).getReg(), SrcReg)
+                                     : getRegNo(GetOp(1).getReg(), SrcReg);
+      bool ValidDst = Form.DstIsFPR ? getFRegNo(GetOp(2).getReg(), DstReg)
+                                     : getRegNo(GetOp(2).getReg(), DstReg);
+      if (getFpuSizeSuffix(Mnemonic, Form.Mnemonic, Size) && ValidSrc &&
+          ValidDst) {
+        PatternFieldValue Fields[] = {
+            {'z', Size}, {'s', SrcReg}, {'d', DstReg}};
+        return encodeLongWithTail(applyPatternValues(Form.Pattern, Fields), {},
+                                  Bytes);
+      }
+    }
+  }
+
+  if (Operands.size() == 3 && GetOp(1).isReg() && GetOp(2).isReg()) {
     struct FPTRANSAForm {
       StringRef Mnemonic;
       StringRef Pattern;

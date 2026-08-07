@@ -111,6 +111,12 @@ BedrockTargetLowering::BedrockTargetLowering(const TargetMachine &TM,
     setOperationAction(ISD::SINT_TO_FP, VT, Legal);
     setOperationAction(ISD::UINT_TO_FP, VT, Legal);
   }
+  setOperationAction(ISD::FP_TO_SINT, MVT::i32, Legal);
+  setOperationAction(ISD::FP_TO_SINT, MVT::i64, Legal);
+  setOperationAction(ISD::FP_TO_UINT, MVT::i32, Legal);
+  setOperationAction(ISD::FP_TO_UINT, MVT::i64, Legal);
+  setOperationAction(ISD::FP_ROUND, MVT::f32, Legal);
+  setOperationAction(ISD::FP_EXTEND, MVT::f64, Legal);
   if (Subtarget.hasFPTRANSA())
     setTargetDAGCombine(
         {ISD::FACOS, ISD::FASIN, ISD::FATAN, ISD::FCOS, ISD::FCOSH,

@@ -626,13 +626,37 @@ def FDIVDrr : BedrockPseudo<(outs FPR64:$rd), (ins FPR64:$lhs, FPR64:$rhs),
                             [(set f64:$rd, (fdiv f64:$lhs, f64:$rhs))]>;
 } // Constraints
 
+def FCVTSQSrr : BedrockPseudo<(outs FPR64:$rd), (ins GPR64:$src),
+                              [(set f32:$rd, (sint_to_fp i64:$src))]>;
 def FCVTSQDrr : BedrockPseudo<(outs FPR64:$rd), (ins GPR64:$src),
                               [(set f64:$rd, (sint_to_fp i64:$src))]>;
+def FCVTUQSrr : BedrockPseudo<(outs FPR64:$rd), (ins GPR64:$src),
+                              [(set f32:$rd, (uint_to_fp i64:$src))]>;
 def FCVTUQDrr : BedrockPseudo<(outs FPR64:$rd), (ins GPR64:$src),
                               [(set f64:$rd, (uint_to_fp i64:$src))]>;
 
+def FCVTStoQrr : BedrockPseudo<(outs GPR64:$rd), (ins FPR64:$src),
+                               [(set i64:$rd, (fp_to_sint f32:$src))]>;
+def FCVTDtoQrr : BedrockPseudo<(outs GPR64:$rd), (ins FPR64:$src),
+                               [(set i64:$rd, (fp_to_sint f64:$src))]>;
+def FCVTUStoQrr : BedrockPseudo<(outs GPR64:$rd), (ins FPR64:$src),
+                                [(set i64:$rd, (fp_to_uint f32:$src))]>;
+def FCVTUDtoQrr : BedrockPseudo<(outs GPR64:$rd), (ins FPR64:$src),
+                                [(set i64:$rd, (fp_to_uint f64:$src))]>;
+
+def FCVTDtoSrr : BedrockPseudo<(outs FPR64:$rd), (ins FPR64:$src),
+                               [(set f32:$rd, (fpround f64:$src))]>;
+def FCVTStoDrr : BedrockPseudo<(outs FPR64:$rd), (ins FPR64:$src),
+                               [(set f64:$rd, (fpextend f32:$src))]>;
+
 def : Pat<(f64 (sint_to_fp i32:$src)), (FCVTSQDrr (EXTSQLrr GPR64:$src))>;
 def : Pat<(f64 (uint_to_fp i32:$src)), (FCVTUQDrr (EXTZQLrr GPR64:$src))>;
+def : Pat<(f32 (sint_to_fp i32:$src)), (FCVTSQSrr (EXTSQLrr GPR64:$src))>;
+def : Pat<(f32 (uint_to_fp i32:$src)), (FCVTUQSrr (EXTZQLrr GPR64:$src))>;
+def : Pat<(i32 (fp_to_sint f32:$src)), (FCVTStoQrr FPR64:$src)>;
+def : Pat<(i32 (fp_to_sint f64:$src)), (FCVTDtoQrr FPR64:$src)>;
+def : Pat<(i32 (fp_to_uint f32:$src)), (FCVTUStoQrr FPR64:$src)>;
+def : Pat<(i32 (fp_to_uint f64:$src)), (FCVTUDtoQrr FPR64:$src)>;
 
 multiclass BedrockFusedPseudo {
   let Constraints = "$rd = $acc", Size = 4 in {
