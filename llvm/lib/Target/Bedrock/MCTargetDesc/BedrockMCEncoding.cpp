@@ -863,6 +863,7 @@ bool decodeMediumFpuRR(uint32_t Payload, SmallString<128> &Text) {
     StringRef Pattern;
   };
   static const Form Forms[] = {
+      {"fcmp", "100010zdddd000ssss"},
       {"fmov", "100100zssss110dddd"},
       {"fadd", "100100zssss111dddd"},
       {"fsub", "100101zssss000dddd"},
@@ -1282,6 +1283,78 @@ bool decodeLongPayload(uint32_t Payload, ArrayRef<uint8_t> Tail,
                    extractPatternField(F.Pattern, Payload, 's'),
                    extractPatternField(F.Pattern, Payload, 'd'))
                .str();
+    return true;
+  }
+
+  constexpr StringLiteral FMovCCRRPattern =
+      "11110110010ccccssss000dddd";
+  if (matchPattern(FMovCCRRPattern, Payload)) {
+    unsigned Cond = extractPatternField(FMovCCRRPattern, Payload, 'c');
+    const char *CondName = getFullCondName(Cond);
+    if (!CondName)
+      return false;
+    Text = formatv("fmov{0}\tf{1}, f{2}", CondName,
+                   extractPatternField(FMovCCRRPattern, Payload, 's'),
+                   extractPatternField(FMovCCRRPattern, Payload, 'd'))
+               .str();
+    return true;
+  }
+
+  constexpr StringLiteral FTestRegPattern =
+      "1111010110z01100000000ssss";
+  if (matchPattern(FTestRegPattern, Payload)) {
+    unsigned Size = extractPatternField(FTestRegPattern, Payload, 'z');
+    Text = formatv("ftest.{0}\tf{1}", Size ? 'd' : 's',
+                   extractPatternField(FTestRegPattern, Payload, 's'))
+               .str();
+    return true;
+  }
+
+  struct LongFpuEAForm {
+    StringRef Mnemonic;
+    StringRef Pattern;
+    bool HasCond;
+    bool EAFirst;
+    char RegField;
+  };
+  static const LongFpuEAForm LongFpuEAForms[] = {
+      {"fcmp", "1111010101z0101ddddeeeeeee", false, true, 'd'},
+      {"ftest", "1111010110z01100000eeeeeee", false, true, '\0'},
+      {"fmov", "1111011010zccccddddeeeeeee", true, true, 'd'},
+      {"fmov", "1111011001zccccsssseeeeeee", true, false, 's'},
+  };
+  for (const LongFpuEAForm &F : LongFpuEAForms) {
+    if (!matchPattern(F.Pattern, Payload))
+      continue;
+    uint8_t EA = extractPatternField(F.Pattern, Payload, 'e');
+    if (EA < 0x10)
+      continue;
+    unsigned Consumed = 0;
+    SmallString<64> EAText;
+    if (!decodeCompactEA(EA, Tail, Consumed, EAText))
+      return false;
+    unsigned Size = extractPatternField(F.Pattern, Payload, 'z');
+    SmallString<16> Mnemonic;
+    Mnemonic += F.Mnemonic;
+    if (F.HasCond) {
+      unsigned Cond = extractPatternField(F.Pattern, Payload, 'c');
+      const char *CondName = getFullCondName(Cond);
+      if (!CondName)
+        return false;
+      Mnemonic += CondName;
+    }
+    Mnemonic += Size ? ".d" : ".s";
+    if (F.RegField == '\0')
+      Text = formatv("{0}\t{1}", Mnemonic, EAText).str();
+    else if (F.EAFirst)
+      Text = formatv("{0}\t{1}, f{2}", Mnemonic, EAText,
+                     extractPatternField(F.Pattern, Payload, F.RegField))
+                 .str();
+    else
+      Text = formatv("{0}\tf{1}, {2}", Mnemonic,
+                     extractPatternField(F.Pattern, Payload, F.RegField),
+                     EAText)
+                 .str();
     return true;
   }
 

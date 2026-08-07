@@ -631,6 +631,24 @@ bool getConditionSizeSuffix(StringRef Mnemonic, StringRef Base, unsigned &Cond,
   return Size < 4;
 }
 
+bool getConditionFpuSizeSuffix(StringRef Mnemonic, StringRef Base,
+                               unsigned &Cond, unsigned &Size,
+                               bool AllowTF) {
+  if (!Mnemonic.consume_front(Base))
+    return false;
+
+  std::pair<StringRef, StringRef> Parts = Mnemonic.rsplit('.');
+  if (Parts.second.empty() || Parts.first.empty() ||
+      !parseConditionSuffix(Parts.first, Cond, AllowTF))
+    return false;
+
+  Size = StringSwitch<unsigned>(Parts.second)
+             .Case("s", 0)
+             .Case("d", 1)
+             .Default(2);
+  return Size < 2;
+}
+
 StringRef getCanonicalConditionSuffix(unsigned Cond) {
   switch (Cond) {
   case 0x0:
@@ -1772,6 +1790,29 @@ bool tryEncodeMediumInstruction(OperandVector &Operands,
       return FinishMedium(Payload, Tail, LocalFixups);
     }
 
+    if (getFpuSizeSuffix(Mnemonic, "ftest", Size)) {
+      unsigned SrcReg;
+      if (GetOp(1).isReg() && getFRegNo(GetOp(1).getReg(), SrcReg)) {
+        PatternFieldValue Fields[] = {{'z', Size}, {'s', SrcReg}};
+        return encodeLongWithTail(applyPatternValues(
+                                      "1111010110z01100000000ssss", Fields),
+                                  {}, Bytes);
+      }
+
+      uint8_t EA;
+      SmallVector<uint8_t, 8> Tail;
+      SmallVector<RawFixup, 2> LocalFixups;
+      if (encodeCompactEA(GetOp(1), /*AllowImmediate=*/true, EA, Tail,
+                          &LocalFixups) &&
+          EA >= 0x10) {
+        PatternFieldValue Fields[] = {{'z', Size}, {'e', EA}};
+        return FinishLong(
+            applyPatternValues("1111010110z01100000eeeeeee", Fields), Tail,
+            LocalFixups);
+      }
+      return false;
+    }
+
     unsigned RegNo;
     if ((getSizeSuffix(Mnemonic, "incf", Size) ||
          getSizeSuffix(Mnemonic, "decf", Size)) &&
@@ -1916,6 +1957,7 @@ bool tryEncodeMediumInstruction(OperandVector &Operands,
       StringRef Pattern;
     };
     static const FpuRRForm Forms[] = {
+        {"fcmp", "100010zdddd000ssss"},
         {"fmov", "100100zssss110dddd"},
         {"fadd", "100100zssss111dddd"},
         {"fsub", "100101zssss000dddd"},
@@ -1941,6 +1983,86 @@ bool tryEncodeMediumInstruction(OperandVector &Operands,
         return encodeMediumWithTail(applyPatternValues(Form.Pattern, Fields),
                                     {}, Bytes);
       }
+    }
+  }
+
+  if (Operands.size() == 3 && GetOp(1).isReg() && GetOp(2).isReg()) {
+    unsigned Size;
+    unsigned SrcReg;
+    unsigned DstReg;
+    if (getFpuSizeSuffix(Mnemonic, "fclass", Size) &&
+        getFRegNo(GetOp(1).getReg(), SrcReg) &&
+        getRegNo(GetOp(2).getReg(), DstReg)) {
+      PatternFieldValue Fields[] = {
+          {'z', Size}, {'s', SrcReg}, {'d', DstReg}};
+      return encodeLongWithTail(
+          applyPatternValues("1111010111z0000ssss010dddd", Fields), {},
+          Bytes);
+    }
+
+    unsigned Cond;
+    if (getConditionSuffix(Mnemonic, "fmov", Cond, /*AllowTF=*/true) &&
+        getFRegNo(GetOp(1).getReg(), SrcReg) &&
+        getFRegNo(GetOp(2).getReg(), DstReg)) {
+      PatternFieldValue Fields[] = {
+          {'c', Cond}, {'s', SrcReg}, {'d', DstReg}};
+      return encodeLongWithTail(
+          applyPatternValues("11110110010ccccssss000dddd", Fields), {},
+          Bytes);
+    }
+  }
+
+  if (Operands.size() == 3) {
+    unsigned Size;
+    unsigned DstReg;
+    if (getFpuSizeSuffix(Mnemonic, "fcmp", Size) && GetOp(2).isReg() &&
+        getFRegNo(GetOp(2).getReg(), DstReg)) {
+      uint8_t EA;
+      SmallVector<uint8_t, 8> Tail;
+      SmallVector<RawFixup, 2> LocalFixups;
+      if (encodeCompactEA(GetOp(1), /*AllowImmediate=*/true, EA, Tail,
+                          &LocalFixups) &&
+          EA >= 0x10) {
+        PatternFieldValue Fields[] = {
+            {'z', Size}, {'d', DstReg}, {'e', EA}};
+        return FinishLong(
+            applyPatternValues("1111010101z0101ddddeeeeeee", Fields), Tail,
+            LocalFixups);
+      }
+      return false;
+    }
+
+    unsigned Cond;
+    if (getConditionFpuSizeSuffix(Mnemonic, "fmov", Cond, Size,
+                                  /*AllowTF=*/true)) {
+      unsigned RegNo;
+      uint8_t EA;
+      SmallVector<uint8_t, 8> Tail;
+      SmallVector<RawFixup, 2> LocalFixups;
+      StringRef Pattern;
+      char RegField;
+      if (GetOp(1).isReg() && getFRegNo(GetOp(1).getReg(), RegNo) &&
+          encodeCompactEA(GetOp(2), /*AllowImmediate=*/false, EA, Tail,
+                          &LocalFixups) &&
+          EA >= 0x10) {
+        Pattern = "1111011001zccccsssseeeeeee";
+        RegField = 's';
+      } else if (encodeCompactEA(GetOp(1), /*AllowImmediate=*/true, EA, Tail,
+                                 &LocalFixups) &&
+                 EA >= 0x10 && GetOp(2).isReg() &&
+                 getFRegNo(GetOp(2).getReg(), RegNo)) {
+        Pattern = "1111011010zccccddddeeeeeee";
+        RegField = 'd';
+      } else {
+        return false;
+      }
+
+      PatternFieldValue Fields[] = {{'z', Size},
+                                    {'c', Cond},
+                                    {RegField, RegNo},
+                                    {'e', EA}};
+      return FinishLong(applyPatternValues(Pattern, Fields), Tail,
+                        LocalFixups);
     }
   }
 
