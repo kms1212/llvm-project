@@ -334,16 +334,18 @@ def check_mc_forms(llvm_root: Path, isa_root: Path, sync: dict) -> str:
     check_inventory("decoder-only", decoder_only, expected["decoder_only"])
     check_inventory("assembler-only", assembler_only, expected["assembler_only"])
 
-    test = (llvm_root / "llvm/test/MC/Bedrock/revised-encodings.s").read_text(
-        encoding="utf-8"
-    )
+    default_test = "llvm/test/MC/Bedrock/revised-encodings.s"
+    tests: dict[str, str] = {}
     for probe in sync["fixed_encoding_probes"]:
+        test_path = probe.get("test", default_test)
+        if test_path not in tests:
+            tests[test_path] = (llvm_root / test_path).read_text(encoding="utf-8")
         reference = probe["form"]
         require(reference in forms_by_reference, f"unknown fixed form {reference}")
         expected_bytes = encode_fixed_form(
             forms_by_reference[reference], probe["fields"]
         )
-        actual_bytes = golden_encoding(test, probe["assembly"])
+        actual_bytes = golden_encoding(tests[test_path], probe["assembly"])
         require(
             actual_bytes == expected_bytes,
             f"{probe['assembly']}: specification bytes {expected_bytes}, "

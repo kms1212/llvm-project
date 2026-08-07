@@ -1408,11 +1408,13 @@ bool tryEncodeShortInstruction(OperandVector &Operands,
       return true;
     }
     if (Mnemonic == "fpushp" && isUIntN(3, Imm)) {
-      encodeExtraShortPayload(0x70 | static_cast<uint8_t>(Imm), Bytes);
+      PatternFieldValue Fields[] = {{'i', static_cast<unsigned>(Imm)}};
+      encodeExtraShortPayload(applyPatternValues("1110iii", Fields), Bytes);
       return true;
     }
     if (Mnemonic == "fpopp" && isUIntN(3, Imm)) {
-      encodeExtraShortPayload(0x78 | static_cast<uint8_t>(Imm), Bytes);
+      PatternFieldValue Fields[] = {{'i', static_cast<unsigned>(Imm)}};
+      encodeExtraShortPayload(applyPatternValues("1111iii", Fields), Bytes);
       return true;
     }
 
@@ -1813,6 +1815,14 @@ bool tryEncodeMediumInstruction(OperandVector &Operands,
       return false;
     }
 
+    unsigned FRegNo;
+    if (Mnemonic == "fclr" && GetOp(1).isReg() &&
+        getFRegNo(GetOp(1).getReg(), FRegNo)) {
+      PatternFieldValue Fields[] = {{'d', FRegNo}};
+      return encodeMediumWithTail(
+          applyPatternValues("10010000001000dddd", Fields), {}, Bytes);
+    }
+
     unsigned RegNo;
     if ((getSizeSuffix(Mnemonic, "incf", Size) ||
          getSizeSuffix(Mnemonic, "decf", Size)) &&
@@ -1952,6 +1962,15 @@ bool tryEncodeMediumInstruction(OperandVector &Operands,
   }
 
   if (Operands.size() == 3 && GetOp(1).isReg() && GetOp(2).isReg()) {
+    unsigned LHSReg;
+    unsigned RHSReg;
+    if (Mnemonic == "fxchg" && getFRegNo(GetOp(1).getReg(), LHSReg) &&
+        getFRegNo(GetOp(2).getReg(), RHSReg)) {
+      PatternFieldValue Fields[] = {{'l', LHSReg}, {'r', RHSReg}};
+      return encodeMediumWithTail(
+          applyPatternValues("1011010llll000rrrr", Fields), {}, Bytes);
+    }
+
     struct FpuRRForm {
       StringRef Mnemonic;
       StringRef Pattern;
@@ -1966,6 +1985,8 @@ bool tryEncodeMediumInstruction(OperandVector &Operands,
         {"fabs", "100101zssss011dddd"},
         {"fneg", "100101zssss100dddd"},
         {"fsqrt", "100101zssss101dddd"},
+        {"fmin", "100101zssss110dddd"},
+        {"fmax", "100101zssss111dddd"},
         {"fround", "100001zdddd000ssss"},
         {"ftrunc", "100011zdddd000ssss"},
         {"fceil", "101001zdddd000ssss"},
@@ -1982,6 +2003,35 @@ bool tryEncodeMediumInstruction(OperandVector &Operands,
             {'z', Size}, {'s', SrcReg}, {'d', DstReg}};
         return encodeMediumWithTail(applyPatternValues(Form.Pattern, Fields),
                                     {}, Bytes);
+      }
+    }
+  }
+
+  if (Operands.size() == 3 && GetOp(1).isReg() && GetOp(2).isReg()) {
+    struct LongFpuRRForm {
+      StringRef Mnemonic;
+      StringRef Pattern;
+    };
+    static const LongFpuRRForm Forms[] = {
+        {"fint", "1111010101z1111dddd000ssss"},
+        {"fintrz", "1111010110z0000dddd000ssss"},
+        {"fgetexp", "1111010110z0001dddd000ssss"},
+        {"fgetman", "1111010110z0010dddd000ssss"},
+        {"fmod", "1111010110z0011dddd000ssss"},
+        {"frem", "1111010110z0100dddd000ssss"},
+        {"fscale", "1111010110z0101dddd000ssss"},
+    };
+    for (const LongFpuRRForm &Form : Forms) {
+      unsigned Size;
+      unsigned SrcReg;
+      unsigned DstReg;
+      if (getFpuSizeSuffix(Mnemonic, Form.Mnemonic, Size) &&
+          getFRegNo(GetOp(1).getReg(), SrcReg) &&
+          getFRegNo(GetOp(2).getReg(), DstReg)) {
+        PatternFieldValue Fields[] = {
+            {'z', Size}, {'s', SrcReg}, {'d', DstReg}};
+        return encodeLongWithTail(applyPatternValues(Form.Pattern, Fields), {},
+                                  Bytes);
       }
     }
   }
@@ -2013,6 +2063,69 @@ bool tryEncodeMediumInstruction(OperandVector &Operands,
   }
 
   if (Operands.size() == 3) {
+    struct FpuEAForm {
+      StringRef Mnemonic;
+      StringRef Pattern;
+      bool EAFirst;
+      bool AllowImmediate;
+      char RegField;
+    };
+    static const FpuEAForm Forms[] = {
+        {"fmov", "1111010101z0000ddddeeeeeee", true, true, 'd'},
+        {"fadd", "1111010101z0001ddddeeeeeee", true, true, 'd'},
+        {"fsub", "1111010101z0010ddddeeeeeee", true, true, 'd'},
+        {"fmul", "1111010101z0011ddddeeeeeee", true, true, 'd'},
+        {"fdiv", "1111010101z0100ddddeeeeeee", true, true, 'd'},
+        {"fabs", "1111010101z0110ddddeeeeeee", true, true, 'd'},
+        {"fneg", "1111010101z0111ddddeeeeeee", true, true, 'd'},
+        {"fsqrt", "1111010101z1000ddddeeeeeee", true, true, 'd'},
+        {"fmin", "1111010101z1001ddddeeeeeee", true, true, 'd'},
+        {"fmax", "1111010101z1010ddddeeeeeee", true, true, 'd'},
+        {"fround", "1111010101z1011ddddeeeeeee", true, true, 'd'},
+        {"ftrunc", "1111010101z1100ddddeeeeeee", true, true, 'd'},
+        {"fceil", "1111010101z1101ddddeeeeeee", true, true, 'd'},
+        {"ffloor", "1111010101z1110ddddeeeeeee", true, true, 'd'},
+        {"fint", "1111010101z1111ddddeeeeeee", true, true, 'd'},
+        {"fintrz", "1111010110z0000ddddeeeeeee", true, true, 'd'},
+        {"fgetexp", "1111010110z0001ddddeeeeeee", true, true, 'd'},
+        {"fgetman", "1111010110z0010ddddeeeeeee", true, true, 'd'},
+        {"fmod", "1111010110z0011ddddeeeeeee", true, true, 'd'},
+        {"frem", "1111010110z0100ddddeeeeeee", true, true, 'd'},
+        {"fscale", "1111010110z0101ddddeeeeeee", true, true, 'd'},
+        {"fmov", "1111011000z0000sssseeeeeee", false, false, 's'},
+        {"fabs", "1111011000z0001sssseeeeeee", false, false, 's'},
+        {"fneg", "1111011000z0010sssseeeeeee", false, false, 's'},
+        {"fsqrt", "1111011000z0011sssseeeeeee", false, false, 's'},
+        {"fround", "1111011000z0100sssseeeeeee", false, false, 's'},
+        {"ftrunc", "1111011000z0101sssseeeeeee", false, false, 's'},
+        {"fceil", "1111011000z0110sssseeeeeee", false, false, 's'},
+        {"ffloor", "1111011000z0111sssseeeeeee", false, false, 's'},
+        {"fint", "1111011000z1000sssseeeeeee", false, false, 's'},
+        {"fintrz", "1111011000z1001sssseeeeeee", false, false, 's'},
+    };
+    for (const FpuEAForm &Form : Forms) {
+      unsigned Size;
+      if (!getFpuSizeSuffix(Mnemonic, Form.Mnemonic, Size))
+        continue;
+
+      const BedrockOperand &EAOp = GetOp(Form.EAFirst ? 1 : 2);
+      const BedrockOperand &RegOp = GetOp(Form.EAFirst ? 2 : 1);
+      unsigned RegNo;
+      uint8_t EA;
+      SmallVector<uint8_t, 8> Tail;
+      SmallVector<RawFixup, 2> LocalFixups;
+      if (!RegOp.isReg() || !getFRegNo(RegOp.getReg(), RegNo) ||
+          !encodeCompactEA(EAOp, Form.AllowImmediate, EA, Tail,
+                           &LocalFixups) ||
+          EA < 0x10)
+        continue;
+
+      PatternFieldValue Fields[] = {
+          {'z', Size}, {Form.RegField, RegNo}, {'e', EA}};
+      return FinishLong(applyPatternValues(Form.Pattern, Fields), Tail,
+                        LocalFixups);
+    }
+
     unsigned Size;
     unsigned DstReg;
     if (getFpuSizeSuffix(Mnemonic, "fcmp", Size) && GetOp(2).isReg() &&
@@ -2344,6 +2457,66 @@ bool tryEncodeMediumInstruction(OperandVector &Operands,
       };
       uint32_t Payload = applyPatternValues(Form.Pattern, Fields);
       return FinishLong(Payload, Tail, LocalFixups);
+    }
+  }
+
+  if (Operands.size() == 3 && GetOp(1).isImm()) {
+    struct LongImmALUForm {
+      StringRef Mnemonic;
+      StringRef Patterns[4];
+    };
+    static const LongImmALUForm Forms[] = {
+        {"add",
+         {"1111000110zz0010000eeeeeee", "1111000110zz0010001eeeeeee",
+          "11110001101z0010010eeeeeee", "1111000110110010011eeeeeee"}},
+        {"sub",
+         {"1111000110zz0010100eeeeeee", "1111000110zz0010101eeeeeee",
+          "11110001101z0010110eeeeeee", "1111000110110010111eeeeeee"}},
+        {"and",
+         {"1111000110zz0011000eeeeeee", "1111000110zz0011001eeeeeee",
+          "11110001101z0011010eeeeeee", "1111000110110011011eeeeeee"}},
+        {"or",
+         {"1111000110zz0011100eeeeeee", "1111000110zz0011101eeeeeee",
+          "11110001101z0011110eeeeeee", "1111000110110011111eeeeeee"}},
+        {"xor",
+         {"1111000110zz0100000eeeeeee", "1111000110zz0100001eeeeeee",
+          "11110001101z0100010eeeeeee", "1111000110110100011eeeeeee"}},
+    };
+    for (const LongImmALUForm &Form : Forms) {
+      unsigned Size;
+      if (!getSizeSuffix(Mnemonic, Form.Mnemonic, Size))
+        continue;
+
+      SmallVector<uint8_t, 16> Tail;
+      SmallVector<RawFixup, 4> LocalFixups;
+      uint8_t EA;
+      if (!encodeCompactEA(GetOp(2), /*AllowImmediate=*/false, EA, Tail,
+                           &LocalFixups) ||
+          !isCompactEAMemory(EA))
+        continue;
+
+      unsigned WidthCode;
+      if (GetOp(1).getImmVariant() == BedrockOperand::ImmAbs64) {
+        WidthCode = 3;
+        int64_t Value;
+        if (getConstantImm(GetOp(1), Value)) {
+          appendLE(Tail, static_cast<uint64_t>(Value), 8);
+        } else if (!appendExprTail(GetOp(1).getImm(), 8, Tail, &LocalFixups,
+                                   FK_Data_8)) {
+          continue;
+        }
+      } else if (!appendSignedAuto(GetOp(1).getImm(), Tail, WidthCode,
+                                   &LocalFixups)) {
+        continue;
+      }
+      if (WidthCode > Size)
+        continue;
+
+      unsigned Z = WidthCode < 2 ? Size : Size - 2;
+      PatternFieldValue Fields[] = {{'z', Z}, {'e', EA}};
+      return FinishLong(
+          applyPatternValues(Form.Patterns[WidthCode], Fields), Tail,
+          LocalFixups);
     }
   }
 
@@ -2895,6 +3068,100 @@ bool tryEncodeMediumInstruction(OperandVector &Operands,
   }
 
   if (Operands.size() == 4) {
+    unsigned Size;
+    struct FpuBoundForm {
+      StringRef Mnemonic;
+      StringRef RRPattern;
+      StringRef MiddleEAPattern;
+      StringRef OuterEAPattern;
+    };
+    static const FpuBoundForm BoundForms[] = {
+        {"fbndii", "1111010000zllllhhhh000vvvv",
+         "1111010001zllllhhhhvvvvvvv",
+         "1111110000000z00vvvvlllllllhhhhhhh"},
+        {"fbndix", "1111010000zllllhhhh001vvvv",
+         "1111010010zllllhhhhvvvvvvv",
+         "1111110000000z01vvvvlllllllhhhhhhh"},
+        {"fbndxi", "1111010000zllllhhhh010vvvv",
+         "1111010011zllllhhhhvvvvvvv",
+         "1111110000000z10vvvvlllllllhhhhhhh"},
+        {"fbndxx", "1111010000zllllhhhh011vvvv",
+         "1111010100zllllhhhhvvvvvvv",
+         "1111110000000z11vvvvlllllllhhhhhhh"},
+    };
+    for (const FpuBoundForm &Form : BoundForms) {
+      if (!getFpuSizeSuffix(Mnemonic, Form.Mnemonic, Size))
+        continue;
+
+      unsigned LowReg;
+      unsigned ValueReg;
+      unsigned HighReg;
+      if (GetOp(1).isReg() && GetOp(2).isReg() && GetOp(3).isReg() &&
+          getFRegNo(GetOp(1).getReg(), LowReg) &&
+          getFRegNo(GetOp(2).getReg(), ValueReg) &&
+          getFRegNo(GetOp(3).getReg(), HighReg)) {
+        PatternFieldValue Fields[] = {{'z', Size},
+                                      {'l', LowReg},
+                                      {'v', ValueReg},
+                                      {'h', HighReg}};
+        return encodeLongWithTail(
+            applyPatternValues(Form.RRPattern, Fields), {}, Bytes);
+      }
+
+      uint8_t ValueEA;
+      SmallVector<uint8_t, 8> Tail;
+      SmallVector<RawFixup, 2> LocalFixups;
+      if (GetOp(1).isReg() && GetOp(3).isReg() &&
+          getFRegNo(GetOp(1).getReg(), LowReg) &&
+          getFRegNo(GetOp(3).getReg(), HighReg) &&
+          encodeCompactEA(GetOp(2), /*AllowImmediate=*/true, ValueEA, Tail,
+                          &LocalFixups) &&
+          ValueEA >= 0x10) {
+        PatternFieldValue Fields[] = {{'z', Size},
+                                      {'l', LowReg},
+                                      {'v', ValueEA},
+                                      {'h', HighReg}};
+        return FinishLong(applyPatternValues(Form.MiddleEAPattern, Fields),
+                          Tail, LocalFixups);
+      }
+
+      uint8_t LowEA;
+      uint8_t HighEA;
+      Tail.clear();
+      LocalFixups.clear();
+      if (GetOp(2).isReg() && getFRegNo(GetOp(2).getReg(), ValueReg) &&
+          encodeCompactEA(GetOp(1), /*AllowImmediate=*/true, LowEA, Tail,
+                          &LocalFixups) &&
+          encodeCompactEA(GetOp(3), /*AllowImmediate=*/true, HighEA, Tail,
+                          &LocalFixups) &&
+          LowEA >= 0x10 && HighEA >= 0x10) {
+        PatternFieldValue Fields[] = {{'z', Size},
+                                      {'l', LowEA},
+                                      {'v', ValueReg},
+                                      {'h', HighEA}};
+        return FinishExtraLong(
+            applyPatternValues64(Form.OuterEAPattern, Fields), Tail,
+            LocalFixups);
+      }
+    }
+
+    unsigned SignReg;
+    unsigned MagnitudeReg;
+    unsigned DstReg;
+    if (getFpuSizeSuffix(Mnemonic, "fcopysign", Size) &&
+        GetOp(1).isReg() && GetOp(2).isReg() && GetOp(3).isReg() &&
+        getFRegNo(GetOp(1).getReg(), SignReg) &&
+        getFRegNo(GetOp(2).getReg(), MagnitudeReg) &&
+        getFRegNo(GetOp(3).getReg(), DstReg)) {
+      PatternFieldValue Fields[] = {{'z', Size},
+                                    {'s', SignReg},
+                                    {'m', MagnitudeReg},
+                                    {'d', DstReg}};
+      return encodeLongWithTail(applyPatternValues(
+                                    "1111010111zssssmmmm011dddd", Fields),
+                                {}, Bytes);
+    }
+
     struct FMAForm {
       StringRef Mnemonic;
       StringRef RRPattern;
@@ -2967,7 +3234,6 @@ bool tryEncodeMediumInstruction(OperandVector &Operands,
       }
     }
 
-    unsigned Size;
     unsigned SrcReg;
     unsigned SinReg;
     unsigned CosReg;

@@ -319,12 +319,18 @@ bool decodeExtraShortPayload(uint8_t Payload, SmallString<128> &Text) {
     Text = formatv("popp\t{0}", Payload & 0x7).str();
     return true;
   }
-  if ((Payload & 0x78) == 0x70) {
-    Text = formatv("fpushp\t{0}", Payload & 0x7).str();
+  constexpr StringLiteral FPushPPattern = "1110iii";
+  if (matchPattern(FPushPPattern, Payload)) {
+    Text = formatv("fpushp\t{0}",
+                   extractPatternField(FPushPPattern, Payload, 'i'))
+               .str();
     return true;
   }
-  if ((Payload & 0x78) == 0x78) {
-    Text = formatv("fpopp\t{0}", Payload & 0x7).str();
+  constexpr StringLiteral FPopPPattern = "1111iii";
+  if (matchPattern(FPopPPattern, Payload)) {
+    Text = formatv("fpopp\t{0}",
+                   extractPatternField(FPopPPattern, Payload, 'i'))
+               .str();
     return true;
   }
 
@@ -858,6 +864,23 @@ bool decodeMediumEAUnary(uint32_t Payload, ArrayRef<uint8_t> Tail,
 }
 
 bool decodeMediumFpuRR(uint32_t Payload, SmallString<128> &Text) {
+  constexpr StringLiteral FClrPattern = "10010000001000dddd";
+  if (matchPattern(FClrPattern, Payload)) {
+    Text = formatv("fclr\tf{0}",
+                   extractPatternField(FClrPattern, Payload, 'd'))
+               .str();
+    return true;
+  }
+
+  constexpr StringLiteral FXchgPattern = "1011010llll000rrrr";
+  if (matchPattern(FXchgPattern, Payload)) {
+    Text = formatv("fxchg\tf{0}, f{1}",
+                   extractPatternField(FXchgPattern, Payload, 'l'),
+                   extractPatternField(FXchgPattern, Payload, 'r'))
+               .str();
+    return true;
+  }
+
   struct Form {
     StringRef Mnemonic;
     StringRef Pattern;
@@ -872,6 +895,8 @@ bool decodeMediumFpuRR(uint32_t Payload, SmallString<128> &Text) {
       {"fabs", "100101zssss011dddd"},
       {"fneg", "100101zssss100dddd"},
       {"fsqrt", "100101zssss101dddd"},
+      {"fmin", "100101zssss110dddd"},
+      {"fmax", "100101zssss111dddd"},
       {"fround", "100001zdddd000ssss"},
       {"ftrunc", "100011zdddd000ssss"},
       {"fceil", "101001zdddd000ssss"},
@@ -1228,6 +1253,60 @@ bool decodeMediumPayload(uint32_t Payload, ArrayRef<uint8_t> Tail,
 
 bool decodeLongPayload(uint32_t Payload, ArrayRef<uint8_t> Tail,
                        SmallString<128> &Text) {
+  struct LongFpuBoundForm {
+    StringRef Mnemonic;
+    StringRef Pattern;
+    bool MiddleEA;
+  };
+  static const LongFpuBoundForm FpuBoundForms[] = {
+      {"fbndii", "1111010000zllllhhhh000vvvv", false},
+      {"fbndix", "1111010000zllllhhhh001vvvv", false},
+      {"fbndxi", "1111010000zllllhhhh010vvvv", false},
+      {"fbndxx", "1111010000zllllhhhh011vvvv", false},
+      {"fbndii", "1111010001zllllhhhhvvvvvvv", true},
+      {"fbndix", "1111010010zllllhhhhvvvvvvv", true},
+      {"fbndxi", "1111010011zllllhhhhvvvvvvv", true},
+      {"fbndxx", "1111010100zllllhhhhvvvvvvv", true},
+  };
+  for (const LongFpuBoundForm &F : FpuBoundForms) {
+    if (!matchPattern(F.Pattern, Payload))
+      continue;
+    unsigned Size = extractPatternField(F.Pattern, Payload, 'z');
+    unsigned Low = extractPatternField(F.Pattern, Payload, 'l');
+    unsigned High = extractPatternField(F.Pattern, Payload, 'h');
+    if (!F.MiddleEA) {
+      Text = formatv("{0}.{1}\tf{2}, f{3}, f{4}", F.Mnemonic,
+                     Size ? 'd' : 's', Low,
+                     extractPatternField(F.Pattern, Payload, 'v'), High)
+                 .str();
+      return true;
+    }
+
+    uint8_t EA = extractPatternField(F.Pattern, Payload, 'v');
+    if (EA < 0x10)
+      continue;
+    unsigned Consumed = 0;
+    SmallString<64> EAText;
+    if (!decodeCompactEA(EA, Tail, Consumed, EAText))
+      return false;
+    Text = formatv("{0}.{1}\tf{2}, {3}, f{4}", F.Mnemonic,
+                   Size ? 'd' : 's', Low, EAText, High)
+               .str();
+    return true;
+  }
+
+  constexpr StringLiteral FCopySignPattern =
+      "1111010111zssssmmmm011dddd";
+  if (matchPattern(FCopySignPattern, Payload)) {
+    unsigned Size = extractPatternField(FCopySignPattern, Payload, 'z');
+    Text = formatv("fcopysign.{0}\tf{1}, f{2}, f{3}", Size ? 'd' : 's',
+                   extractPatternField(FCopySignPattern, Payload, 's'),
+                   extractPatternField(FCopySignPattern, Payload, 'm'),
+                   extractPatternField(FCopySignPattern, Payload, 'd'))
+               .str();
+    return true;
+  }
+
   struct LongFMAForm {
     StringRef Mnemonic;
     StringRef Pattern;
@@ -1276,6 +1355,30 @@ bool decodeLongPayload(uint32_t Payload, ArrayRef<uint8_t> Tail,
       {"ftwotoxa", "1111011100z0010dddd010ssss"},
   };
   for (const LongFPTRANSAForm &F : FPTRANSAForms) {
+    if (!matchPattern(F.Pattern, Payload))
+      continue;
+    unsigned Size = extractPatternField(F.Pattern, Payload, 'z');
+    Text = formatv("{0}.{1}\tf{2}, f{3}", F.Mnemonic, Size ? 'd' : 's',
+                   extractPatternField(F.Pattern, Payload, 's'),
+                   extractPatternField(F.Pattern, Payload, 'd'))
+               .str();
+    return true;
+  }
+
+  struct LongFpuRRForm {
+    StringRef Mnemonic;
+    StringRef Pattern;
+  };
+  static const LongFpuRRForm LongFpuRRForms[] = {
+      {"fint", "1111010101z1111dddd000ssss"},
+      {"fintrz", "1111010110z0000dddd000ssss"},
+      {"fgetexp", "1111010110z0001dddd000ssss"},
+      {"fgetman", "1111010110z0010dddd000ssss"},
+      {"fmod", "1111010110z0011dddd000ssss"},
+      {"frem", "1111010110z0100dddd000ssss"},
+      {"fscale", "1111010110z0101dddd000ssss"},
+  };
+  for (const LongFpuRRForm &F : LongFpuRRForms) {
     if (!matchPattern(F.Pattern, Payload))
       continue;
     unsigned Size = extractPatternField(F.Pattern, Payload, 'z');
@@ -1386,13 +1489,43 @@ bool decodeLongPayload(uint32_t Payload, ArrayRef<uint8_t> Tail,
   }
 
   struct LongFpuMemoryForm {
+    StringRef Mnemonic;
     StringRef Pattern;
-    bool IsLoad;
+    bool EAFirst;
     char RegField;
   };
   static const LongFpuMemoryForm LongFpuMemoryForms[] = {
-      {"1111010101z0000ddddeeeeeee", true, 'd'},
-      {"1111011000z0000sssseeeeeee", false, 's'},
+      {"fmov", "1111010101z0000ddddeeeeeee", true, 'd'},
+      {"fadd", "1111010101z0001ddddeeeeeee", true, 'd'},
+      {"fsub", "1111010101z0010ddddeeeeeee", true, 'd'},
+      {"fmul", "1111010101z0011ddddeeeeeee", true, 'd'},
+      {"fdiv", "1111010101z0100ddddeeeeeee", true, 'd'},
+      {"fabs", "1111010101z0110ddddeeeeeee", true, 'd'},
+      {"fneg", "1111010101z0111ddddeeeeeee", true, 'd'},
+      {"fsqrt", "1111010101z1000ddddeeeeeee", true, 'd'},
+      {"fmin", "1111010101z1001ddddeeeeeee", true, 'd'},
+      {"fmax", "1111010101z1010ddddeeeeeee", true, 'd'},
+      {"fround", "1111010101z1011ddddeeeeeee", true, 'd'},
+      {"ftrunc", "1111010101z1100ddddeeeeeee", true, 'd'},
+      {"fceil", "1111010101z1101ddddeeeeeee", true, 'd'},
+      {"ffloor", "1111010101z1110ddddeeeeeee", true, 'd'},
+      {"fint", "1111010101z1111ddddeeeeeee", true, 'd'},
+      {"fintrz", "1111010110z0000ddddeeeeeee", true, 'd'},
+      {"fgetexp", "1111010110z0001ddddeeeeeee", true, 'd'},
+      {"fgetman", "1111010110z0010ddddeeeeeee", true, 'd'},
+      {"fmod", "1111010110z0011ddddeeeeeee", true, 'd'},
+      {"frem", "1111010110z0100ddddeeeeeee", true, 'd'},
+      {"fscale", "1111010110z0101ddddeeeeeee", true, 'd'},
+      {"fmov", "1111011000z0000sssseeeeeee", false, 's'},
+      {"fabs", "1111011000z0001sssseeeeeee", false, 's'},
+      {"fneg", "1111011000z0010sssseeeeeee", false, 's'},
+      {"fsqrt", "1111011000z0011sssseeeeeee", false, 's'},
+      {"fround", "1111011000z0100sssseeeeeee", false, 's'},
+      {"ftrunc", "1111011000z0101sssseeeeeee", false, 's'},
+      {"fceil", "1111011000z0110sssseeeeeee", false, 's'},
+      {"ffloor", "1111011000z0111sssseeeeeee", false, 's'},
+      {"fint", "1111011000z1000sssseeeeeee", false, 's'},
+      {"fintrz", "1111011000z1001sssseeeeeee", false, 's'},
   };
   for (const LongFpuMemoryForm &F : LongFpuMemoryForms) {
     if (!matchPattern(F.Pattern, Payload))
@@ -1404,11 +1537,13 @@ bool decodeLongPayload(uint32_t Payload, ArrayRef<uint8_t> Tail,
     SmallString<64> EAText;
     if (!decodeCompactEA(EA, Tail, Consumed, EAText))
       return false;
-    if (F.IsLoad)
-      Text = formatv("FMOV.{0}\t{1}, f{2}", Size ? 'D' : 'S', EAText, Reg)
+    if (F.EAFirst)
+      Text = formatv("{0}.{1}\t{2}, f{3}", F.Mnemonic, Size ? 'd' : 's',
+                     EAText, Reg)
                  .str();
     else
-      Text = formatv("FMOV.{0}\tf{1}, {2}", Size ? 'D' : 'S', Reg, EAText)
+      Text = formatv("{0}.{1}\tf{2}, {3}", F.Mnemonic, Size ? 'd' : 's',
+                     Reg, EAText)
                  .str();
     return true;
   }
@@ -1431,6 +1566,56 @@ bool decodeLongPayload(uint32_t Payload, ArrayRef<uint8_t> Tail,
     Text = formatv("fmovcr.{0}\t{1}, f{2}", Size ? 'd' : 's',
                    readLE(Tail, 0, 2), Dst)
                .str();
+    return true;
+  }
+
+  struct LongImmALUForm {
+    StringRef Mnemonic;
+    StringRef Pattern;
+    unsigned Width;
+    unsigned SizeBase;
+  };
+  static const LongImmALUForm LongImmALUForms[] = {
+      {"add", "1111000110zz0010000eeeeeee", 1, 0},
+      {"add", "1111000110zz0010001eeeeeee", 2, 0},
+      {"add", "11110001101z0010010eeeeeee", 4, 2},
+      {"add", "1111000110110010011eeeeeee", 8, 3},
+      {"sub", "1111000110zz0010100eeeeeee", 1, 0},
+      {"sub", "1111000110zz0010101eeeeeee", 2, 0},
+      {"sub", "11110001101z0010110eeeeeee", 4, 2},
+      {"sub", "1111000110110010111eeeeeee", 8, 3},
+      {"and", "1111000110zz0011000eeeeeee", 1, 0},
+      {"and", "1111000110zz0011001eeeeeee", 2, 0},
+      {"and", "11110001101z0011010eeeeeee", 4, 2},
+      {"and", "1111000110110011011eeeeeee", 8, 3},
+      {"or", "1111000110zz0011100eeeeeee", 1, 0},
+      {"or", "1111000110zz0011101eeeeeee", 2, 0},
+      {"or", "11110001101z0011110eeeeeee", 4, 2},
+      {"or", "1111000110110011111eeeeeee", 8, 3},
+      {"xor", "1111000110zz0100000eeeeeee", 1, 0},
+      {"xor", "1111000110zz0100001eeeeeee", 2, 0},
+      {"xor", "11110001101z0100010eeeeeee", 4, 2},
+      {"xor", "1111000110110100011eeeeeee", 8, 3},
+  };
+  for (const LongImmALUForm &F : LongImmALUForms) {
+    if (!matchPattern(F.Pattern, Payload))
+      continue;
+    uint8_t EA = extractPatternField(F.Pattern, Payload, 'e');
+    if (!isCompactEAMemory(EA))
+      continue;
+
+    unsigned Consumed = 0;
+    SmallString<64> EAText;
+    if (!decodeCompactEA(EA, Tail, Consumed, EAText) ||
+        Tail.size() < Consumed + F.Width)
+      return false;
+
+    unsigned Size = F.SizeBase;
+    if (F.Width != 8)
+      Size += extractPatternField(F.Pattern, Payload, 'z');
+    Text = formatv("{0}.{1}\t", F.Mnemonic, "bwlq"[Size]).str();
+    appendSignedImm(Text, Tail.drop_front(Consumed), F.Width);
+    Text += formatv(", {0}", EAText).str();
     return true;
   }
 
@@ -1988,6 +2173,41 @@ bool decodeLongPayload(uint32_t Payload, ArrayRef<uint8_t> Tail,
 
 bool decodeExtraLongPayload(uint64_t Payload, ArrayRef<uint8_t> Tail,
                             SmallString<128> &Text) {
+  struct ExtraFpuBoundForm {
+    StringRef Mnemonic;
+    StringRef Pattern;
+  };
+  static const ExtraFpuBoundForm BoundForms[] = {
+      {"fbndii", "1111110000000z00vvvvlllllllhhhhhhh"},
+      {"fbndix", "1111110000000z01vvvvlllllllhhhhhhh"},
+      {"fbndxi", "1111110000000z10vvvvlllllllhhhhhhh"},
+      {"fbndxx", "1111110000000z11vvvvlllllllhhhhhhh"},
+  };
+  for (const ExtraFpuBoundForm &F : BoundForms) {
+    if (!matchPattern64(F.Pattern, Payload))
+      continue;
+    uint8_t LowEA = extractPatternField64(F.Pattern, Payload, 'l');
+    uint8_t HighEA = extractPatternField64(F.Pattern, Payload, 'h');
+    if (LowEA < 0x10 || HighEA < 0x10)
+      continue;
+
+    unsigned LowConsumed = 0;
+    unsigned HighConsumed = 0;
+    SmallString<64> LowText;
+    SmallString<64> HighText;
+    if (!decodeCompactEA(LowEA, Tail, LowConsumed, LowText) ||
+        !decodeCompactEA(HighEA, Tail.drop_front(LowConsumed), HighConsumed,
+                         HighText))
+      return false;
+
+    unsigned Size = extractPatternField64(F.Pattern, Payload, 'z');
+    Text = formatv("{0}.{1}\t{2}, f{3}, {4}", F.Mnemonic,
+                   Size ? 'd' : 's', LowText,
+                   extractPatternField64(F.Pattern, Payload, 'v'), HighText)
+               .str();
+    return true;
+  }
+
   struct ExtraFMAForm {
     StringRef Mnemonic;
     StringRef Pattern;

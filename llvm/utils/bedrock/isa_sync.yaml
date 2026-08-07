@@ -35,11 +35,11 @@ fptransa_c_api:
 # round-trip set is an intentional inventory change.
 mc_form_inventory:
   round_trip:
-    count: 265
-    sha256: 5d4221d5e450f893f8ae8f3f0d9ee75e5bdd1a0544ec249c4545fddf78cd212c
+    count: 340
+    sha256: 27049a8e4c84f1ecc724a1d204347331e6e529da866fe32903b64ad47bbe4565
   decoder_only:
-    count: 2
-    sha256: 206929f3f05770446d85babfdb0e9e373de4a34f5a078ca0705609cd914f36d4
+    count: 0
+    sha256: e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855
   assembler_only:
     count: 0
     sha256: e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855
@@ -66,3 +66,11 @@ fixed_encoding_probes:
   - form: isa/defs/instructions/POP/encodings.yaml#short.pop_sreg_s
     assembly: pop gs5
     fields: {s: 7}
+  - form: isa/defs/extensions/fpu/instructions/FPUSHP/encodings.yaml#extrashort.fpushp_pair_id_i
+    test: llvm/test/MC/Bedrock/fpu-extensions.s
+    assembly: fpushp 3
+    fields: {i: 3}
+  - form: isa/defs/extensions/fpu/instructions/FPOPP/encodings.yaml#extrashort.fpopp_pair_id_i
+    test: llvm/test/MC/Bedrock/fpu-extensions.s
+    assembly: fpopp 3
+    fields: {i: 3}
