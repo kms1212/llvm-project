@@ -217,6 +217,17 @@ bool BedrockTargetLowering::isFMAFasterThanFMulAndFAdd(
   return Ty->isFloatTy() || Ty->isDoubleTy();
 }
 
+bool BedrockTargetLowering::shouldSignExtendTypeInLibCall(Type *Ty,
+                                                          bool IsSigned) const {
+  // Every baseline libcall parameter with C type int follows the Bedrock C
+  // ABI's signed GENERAL rule, even when the operation producing the libcall
+  // otherwise has unsigned semantics. In particular, the shift-count argument
+  // of __ashlti3 and __lshrti3 is signed int.
+  if (Ty->isIntegerTy(32))
+    return true;
+  return IsSigned;
+}
+
 static bool isFPTRANSAConstantInPrimaryRange(SDValue Op) {
   auto *Constant = dyn_cast<ConstantFPSDNode>(Op);
   if (!Constant || !Constant->getValueAPF().isFinite())

@@ -448,6 +448,11 @@ define i64 @integer_bit_operations(i64 %value) {
 
 define i128 @wide_variable_shift(i128 %value, i64 %amount) {
 ; CHECK-LABEL: wide_variable_shift:
+; CHECK: shl.q{{[ \t]+}}32, [[AMOUNT:r[0-9]+]]
+; CHECK-NEXT: sar.q{{[ \t]+}}32, [[AMOUNT]]
+; CHECK-NOT: extzq.l
+; CHECK: call __ashlti3
+; CHECK: call __lshrti3
 ; CHECK: ret
   %wide_amount = zext i64 %amount to i128
   %left = shl i128 %value, %wide_amount

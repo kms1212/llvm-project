@@ -40,6 +40,8 @@ public:
                                   EVT VT) const override;
   bool isFMAFasterThanFMulAndFAdd(const Function &F,
                                   Type *Ty) const override;
+  bool shouldSignExtendTypeInLibCall(Type *Ty,
+                                     bool IsSigned) const override;
   void AdjustInstrPostInstrSelection(MachineInstr &MI,
                                      SDNode *Node) const override;
   MachineBasicBlock *
