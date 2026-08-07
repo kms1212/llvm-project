@@ -10,6 +10,7 @@
 #include "BedrockInstPrinter.h"
 #include "BedrockMCAsmInfo.h"
 #include "TargetInfo/BedrockTargetInfo.h"
+#include "llvm/MC/MCDwarf.h"
 #include "llvm/MC/MCInstrInfo.h"
 #include "llvm/MC/MCRegisterInfo.h"
 #include "llvm/MC/MCSubtargetInfo.h"
@@ -48,7 +49,10 @@ createBedrockMCSubtargetInfo(const Triple &TT, StringRef CPU, StringRef FS) {
 static MCAsmInfo *createBedrockMCAsmInfo(const MCRegisterInfo &MRI,
                                          const Triple &TT,
                                          const MCTargetOptions &Options) {
-  return new BedrockMCAsmInfo(TT);
+  MCAsmInfo *MAI = new BedrockMCAsmInfo(TT);
+  MAI->addInitialFrameState(MCCFIInstruction::createSameValue(
+      nullptr, MRI.getDwarfRegNum(Bedrock::CS, true)));
+  return MAI;
 }
 
 static MCInstPrinter *createBedrockMCInstPrinter(const Triple &T,

@@ -10,6 +10,7 @@ int near_debug_frame(int x) {
 }
 
 // CFI: Return address column: 17
+// CFI: DW_CFA_same_value: CS
 // CFI: DW_CFA_def_cfa: SP +8
 // CFI-NEXT: DW_CFA_offset: PC -8
 // CFI: DW_CFA_def_cfa_offset: +24
