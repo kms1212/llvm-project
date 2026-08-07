@@ -62,12 +62,21 @@ static uint32_t getEFlags(ELFFileBase *file) {
 }
 
 uint32_t Bedrock::calcEFlags() const {
+  auto checkHeader = [&](ELFFileBase *file) {
+    if (file->osabi != ELFOSABI_NONE)
+      ErrAlways(ctx) << file << ": unrecognized ELF OSABI: "
+                     << static_cast<unsigned>(file->osabi);
+    if (file->abiVersion != 0)
+      ErrAlways(ctx) << file
+                     << ": unrecognized ELF ABI version: "
+                     << static_cast<unsigned>(file->abiVersion);
+    if (uint32_t flags = getEFlags(file))
+      ErrAlways(ctx) << file << ": unrecognized e_flags: " << flags;
+  };
   for (ELFFileBase *file : ctx.objectFiles)
-    if (uint32_t flags = getEFlags(file))
-      ErrAlways(ctx) << file << ": unrecognized e_flags: " << flags;
+    checkHeader(file);
   for (ELFFileBase *file : ctx.sharedFiles)
-    if (uint32_t flags = getEFlags(file))
-      ErrAlways(ctx) << file << ": unrecognized e_flags: " << flags;
+    checkHeader(file);
   return 0;
 }
 
