@@ -72,6 +72,11 @@ uint32_t Bedrock::calcEFlags() const {
                      << static_cast<unsigned>(file->abiVersion);
     if (uint32_t flags = getEFlags(file))
       ErrAlways(ctx) << file << ": unrecognized e_flags: " << flags;
+    for (const object::ELF64LE::Shdr &sec :
+         file->getELFShdrs<object::ELF64LE>())
+      if (sec.sh_type == SHT_REL)
+        ErrAlways(ctx) << file
+                       << ": SHT_REL relocation sections are not permitted";
     for (const object::ELF64LE::Sym &sym :
          file->getELFSyms<object::ELF64LE>())
       if (sym.st_other & 0xfc)
