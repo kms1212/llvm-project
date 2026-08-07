@@ -1,6 +1,6 @@
 ; REQUIRES: bedrock-registered-target
-; RUN: llc -mtriple=bedrock -O2 -verify-machineinstrs < %s | FileCheck %s
-; RUN: llc -mtriple=bedrock -O2 -filetype=obj < %s -o %t.o
+; RUN: llc -mtriple=bedrock -code-model=tiny -O2 -verify-machineinstrs < %s | FileCheck %s
+; RUN: llc -mtriple=bedrock -code-model=tiny -O2 -filetype=obj < %s -o %t.o
 ; RUN: llvm-objdump -d -r --triple=bedrock %t.o | FileCheck %s --check-prefix=OBJ
 
 @src64 = external global i64

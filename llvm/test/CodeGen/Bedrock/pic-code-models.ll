@@ -1,6 +1,8 @@
 ; REQUIRES: bedrock-registered-target
 ; RUN: llc -mtriple=bedrock -relocation-model=static -code-model=tiny -filetype=obj %s -o %t.low.o
 ; RUN: llvm-readobj -r %t.low.o | FileCheck %s --check-prefix=LOW
+; RUN: llc -mtriple=bedrock -relocation-model=static -code-model=small -filetype=obj %s -o %t.small-static.o
+; RUN: llvm-readobj -r %t.small-static.o | FileCheck %s --check-prefix=SMALL-STATIC
 ; RUN: llc -mtriple=bedrock -relocation-model=static -code-model=medium -filetype=obj %s -o %t.medium.o
 ; RUN: llvm-readobj -r %t.medium.o | FileCheck %s --check-prefix=MEDIUM
 ; RUN: llc -mtriple=bedrock -relocation-model=static -code-model=kernel -filetype=obj %s -o %t.high.o
@@ -52,6 +54,13 @@ define void @external_call() {
 ; LOW: R_BEDROCK_IMM32S .data
 ; LOW: R_BEDROCK_TLS_OFFSET32S local_tls
 ; LOW: R_BEDROCK_CALL32S external_function
+
+; SMALL-STATIC: R_BEDROCK_PCREL32S external_data
+; SMALL-STATIC: R_BEDROCK_PCREL32S .data
+; SMALL-STATIC: R_BEDROCK_TLS_OFFSET32S local_tls
+; SMALL-STATIC: R_BEDROCK_TLSDESC_GOTPCREL32S external_tls
+; SMALL-STATIC: R_BEDROCK_TLSDESC_CALL external_tls
+; SMALL-STATIC: R_BEDROCK_CALL32S external_function
 
 ; MEDIUM: R_BEDROCK_ABS64 external_data
 ; MEDIUM: R_BEDROCK_ABS64 .data

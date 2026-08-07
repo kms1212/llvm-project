@@ -1,5 +1,5 @@
 ; REQUIRES: bedrock-registered-target
-; RUN: llc -mtriple=bedrock -filetype=obj < %s -o %t.o
+; RUN: llc -mtriple=bedrock -code-model=tiny -filetype=obj < %s -o %t.o
 ; RUN: llvm-readelf -r %t.o | FileCheck %s --check-prefix=RELOC
 ; RUN: llvm-objdump -d -r --triple=bedrock %t.o | FileCheck %s --check-prefix=DISASM
 

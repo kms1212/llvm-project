@@ -21,7 +21,7 @@ define void @dense_switch(i32 %x) {
 ; CHECK-LABEL: dense_switch:
 ; CHECK: cmp.l 15,
 ; CHECK-NOT: shl.q
-; CHECK: lea.q .LJTI{{[0-9]+}}_{{[0-9]+}}, [[JT:r[0-9]+]]
+; CHECK: lea.q [pc + .LJTI{{[0-9]+}}_{{[0-9]+}}], [[JT:r[0-9]+]]
 ; CHECK-NEXT: extsq.l [ds:[[JT]] + r0], r0
 ; CHECK-NEXT: add.q [[JT]], r0
 ; CHECK-NEXT: jmp.q r0

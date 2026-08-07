@@ -600,6 +600,8 @@ static unsigned getSymbolAddressFlag(const SelectionDAG &DAG,
     return BedrockII::MO_ABS64;
   if (CM == CodeModel::Kernel)
     return IsLocal ? BedrockII::MO_PCREL32 : BedrockII::MO_ABS64;
+  if (CM == CodeModel::Small)
+    return BedrockII::MO_PCREL32;
   return BedrockII::MO_ABS32;
 }
 
@@ -612,7 +614,8 @@ static unsigned getLocalAddressFlag(const SelectionDAG &DAG,
                                   : BedrockII::MO_PCREL32;
   if (CM == CodeModel::Large || (CM == CodeModel::Medium && !IsCodeRelated))
     return BedrockII::MO_ABS64;
-  if (CM == CodeModel::Kernel || (CM == CodeModel::Medium && IsCodeRelated))
+  if (CM == CodeModel::Small || CM == CodeModel::Kernel ||
+      (CM == CodeModel::Medium && IsCodeRelated))
     return BedrockII::MO_PCREL32;
   return BedrockII::MO_ABS32;
 }
@@ -621,7 +624,7 @@ static bool useAbsolute32Memory(const SelectionDAG &DAG) {
   if (DAG.getTarget().isPositionIndependent())
     return false;
   CodeModel::Model CM = DAG.getTarget().getCodeModel();
-  return CM == CodeModel::Tiny || CM == CodeModel::Small;
+  return CM == CodeModel::Tiny;
 }
 
 static bool selectMaterializedSymbolAddress(SelectionDAG *DAG, SDNode *N,
@@ -643,7 +646,9 @@ static bool selectMaterializedSymbolAddress(SelectionDAG *DAG, SDNode *N,
                                : BedrockII::MO_GOTPCREL32)
                         : (CM == CodeModel::Large || CM == CodeModel::Medium
                                ? BedrockII::MO_ABS64
-                               : BedrockII::MO_ABS32);
+                               : CM == CodeModel::Small
+                                     ? BedrockII::MO_PCREL32
+                                     : BedrockII::MO_ABS32);
     Target = DAG->getTargetExternalSymbol(ES->getSymbol(), MVT::i64, Flag);
     return true;
   }

@@ -1,5 +1,5 @@
 ; REQUIRES: bedrock-registered-target
-; RUN: llc -mtriple=bedrock -verify-machineinstrs < %s | FileCheck %s
+; RUN: llc -mtriple=bedrock -code-model=tiny -verify-machineinstrs < %s | FileCheck %s
 
 declare void @use(ptr)
 declare void @clobber()
