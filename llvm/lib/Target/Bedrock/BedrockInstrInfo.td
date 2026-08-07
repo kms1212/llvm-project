@@ -72,6 +72,9 @@ def SDT_BedrockFClrS : SDTypeProfile<1, 0, [SDTCisVT<0, f32>]>;
 def SDT_BedrockFClrD : SDTypeProfile<1, 0, [SDTCisVT<0, f64>]>;
 def SDT_BedrockFMovCrD : SDTypeProfile<1, 1, [SDTCisVT<0, f64>,
                                                SDTCisVT<1, i32>]>;
+def SDT_BedrockFPPair : SDTypeProfile<2, 1, [SDTCisFP<0>,
+                                             SDTCisSameAs<0, 1>,
+                                             SDTCisSameAs<0, 2>]>;
 
 def BedrockCall : SDNode<"BedrockISD::CALL", SDT_BedrockCall,
                          [SDNPHasChain, SDNPOptInGlue, SDNPOutGlue,
@@ -120,6 +123,25 @@ def BedrockFClrD : SDNode<"BedrockISD::FCLR_D", SDT_BedrockFClrD>;
 def BedrockFMovCrD : SDNode<"BedrockISD::FMOVCR_D", SDT_BedrockFMovCrD>;
 def BedrockFGetExp : SDNode<"BedrockISD::FGETEXP", SDTFPUnaryOp>;
 def BedrockFGetMan : SDNode<"BedrockISD::FGETMAN", SDTFPUnaryOp>;
+def BedrockFACOSA : SDNode<"BedrockISD::FACOSA", SDTFPUnaryOp>;
+def BedrockFASINA : SDNode<"BedrockISD::FASINA", SDTFPUnaryOp>;
+def BedrockFATANA : SDNode<"BedrockISD::FATANA", SDTFPUnaryOp>;
+def BedrockFATANHA : SDNode<"BedrockISD::FATANHA", SDTFPUnaryOp>;
+def BedrockFCOSA : SDNode<"BedrockISD::FCOSA", SDTFPUnaryOp>;
+def BedrockFCOSHA : SDNode<"BedrockISD::FCOSHA", SDTFPUnaryOp>;
+def BedrockFETOXA : SDNode<"BedrockISD::FETOXA", SDTFPUnaryOp>;
+def BedrockFETOXM1A : SDNode<"BedrockISD::FETOXM1A", SDTFPUnaryOp>;
+def BedrockFLOG10A : SDNode<"BedrockISD::FLOG10A", SDTFPUnaryOp>;
+def BedrockFLOG2A : SDNode<"BedrockISD::FLOG2A", SDTFPUnaryOp>;
+def BedrockFLOGNA : SDNode<"BedrockISD::FLOGNA", SDTFPUnaryOp>;
+def BedrockFLOGNP1A : SDNode<"BedrockISD::FLOGNP1A", SDTFPUnaryOp>;
+def BedrockFSINA : SDNode<"BedrockISD::FSINA", SDTFPUnaryOp>;
+def BedrockFSINHA : SDNode<"BedrockISD::FSINHA", SDTFPUnaryOp>;
+def BedrockFTANA : SDNode<"BedrockISD::FTANA", SDTFPUnaryOp>;
+def BedrockFTANHA : SDNode<"BedrockISD::FTANHA", SDTFPUnaryOp>;
+def BedrockFTENTOXA : SDNode<"BedrockISD::FTENTOXA", SDTFPUnaryOp>;
+def BedrockFTWOTOXA : SDNode<"BedrockISD::FTWOTOXA", SDTFPUnaryOp>;
+def BedrockFSINCOSA : SDNode<"BedrockISD::FSINCOSA", SDT_BedrockFPPair>;
 def BedrockIncF : SDNode<"BedrockISD::INCF", SDT_BedrockUnaryInt,
                          [SDNPOutGlue]>;
 def BedrockDecF : SDNode<"BedrockISD::DECF", SDT_BedrockUnaryInt,
@@ -963,7 +985,7 @@ def : Pat<(fma f64:$lhs, (fneg f64:$rhs), (fneg f64:$acc)),
           (BEDROCK_FNMSUB_D FPR64:$lhs, FPR64:$rhs, FPR64:$acc)>;
 
 multiclass BedrockApproxUnaryPseudo<Intrinsic Intr> {
-  let Size = 4 in {
+  let Size = 4, Uses = [FSTATUS], Defs = [FFLAGS], hasSideEffects = 1 in {
     def _S : BedrockPseudo<(outs FPR64:$dst), (ins FPR64:$src),
                            [(set f32:$dst, (Intr f32:$src))]>;
     def _D : BedrockPseudo<(outs FPR64:$dst), (ins FPR64:$src),
@@ -991,7 +1013,50 @@ defm BEDROCK_FTANHA : BedrockApproxUnaryPseudo<int_bedrock_ftanha>;
 defm BEDROCK_FTENTOXA : BedrockApproxUnaryPseudo<int_bedrock_ftentoxa>;
 defm BEDROCK_FTWOTOXA : BedrockApproxUnaryPseudo<int_bedrock_ftwotoxa>;
 
-let Size = 5 in {
+multiclass BedrockApproxUnaryNodePat<SDNode Op, Instruction InstS,
+                                     Instruction InstD> {
+  def : Pat<(Op f32:$src), (InstS FPR64:$src)>;
+  def : Pat<(Op f64:$src), (InstD FPR64:$src)>;
+}
+
+defm : BedrockApproxUnaryNodePat<BedrockFACOSA, BEDROCK_FACOSA_S,
+                                 BEDROCK_FACOSA_D>;
+defm : BedrockApproxUnaryNodePat<BedrockFASINA, BEDROCK_FASINA_S,
+                                 BEDROCK_FASINA_D>;
+defm : BedrockApproxUnaryNodePat<BedrockFATANA, BEDROCK_FATANA_S,
+                                 BEDROCK_FATANA_D>;
+defm : BedrockApproxUnaryNodePat<BedrockFATANHA, BEDROCK_FATANHA_S,
+                                 BEDROCK_FATANHA_D>;
+defm : BedrockApproxUnaryNodePat<BedrockFCOSA, BEDROCK_FCOSA_S,
+                                 BEDROCK_FCOSA_D>;
+defm : BedrockApproxUnaryNodePat<BedrockFCOSHA, BEDROCK_FCOSHA_S,
+                                 BEDROCK_FCOSHA_D>;
+defm : BedrockApproxUnaryNodePat<BedrockFETOXA, BEDROCK_FETOXA_S,
+                                 BEDROCK_FETOXA_D>;
+defm : BedrockApproxUnaryNodePat<BedrockFETOXM1A, BEDROCK_FETOXM1A_S,
+                                 BEDROCK_FETOXM1A_D>;
+defm : BedrockApproxUnaryNodePat<BedrockFLOG10A, BEDROCK_FLOG10A_S,
+                                 BEDROCK_FLOG10A_D>;
+defm : BedrockApproxUnaryNodePat<BedrockFLOG2A, BEDROCK_FLOG2A_S,
+                                 BEDROCK_FLOG2A_D>;
+defm : BedrockApproxUnaryNodePat<BedrockFLOGNA, BEDROCK_FLOGNA_S,
+                                 BEDROCK_FLOGNA_D>;
+defm : BedrockApproxUnaryNodePat<BedrockFLOGNP1A, BEDROCK_FLOGNP1A_S,
+                                 BEDROCK_FLOGNP1A_D>;
+defm : BedrockApproxUnaryNodePat<BedrockFSINA, BEDROCK_FSINA_S,
+                                 BEDROCK_FSINA_D>;
+defm : BedrockApproxUnaryNodePat<BedrockFSINHA, BEDROCK_FSINHA_S,
+                                 BEDROCK_FSINHA_D>;
+defm : BedrockApproxUnaryNodePat<BedrockFTANA, BEDROCK_FTANA_S,
+                                 BEDROCK_FTANA_D>;
+defm : BedrockApproxUnaryNodePat<BedrockFTANHA, BEDROCK_FTANHA_S,
+                                 BEDROCK_FTANHA_D>;
+defm : BedrockApproxUnaryNodePat<BedrockFTENTOXA, BEDROCK_FTENTOXA_S,
+                                 BEDROCK_FTENTOXA_D>;
+defm : BedrockApproxUnaryNodePat<BedrockFTWOTOXA, BEDROCK_FTWOTOXA_S,
+                                 BEDROCK_FTWOTOXA_D>;
+
+let Size = 5, Uses = [FSTATUS], Defs = [FFLAGS], hasSideEffects = 1 in {
   def BEDROCK_FSINCOSA_S
       : BedrockPseudo<(outs FPR64:$sin, FPR64:$cos), (ins FPR64:$src),
                       [(set f32:$sin, f32:$cos,
@@ -1001,6 +1066,8 @@ let Size = 5 in {
                       [(set f64:$sin, f64:$cos,
                             (int_bedrock_fsincosa f64:$src))]>;
 }
+def : Pat<(BedrockFSINCOSA f32:$src), (BEDROCK_FSINCOSA_S FPR64:$src)>;
+def : Pat<(BedrockFSINCOSA f64:$src), (BEDROCK_FSINCOSA_D FPR64:$src)>;
 }
 
 let Constraints = "$rd = $src" in {

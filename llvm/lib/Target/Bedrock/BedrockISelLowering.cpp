@@ -411,73 +411,71 @@ SDValue BedrockTargetLowering::PerformDAGCombine(SDNode *N,
   if (VT != MVT::f32 && VT != MVT::f64)
     return {};
 
-  Intrinsic::ID IID;
+  unsigned Opcode;
   switch (N->getOpcode()) {
   case ISD::FACOS:
-    IID = Intrinsic::bedrock_facosa;
+    Opcode = BedrockISD::FACOSA;
     break;
   case ISD::FASIN:
-    IID = Intrinsic::bedrock_fasina;
+    Opcode = BedrockISD::FASINA;
     break;
   case ISD::FATAN:
-    IID = Intrinsic::bedrock_fatana;
+    Opcode = BedrockISD::FATANA;
     break;
   case ISD::FCOS:
     if (!isFPTRANSAConstantInPrimaryRange(Arg))
       return {};
-    IID = Intrinsic::bedrock_fcosa;
+    Opcode = BedrockISD::FCOSA;
     break;
   case ISD::FCOSH:
-    IID = Intrinsic::bedrock_fcosha;
+    Opcode = BedrockISD::FCOSHA;
     break;
   case ISD::FEXP:
-    IID = Intrinsic::bedrock_fetoxa;
+    Opcode = BedrockISD::FETOXA;
     break;
   case ISD::FEXP2:
-    IID = Intrinsic::bedrock_ftwotoxa;
+    Opcode = BedrockISD::FTWOTOXA;
     break;
   case ISD::FEXP10:
-    IID = Intrinsic::bedrock_ftentoxa;
+    Opcode = BedrockISD::FTENTOXA;
     break;
   case ISD::FLOG:
-    IID = Intrinsic::bedrock_flogna;
+    Opcode = BedrockISD::FLOGNA;
     break;
   case ISD::FLOG2:
-    IID = Intrinsic::bedrock_flog2a;
+    Opcode = BedrockISD::FLOG2A;
     break;
   case ISD::FLOG10:
-    IID = Intrinsic::bedrock_flog10a;
+    Opcode = BedrockISD::FLOG10A;
     break;
   case ISD::FSIN:
     if (!isFPTRANSAConstantInPrimaryRange(Arg))
       return {};
-    IID = Intrinsic::bedrock_fsina;
+    Opcode = BedrockISD::FSINA;
     break;
   case ISD::FSINH:
-    IID = Intrinsic::bedrock_fsinha;
+    Opcode = BedrockISD::FSINHA;
     break;
   case ISD::FTAN:
     if (!isFPTRANSAConstantInPrimaryRange(Arg))
       return {};
-    IID = Intrinsic::bedrock_ftana;
+    Opcode = BedrockISD::FTANA;
     break;
   case ISD::FTANH:
-    IID = Intrinsic::bedrock_ftanha;
+    Opcode = BedrockISD::FTANHA;
     break;
   case ISD::FSINCOS: {
     if (!isFPTRANSAConstantInPrimaryRange(Arg))
       return {};
-    SDValue ID = DAG.getConstant(Intrinsic::bedrock_fsincosa, DL, MVT::i32);
-    SDValue Result = DAG.getNode(ISD::INTRINSIC_WO_CHAIN, DL,
-                                 DAG.getVTList(VT, VT), {ID, Arg});
+    SDValue Result = DAG.getNode(BedrockISD::FSINCOSA, DL,
+                                 DAG.getVTList(VT, VT), Arg);
     return DCI.CombineTo(N, Result, Result.getValue(1));
   }
   default:
     return {};
   }
 
-  SDValue ID = DAG.getConstant(IID, DL, MVT::i32);
-  return DAG.getNode(ISD::INTRINSIC_WO_CHAIN, DL, VT, {ID, Arg});
+  return DAG.getNode(Opcode, DL, VT, Arg);
 }
 
 bool BedrockTargetLowering::shouldInsertFencesForAtomic(
@@ -578,6 +576,44 @@ const char *BedrockTargetLowering::getTargetNodeName(unsigned Opcode) const {
     return "BedrockISD::FGETEXP";
   case BedrockISD::FGETMAN:
     return "BedrockISD::FGETMAN";
+  case BedrockISD::FACOSA:
+    return "BedrockISD::FACOSA";
+  case BedrockISD::FASINA:
+    return "BedrockISD::FASINA";
+  case BedrockISD::FATANA:
+    return "BedrockISD::FATANA";
+  case BedrockISD::FATANHA:
+    return "BedrockISD::FATANHA";
+  case BedrockISD::FCOSA:
+    return "BedrockISD::FCOSA";
+  case BedrockISD::FCOSHA:
+    return "BedrockISD::FCOSHA";
+  case BedrockISD::FETOXA:
+    return "BedrockISD::FETOXA";
+  case BedrockISD::FETOXM1A:
+    return "BedrockISD::FETOXM1A";
+  case BedrockISD::FLOG10A:
+    return "BedrockISD::FLOG10A";
+  case BedrockISD::FLOG2A:
+    return "BedrockISD::FLOG2A";
+  case BedrockISD::FLOGNA:
+    return "BedrockISD::FLOGNA";
+  case BedrockISD::FLOGNP1A:
+    return "BedrockISD::FLOGNP1A";
+  case BedrockISD::FSINA:
+    return "BedrockISD::FSINA";
+  case BedrockISD::FSINHA:
+    return "BedrockISD::FSINHA";
+  case BedrockISD::FTANA:
+    return "BedrockISD::FTANA";
+  case BedrockISD::FTANHA:
+    return "BedrockISD::FTANHA";
+  case BedrockISD::FTENTOXA:
+    return "BedrockISD::FTENTOXA";
+  case BedrockISD::FTWOTOXA:
+    return "BedrockISD::FTWOTOXA";
+  case BedrockISD::FSINCOSA:
+    return "BedrockISD::FSINCOSA";
   case BedrockISD::INCF:
     return "BedrockISD::INCF";
   case BedrockISD::DECF:

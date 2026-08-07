@@ -67,7 +67,8 @@ let TargetPrefix = "bedrock" in {
       Intrinsic<[llvm_i64_ty], [llvm_double_ty], [IntrNoMem]>;
 
   class BedrockApproxUnaryIntrinsic
-      : Intrinsic<[llvm_anyfloat_ty], [LLVMMatchType<0>], [IntrNoMem]>;
+      : Intrinsic<[llvm_anyfloat_ty], [LLVMMatchType<0>],
+                  [IntrNoMem, IntrHasSideEffects]>;
   def int_bedrock_facosa : BedrockApproxUnaryIntrinsic;
   def int_bedrock_fasina : BedrockApproxUnaryIntrinsic;
   def int_bedrock_fatana : BedrockApproxUnaryIntrinsic;
@@ -88,7 +89,7 @@ let TargetPrefix = "bedrock" in {
   def int_bedrock_ftwotoxa : BedrockApproxUnaryIntrinsic;
   def int_bedrock_fsincosa
       : Intrinsic<[llvm_anyfloat_ty, LLVMMatchType<0>], [LLVMMatchType<0>],
-                  [IntrNoMem]>;
+                  [IntrNoMem, IntrHasSideEffects]>;
 
   def int_bedrock_write_status :
       Intrinsic<[], [llvm_i64_ty], [IntrNoMem, IntrHasSideEffects]>;

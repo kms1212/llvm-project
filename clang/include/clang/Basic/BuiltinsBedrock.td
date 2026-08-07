@@ -44,7 +44,9 @@ def clmul_u32 : BedrockBuiltin<"unsigned int(unsigned int, unsigned int)">;
 def clmul_u64 : BedrockBuiltin<"uint64_t(uint64_t, uint64_t)">;
 def fclass_f32 : BedrockBuiltin<"unsigned short(float)", "fpu">;
 def fclass_f64 : BedrockBuiltin<"unsigned short(double)", "fpu">;
+}
 
+let Attributes = [NoThrow] in {
 multiclass BedrockApproxUnaryBuiltins {
   def _f32 : BedrockBuiltin<"float(float)", "fptransa">;
   def _f64 : BedrockBuiltin<"double(double)", "fptransa">;

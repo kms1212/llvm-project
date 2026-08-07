@@ -1,5 +1,6 @@
 // REQUIRES: bedrock-registered-target
 // RUN: %clang_cc1 -triple bedrock -std=c11 -ffreestanding -O1 -target-feature +fptransa -internal-isystem %S/../../lib/Headers -emit-llvm -o - %s | FileCheck %s
+// RUN: %clang_cc1 -triple bedrock -std=c11 -ffreestanding -O1 -target-feature +fptransa -internal-isystem %S/../../lib/Headers -S -o - %s | FileCheck %s --check-prefix=ASM
 // RUN: not %clang_cc1 -triple bedrock -std=c11 -ffreestanding -target-feature -fptransa -internal-isystem %S/../../lib/Headers -emit-llvm -o /dev/null %s -DTEST_NO_FPTRANSA 2>&1 | FileCheck %s --check-prefix=NOFEATURE
 
 #include <bedrockintrin.h>
@@ -100,6 +101,20 @@ void approx_sincos_f32(float value, float *sin_result, float *cos_result) {
 // CHECK: store double
 void approx_sincos_f64(double value, double *sin_result, double *cos_result) {
   __bedrock_fsincosa_f64(value, sin_result, cos_result);
+}
+
+// CHECK-LABEL: define{{.*}} void @unused_results_are_side_effecting
+// CHECK-COUNT-2: call float @llvm.bedrock.fsina.f32
+// CHECK: call { float, float } @llvm.bedrock.fsincosa.f32
+// ASM-LABEL: unused_results_are_side_effecting:
+// ASM-COUNT-2: FSINA.S
+// ASM: FSINCOSA.S
+void unused_results_are_side_effecting(float value) {
+  (void)__bedrock_fsina_f32(value);
+  (void)__bedrock_fsina_f32(value);
+  float sin_result;
+  float cos_result;
+  __bedrock_fsincosa_f32(value, &sin_result, &cos_result);
 }
 
 #else
