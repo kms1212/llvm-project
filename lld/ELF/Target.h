@@ -23,6 +23,7 @@ namespace lld {
 namespace elf {
 class Defined;
 class InputFile;
+struct PhdrEntry;
 class Symbol;
 template <class RelTy> struct Relocs;
 
@@ -32,6 +33,8 @@ class TargetInfo {
 public:
   TargetInfo(Ctx &ctx) : ctx(ctx) {}
   virtual uint32_t calcEFlags() const { return 0; }
+  virtual void checkProgramHeaders(
+      ArrayRef<std::unique_ptr<PhdrEntry>> phdrs) const {}
   virtual RelExpr getRelExpr(RelType type, const Symbol &s,
                              const uint8_t *loc) const = 0;
   virtual RelType getDynRel(RelType type) const { return 0; }

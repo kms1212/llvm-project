@@ -24,6 +24,8 @@ class Bedrock final : public TargetInfo {
 public:
   Bedrock(Ctx &);
   uint32_t calcEFlags() const override;
+  void checkProgramHeaders(
+      ArrayRef<std::unique_ptr<PhdrEntry>> phdrs) const override;
   RelExpr getRelExpr(RelType type, const Symbol &s,
                      const uint8_t *loc) const override;
   void scanSection(InputSectionBase &sec) override;
@@ -119,6 +121,19 @@ uint32_t Bedrock::calcEFlags() const {
   for (ELFFileBase *file : ctx.sharedFiles)
     checkHeader(file);
   return 0;
+}
+
+void Bedrock::checkProgramHeaders(
+    ArrayRef<std::unique_ptr<PhdrEntry>> phdrs) const {
+  for (const std::unique_ptr<PhdrEntry> &phdr : phdrs) {
+    if (phdr->p_type != PT_LOAD)
+      continue;
+    if (!(phdr->p_flags & PF_R))
+      ErrAlways(ctx) << "Bedrock PT_LOAD segment must set PF_R";
+    if (phdr->p_align < 4096)
+      ErrAlways(ctx) << "Bedrock PT_LOAD segment alignment " << phdr->p_align
+                     << " is below the 4096-byte minimum";
+  }
 }
 
 int64_t Bedrock::getImplicitAddend(const uint8_t *buf, RelType type) const {

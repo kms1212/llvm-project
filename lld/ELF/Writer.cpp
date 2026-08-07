@@ -343,8 +343,10 @@ template <class ELFT> void Writer<ELFT>::run() {
   else
     assignFileOffsetsBinary();
 
-  for (Partition &part : ctx.partitions)
+  for (Partition &part : ctx.partitions) {
     setPhdrs(part);
+    ctx.target->checkProgramHeaders(part.phdrs);
+  }
 
   // Handle --print-map(-M)/--Map and --cref. Dump them before checkSections()
   // because the files may be useful in case checkSections() or openFile()
