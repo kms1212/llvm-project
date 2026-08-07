@@ -199,14 +199,13 @@ void Bedrock::relocate(uint8_t *loc, const Relocation &rel,
   case R_BEDROCK_TLSDESC_GOTPCREL64:
     if (rel.expr == R_RELAX_TLS_GD_TO_LE) {
       uint8_t *start = loc - 3;
-      // seglea.q [gs0:0 + tpoff64], r0
-      start[0] = 0xeb;
-      start[1] = 0xc7;
-      start[2] = 0x80;
-      start[3] = 0x73;
-      start[4] = 0xa3;
-      write64le(start + 5, val);
-      memset(start + 13, 0x01, 12);
+      // LEN 15, MOV.Q tpoff64, R0. The ELF addend includes the three-byte
+      // field offset; it is not part of the semantic TLS subobject offset.
+      start[0] = 0xf0;
+      start[1] = 0x38;
+      start[2] = 0x6f;
+      write64le(start + 3, val - 3);
+      memset(start + 11, 0, 4);
       break;
     }
     write64le(loc, val);
@@ -243,15 +242,14 @@ void Bedrock::relocate(uint8_t *loc, const Relocation &rel,
     if (rel.type == R_BEDROCK_TLSDESC_GOTPCREL32S &&
         rel.expr == R_RELAX_TLS_GD_TO_LE) {
       uint8_t *start = loc - 3;
-      // seglea.q [gs0:0 + tpoff32], r0
-      start[0] = 0xdb;
-      start[1] = 0xc7;
-      start[2] = 0x80;
-      start[3] = 0x72;
-      start[4] = 0xa3;
-      checkInt(ctx, start + 5, val, 32, rel);
-      write32le(start + 5, val);
-      memset(start + 9, 0x01, 12);
+      // LEN 11, MOV.Q tpoff32, R0. See the 64-bit form above.
+      int64_t tlsOffset = static_cast<int64_t>(val) - 3;
+      start[0] = 0xe0;
+      start[1] = 0x38;
+      start[2] = 0x6e;
+      checkInt(ctx, start + 3, tlsOffset, 32, rel);
+      write32le(start + 3, tlsOffset);
+      memset(start + 7, 0, 4);
       break;
     }
     checkInt(ctx, loc, val, 32, rel);

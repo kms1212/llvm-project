@@ -5116,8 +5116,11 @@ BedrockAsmPrinter::getInstSizeForBranchLayout(const MachineInstr &MI) const {
     return RepgHeaderSize + getConstSize(MI);
   case Bedrock::TLSDESC_CALL:
     return RepgHeaderSize +
-           (MI.getOperand(0).getTargetFlags() == BedrockII::MO_TLSDESC64 ? 25
-                                                                        : 21);
+           (MI.getOperand(0).getTargetFlags() == BedrockII::MO_TLSDESC64 ? 22
+                                                                        : 18) +
+           (MI.getOperand(0).getOffset() == 0
+                ? 0
+                : 3 + getSignedAutoSize(MI.getOperand(0).getOffset()));
   case Bedrock::EXTSQBrr:
   case Bedrock::EXTSQWrr:
   case Bedrock::EXTZQBrr:
@@ -8398,22 +8401,39 @@ void BedrockAsmPrinter::emitTailCall(const MachineInstr *MI) {
 
 void BedrockAsmPrinter::emitTLSDescCall(const MachineInstr *MI) {
   const MachineOperand &Symbol = MI->getOperand(0);
-  const MCExpr *Expr = lowerSymbolOperand(Symbol);
+  assert(Symbol.isGlobal() && "expected a global TLS symbol");
+  const MCExpr *Expr =
+      MCSymbolRefExpr::create(getSymbol(Symbol.getGlobal()), OutContext);
+  int64_t SubobjectOffset = Symbol.getOffset();
   bool Is64BitField =
       Symbol.getTargetFlags() == BedrockII::MO_TLSDESC64;
 
   if (OutStreamer->hasRawTextSupport()) {
     SmallString<96> Text;
     raw_svector_ostream OS(Text);
-    OS << "\tlea.q\t[pc + ";
+    OS << "\tsub.q\t8, sp\n\t.byte\t";
+    if (Is64BitField)
+      OS << "0xe1, 0xb8, 0x07, 0, 0, 0, 0, 0, 0, 0, 0";
+    else
+      OS << "0xd1, 0xb8, 0x06, 0, 0, 0, 0";
+    OS << "\n\t.reloc\t.-" << (Is64BitField ? 8 : 4) << ", "
+       << (Is64BitField ? "R_BEDROCK_TLSDESC_GOTPCREL64"
+                        : "R_BEDROCK_TLSDESC_GOTPCREL32S")
+       << ", ";
     MAI->printExpr(OS, *Expr);
-    OS << "], r0\n\tmov.q\t[r0], r1\n\tsub.q\t8, sp\n\t.tlsdesccall\t";
+    OS << "+3\n\t.reloc\t., R_BEDROCK_TLSDESC_CALL, ";
     MAI->printExpr(OS, *Expr);
-    OS << "\n\tcall\tr1\n\tadd.q\t8, sp\n"
-          "\tlea.q\t[gs0:0 + r0], r0";
+    OS << "\n\tcall\t[r0]\n\tadd.q\t8, sp";
+    if (SubobjectOffset != 0)
+      OS << "\n\tadd.q\t" << SubobjectOffset << ", r0";
+    OS << "\n\tlea.q\t[gs0:0 + r0], r0";
     OutStreamer->emitRawText(OS.str());
     return;
   }
+
+  // The specialized resolver still observes the baseline C ABI stack
+  // alignment. Keep the adjustment outside the exact relaxable pair.
+  emitRaw({0x0f});
 
   unsigned FieldBytes = Is64BitField ? 8 : 4;
   SmallVector<uint8_t, 8> Tail(FieldBytes, 0);
@@ -8428,27 +8448,28 @@ void BedrockAsmPrinter::emitTLSDescCall(const MachineInstr *MI) {
                                : Bedrock::fixup_bedrock_tlsdesc_gotpcrel32),
       Expr);
 
-  SmallVector<uint8_t, 8> LoadBytes;
-  if (!BedrockMC::encodeMedium(
-          getMovPayload(/*IsLoad=*/true, /*Size=*/3,
-                        0x10 + getGPRNo(Bedrock::R0),
-                        Bedrock::R1),
-          {}, LoadBytes))
-    report_fatal_error("failed to encode Bedrock TLSDESC resolver load");
-  emitRaw(LoadBytes);
-
-  // A near CALL pushes an 8-byte return PC. Maintain the baseline ABI's
-  // 16-byte callee entry alignment around the specialized resolver call.
-  emitRaw({0x0f});
-
   SmallVector<uint8_t, 4> CallBytes;
   uint32_t CallPayload = applyPatternValues(
-      "1111000011011100000eeeeeee", {{'e', getRegEA(Bedrock::R1)}});
+      "1111000011011100000eeeeeee",
+      {{'e', 0x10 | getGPRNo(Bedrock::R0)}});
   if (!BedrockMC::encodeLong(CallPayload, {}, CallBytes))
     report_fatal_error("failed to encode Bedrock TLSDESC resolver call");
   emitRawExpr(CallBytes, 0,
               MCFixupKind(Bedrock::fixup_bedrock_tlsdesc_call), Expr);
   emitRaw({0x0e});
+
+  if (SubobjectOffset != 0) {
+    SmallVector<uint8_t, 8> OffsetTail;
+    unsigned WidthCode;
+    appendSignedAuto(SubobjectOffset, OffsetTail, WidthCode);
+    SmallVector<uint8_t, 16> AddBytes;
+    if (!BedrockMC::encodeMedium(
+            getBinaryImmPayload("000111zddddeeeeeee", /*Size=*/3,
+                                0x6c + WidthCode, Bedrock::R0),
+            OffsetTail, AddBytes))
+      report_fatal_error("failed to encode Bedrock TLS subobject offset");
+    emitRaw(AddBytes);
+  }
 
   SmallVector<uint8_t, 2> GSTail = {0xa9, 0x20};
   SmallVector<uint8_t, 8> ResultBytes;

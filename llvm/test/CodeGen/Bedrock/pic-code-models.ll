@@ -12,6 +12,9 @@
 ; RUN: llc -mtriple=bedrock -relocation-model=pic -code-model=small -filetype=obj %s -o %t.small-pic.o
 ; RUN: llvm-readobj -r %t.small-pic.o | FileCheck %s --check-prefix=SMALL-PIC
 ; RUN: llvm-objdump -d %t.small-pic.o | FileCheck %s --check-prefix=PIC-DISASM
+; RUN: llc -mtriple=bedrock -relocation-model=pic -code-model=small -filetype=asm %s -o %t.small-pic.s
+; RUN: llvm-mc -triple=bedrock -filetype=obj %t.small-pic.s -o %t.small-pic-asm.o
+; RUN: llvm-readobj -r %t.small-pic-asm.o | FileCheck %s --check-prefix=ASM-RELOC
 ; RUN: llc -mtriple=bedrock -relocation-model=pic -code-model=small -stop-after=finalize-isel %s -o - | FileCheck %s --check-prefix=PIC-MIR
 ; RUN: llc -mtriple=bedrock -relocation-model=pic -code-model=medium -filetype=obj %s -o %t.medium-pic.o
 ; RUN: llvm-readobj -r %t.medium-pic.o | FileCheck %s --check-prefix=MEDIUM-PIC
@@ -43,6 +46,10 @@ define ptr @external_tls_address() {
 ; PIC-MIR-LABEL: name: external_tls_address
 ; PIC-MIR: TLSDESC_CALL {{.*}}@external_tls, {{.*}}implicit-def dead $status, implicit-def dead $fflags
   ret ptr @external_tls
+}
+
+define ptr @external_tls_subobject() {
+  ret ptr getelementptr (i8, ptr @external_tls, i64 4)
 }
 
 define void @external_call() {
@@ -100,9 +107,18 @@ define void @external_call() {
 ; PIC-DISASM: lea.q	[pc + 0], r0
 ; PIC-DISASM-NEXT: mov.q	[r0], r0
 ; PIC-DISASM-LABEL: <external_tls_address>:
+; PIC-DISASM: sub.q	8, sp
 ; PIC-DISASM: lea.q	[pc + 0], r0
-; PIC-DISASM-NEXT: mov.q	[r0], r1
-; PIC-DISASM-NEXT: sub.q	8, sp
-; PIC-DISASM-NEXT: call	r1
+; PIC-DISASM-NEXT: call	[r0]
 ; PIC-DISASM-NEXT: add.q	8, sp
 ; PIC-DISASM-NEXT: lea.q	[gs0:0 + r0], r0
+; PIC-DISASM-LABEL: <external_tls_subobject>:
+; PIC-DISASM: sub.q	8, sp
+; PIC-DISASM-NEXT: lea.q	[pc + 0], r0
+; PIC-DISASM-NEXT: call	[r0]
+; PIC-DISASM-NEXT: add.q	8, sp
+; PIC-DISASM-NEXT: lea.q	[gs0:0 + r0], r0
+; PIC-DISASM-NEXT: lea.q	[r0 + 4], r0
+
+; ASM-RELOC: R_BEDROCK_TLSDESC_GOTPCREL32S external_tls 0x3
+; ASM-RELOC-NEXT: R_BEDROCK_TLSDESC_CALL external_tls 0x0

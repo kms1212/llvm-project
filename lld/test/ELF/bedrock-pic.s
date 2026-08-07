@@ -58,13 +58,13 @@
 # RELAX-RELOC: Relocations [
 # RELAX-RELOC-NEXT: ]
 # RELAX-LABEL: <tls_ref>:
-# RELAX: db c7 80 72 a3 00 00 00 00 {{.*}}seglea.q	[gs0:0 + 0], r0
-# RELAX-NEXT: nop
+# RELAX: e0 38 6e 00 00 00 00 00 00 00 00 {{.*}}mov.q	0, r0
+# RELAX-NEXT: lea.q	[gs0:0 + r0], r0
 # RELAX: ret
 
 # RELAX64-LABEL: <tls_ref_large>:
-# RELAX64: eb c7 80 73 a3 00 00 00 00 00 00 00 00 {{.*}}seglea.q	[gs0:0 + 0], r0
-# RELAX64-NEXT: nop
+# RELAX64: f0 38 6f 00 00 00 00 00 00 00 00 00 00 00 00 {{.*}}mov.q	0, r0
+# RELAX64-NEXT: lea.q	[gs0:0 + r0], r0
 # RELAX64: ret
 
 #--- shared.s
@@ -75,15 +75,12 @@ entry:
   .byte 0xd0, 0xe6, 0, 0, 0, 0, 0
   .reloc entry+3, R_BEDROCK_PLT32S, function
   .byte 0xd1, 0xb8, 0x06, 0, 0, 0, 0
-  .reloc entry+10, R_BEDROCK_GOTPCREL32S, data
+  .reloc entry+10, R_BEDROCK_GOTPCREL32S, data+3
   .byte 0xd1, 0xb8, 0x06, 0, 0, 0, 0
-  .reloc entry+17, R_BEDROCK_TLSDESC_GOTPCREL32S, tls
-  .byte 0xc0, 0x38, 0x80
-  .byte 0x0f
-  .byte 0xc7, 0xc3, 0x88, 0x01
-  .reloc entry+25, R_BEDROCK_TLSDESC_CALL, tls
-  .byte 0x0e
-  .byte 0xc9, 0xf8, 0x04, 0xb9, 0x20
+  .reloc entry+17, R_BEDROCK_TLSDESC_GOTPCREL32S, tls+3
+  .byte 0xc7, 0xc3, 0x70, 0x10
+  .reloc entry+21, R_BEDROCK_TLSDESC_CALL, tls
+  .byte 0xc9, 0xf8, 0x04, 0xa9, 0x20
   ret
 .type tls,@tls_object
 
@@ -93,13 +90,10 @@ entry:
 .type tls_ref,@function
 tls_ref:
   .byte 0xd1, 0xb8, 0x06, 0, 0, 0, 0
-  .reloc tls_ref+3, R_BEDROCK_TLSDESC_GOTPCREL32S, tls
-  .byte 0xc0, 0x38, 0x80
-  .byte 0x0f
-  .byte 0xc7, 0xc3, 0x88, 0x01
-  .reloc tls_ref+11, R_BEDROCK_TLSDESC_CALL, tls
-  .byte 0x0e
-  .byte 0xc9, 0xf8, 0x04, 0xb9, 0x20
+  .reloc tls_ref+3, R_BEDROCK_TLSDESC_GOTPCREL32S, tls+3
+  .byte 0xc7, 0xc3, 0x70, 0x10
+  .reloc tls_ref+7, R_BEDROCK_TLSDESC_CALL, tls
+  .byte 0xc9, 0xf8, 0x04, 0xa9, 0x20
   ret
 .type tls,@tls_object
 
@@ -116,12 +110,9 @@ tls:
 .type tls_ref_large,@function
 tls_ref_large:
   .byte 0xe1, 0xb8, 0x07, 0, 0, 0, 0, 0, 0, 0, 0
-  .reloc tls_ref_large+3, R_BEDROCK_TLSDESC_GOTPCREL64, tls
-  .byte 0xc0, 0x38, 0x90
-  .byte 0x0f
-  .byte 0xc7, 0xc3, 0x88, 0x01
-  .reloc tls_ref_large+15, R_BEDROCK_TLSDESC_CALL, tls
-  .byte 0x0e
-  .byte 0xc9, 0xf8, 0x04, 0xb9, 0x20
+  .reloc tls_ref_large+3, R_BEDROCK_TLSDESC_GOTPCREL64, tls+3
+  .byte 0xc7, 0xc3, 0x70, 0x10
+  .reloc tls_ref_large+11, R_BEDROCK_TLSDESC_CALL, tls
+  .byte 0xc9, 0xf8, 0x04, 0xa9, 0x20
   ret
 .type tls,@tls_object
