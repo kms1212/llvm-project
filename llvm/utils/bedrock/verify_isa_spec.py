@@ -42,6 +42,31 @@ def git_revision(path: Path) -> str:
     return result.stdout.strip()
 
 
+def require_clean_git_checkout(path: Path) -> None:
+    result = subprocess.run(
+        [
+            "git",
+            "-C",
+            str(path),
+            "status",
+            "--porcelain=v1",
+            "--untracked-files=all",
+        ],
+        check=False,
+        stdout=subprocess.PIPE,
+        stderr=subprocess.PIPE,
+        text=True,
+    )
+    require(result.returncode == 0, f"{path}: cannot inspect Git worktree state")
+    changes = result.stdout.splitlines()
+    require(
+        not changes,
+        f"{path}: ISA checkout has uncommitted changes: "
+        + ", ".join(changes[:3])
+        + (f" (and {len(changes) - 3} more)" if len(changes) > 3 else ""),
+    )
+
+
 def parse_tablegen_registers(path: Path) -> tuple[dict[str, int], dict[str, int]]:
     text = path.read_text(encoding="utf-8")
     hardware: dict[str, int] = {}
@@ -194,6 +219,66 @@ def check_builtins(llvm_root: Path, isa_root: Path, sync: dict) -> str:
     return (
         f"builtins: {len(specification)} architectural, "
         f"{len(allowlist)} LLVM FPTRANSA extensions"
+    )
+
+
+def check_builtin_constraints(llvm_root: Path, isa_root: Path) -> str:
+    sema = (llvm_root / "clang/lib/Sema/SemaChecking.cpp").read_text(
+        encoding="utf-8"
+    )
+    selector_list = re.search(
+        r"constexpr uint64_t DefinedSelectors\[\]\s*=\s*\{(.*?)\};",
+        sema,
+        re.DOTALL,
+    )
+    require(selector_list is not None, "Clang has no defined control-selector list")
+    actual_selectors = {
+        int(value, 0)
+        for value in re.findall(r"0x[0-9a-fA-F]+|\b\d+\b", selector_list.group(1))
+    }
+    expected_selectors = {
+        int(entry["selector"])
+        for entry in load_yaml(
+            isa_root / "isa/reference/architecture_tables.yaml"
+        )["control_registers"]
+    }
+    require(
+        actual_selectors == expected_selectors,
+        "Clang and specification control-register selector sets differ",
+    )
+
+    intrinsics = load_yaml(isa_root / "isa/c/target_intrinsics.yaml")
+    page_queries = [
+        builtin
+        for family in intrinsics["builtin_families"]
+        for builtin in family["builtins"]
+        if builtin["name"] == "page_table_query"
+    ]
+    require(
+        len(page_queries) == 1,
+        "specification must define exactly one page_table_query builtin",
+    )
+    page_query = page_queries[0]
+    level_range = re.search(r"\bin (\d+) through (\d+)\b", page_query["effect"])
+    require(
+        level_range is not None,
+        "specification page_table_query has no integer level range",
+    )
+    expected_range = tuple(map(int, level_range.groups()))
+    sema_range = re.search(
+        r"case Bedrock::BI__builtin_bedrock_page_table_query:\s*"
+        r"return BuiltinConstantArgRange\(TheCall, 0, (\d+), (\d+)\);",
+        sema,
+    )
+    require(sema_range is not None, "Clang has no page_table_query level check")
+    actual_range = tuple(map(int, sema_range.groups()))
+    require(
+        actual_range == expected_range,
+        "Clang and specification PTQUERY level ranges differ",
+    )
+    return (
+        f"builtin constraints: {len(expected_selectors)} control selectors, "
+        f"PTQUERY levels {expected_range[0]}..{expected_range[1]}"
     )
 
 
@@ -531,9 +616,11 @@ def main() -> int:
             revision == sync["isa_revision"],
             f"isa-design revision {revision} does not match {sync['isa_revision']}",
         )
+        require_clean_git_checkout(isa_root)
         checks = (
             check_register_map,
             check_builtins,
+            check_builtin_constraints,
             check_retired_profiles,
             check_fmovcr_constants,
             check_elf_relocations,
