@@ -5,6 +5,7 @@
 target triple = "bedrock"
 
 declare i64 @callee(i64)
+declare void @clobber()
 declare void @use(ptr)
 
 ; A dynamic allocation with the ABI's maximum baseline object alignment must
@@ -33,6 +34,32 @@ define void @dynamic_call_alignment(i64 %size) {
   %slot = alloca i8, i64 %size, align 8
   call void @use(ptr %slot)
   ret void
+}
+
+; R14 holds the stable base for a realigned frame. Keep it out of the general
+; allocation pool even under enough call-crossing pressure to otherwise use
+; every callee-saved GPR.
+define i64 @realigned_base_reserved(i64 %a, i64 %b, i64 %c, i64 %d,
+                                    i64 %e, i64 %f, i64 %g) {
+; CHECK-LABEL: realigned_base_reserved:
+; CHECK: mov.q sp, r14
+; CHECK-NEXT: and.q -64, r14
+; CHECK-NEXT: mov.q r14, sp
+; CHECK-NOT: mov.q {{.*}}, r14
+; CHECK: call clobber
+; CHECK-NOT: mov.q {{.*}}, r14
+; CHECK: lea.q [r14{{( \+ [0-9]+)?}}], r0
+  %slot = alloca i64, align 64
+  call void @clobber()
+  store i64 %a, ptr %slot, align 64
+  call void @use(ptr %slot)
+  %s0 = add i64 %a, %b
+  %s1 = add i64 %s0, %c
+  %s2 = add i64 %s1, %d
+  %s3 = add i64 %s2, %e
+  %s4 = add i64 %s3, %f
+  %s5 = add i64 %s4, %g
+  ret i64 %s5
 }
 
 ; Function bodies keep SP 16-byte aligned.  A single eight-byte save therefore

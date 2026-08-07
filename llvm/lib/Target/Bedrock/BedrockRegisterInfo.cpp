@@ -41,6 +41,8 @@ BedrockRegisterInfo::getReservedRegs(const MachineFunction &MF) const {
 
   Reserved.set(Bedrock::SP);
   Reserved.set(Bedrock::R15);
+  if (MF.getFrameInfo().getMaxAlign() > Align(16))
+    Reserved.set(Bedrock::R14);
   for (MCPhysReg Reg :
        {Bedrock::PC, Bedrock::FLAGS, Bedrock::STATUS, Bedrock::CS, Bedrock::DS,
         Bedrock::SS, Bedrock::GS0, Bedrock::GS1, Bedrock::GS2, Bedrock::GS3,
