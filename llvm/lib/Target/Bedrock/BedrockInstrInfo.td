@@ -34,6 +34,7 @@ def SDT_BedrockMemset : SDTypeProfile<2, 3, [SDTCisVT<0, i64>,
 def SDT_BedrockCmp : SDTypeProfile<0, 2, [SDTCisSameAs<0, 1>]>;
 def SDT_BedrockFCmp : SDTypeProfile<0, 2, [SDTCisSameAs<0, 1>,
                                           SDTCisFP<0>]>;
+def SDT_BedrockFTest : SDTypeProfile<0, 1, [SDTCisFP<0>]>;
 def SDT_BedrockTest : SDTypeProfile<0, 1, [SDTCisInt<0>]>;
 def SDT_BedrockBrCC : SDTypeProfile<0, 2, [SDTCisVT<0, OtherVT>,
                                            SDTCisVT<1, i32>]>;
@@ -49,6 +50,11 @@ def SDT_BedrockFPSelectCC : SDTypeProfile<1, 5, [SDTCisSameAs<1, 2>,
                                                  SDTCisVT<5, i32>,
                                                  SDTCisFP<0>,
                                                  SDTCisFP<1>]>;
+def SDT_BedrockFPSelectTest : SDTypeProfile<1, 4, [SDTCisSameAs<0, 2>,
+                                                   SDTCisSameAs<0, 3>,
+                                                   SDTCisVT<4, i32>,
+                                                   SDTCisFP<0>,
+                                                   SDTCisFP<1>]>;
 def SDT_BedrockFPSetCC : SDTypeProfile<1, 3, [SDTCisVT<0, i64>,
                                               SDTCisSameAs<1, 2>,
                                               SDTCisVT<3, i32>,
@@ -60,6 +66,8 @@ def SDT_BedrockBinaryInt : SDTypeProfile<1, 2, [SDTCisSameAs<0, 1>,
                                                 SDTCisInt<0>]>;
 def SDT_BedrockAddress : SDTypeProfile<1, 1, [SDTCisSameAs<0, 1>]>;
 def SDT_BedrockTLSDesc : SDTypeProfile<0, 1, [SDTCisPtrTy<0>]>;
+def SDT_BedrockFClrS : SDTypeProfile<1, 0, [SDTCisVT<0, f32>]>;
+def SDT_BedrockFClrD : SDTypeProfile<1, 0, [SDTCisVT<0, f64>]>;
 
 def BedrockCall : SDNode<"BedrockISD::CALL", SDT_BedrockCall,
                          [SDNPHasChain, SDNPOptInGlue, SDNPOutGlue,
@@ -81,6 +89,8 @@ def BedrockRetFlag : SDNode<"BedrockISD::RET_FLAG", SDTNone,
 def BedrockCmp : SDNode<"BedrockISD::CMP", SDT_BedrockCmp, [SDNPOutGlue]>;
 def BedrockFCmp : SDNode<"BedrockISD::FCMP", SDT_BedrockFCmp,
                          [SDNPOutGlue]>;
+def BedrockFTest : SDNode<"BedrockISD::FTEST", SDT_BedrockFTest,
+                          [SDNPOutGlue]>;
 def BedrockTest : SDNode<"BedrockISD::TEST", SDT_BedrockTest, [SDNPOutGlue]>;
 def BedrockBrCC : SDNode<"BedrockISD::BR_CC", SDT_BedrockBrCC,
                          [SDNPHasChain, SDNPInGlue]>;
@@ -90,6 +100,8 @@ def BedrockSelectCC : SDNode<"BedrockISD::SELECT_CC",
                              SDT_BedrockSelectCC>;
 def BedrockFPSelectCC : SDNode<"BedrockISD::FP_SELECT_CC",
                                SDT_BedrockFPSelectCC>;
+def BedrockFPSelectTest : SDNode<"BedrockISD::FP_SELECT_TEST",
+                                 SDT_BedrockFPSelectTest>;
 def BedrockFPSetCC : SDNode<"BedrockISD::FP_SET_CC", SDT_BedrockFPSetCC>;
 def BedrockSMax : SDNode<"BedrockISD::SMAX", SDT_BedrockBinaryInt>;
 def BedrockSMin : SDNode<"BedrockISD::SMIN", SDT_BedrockBinaryInt>;
@@ -97,6 +109,8 @@ def BedrockUMax : SDNode<"BedrockISD::UMAX", SDT_BedrockBinaryInt>;
 def BedrockUMin : SDNode<"BedrockISD::UMIN", SDT_BedrockBinaryInt>;
 def BedrockSMaxZero : SDNode<"BedrockISD::SMAX_ZERO", SDT_BedrockUnaryInt>;
 def BedrockSMinZero : SDNode<"BedrockISD::SMIN_ZERO", SDT_BedrockUnaryInt>;
+def BedrockFClrS : SDNode<"BedrockISD::FCLR_S", SDT_BedrockFClrS>;
+def BedrockFClrD : SDNode<"BedrockISD::FCLR_D", SDT_BedrockFClrD>;
 def BedrockCallSeqStart : SDNode<"ISD::CALLSEQ_START",
                                  SDT_BedrockCallSeqStart,
                                  [SDNPHasChain, SDNPOutGlue]>;
@@ -623,12 +637,22 @@ def : Pat<(i64 (anyext i32:$src)), (COPY_TO_REGCLASS $src, GPR64)>;
 def : Pat<(i32 (trunc i64:$src)), (COPY_TO_REGCLASS $src, GPR64)>;
 
 def FMOVDrr : BedrockPseudo<(outs FPR64:$rd), (ins FPR64:$src)>;
+def BEDROCK_FCLR_S
+    : BedrockPseudo<(outs FPR64:$rd), (ins),
+                    [(set f32:$rd, (BedrockFClrS))]>;
+def BEDROCK_FCLR_D
+    : BedrockPseudo<(outs FPR64:$rd), (ins),
+                    [(set f64:$rd, (BedrockFClrD))]>;
 
 let isCompare = 1, hasSideEffects = 1 in {
 def FCMPSrr : BedrockPseudo<(outs), (ins FPR64:$lhs, FPR64:$rhs),
                             [(BedrockFCmp f32:$lhs, f32:$rhs)]>;
 def FCMPDrr : BedrockPseudo<(outs), (ins FPR64:$lhs, FPR64:$rhs),
                             [(BedrockFCmp f64:$lhs, f64:$rhs)]>;
+def FTESTSr : BedrockPseudo<(outs), (ins FPR64:$src),
+                            [(BedrockFTest f32:$src)]>;
+def FTESTDr : BedrockPseudo<(outs), (ins FPR64:$src),
+                            [(BedrockFTest f64:$src)]>;
 }
 
 let Constraints = "$rd = $fval" in {
@@ -646,6 +670,47 @@ def FP_SELECT_CC_D
                     [(set f64:$rd,
                           (BedrockFPSelectCC f64:$lhs, f64:$rhs, f64:$tval,
                                              f64:$fval, imm:$cc))]>;
+def FP_SELECT_CC_SD
+    : BedrockPseudo<(outs FPR64:$rd),
+                    (ins FPR64:$lhs, FPR64:$rhs, FPR64:$tval,
+                         FPR64:$fval, i32imm:$cc),
+                    [(set f64:$rd,
+                          (BedrockFPSelectCC f32:$lhs, f32:$rhs, f64:$tval,
+                                             f64:$fval, imm:$cc))]>;
+def FP_SELECT_CC_DS
+    : BedrockPseudo<(outs FPR64:$rd),
+                    (ins FPR64:$lhs, FPR64:$rhs, FPR64:$tval,
+                         FPR64:$fval, i32imm:$cc),
+                    [(set f32:$rd,
+                          (BedrockFPSelectCC f64:$lhs, f64:$rhs, f32:$tval,
+                                             f32:$fval, imm:$cc))]>;
+}
+
+let Constraints = "$rd = $fval" in {
+def FP_SELECT_TEST_SS
+    : BedrockPseudo<(outs FPR64:$rd),
+                    (ins FPR64:$src, FPR64:$tval, FPR64:$fval, i32imm:$cc),
+                    [(set f32:$rd,
+                          (BedrockFPSelectTest f32:$src, f32:$tval,
+                                               f32:$fval, imm:$cc))]>;
+def FP_SELECT_TEST_SD
+    : BedrockPseudo<(outs FPR64:$rd),
+                    (ins FPR64:$src, FPR64:$tval, FPR64:$fval, i32imm:$cc),
+                    [(set f64:$rd,
+                          (BedrockFPSelectTest f32:$src, f64:$tval,
+                                               f64:$fval, imm:$cc))]>;
+def FP_SELECT_TEST_DS
+    : BedrockPseudo<(outs FPR64:$rd),
+                    (ins FPR64:$src, FPR64:$tval, FPR64:$fval, i32imm:$cc),
+                    [(set f32:$rd,
+                          (BedrockFPSelectTest f64:$src, f32:$tval,
+                                               f32:$fval, imm:$cc))]>;
+def FP_SELECT_TEST_DD
+    : BedrockPseudo<(outs FPR64:$rd),
+                    (ins FPR64:$src, FPR64:$tval, FPR64:$fval, i32imm:$cc),
+                    [(set f64:$rd,
+                          (BedrockFPSelectTest f64:$src, f64:$tval,
+                                               f64:$fval, imm:$cc))]>;
 }
 
 let usesCustomInserter = 1, hasSideEffects = 1 in {
@@ -678,7 +743,38 @@ def FDIVSrr : BedrockPseudo<(outs FPR64:$rd), (ins FPR64:$lhs, FPR64:$rhs),
                             [(set f32:$rd, (fdiv f32:$lhs, f32:$rhs))]>;
 def FDIVDrr : BedrockPseudo<(outs FPR64:$rd), (ins FPR64:$lhs, FPR64:$rhs),
                             [(set f64:$rd, (fdiv f64:$lhs, f64:$rhs))]>;
+def FMODSrr : BedrockPseudo<(outs FPR64:$rd), (ins FPR64:$lhs, FPR64:$rhs),
+                            [(set f32:$rd, (frem f32:$lhs, f32:$rhs))]>;
+def FMODDrr : BedrockPseudo<(outs FPR64:$rd), (ins FPR64:$lhs, FPR64:$rhs),
+                            [(set f64:$rd, (frem f64:$lhs, f64:$rhs))]>;
+def FMINSrr
+    : BedrockPseudo<(outs FPR64:$rd), (ins FPR64:$lhs, FPR64:$rhs),
+                    [(set f32:$rd,
+                          (fminimumnum f32:$lhs, f32:$rhs))]>;
+def FMINDrr
+    : BedrockPseudo<(outs FPR64:$rd), (ins FPR64:$lhs, FPR64:$rhs),
+                    [(set f64:$rd,
+                          (fminimumnum f64:$lhs, f64:$rhs))]>;
+def FMAXSrr
+    : BedrockPseudo<(outs FPR64:$rd), (ins FPR64:$lhs, FPR64:$rhs),
+                    [(set f32:$rd,
+                          (fmaximumnum f32:$lhs, f32:$rhs))]>;
+def FMAXDrr
+    : BedrockPseudo<(outs FPR64:$rd), (ins FPR64:$lhs, FPR64:$rhs),
+                    [(set f64:$rd,
+                          (fmaximumnum f64:$lhs, f64:$rhs))]>;
 } // Constraints
+
+def FCOPYSIGNSrrr
+    : BedrockPseudo<(outs FPR64:$rd),
+                    (ins FPR64:$magnitude, FPR64:$sign),
+                    [(set f32:$rd,
+                          (fcopysign f32:$magnitude, f32:$sign))]>;
+def FCOPYSIGNDrrr
+    : BedrockPseudo<(outs FPR64:$rd),
+                    (ins FPR64:$magnitude, FPR64:$sign),
+                    [(set f64:$rd,
+                          (fcopysign f64:$magnitude, f64:$sign))]>;
 
 def FCVTSQSrr : BedrockPseudo<(outs FPR64:$rd), (ins GPR64:$src),
                               [(set f32:$rd, (sint_to_fp i64:$src))]>;
@@ -726,6 +822,7 @@ defm BEDROCK_FROUND : BedrockFpuUnaryPseudo<froundeven>;
 defm BEDROCK_FTRUNC : BedrockFpuUnaryPseudo<ftrunc>;
 defm BEDROCK_FCEIL : BedrockFpuUnaryPseudo<fceil>;
 defm BEDROCK_FFLOOR : BedrockFpuUnaryPseudo<ffloor>;
+defm BEDROCK_FINT : BedrockFpuUnaryPseudo<frint>;
 
 multiclass BedrockFusedPseudo {
   let Constraints = "$rd = $acc", Size = 4 in {

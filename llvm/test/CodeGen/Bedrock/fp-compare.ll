@@ -181,3 +181,49 @@ define double @select_bool(i1 %cond, double %x, double %y) {
   %result = select i1 %cond, double %x, double %y
   ret double %result
 }
+
+define i1 @test_positive_zero(float %value) {
+; CHECK-LABEL: test_positive_zero:
+; CHECK: FTEST.S{{[ \t]+}}f0
+; CHECK-NEXT: seteq
+; OBJ-LABEL: <test_positive_zero>:
+; OBJ: c7 d6 30 00{{.*}}ftest.s{{[ \t]+}}f0
+  %result = fcmp oeq float %value, 0.0
+  ret i1 %result
+}
+
+define i1 @test_negative_zero(double %value) {
+; CHECK-LABEL: test_negative_zero:
+; CHECK: FTEST.D{{[ \t]+}}f0
+; CHECK-NEXT: setult
+; OBJ-LABEL: <test_negative_zero>:
+; OBJ: c7 d6 b0 00{{.*}}ftest.d{{[ \t]+}}f0
+  %result = fcmp olt double %value, -0.0
+  ret i1 %result
+}
+
+define double @select_float_test_double_result(float %value, double %t,
+                                                double %f) {
+; CHECK-LABEL: select_float_test_double_result:
+; CHECK: FTEST.S{{[ \t]+}}f0
+; CHECK-NEXT: FMOVult
+; OBJ-LABEL: <select_float_test_double_result>:
+; OBJ: c7 d6 30 00{{.*}}ftest.s{{[ \t]+}}f0
+; OBJ-NEXT: {{.*}}c7 d9 20 82{{.*}}fmovult
+  %condition = fcmp olt float %value, 0.0
+  %result = select i1 %condition, double %t, double %f
+  ret double %result
+}
+
+define float @select_double_test_float_result(double %value, float %t,
+                                               float %f) {
+; CHECK-LABEL: select_double_test_float_result:
+; CHECK: FTEST.D{{[ \t]+}}f0
+; CHECK-NEXT: FMOVgt
+; OBJ-LABEL: <select_double_test_float_result>:
+; OBJ: c7 d6 b0 00{{.*}}ftest.d{{[ \t]+}}f0
+; OBJ-NEXT: {{.*}}c7 d9 78 82{{.*}}fmovgt
+  %condition = fcmp ogt double %value, -0.0
+  %result = select i1 %condition, float %t, float %f
+  ret float %result
+}

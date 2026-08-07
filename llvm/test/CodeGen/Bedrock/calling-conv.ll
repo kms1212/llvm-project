@@ -193,6 +193,6 @@ define i128 @integer_pair_return(i64 %low, i64 %high) {
 ; OBJ: call
 ; OBJ: add.q 40, sp
 ; OBJ-LABEL: <floating_register_exhaustion>:
-; OBJ: FMOV.D [sp + 16], f0
+; OBJ: fmov.d [sp + 16], f0
 ; OBJ-LABEL: <single_register_exhaustion>:
-; OBJ: FMOV.S [sp + 16], f0
+; OBJ: fmov.s [sp + 16], f0

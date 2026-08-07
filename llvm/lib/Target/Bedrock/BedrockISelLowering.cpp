@@ -102,14 +102,19 @@ BedrockTargetLowering::BedrockTargetLowering(const TargetMachine &TM,
     setOperationAction(ISD::FSUB, VT, Legal);
     setOperationAction(ISD::FMUL, VT, Legal);
     setOperationAction(ISD::FDIV, VT, Legal);
+    setOperationAction(ISD::FREM, VT, Legal);
     setOperationAction(ISD::FMA, VT, Legal);
     setOperationAction(ISD::FABS, VT, Legal);
     setOperationAction(ISD::FNEG, VT, Legal);
+    setOperationAction(ISD::FCOPYSIGN, VT, Legal);
+    setOperationAction(ISD::FMINIMUMNUM, VT, Legal);
+    setOperationAction(ISD::FMAXIMUMNUM, VT, Legal);
     setOperationAction(ISD::FSQRT, VT, Legal);
     setOperationAction(ISD::FROUNDEVEN, VT, Legal);
     setOperationAction(ISD::FTRUNC, VT, Legal);
     setOperationAction(ISD::FCEIL, VT, Legal);
     setOperationAction(ISD::FFLOOR, VT, Legal);
+    setOperationAction(ISD::FRINT, VT, Legal);
     setOperationAction(ISD::SETCC, VT, Custom);
     setOperationAction(ISD::SELECT, VT, Custom);
     setOperationAction(ISD::SELECT_CC, VT, Custom);
@@ -128,6 +133,7 @@ BedrockTargetLowering::BedrockTargetLowering(const TargetMachine &TM,
   setOperationAction(ISD::FP_TO_UINT, MVT::i64, Legal);
   setOperationAction(ISD::FP_ROUND, MVT::f32, Legal);
   setOperationAction(ISD::FP_EXTEND, MVT::f64, Legal);
+  setTargetDAGCombine(ISD::ConstantFP);
   if (Subtarget.hasFPTRANSA())
     setTargetDAGCombine(
         {ISD::FACOS, ISD::FASIN, ISD::FATAN, ISD::FCOS, ISD::FCOSH,
@@ -170,11 +176,28 @@ static bool isFPTRANSAConstantInPrimaryRange(SDValue Op) {
 
 SDValue BedrockTargetLowering::PerformDAGCombine(
     SDNode *N, DAGCombinerInfo &DCI) const {
+  SelectionDAG &DAG = DCI.DAG;
+  SDLoc DL(N);
+  if (N->getOpcode() == ISD::ConstantFP) {
+    auto *Constant = cast<ConstantFPSDNode>(N);
+    EVT VT = N->getValueType(0);
+    if (Constant->getValueAPF().isPosZero()) {
+      for (SDUse &Use : N->uses())
+        if (Use.getUser()->getOpcode() == ISD::SETCC ||
+            Use.getUser()->getOpcode() == ISD::BR_CC ||
+            Use.getUser()->getOpcode() == ISD::SELECT_CC)
+          return {};
+      if (VT == MVT::f32)
+        return DAG.getNode(BedrockISD::FCLR_S, DL, VT);
+      if (VT == MVT::f64)
+        return DAG.getNode(BedrockISD::FCLR_D, DL, VT);
+    }
+    return {};
+  }
+
   if (!Subtarget.hasFPTRANSA() || !N->getFlags().hasApproximateFuncs())
     return {};
 
-  SelectionDAG &DAG = DCI.DAG;
-  SDLoc DL(N);
   SDValue Arg = N->getOperand(0);
   EVT VT = N->getValueType(0);
   if (VT != MVT::f32 && VT != MVT::f64)
@@ -307,6 +330,8 @@ const char *BedrockTargetLowering::getTargetNodeName(unsigned Opcode) const {
     return "BedrockISD::CMP";
   case BedrockISD::FCMP:
     return "BedrockISD::FCMP";
+  case BedrockISD::FTEST:
+    return "BedrockISD::FTEST";
   case BedrockISD::TEST:
     return "BedrockISD::TEST";
   case BedrockISD::BR_CC:
@@ -317,6 +342,8 @@ const char *BedrockTargetLowering::getTargetNodeName(unsigned Opcode) const {
     return "BedrockISD::SELECT_CC";
   case BedrockISD::FP_SELECT_CC:
     return "BedrockISD::FP_SELECT_CC";
+  case BedrockISD::FP_SELECT_TEST:
+    return "BedrockISD::FP_SELECT_TEST";
   case BedrockISD::FP_SET_CC:
     return "BedrockISD::FP_SET_CC";
   case BedrockISD::SMAX:
@@ -331,6 +358,10 @@ const char *BedrockTargetLowering::getTargetNodeName(unsigned Opcode) const {
     return "BedrockISD::SMAX_ZERO";
   case BedrockISD::SMIN_ZERO:
     return "BedrockISD::SMIN_ZERO";
+  case BedrockISD::FCLR_S:
+    return "BedrockISD::FCLR_S";
+  case BedrockISD::FCLR_D:
+    return "BedrockISD::FCLR_D";
   default:
     return nullptr;
   }
@@ -511,8 +542,12 @@ BedrockTargetLowering::LowerDYNAMIC_STACKALLOC(SDValue Op,
 
 static SDValue emitCompare(SDValue LHS, SDValue RHS, const SDLoc &DL,
                            SelectionDAG &DAG) {
-  if (LHS.getValueType().isFloatingPoint())
+  if (LHS.getValueType().isFloatingPoint()) {
+    auto *Constant = dyn_cast<ConstantFPSDNode>(RHS);
+    if (Constant && Constant->getValueAPF().isZero())
+      return DAG.getNode(BedrockISD::FTEST, DL, MVT::Glue, LHS);
     return DAG.getNode(BedrockISD::FCMP, DL, MVT::Glue, LHS, RHS);
+  }
   if (isNullConstant(RHS))
     return DAG.getNode(BedrockISD::TEST, DL, MVT::Glue, LHS);
   return DAG.getNode(BedrockISD::CMP, DL, MVT::Glue, LHS, RHS);
@@ -748,8 +783,13 @@ static SDValue lowerRegisterSelectCC(SDValue LHS, SDValue RHS,
     if (TargetCC == 0x1)
       return FalseValue;
 
+    auto *Constant = dyn_cast<ConstantFPSDNode>(RHS);
+    bool TestZero = Constant && Constant->getValueAPF().isZero();
     auto MakeSelect = [&](SDValue TVal, SDValue FVal,
                           unsigned Cond) -> SDValue {
+      if (TestZero)
+        return DAG.getNode(BedrockISD::FP_SELECT_TEST, DL, VT, LHS, TVal,
+                           FVal, DAG.getConstant(Cond, DL, MVT::i32));
       return DAG.getNode(BedrockISD::FP_SELECT_CC, DL, VT, LHS, RHS, TVal,
                          FVal, DAG.getConstant(Cond, DL, MVT::i32));
     };

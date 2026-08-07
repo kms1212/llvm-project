@@ -190,12 +190,18 @@ private:
                         MemAddrKind AddrKind);
   void emitFpuMove(Register DstReg, Register SrcReg);
   void emitFpuMove(const MachineInstr *MI);
+  void emitFpuClear(const MachineInstr *MI);
   void emitFpuComparePseudo(const MachineInstr *MI, bool IsDouble);
+  void emitFpuTestPseudo(const MachineInstr *MI, bool IsDouble);
   void emitFpuSelectPseudo(const MachineInstr *MI, bool IsDouble);
+  void emitFpuSelectTestPseudo(const MachineInstr *MI, bool IsDouble);
   void emitFpuBinaryPseudo(const MachineInstr *MI, StringRef Mnemonic,
-                           StringRef Pattern, bool IsDouble);
+                           StringRef Pattern, bool IsDouble,
+                           bool IsLong = false);
+  void emitFpuCopySignPseudo(const MachineInstr *MI, bool IsDouble);
   void emitFpuUnaryPseudo(const MachineInstr *MI, StringRef Mnemonic,
-                          StringRef Pattern, bool IsDouble);
+                          StringRef Pattern, bool IsDouble,
+                          bool IsLong = false);
   void emitFusedPseudo(const MachineInstr *MI, StringRef Mnemonic,
                        StringRef Pattern, bool IsDouble);
   void emitApproxUnaryPseudo(const MachineInstr *MI, StringRef Mnemonic,
@@ -5438,13 +5444,27 @@ BedrockAsmPrinter::getInstSizeForBranchLayout(const MachineInstr &MI) const {
            getFrameTailSize(MI, 2);
   case Bedrock::FMOVDrr:
     return RepgHeaderSize + 3;
+  case Bedrock::BEDROCK_FCLR_S:
+  case Bedrock::BEDROCK_FCLR_D:
+    return RepgHeaderSize + 3;
   case Bedrock::FCMPSrr:
   case Bedrock::FCMPDrr:
     return RepgHeaderSize + 3;
+  case Bedrock::FTESTSr:
+  case Bedrock::FTESTDr:
+    return RepgHeaderSize + 4;
   case Bedrock::FP_SELECT_CC_S:
   case Bedrock::FP_SELECT_CC_D:
+  case Bedrock::FP_SELECT_CC_SD:
+  case Bedrock::FP_SELECT_CC_DS:
     return RepgHeaderSize +
            (MI.getOperand(5).getImm() == 0x11 ? 11 : 7);
+  case Bedrock::FP_SELECT_TEST_SS:
+  case Bedrock::FP_SELECT_TEST_SD:
+  case Bedrock::FP_SELECT_TEST_DS:
+  case Bedrock::FP_SELECT_TEST_DD:
+    return RepgHeaderSize +
+           (MI.getOperand(4).getImm() == 0x11 ? 12 : 8);
   case Bedrock::FADDSrr:
   case Bedrock::FADDDrr:
   case Bedrock::FSUBSrr:
@@ -5453,8 +5473,19 @@ BedrockAsmPrinter::getInstSizeForBranchLayout(const MachineInstr &MI) const {
   case Bedrock::FMULDrr:
   case Bedrock::FDIVSrr:
   case Bedrock::FDIVDrr:
+  case Bedrock::FMINSrr:
+  case Bedrock::FMINDrr:
+  case Bedrock::FMAXSrr:
+  case Bedrock::FMAXDrr:
     return RepgHeaderSize +
            (MI.getOperand(0).getReg() == MI.getOperand(1).getReg() ? 3 : 6);
+  case Bedrock::FMODSrr:
+  case Bedrock::FMODDrr:
+    return RepgHeaderSize +
+           (MI.getOperand(0).getReg() == MI.getOperand(1).getReg() ? 4 : 7);
+  case Bedrock::FCOPYSIGNSrrr:
+  case Bedrock::FCOPYSIGNDrrr:
+    return RepgHeaderSize + 4;
   case Bedrock::FCVTSQSrr:
   case Bedrock::FCVTSQDrr:
   case Bedrock::FCVTUQSrr:
@@ -5478,6 +5509,9 @@ BedrockAsmPrinter::getInstSizeForBranchLayout(const MachineInstr &MI) const {
     FPU_UNARY_SIZE_CASES(FFLOOR)
 #undef FPU_UNARY_SIZE_CASES
     return RepgHeaderSize + 3;
+  case Bedrock::BEDROCK_FINT_S:
+  case Bedrock::BEDROCK_FINT_D:
+    return RepgHeaderSize + 4;
 #define FUSED_SIZE_CASES(NAME)                                               \
   case Bedrock::BEDROCK_##NAME##_S:                                         \
   case Bedrock::BEDROCK_##NAME##_D:
@@ -7308,6 +7342,24 @@ void BedrockAsmPrinter::emitFpuMove(const MachineInstr *MI) {
   emitFpuMove(MI->getOperand(0).getReg(), MI->getOperand(1).getReg());
 }
 
+void BedrockAsmPrinter::emitFpuClear(const MachineInstr *MI) {
+  Register DstReg = MI->getOperand(0).getReg();
+  if (OutStreamer->hasRawTextSupport()) {
+    SmallString<48> Text;
+    raw_svector_ostream OS(Text);
+    OS << "\tFCLR\t" << BedrockInstPrinter::getRegisterName(DstReg);
+    OutStreamer->emitRawText(OS.str());
+    return;
+  }
+
+  uint32_t Payload =
+      applyPatternValues("10010000001000dddd", {{'d', getFPRNo(DstReg)}});
+  SmallVector<uint8_t, 4> Bytes;
+  if (!BedrockMC::encodeMedium(Payload, {}, Bytes))
+    report_fatal_error("failed to encode Bedrock floating-point clear");
+  emitRaw(Bytes);
+}
+
 void BedrockAsmPrinter::emitFpuComparePseudo(const MachineInstr *MI,
                                              bool IsDouble) {
   Register LHSReg = MI->getOperand(0).getReg();
@@ -7331,6 +7383,27 @@ void BedrockAsmPrinter::emitFpuComparePseudo(const MachineInstr *MI,
   SmallVector<uint8_t, 4> Bytes;
   if (!BedrockMC::encodeMedium(Payload, {}, Bytes))
     report_fatal_error("failed to encode Bedrock floating-point compare");
+  emitRaw(Bytes);
+}
+
+void BedrockAsmPrinter::emitFpuTestPseudo(const MachineInstr *MI,
+                                          bool IsDouble) {
+  Register SrcReg = MI->getOperand(0).getReg();
+  if (OutStreamer->hasRawTextSupport()) {
+    SmallString<48> Text;
+    raw_svector_ostream OS(Text);
+    OS << "\tFTEST." << (IsDouble ? 'D' : 'S') << "\t"
+       << BedrockInstPrinter::getRegisterName(SrcReg);
+    OutStreamer->emitRawText(OS.str());
+    return;
+  }
+
+  uint32_t Payload = applyPatternValues(
+      "1111010110z01100000000ssss",
+      {{'z', IsDouble}, {'s', getFPRNo(SrcReg)}});
+  SmallVector<uint8_t, 4> Bytes;
+  if (!BedrockMC::encodeLong(Payload, {}, Bytes))
+    report_fatal_error("failed to encode Bedrock floating-point test");
   emitRaw(Bytes);
 }
 
@@ -7397,10 +7470,69 @@ void BedrockAsmPrinter::emitFpuSelectPseudo(const MachineInstr *MI,
   }
 }
 
+void BedrockAsmPrinter::emitFpuSelectTestPseudo(const MachineInstr *MI,
+                                                bool IsDouble) {
+  Register DstReg = MI->getOperand(0).getReg();
+  Register SrcReg = MI->getOperand(1).getReg();
+  Register TrueReg = MI->getOperand(2).getReg();
+  unsigned Cond = MI->getOperand(4).getImm();
+
+  if (OutStreamer->hasRawTextSupport()) {
+    SmallString<48> TestText;
+    raw_svector_ostream TestOS(TestText);
+    TestOS << "\tFTEST." << (IsDouble ? 'D' : 'S') << "\t"
+           << BedrockInstPrinter::getRegisterName(SrcReg);
+    OutStreamer->emitRawText(TestOS.str());
+
+    auto EmitMoveText = [&](unsigned MoveCond) {
+      SmallString<64> MoveText;
+      raw_svector_ostream MoveOS(MoveText);
+      MoveOS << "\tFMOV" << getCondSuffix(MoveCond) << "\t"
+             << BedrockInstPrinter::getRegisterName(TrueReg) << ", "
+             << BedrockInstPrinter::getRegisterName(DstReg);
+      OutStreamer->emitRawText(MoveOS.str());
+    };
+    if (Cond == 0x11) {
+      EmitMoveText(0x2);
+      EmitMoveText(0x8);
+    } else {
+      EmitMoveText(Cond);
+    }
+    return;
+  }
+
+  uint32_t TestPayload = applyPatternValues(
+      "1111010110z01100000000ssss",
+      {{'z', IsDouble}, {'s', getFPRNo(SrcReg)}});
+  SmallVector<uint8_t, 4> TestBytes;
+  if (!BedrockMC::encodeLong(TestPayload, {}, TestBytes))
+    report_fatal_error("failed to encode Bedrock floating-point test");
+  emitRaw(TestBytes);
+
+  auto EmitMove = [&](unsigned MoveCond) {
+    uint32_t MovePayload = applyPatternValues(
+        "11110110010ccccssss000dddd",
+        {{'c', MoveCond},
+         {'s', getFPRNo(TrueReg)},
+         {'d', getFPRNo(DstReg)}});
+    SmallVector<uint8_t, 4> MoveBytes;
+    if (!BedrockMC::encodeLong(MovePayload, {}, MoveBytes))
+      report_fatal_error(
+          "failed to encode Bedrock floating-point conditional move");
+    emitRaw(MoveBytes);
+  };
+  if (Cond == 0x11) {
+    EmitMove(0x2);
+    EmitMove(0x8);
+  } else {
+    EmitMove(Cond);
+  }
+}
+
 void BedrockAsmPrinter::emitFpuBinaryPseudo(const MachineInstr *MI,
                                             StringRef Mnemonic,
                                             StringRef Pattern,
-                                            bool IsDouble) {
+                                            bool IsDouble, bool IsLong) {
   Register DstReg = MI->getOperand(0).getReg();
   Register LHSReg = MI->getOperand(1).getReg();
   Register RHSReg = MI->getOperand(2).getReg();
@@ -7423,15 +7555,46 @@ void BedrockAsmPrinter::emitFpuBinaryPseudo(const MachineInstr *MI,
                                    {'s', getFPRNo(RHSReg)},
                                    {'d', getFPRNo(DstReg)}});
   SmallVector<uint8_t, 4> Bytes;
-  if (!BedrockMC::encodeMedium(Payload, {}, Bytes))
+  bool Encoded = IsLong ? BedrockMC::encodeLong(Payload, {}, Bytes)
+                        : BedrockMC::encodeMedium(Payload, {}, Bytes);
+  if (!Encoded)
     report_fatal_error("failed to encode Bedrock floating-point arithmetic");
+  emitRaw(Bytes);
+}
+
+void BedrockAsmPrinter::emitFpuCopySignPseudo(const MachineInstr *MI,
+                                              bool IsDouble) {
+  Register DstReg = MI->getOperand(0).getReg();
+  Register MagnitudeReg = MI->getOperand(1).getReg();
+  Register SignReg = MI->getOperand(2).getReg();
+
+  if (OutStreamer->hasRawTextSupport()) {
+    SmallString<80> Text;
+    raw_svector_ostream OS(Text);
+    OS << "\tFCOPYSIGN." << (IsDouble ? 'D' : 'S') << "\t"
+       << BedrockInstPrinter::getRegisterName(SignReg) << ", "
+       << BedrockInstPrinter::getRegisterName(MagnitudeReg) << ", "
+       << BedrockInstPrinter::getRegisterName(DstReg);
+    OutStreamer->emitRawText(OS.str());
+    return;
+  }
+
+  uint32_t Payload = applyPatternValues(
+      "1111010111zssssmmmm011dddd",
+      {{'z', IsDouble},
+       {'s', getFPRNo(SignReg)},
+       {'m', getFPRNo(MagnitudeReg)},
+       {'d', getFPRNo(DstReg)}});
+  SmallVector<uint8_t, 4> Bytes;
+  if (!BedrockMC::encodeLong(Payload, {}, Bytes))
+    report_fatal_error("failed to encode Bedrock floating-point copy sign");
   emitRaw(Bytes);
 }
 
 void BedrockAsmPrinter::emitFpuUnaryPseudo(const MachineInstr *MI,
                                            StringRef Mnemonic,
                                            StringRef Pattern,
-                                           bool IsDouble) {
+                                           bool IsDouble, bool IsLong) {
   Register DstReg = MI->getOperand(0).getReg();
   Register SrcReg = MI->getOperand(1).getReg();
   if (OutStreamer->hasRawTextSupport()) {
@@ -7449,7 +7612,9 @@ void BedrockAsmPrinter::emitFpuUnaryPseudo(const MachineInstr *MI,
                                    {'s', getFPRNo(SrcReg)},
                                    {'d', getFPRNo(DstReg)}});
   SmallVector<uint8_t, 4> Bytes;
-  if (!BedrockMC::encodeMedium(Payload, {}, Bytes))
+  bool Encoded = IsLong ? BedrockMC::encodeLong(Payload, {}, Bytes)
+                        : BedrockMC::encodeMedium(Payload, {}, Bytes);
+  if (!Encoded)
     report_fatal_error("failed to encode Bedrock floating-point unary op");
   emitRaw(Bytes);
 }
@@ -7623,6 +7788,21 @@ void BedrockAsmPrinter::emitFpuLoad(const MachineInstr *MI, bool IsFrame,
                                     bool IsDouble) {
   Register DstReg = MI->getOperand(0).getReg();
 
+  if (OutStreamer->hasRawTextSupport()) {
+    SmallString<80> Text;
+    raw_svector_ostream OS(Text);
+    OS << "\tFMOV." << (IsDouble ? 'D' : 'S') << "\t[";
+    if (IsFrame) {
+      OS << "sp";
+      printMemOffset(OS, getFrameOffset(MI, 1));
+    } else {
+      OS << BedrockInstPrinter::getRegisterName(MI->getOperand(1).getReg());
+    }
+    OS << "], " << BedrockInstPrinter::getRegisterName(DstReg);
+    OutStreamer->emitRawText(OS.str());
+    return;
+  }
+
   uint8_t EA;
   SmallVector<uint8_t, 8> Tail;
   if (IsFrame)
@@ -7643,6 +7823,17 @@ void BedrockAsmPrinter::emitFpuLoadOffset(const MachineInstr *MI,
                                           bool IsDouble) {
   Register DstReg = MI->getOperand(0).getReg();
 
+  if (OutStreamer->hasRawTextSupport()) {
+    SmallString<80> Text;
+    raw_svector_ostream OS(Text);
+    OS << "\tFMOV." << (IsDouble ? 'D' : 'S') << "\t["
+       << BedrockInstPrinter::getRegisterName(MI->getOperand(1).getReg());
+    printMemOffset(OS, MI->getOperand(2).getImm());
+    OS << "], " << BedrockInstPrinter::getRegisterName(DstReg);
+    OutStreamer->emitRawText(OS.str());
+    return;
+  }
+
   uint8_t EA;
   SmallVector<uint8_t, 8> Tail;
   getMemEAForRegOffset(MI->getOperand(1).getReg(), MI->getOperand(2).getImm(),
@@ -7660,6 +7851,22 @@ void BedrockAsmPrinter::emitFpuLoadOffset(const MachineInstr *MI,
 void BedrockAsmPrinter::emitFpuStore(const MachineInstr *MI, bool IsFrame,
                                      bool IsDouble) {
   Register SrcReg = MI->getOperand(0).getReg();
+
+  if (OutStreamer->hasRawTextSupport()) {
+    SmallString<80> Text;
+    raw_svector_ostream OS(Text);
+    OS << "\tFMOV." << (IsDouble ? 'D' : 'S') << "\t"
+       << BedrockInstPrinter::getRegisterName(SrcReg) << ", [";
+    if (IsFrame) {
+      OS << "sp";
+      printMemOffset(OS, getFrameOffset(MI, 1));
+    } else {
+      OS << BedrockInstPrinter::getRegisterName(MI->getOperand(1).getReg());
+    }
+    OS << "]";
+    OutStreamer->emitRawText(OS.str());
+    return;
+  }
 
   uint8_t EA;
   SmallVector<uint8_t, 8> Tail;
@@ -7680,6 +7887,18 @@ void BedrockAsmPrinter::emitFpuStore(const MachineInstr *MI, bool IsFrame,
 void BedrockAsmPrinter::emitFpuStoreOffset(const MachineInstr *MI,
                                            bool IsDouble) {
   Register SrcReg = MI->getOperand(0).getReg();
+
+  if (OutStreamer->hasRawTextSupport()) {
+    SmallString<80> Text;
+    raw_svector_ostream OS(Text);
+    OS << "\tFMOV." << (IsDouble ? 'D' : 'S') << "\t"
+       << BedrockInstPrinter::getRegisterName(SrcReg) << ", ["
+       << BedrockInstPrinter::getRegisterName(MI->getOperand(1).getReg());
+    printMemOffset(OS, MI->getOperand(2).getImm());
+    OS << "]";
+    OutStreamer->emitRawText(OS.str());
+    return;
+  }
 
   uint8_t EA;
   SmallVector<uint8_t, 8> Tail;
@@ -8908,17 +9127,41 @@ void BedrockAsmPrinter::emitInstruction(const MachineInstr *MI) {
   case Bedrock::FMOVDrr:
     emitFpuMove(MI);
     return;
+  case Bedrock::BEDROCK_FCLR_S:
+  case Bedrock::BEDROCK_FCLR_D:
+    emitFpuClear(MI);
+    return;
   case Bedrock::FCMPSrr:
     emitFpuComparePseudo(MI, /*IsDouble=*/false);
     return;
   case Bedrock::FCMPDrr:
     emitFpuComparePseudo(MI, /*IsDouble=*/true);
     return;
+  case Bedrock::FTESTSr:
+    emitFpuTestPseudo(MI, /*IsDouble=*/false);
+    return;
+  case Bedrock::FTESTDr:
+    emitFpuTestPseudo(MI, /*IsDouble=*/true);
+    return;
   case Bedrock::FP_SELECT_CC_S:
     emitFpuSelectPseudo(MI, /*IsDouble=*/false);
     return;
   case Bedrock::FP_SELECT_CC_D:
     emitFpuSelectPseudo(MI, /*IsDouble=*/true);
+    return;
+  case Bedrock::FP_SELECT_CC_SD:
+    emitFpuSelectPseudo(MI, /*IsDouble=*/false);
+    return;
+  case Bedrock::FP_SELECT_CC_DS:
+    emitFpuSelectPseudo(MI, /*IsDouble=*/true);
+    return;
+  case Bedrock::FP_SELECT_TEST_SS:
+  case Bedrock::FP_SELECT_TEST_SD:
+    emitFpuSelectTestPseudo(MI, /*IsDouble=*/false);
+    return;
+  case Bedrock::FP_SELECT_TEST_DS:
+  case Bedrock::FP_SELECT_TEST_DD:
+    emitFpuSelectTestPseudo(MI, /*IsDouble=*/true);
     return;
   case Bedrock::FADDSrr:
     emitFpuBinaryPseudo(MI, "FADD", "100100zssss111dddd",
@@ -8952,6 +9195,36 @@ void BedrockAsmPrinter::emitInstruction(const MachineInstr *MI) {
     emitFpuBinaryPseudo(MI, "FDIV", "100101zssss010dddd",
                         /*IsDouble=*/true);
     return;
+  case Bedrock::FMODSrr:
+    emitFpuBinaryPseudo(MI, "FMOD", "1111010110z0011dddd000ssss",
+                        /*IsDouble=*/false, /*IsLong=*/true);
+    return;
+  case Bedrock::FMODDrr:
+    emitFpuBinaryPseudo(MI, "FMOD", "1111010110z0011dddd000ssss",
+                        /*IsDouble=*/true, /*IsLong=*/true);
+    return;
+  case Bedrock::FMINSrr:
+    emitFpuBinaryPseudo(MI, "FMIN", "100101zssss110dddd",
+                        /*IsDouble=*/false);
+    return;
+  case Bedrock::FMINDrr:
+    emitFpuBinaryPseudo(MI, "FMIN", "100101zssss110dddd",
+                        /*IsDouble=*/true);
+    return;
+  case Bedrock::FMAXSrr:
+    emitFpuBinaryPseudo(MI, "FMAX", "100101zssss111dddd",
+                        /*IsDouble=*/false);
+    return;
+  case Bedrock::FMAXDrr:
+    emitFpuBinaryPseudo(MI, "FMAX", "100101zssss111dddd",
+                        /*IsDouble=*/true);
+    return;
+  case Bedrock::FCOPYSIGNSrrr:
+    emitFpuCopySignPseudo(MI, /*IsDouble=*/false);
+    return;
+  case Bedrock::FCOPYSIGNDrrr:
+    emitFpuCopySignPseudo(MI, /*IsDouble=*/true);
+    return;
 #define EMIT_FPU_UNARY(NAME, PATTERN)                                       \
   case Bedrock::BEDROCK_##NAME##_S:                                         \
     emitFpuUnaryPseudo(MI, #NAME, PATTERN, /*IsDouble=*/false);             \
@@ -8967,6 +9240,14 @@ void BedrockAsmPrinter::emitInstruction(const MachineInstr *MI) {
     EMIT_FPU_UNARY(FCEIL, "101001zdddd000ssss")
     EMIT_FPU_UNARY(FFLOOR, "101011zdddd000ssss")
 #undef EMIT_FPU_UNARY
+  case Bedrock::BEDROCK_FINT_S:
+    emitFpuUnaryPseudo(MI, "FINT", "1111010101z1111dddd000ssss",
+                       /*IsDouble=*/false, /*IsLong=*/true);
+    return;
+  case Bedrock::BEDROCK_FINT_D:
+    emitFpuUnaryPseudo(MI, "FINT", "1111010101z1111dddd000ssss",
+                       /*IsDouble=*/true, /*IsLong=*/true);
+    return;
 #define EMIT_FUSED(NAME, PATTERN)                                            \
   case Bedrock::BEDROCK_##NAME##_S:                                          \
     emitFusedPseudo(MI, #NAME, PATTERN, /*IsDouble=*/false);                 \
