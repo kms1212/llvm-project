@@ -72,6 +72,11 @@ uint32_t Bedrock::calcEFlags() const {
                      << static_cast<unsigned>(file->abiVersion);
     if (uint32_t flags = getEFlags(file))
       ErrAlways(ctx) << file << ": unrecognized e_flags: " << flags;
+    for (const object::ELF64LE::Sym &sym :
+         file->getELFSyms<object::ELF64LE>())
+      if (sym.st_other & 0xfc)
+        ErrAlways(ctx) << file << ": reserved symbol st_other bits are nonzero: "
+                       << static_cast<unsigned>(sym.st_other);
   };
   for (ELFFileBase *file : ctx.objectFiles)
     checkHeader(file);
