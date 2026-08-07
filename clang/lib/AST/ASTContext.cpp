@@ -5502,6 +5502,11 @@ bool ASTContext::computeBestEnumTypes(bool IsPacked, unsigned NumNegativeBits,
       BestType = UnsignedShortTy;
       BestPromotionType = IntTy;
       BestWidth = ShortWidth;
+    } else if (Target->useSignedIntForNonNegativeEnums() &&
+               NumPositiveBits < IntWidth) {
+      BestType = IntTy;
+      BestWidth = IntWidth;
+      BestPromotionType = IntTy;
     } else if (NumPositiveBits <= IntWidth) {
       BestType = UnsignedIntTy;
       BestWidth = IntWidth;

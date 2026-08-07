@@ -952,6 +952,10 @@ public:
   /// only if their canonical declared base types are identical.
   virtual bool useBitFieldTypeForAllocationUnits() const { return false; }
 
+  /// Return true when an enumeration with no negative values still uses
+  /// signed int whenever all of its values are representable by that type.
+  virtual bool useSignedIntForNonNegativeEnums() const { return false; }
+
   /// Check whether zero length bitfields should force alignment of
   /// the next member.
   bool useZeroLengthBitfieldAlignment() const {

@@ -81,6 +81,8 @@ public:
 
   bool useBitFieldTypeForAllocationUnits() const override { return true; }
 
+  bool useSignedIntForNonNegativeEnums() const override { return true; }
+
 };
 
 } // namespace targets
