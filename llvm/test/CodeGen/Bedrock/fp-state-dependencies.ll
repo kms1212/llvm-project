@@ -43,6 +43,7 @@ declare i1 @llvm.experimental.constrained.fcmps.f32(float, float, metadata,
                                                      metadata)
 declare i1 @llvm.experimental.constrained.fcmps.f64(double, double, metadata,
                                                      metadata)
+declare void @callee()
 
 define i64 @state_access(i64 %status, i64 %flags) {
 ; CHECK-LABEL: name: state_access
@@ -52,6 +53,22 @@ define i64 @state_access(i64 %status, i64 %flags) {
 ; CHECK: BEDROCK_RDFFLAGS implicit $fflags
   call void @llvm.bedrock.write.fstatus(i64 %status)
   call void @llvm.bedrock.write.fflags(i64 %flags)
+  %read_status = call i64 @llvm.bedrock.read.fstatus()
+  %read_flags = call i64 @llvm.bedrock.read.fflags()
+  %result = xor i64 %read_status, %read_flags
+  ret i64 %result
+}
+
+define i64 @call_fp_state(i64 %status, i64 %flags) {
+; CHECK-LABEL: name: call_fp_state
+; CHECK: BEDROCK_WRFSTATUS {{.*}}, implicit-def {{(dead )?}}$fstatus
+; CHECK: BEDROCK_WRFFLAGS {{.*}}, implicit-def {{(dead )?}}$fflags
+; CHECK: CALL @callee, csr_bedrock, {{.*}}implicit-def {{(dead )?}}$fflags
+; CHECK: BEDROCK_RDFSTATUS implicit $fstatus
+; CHECK: BEDROCK_RDFFLAGS implicit $fflags
+  call void @llvm.bedrock.write.fstatus(i64 %status)
+  call void @llvm.bedrock.write.fflags(i64 %flags)
+  call void @callee()
   %read_status = call i64 @llvm.bedrock.read.fstatus()
   %read_flags = call i64 @llvm.bedrock.read.fflags()
   %result = xor i64 %read_status, %read_flags

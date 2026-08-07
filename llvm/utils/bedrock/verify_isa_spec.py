@@ -309,6 +309,122 @@ def check_retired_profiles(llvm_root: Path, isa_root: Path) -> str:
     return "retired profiles: C far pointers and far ELF ABI absent"
 
 
+def parse_tex_register_set(cell: str) -> set[str]:
+    result: set[str] = set()
+    register_re = re.compile(
+        r"\\texttt\{([A-Z]+)(\d*)\}"
+        r"(?:--\\texttt\{([A-Z]+)(\d*)\})?"
+    )
+    for match in register_re.finditer(cell):
+        first_prefix, first_index, last_prefix, last_index = match.groups()
+        if last_prefix is None:
+            result.add(first_prefix + first_index)
+            continue
+        require(
+            first_prefix == last_prefix and first_index and last_index,
+            f"cannot expand ABI register range {match.group(0)!r}",
+        )
+        result.update(
+            f"{first_prefix}{index}"
+            for index in range(int(first_index), int(last_index) + 1)
+        )
+    return result
+
+
+def parse_tablegen_register_set(body: str) -> set[str]:
+    return set(
+        re.findall(
+            r"\b(?:R(?:1[0-5]|[0-9])|F(?:1[0-5]|[0-9])|"
+            r"FLAGS|STATUS|FFLAGS|FSTATUS|CS|DS|SS|GS[0-5])\b",
+            body,
+        )
+    )
+
+
+def check_call_state(llvm_root: Path, isa_root: Path) -> str:
+    abi = (isa_root / "isa/abi/bedrock-c-abi.tex").read_text(encoding="utf-8")
+    volatile: set[str] = set()
+    preserved: set[str] = set()
+    for state in (
+        "General registers",
+        "Floating-point registers",
+        "Condition state",
+        "Segment state",
+    ):
+        row = re.search(
+            rf"^{re.escape(state)}\s*&\s*(.*?)\s*&\s*(.*?)\\\\$",
+            abi,
+            re.MULTILINE,
+        )
+        require(row is not None, f"cannot parse C ABI {state} preservation row")
+        volatile.update(parse_tex_register_set(row.group(1)))
+        preserved.update(parse_tex_register_set(row.group(2)))
+
+    require(
+        re.search(r"\\texttt\{FSTATUS\} is callee-saved", abi) is not None,
+        "C ABI does not classify FSTATUS as callee-saved",
+    )
+    require(
+        re.search(r"\\texttt\{FFLAGS\} is cumulative[\s\S]*?caller-clobbered", abi)
+        is not None,
+        "C ABI does not classify FFLAGS as caller-clobbered",
+    )
+    require(
+        "Registers not listed as nonvolatile carry no" in abi
+        and "\\texttt{STATUS} is not part of the C abstract machine" in abi,
+        "C ABI no longer defines the unlisted STATUS call state",
+    )
+    preserved.add("FSTATUS")
+    volatile.update(("STATUS", "FFLAGS"))
+
+    calling_conv = (
+        llvm_root / "llvm/lib/Target/Bedrock/BedrockCallingConv.td"
+    ).read_text(encoding="utf-8")
+    preserved_definition = re.search(
+        r"def CSR_Bedrock\s*:\s*CalleeSavedRegs<\s*\(add(.*?)\)>;",
+        calling_conv,
+        re.DOTALL,
+    )
+    require(preserved_definition is not None, "LLVM has no C ABI preserved mask")
+    actual_preserved = parse_tablegen_register_set(preserved_definition.group(1))
+    require(
+        actual_preserved == preserved,
+        f"LLVM call-preserved state differs from the C ABI: "
+        f"expected {sorted(preserved)}, found {sorted(actual_preserved)}",
+    )
+
+    instructions = (
+        llvm_root / "llvm/lib/Target/Bedrock/BedrockInstrInfo.td"
+    ).read_text(encoding="utf-8")
+    call_defs = re.search(
+        r"let isCall = 1, Defs = \[(.*?)\] in \{\s*def CALL\b",
+        instructions,
+        re.DOTALL,
+    )
+    tlsdesc_defs = re.search(
+        r"let isCall = 1, hasSideEffects = 1,\s*Defs = \[(.*?)\] in\s*"
+        r"def TLSDESC_CALL\b",
+        instructions,
+        re.DOTALL,
+    )
+    require(call_defs is not None, "LLVM has no ordinary call clobber set")
+    require(tlsdesc_defs is not None, "LLVM has no TLSDESC call clobber set")
+    for name, definition in (
+        ("ordinary", call_defs),
+        ("TLSDESC", tlsdesc_defs),
+    ):
+        actual_volatile = parse_tablegen_register_set(definition.group(1))
+        require(
+            actual_volatile == volatile,
+            f"LLVM {name} call-clobbered state differs from the C ABI: "
+            f"expected {sorted(volatile)}, found {sorted(actual_volatile)}",
+        )
+    return (
+        f"call state: {len(preserved)} preserved, "
+        f"{len(volatile)} caller-clobbered"
+    )
+
+
 def check_fmovcr_constants(llvm_root: Path, isa_root: Path) -> str:
     values = load_yaml(isa_root / "isa/defs/extensions/fpu/operands.yaml")[
         "operand_types"
@@ -622,6 +738,7 @@ def main() -> int:
             check_builtins,
             check_builtin_constraints,
             check_retired_profiles,
+            check_call_state,
             check_fmovcr_constants,
             check_elf_relocations,
             check_mc_forms,

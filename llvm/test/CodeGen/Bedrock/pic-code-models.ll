@@ -10,6 +10,7 @@
 ; RUN: llc -mtriple=bedrock -relocation-model=pic -code-model=small -filetype=obj %s -o %t.small-pic.o
 ; RUN: llvm-readobj -r %t.small-pic.o | FileCheck %s --check-prefix=SMALL-PIC
 ; RUN: llvm-objdump -d %t.small-pic.o | FileCheck %s --check-prefix=PIC-DISASM
+; RUN: llc -mtriple=bedrock -relocation-model=pic -code-model=small -stop-after=finalize-isel %s -o - | FileCheck %s --check-prefix=PIC-MIR
 ; RUN: llc -mtriple=bedrock -relocation-model=pic -code-model=medium -filetype=obj %s -o %t.medium-pic.o
 ; RUN: llvm-readobj -r %t.medium-pic.o | FileCheck %s --check-prefix=MEDIUM-PIC
 ; RUN: llc -mtriple=bedrock -relocation-model=pic -code-model=large -filetype=obj %s -o %t.large-pic.o
@@ -37,6 +38,8 @@ define ptr @local_tls_address() {
 }
 
 define ptr @external_tls_address() {
+; PIC-MIR-LABEL: name: external_tls_address
+; PIC-MIR: TLSDESC_CALL {{.*}}@external_tls, {{.*}}implicit-def dead $status, implicit-def dead $fflags
   ret ptr @external_tls
 }
 

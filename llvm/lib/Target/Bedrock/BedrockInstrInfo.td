@@ -1868,7 +1868,7 @@ def SELECT_CC_D : BedrockPseudo<(outs FPR64:$rd),
 
 let isCall = 1, Defs = [R0, R1, R2, R3, R4, R5, R6, R7,
                         F0, F1, F2, F3, F4, F5, F6, F7, FLAGS,
-                        GS1, GS2, GS3, GS4, GS5] in {
+                        GS1, GS2, GS3, GS4, GS5, STATUS, FFLAGS] in {
 def CALL : BedrockPseudo<(outs), (ins i64imm:$dst)>;
 def CALLr : BedrockPseudo<(outs), (ins GPR64:$dst)>;
 // These retain ordinary call semantics until the late pass verifies that the
@@ -1880,7 +1880,7 @@ def CALLr_TAIL : BedrockPseudo<(outs), (ins GPR64:$dst)>;
 let isCall = 1, hasSideEffects = 1,
     Defs = [R0, R1, R2, R3, R4, R5, R6, R7,
             F0, F1, F2, F3, F4, F5, F6, F7, FLAGS,
-            GS1, GS2, GS3, GS4, GS5] in
+            GS1, GS2, GS3, GS4, GS5, STATUS, FFLAGS] in
 def TLSDESC_CALL : BedrockPseudo<(outs), (ins i64imm:$sym)>;
 
 let isBranch = 1, isTerminator = 1, isBarrier = 1 in

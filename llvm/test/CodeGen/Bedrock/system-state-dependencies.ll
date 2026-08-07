@@ -5,6 +5,7 @@ declare void @llvm.bedrock.write.status(i64)
 declare i64 @llvm.bedrock.read.segment.register(i32 immarg)
 declare i64 @llvm.bedrock.read.code.segment()
 declare void @llvm.bedrock.write.segment.register(i32 immarg, i64)
+declare void @callee()
 
 ; CHECK-LABEL: name: status_state
 ; CHECK: %{{[0-9]+}}:gpr64 = BEDROCK_RDSTATUS implicit $status
@@ -13,6 +14,14 @@ define void @status_state() {
   %status = call i64 @llvm.bedrock.read.status()
   call void @llvm.bedrock.write.status(i64 %status)
   ret void
+}
+
+; CHECK-LABEL: name: call_status_state
+; CHECK: CALL @callee, csr_bedrock, {{.*}}implicit-def {{(dead )?}}$status
+define i64 @call_status_state() {
+  call void @callee()
+  %status = call i64 @llvm.bedrock.read.status()
+  ret i64 %status
 }
 
 ; CHECK-LABEL: name: read_segment_state
