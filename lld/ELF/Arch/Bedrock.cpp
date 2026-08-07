@@ -26,6 +26,7 @@ public:
   uint32_t calcEFlags() const override;
   void checkProgramHeaders(
       ArrayRef<std::unique_ptr<PhdrEntry>> phdrs) const override;
+  RelType getDynRel(RelType type) const override;
   RelExpr getRelExpr(RelType type, const Symbol &s,
                      const uint8_t *loc) const override;
   void scanSection(InputSectionBase &sec) override;
@@ -134,6 +135,10 @@ void Bedrock::checkProgramHeaders(
       ErrAlways(ctx) << "Bedrock PT_LOAD segment alignment " << phdr->p_align
                      << " is below the 4096-byte minimum";
   }
+}
+
+RelType Bedrock::getDynRel(RelType type) const {
+  return type == symbolicRel ? type : R_BEDROCK_NONE;
 }
 
 int64_t Bedrock::getImplicitAddend(const uint8_t *buf, RelType type) const {

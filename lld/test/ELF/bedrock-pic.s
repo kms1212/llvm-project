@@ -37,6 +37,7 @@
 # SHARED: FLAGS_1  NOW
 # SHARED: PLTREL   RELA
 # SHARED-DAG: R_BEDROCK_TLSDESC tls 0x0
+# SHARED-DAG: R_BEDROCK_ABS64 data 0x0
 # SHARED-DAG: R_BEDROCK_GLOB_DAT data 0x0
 # SHARED-DAG: R_BEDROCK_JUMP_SLOT function 0x0
 
@@ -86,6 +87,11 @@ entry:
   .byte 0xc9, 0xf8, 0x04, 0xa9, 0x20
   ret
 .type tls,@tls_object
+
+.data
+.globl data_pointer
+data_pointer:
+  .quad data
 
 #--- tls-ref.s
 .text
