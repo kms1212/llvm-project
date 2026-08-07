@@ -100,3 +100,21 @@ define double @float_to_double(float %x) {
   %result = fpext float %x to double
   ret double %result
 }
+
+define double @extend_float_load(ptr %p) {
+; CHECK-LABEL: extend_float_load:
+; CHECK: FMOV.S [r0], f0
+; CHECK-NEXT: FCVT.D f0, f0
+  %value = load float, ptr %p, align 4
+  %result = fpext float %value to double
+  ret double %result
+}
+
+define void @truncate_double_store(ptr %p, double %value) {
+; CHECK-LABEL: truncate_double_store:
+; CHECK: FCVT.S f0, f0
+; CHECK-NEXT: FMOV.S f0, [r0]
+  %narrow = fptrunc double %value to float
+  store float %narrow, ptr %p, align 4
+  ret void
+}

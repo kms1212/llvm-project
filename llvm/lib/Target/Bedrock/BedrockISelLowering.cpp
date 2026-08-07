@@ -104,12 +104,14 @@ BedrockTargetLowering::BedrockTargetLowering(const TargetMachine &TM,
   setLoadExtAction(ISD::EXTLOAD, MVT::i64, MVT::i32, Legal);
   setLoadExtAction(ISD::SEXTLOAD, MVT::i64, MVT::i32, Legal);
   setLoadExtAction(ISD::ZEXTLOAD, MVT::i64, MVT::i32, Legal);
+  setLoadExtAction(ISD::EXTLOAD, MVT::f64, MVT::f32, Expand);
 
   setTruncStoreAction(MVT::i32, MVT::i8, Legal);
   setTruncStoreAction(MVT::i32, MVT::i16, Legal);
   setTruncStoreAction(MVT::i64, MVT::i8, Legal);
   setTruncStoreAction(MVT::i64, MVT::i16, Legal);
   setTruncStoreAction(MVT::i64, MVT::i32, Legal);
+  setTruncStoreAction(MVT::f64, MVT::f32, Expand);
   setOperationAction(ISD::SIGN_EXTEND_INREG, MVT::i1, Custom);
   setOperationAction(ISD::TRAP, MVT::Other, Legal);
   setOperationAction(ISD::DEBUGTRAP, MVT::Other, Legal);

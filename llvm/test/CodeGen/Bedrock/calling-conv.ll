@@ -15,6 +15,9 @@ declare i64 @sink_byval(ptr byval(%Pair) align 16)
 declare void @clobber_sret_registers()
 declare i64 @sink_nine_float(float, float, float, float, float, float, float,
                              float, float)
+declare double @sink_complex_exhaustion(
+    double, double, double, double, double, double, double,
+    { double, double } inreg, float)
 
 define i64 @general_pair_even_alignment(i64 %tag, i128 %wide) {
 ; CHECK-LABEL: general_pair_even_alignment:
@@ -122,6 +125,42 @@ define float @single_register_exhaustion(
 ; CHECK: FMOV.S [sp + 16], f0
 ; CHECK-NEXT: ret
   ret float %f8
+}
+
+define double @complex_pair_exhausts_float_class(
+    double %f0, double %f1, double %f2, double %f3,
+    double %f4, double %f5, double %f6,
+    { double, double } inreg %pair, float %tail) {
+; CHECK-LABEL: complex_pair_exhausts_float_class:
+; CHECK-DAG: FMOV.D [sp + 16], [[REAL:f[0-9]+]]
+; CHECK-DAG: FMOV.D [sp + 24], [[IMAG:f[0-9]+]]
+; CHECK: FADD.D [[IMAG]], [[REAL]]
+; CHECK: FMOV.S [sp + 32], [[TAIL:f[0-9]+]]
+; CHECK-NEXT: FCVT.D [[TAIL]], [[TAIL]]
+; CHECK-NEXT: FADD.D [[TAIL]], [[REAL]]
+  %real = extractvalue { double, double } %pair, 0
+  %imag = extractvalue { double, double } %pair, 1
+  %pair.sum = fadd double %real, %imag
+  %tail.wide = fpext float %tail to double
+  %sum = fadd double %pair.sum, %tail.wide
+  ret double %sum
+}
+
+define double @call_complex_pair_exhaustion() {
+; CHECK-LABEL: call_complex_pair_exhaustion:
+; CHECK: sub.q 40, sp
+; CHECK: mov.l {{.*}}, [{{r[0-9]+}} + 24]
+; CHECK: mov.q {{.*}}, [{{r[0-9]+}} + 16]
+; CHECK: mov.q {{.*}}, [{{r[0-9]+}} + 8]
+; CHECK: call sink_complex_exhaustion
+; CHECK-NEXT: add.q 40, sp
+  %result = call double @sink_complex_exhaustion(
+      double 0.000000e+00, double 1.000000e+00, double 2.000000e+00,
+      double 3.000000e+00, double 4.000000e+00, double 5.000000e+00,
+      double 6.000000e+00,
+      { double, double } inreg { double 7.000000e+00, double 8.000000e+00 },
+      float 9.000000e+00)
+  ret double %result
 }
 
 define i64 @call_single_register_exhaustion(
