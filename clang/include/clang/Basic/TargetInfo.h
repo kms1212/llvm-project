@@ -1582,7 +1582,8 @@ public:
       return true;
     if (getTriple().isOSWindows() && getTriple().isAArch64())
       return true;
-    if (getTriple().getArch() == llvm::Triple::ArchType::avr)
+    if (getTriple().getArch() == llvm::Triple::ArchType::avr ||
+        getTriple().getArch() == llvm::Triple::ArchType::bedrock)
       return true;
     return getTriple().isOSBinFormatELF() &&
            ((getTriple().isOSLinux() && !getTriple().isMusl()) ||

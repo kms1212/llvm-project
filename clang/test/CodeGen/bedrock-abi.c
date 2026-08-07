@@ -3,6 +3,7 @@
 
 // CHECK: target datalayout = "e-m:e-p:64:64-i64:64-i128:128-n64-S128"
 // CHECK: target triple = "bedrock"
+// CHECK: @indirect_function = ifunc void (), ptr @resolve_indirect_function
 
 struct Pair {
   long a;
@@ -96,6 +97,12 @@ unsigned long pair_exhaustion_signature(
 
 // CHECK-LABEL: define{{.*}} i128 @return_i128(i128 noundef %value)
 uint128_t return_i128(uint128_t value) { return value; }
+
+// The ELF ABI includes indirect functions in the baseline profile.
+static void indirect_implementation(void) {}
+static void *resolve_indirect_function(void) { return indirect_implementation; }
+void indirect_function(void)
+    __attribute__((ifunc("resolve_indirect_function")));
 
 // Bedrock long double uses the base ABI's IEEE double representation and
 // FLOAT register class.
