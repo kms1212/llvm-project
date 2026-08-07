@@ -101,10 +101,6 @@ private:
   DenseMap<const MachineInstr *, int64_t> MediumBranchDisplacements;
   DenseMap<const MachineInstr *, int64_t> CmpTestJumpDisplacements;
   DenseMap<const MachineInstr *, int64_t> DJDisplacements;
-  bool EmittedFarNote = false;
-
-  void emitFunctionEntryLabel() override;
-  void emitFarABINote();
   MCOperand lowerOperand(const MachineOperand &MO) const;
   const MCExpr *lowerSymbolOperand(const MachineOperand &MO) const;
 
@@ -184,12 +180,6 @@ private:
   void emitStoreIndex(const MachineInstr *MI, unsigned Size);
   void emitStoreSPIndex(const MachineInstr *MI, unsigned Size);
   void emitStoreOffset(const MachineInstr *MI, unsigned Size);
-  void emitWriteGS4(Register ImageReg);
-  void emitFarLoad(const MachineInstr *MI, unsigned Size, bool IsExt = false,
-                   bool IsSigned = false);
-  void emitFarStore(const MachineInstr *MI, unsigned Size);
-  void emitFarFpuLoad(const MachineInstr *MI, bool IsDouble);
-  void emitFarFpuStore(const MachineInstr *MI, bool IsDouble);
   void emitImmStore(const MachineInstr *MI, unsigned Size, bool IsFrame);
   void emitImmStoreOffset(const MachineInstr *MI, unsigned Size);
   void emitImmStoreAbs(const MachineInstr *MI, unsigned Size);
@@ -202,6 +192,11 @@ private:
   void emitFpuMove(Register DstReg, Register SrcReg);
   void emitFpuMove(const MachineInstr *MI);
   void emitFpuBinaryPseudo(const MachineInstr *MI, uint16_t BaseExt);
+  void emitFusedPseudo(const MachineInstr *MI, StringRef Mnemonic,
+                       StringRef Pattern, bool IsDouble);
+  void emitApproxUnaryPseudo(const MachineInstr *MI, StringRef Mnemonic,
+                             StringRef Pattern, bool IsDouble);
+  void emitSincosPseudo(const MachineInstr *MI, bool IsDouble);
   void emitFpuConvert(const MachineInstr *MI, bool IsUnsigned);
   void emitFpuAbsLoad(const MachineInstr *MI, bool IsDouble);
   void emitFpuAbsStore(const MachineInstr *MI, bool IsDouble);
@@ -225,8 +220,6 @@ private:
   void emitTailCall(const MachineInstr *MI);
   void emitIndirectCall(const MachineInstr *MI);
   void emitIndirectJump(const MachineInstr *MI);
-  void emitFarCall(const MachineInstr *MI);
-  void emitFarTailCall(const MachineInstr *MI);
   void emitPublicIntrinsic(const MachineInstr *MI);
   void emitSystemIntrinsic(const MachineInstr *MI);
   void emitAtomic(const MachineInstr *MI);
@@ -535,11 +528,11 @@ static bool getAtomicEncodingInfo(unsigned Opcode, unsigned &Size,
     Size = 3;                                                               \
     Pattern = PATTERN;                                                       \
     return true
-    ATOMIC_FETCH_CASES(FETCHADD, "111111000111zz000ooossss000eeeeeee");
-    ATOMIC_FETCH_CASES(FETCHAND, "111111000111zz001ooossss000eeeeeee");
-    ATOMIC_FETCH_CASES(FETCHOR, "111111000111zz010ooossss000eeeeeee");
-    ATOMIC_FETCH_CASES(FETCHSUB, "111111000111zz011ooossss000eeeeeee");
-    ATOMIC_FETCH_CASES(FETCHXOR, "111111000111zz100ooossss000eeeeeee");
+    ATOMIC_FETCH_CASES(FETCHADD, "111111000101zz000000ooosssseeeeeee");
+    ATOMIC_FETCH_CASES(FETCHAND, "111111000101zz000001ooosssseeeeeee");
+    ATOMIC_FETCH_CASES(FETCHOR, "111111000101zz000010ooosssseeeeeee");
+    ATOMIC_FETCH_CASES(FETCHSUB, "111111000101zz000011ooosssseeeeeee");
+    ATOMIC_FETCH_CASES(FETCHXOR, "111111000101zz000100ooosssseeeeeee");
 #undef ATOMIC_FETCH_CASES
   case Bedrock::ATOMIC_CMPXCHG_B:
     Size = 0;
@@ -556,7 +549,7 @@ static bool getAtomicEncodingInfo(unsigned Opcode, unsigned &Size,
   default:
     return false;
   }
-  Pattern = "1111110010000zzoooxxxxdddd0eeeeeee";
+  Pattern = "111111000101zz01xxxxoooddddeeeeeee";
   IsCmpXchg = true;
   return true;
 }
@@ -576,7 +569,7 @@ static void getMemEAForRegIndex(Register BaseReg, Register IndexReg,
                                 uint8_t &EA,
                                 SmallVectorImpl<uint8_t> &Tail) {
   EA = 0x74;
-  Tail.push_back(0x92);
+  Tail.push_back(0x82);
   Tail.push_back((getGPRNo(BaseReg) << 4) | getGPRNo(IndexReg));
 }
 
@@ -5195,7 +5188,7 @@ BedrockAsmPrinter::getInstSizeForBranchLayout(const MachineInstr &MI) const {
   case Bedrock::NOP:
   case Bedrock::RET:
   case Bedrock::LRET:
-  case Bedrock::IRET:
+  case Bedrock::ERET:
   case Bedrock::SYSCALL:
   case Bedrock::SYSRET:
   case Bedrock::BKPT:
@@ -5206,6 +5199,8 @@ BedrockAsmPrinter::getInstSizeForBranchLayout(const MachineInstr &MI) const {
   case Bedrock::AFENCE:
   case Bedrock::PUSHPi:
   case Bedrock::POPPi:
+  case Bedrock::FPUSHPi:
+  case Bedrock::FPOPPi:
   case Bedrock::PUSHr:
   case Bedrock::POPr:
   case Bedrock::MOVQrs:
@@ -5448,6 +5443,40 @@ BedrockAsmPrinter::getInstSizeForBranchLayout(const MachineInstr &MI) const {
   case Bedrock::FCVTSQDrr:
   case Bedrock::FCVTUQDrr:
     return RepgHeaderSize + 4;
+#define FUSED_SIZE_CASES(NAME)                                               \
+  case Bedrock::BEDROCK_##NAME##_S:                                         \
+  case Bedrock::BEDROCK_##NAME##_D:
+    FUSED_SIZE_CASES(FMADD)
+    FUSED_SIZE_CASES(FMSUB)
+    FUSED_SIZE_CASES(FNMADD)
+    FUSED_SIZE_CASES(FNMSUB)
+#undef FUSED_SIZE_CASES
+#define APPROX_SIZE_CASES(NAME)                                              \
+  case Bedrock::BEDROCK_##NAME##_S:                                         \
+  case Bedrock::BEDROCK_##NAME##_D:
+    APPROX_SIZE_CASES(FACOSA)
+    APPROX_SIZE_CASES(FASINA)
+    APPROX_SIZE_CASES(FATANA)
+    APPROX_SIZE_CASES(FATANHA)
+    APPROX_SIZE_CASES(FCOSA)
+    APPROX_SIZE_CASES(FCOSHA)
+    APPROX_SIZE_CASES(FETOXA)
+    APPROX_SIZE_CASES(FETOXM1A)
+    APPROX_SIZE_CASES(FLOG10A)
+    APPROX_SIZE_CASES(FLOG2A)
+    APPROX_SIZE_CASES(FLOGNA)
+    APPROX_SIZE_CASES(FLOGNP1A)
+    APPROX_SIZE_CASES(FSINA)
+    APPROX_SIZE_CASES(FSINHA)
+    APPROX_SIZE_CASES(FTANA)
+    APPROX_SIZE_CASES(FTANHA)
+    APPROX_SIZE_CASES(FTENTOXA)
+    APPROX_SIZE_CASES(FTWOTOXA)
+#undef APPROX_SIZE_CASES
+    return RepgHeaderSize + 4;
+  case Bedrock::BEDROCK_FSINCOSA_S:
+  case Bedrock::BEDROCK_FSINCOSA_D:
+    return RepgHeaderSize + 5;
   case Bedrock::LEAfi:
     if (getFrameOffset(&MI, 1) == 0)
       return RepgHeaderSize + 1;
@@ -5635,33 +5664,8 @@ BedrockAsmPrinter::getInstSizeForBranchLayout(const MachineInstr &MI) const {
     return RepgHeaderSize + 7;
   case Bedrock::CALLr:
   case Bedrock::CALLr_TAIL:
-  case Bedrock::FARCALLr:
-  case Bedrock::FARCALLr_TAIL:
-  case Bedrock::FARTAILr:
   case Bedrock::BRIND:
     return RepgHeaderSize + 4;
-  case Bedrock::FARCALLi:
-  case Bedrock::FARCALLi_TAIL:
-  case Bedrock::FARTAILi:
-    return RepgHeaderSize + 8;
-  case Bedrock::FAR_LOADB_Z:
-  case Bedrock::FAR_LOADW_Z:
-  case Bedrock::FAR_LOADL_Z:
-  case Bedrock::FAR_LOADB_S:
-  case Bedrock::FAR_LOADW_S:
-  case Bedrock::FAR_LOADL_S:
-  case Bedrock::FAR_LOADL:
-  case Bedrock::FAR_LOADQ:
-  case Bedrock::FAR_STOREB:
-  case Bedrock::FAR_STOREW:
-  case Bedrock::FAR_STOREL:
-  case Bedrock::FAR_STOREQ:
-    return RepgHeaderSize + 8;
-  case Bedrock::FAR_FLOADS:
-  case Bedrock::FAR_FLOADD:
-  case Bedrock::FAR_FSTORES:
-  case Bedrock::FAR_FSTORED:
-    return RepgHeaderSize + 9;
   case Bedrock::BEDROCK_CPUID:
     return RepgHeaderSize + 3;
   case Bedrock::BEDROCK_TRACE:
@@ -5694,6 +5698,7 @@ BedrockAsmPrinter::getInstSizeForBranchLayout(const MachineInstr &MI) const {
     return RepgHeaderSize + 8;
   case Bedrock::BEDROCK_WRSTATUS:
   case Bedrock::BEDROCK_RDSEG:
+  case Bedrock::BEDROCK_RDSEG_CS:
   case Bedrock::BEDROCK_WRSEG:
   case Bedrock::BEDROCK_FLSHDCACHE:
   case Bedrock::BEDROCK_INVDCACHE:
@@ -5706,7 +5711,6 @@ BedrockAsmPrinter::getInstSizeForBranchLayout(const MachineInstr &MI) const {
   case Bedrock::BEDROCK_SWPTA:
   case Bedrock::BEDROCK_SAVE:
   case Bedrock::BEDROCK_RESTORE:
-  case Bedrock::BEDROCK_ENCINST:
     return RepgHeaderSize + 4;
   default:
     break;
@@ -5955,34 +5959,6 @@ bool BedrockAsmPrinter::runOnMachineFunction(MachineFunction &MF) {
   return AsmPrinter::runOnMachineFunction(MF) || Changed;
 }
 
-void BedrockAsmPrinter::emitFarABINote() {
-  if (EmittedFarNote)
-    return;
-  EmittedFarNote = true;
-
-  MCSection *Note =
-      OutContext.getELFSection(".note.bedrock", ELF::SHT_NOTE, ELF::SHF_ALLOC);
-  OutStreamer->pushSection();
-  OutStreamer->switchSection(Note);
-  OutStreamer->emitInt32(8);
-  OutStreamer->emitInt32(8);
-  OutStreamer->emitInt32(ELF::NT_BEDROCK_ABI_ATTRIBUTES);
-  OutStreamer->emitBytes(StringRef("BEDROCK\0", 8));
-  OutStreamer->emitValueToAlignment(Align(4));
-  OutStreamer->emitInt32(ELF::TAG_BEDROCK_FAR_MODEL);
-  OutStreamer->emitInt32(0);
-  OutStreamer->popSection();
-}
-
-void BedrockAsmPrinter::emitFunctionEntryLabel() {
-  AsmPrinter::emitFunctionEntryLabel();
-  if (MF->getFunction().getCallingConv() != CallingConv::Bedrock_Far)
-    return;
-
-  static_cast<MCSymbolELF *>(CurrentFnSym)->setType(ELF::STT_BEDROCK_FAR_FUNC);
-  emitFarABINote();
-}
-
 const MCExpr *
 BedrockAsmPrinter::lowerSymbolOperand(const MachineOperand &MO) const {
   const MCSymbol *Symbol = nullptr;
@@ -6223,7 +6199,7 @@ void BedrockAsmPrinter::emitConst(const MachineInstr *MI, bool Is64) {
   if (IsTLSLE) {
     // Extended zero-base EA qualified by GS0, followed by the TLS offset.
     EA = FieldBytes == 8 ? 0x73 : 0x72;
-    Tail.push_back(0xb3);
+    Tail.push_back(0xa3);
   } else {
     EA = IsPCRelative ? (FieldBytes == 8 ? 0x67 : 0x66)
                       : (FieldBytes == 8 ? 0x6f : 0x6e);
@@ -7060,75 +7036,6 @@ void BedrockAsmPrinter::emitStoreOffset(const MachineInstr *MI,
   emitRaw(Bytes);
 }
 
-void BedrockAsmPrinter::emitWriteGS4(Register ImageReg) {
-  SmallVector<uint8_t, 4> Bytes;
-  uint32_t Payload = applyPatternValues("1111101111010000001sssdddd",
-                                        {{'s', 7}, {'d', getGPRNo(ImageReg)}});
-  if (!BedrockMC::encodeLong(Payload, {}, Bytes))
-    report_fatal_error("failed to encode Bedrock WRSEG GS4");
-  emitRaw(Bytes);
-}
-
-void BedrockAsmPrinter::emitFarLoad(const MachineInstr *MI, unsigned Size,
-                                    bool IsExt, bool IsSigned) {
-  Register DstReg = MI->getOperand(0).getReg();
-  Register BaseReg = MI->getOperand(1).getReg();
-  emitWriteGS4(MI->getOperand(2).getReg());
-
-  uint8_t EA = 0x74;
-  SmallVector<uint8_t, 1> Tail{static_cast<uint8_t>(0x70 | getGPRNo(BaseReg))};
-  uint32_t Payload = IsExt ? getExtLoadPayload(Size, IsSigned, EA, DstReg)
-                           : getMovPayload(/*IsLoad=*/true, Size, EA, DstReg);
-  SmallVector<uint8_t, 8> Bytes;
-  if (!BedrockMC::encodeMedium(Payload, Tail, Bytes))
-    report_fatal_error("failed to encode Bedrock far load");
-  emitRaw(Bytes);
-}
-
-void BedrockAsmPrinter::emitFarStore(const MachineInstr *MI, unsigned Size) {
-  Register SrcReg = MI->getOperand(0).getReg();
-  Register BaseReg = MI->getOperand(1).getReg();
-  emitWriteGS4(MI->getOperand(2).getReg());
-
-  uint8_t EA = 0x74;
-  SmallVector<uint8_t, 1> Tail{static_cast<uint8_t>(0x70 | getGPRNo(BaseReg))};
-  SmallVector<uint8_t, 8> Bytes;
-  if (!BedrockMC::encodeMedium(
-          getMovPayload(/*IsLoad=*/false, Size, EA, SrcReg), Tail, Bytes))
-    report_fatal_error("failed to encode Bedrock far store");
-  emitRaw(Bytes);
-}
-
-void BedrockAsmPrinter::emitFarFpuLoad(const MachineInstr *MI, bool IsDouble) {
-  Register DstReg = MI->getOperand(0).getReg();
-  Register BaseReg = MI->getOperand(1).getReg();
-  emitWriteGS4(MI->getOperand(2).getReg());
-
-  SmallVector<uint8_t, 1> Tail{static_cast<uint8_t>(0x70 | getGPRNo(BaseReg))};
-  SmallVector<uint8_t, 8> Bytes;
-  uint32_t Payload = applyPatternValues(
-      "1111010101z0000ddddeeeeeee",
-      {{'z', IsDouble}, {'d', getFPRNo(DstReg)}, {'e', 0x74}});
-  if (!BedrockMC::encodeLong(Payload, Tail, Bytes))
-    report_fatal_error("failed to encode Bedrock far FPU load");
-  emitRaw(Bytes);
-}
-
-void BedrockAsmPrinter::emitFarFpuStore(const MachineInstr *MI, bool IsDouble) {
-  Register SrcReg = MI->getOperand(0).getReg();
-  Register BaseReg = MI->getOperand(1).getReg();
-  emitWriteGS4(MI->getOperand(2).getReg());
-
-  SmallVector<uint8_t, 1> Tail{static_cast<uint8_t>(0x70 | getGPRNo(BaseReg))};
-  SmallVector<uint8_t, 8> Bytes;
-  uint32_t Payload = applyPatternValues(
-      "1111011000z0000sssseeeeeee",
-      {{'z', IsDouble}, {'s', getFPRNo(SrcReg)}, {'e', 0x74}});
-  if (!BedrockMC::encodeLong(Payload, Tail, Bytes))
-    report_fatal_error("failed to encode Bedrock far FPU store");
-  emitRaw(Bytes);
-}
-
 static StringRef getClearMemPattern(unsigned Size) {
   return Size < 2 ? "0eee10z0110000eeee" : "0eee10z0111000eeee";
 }
@@ -7411,6 +7318,90 @@ void BedrockAsmPrinter::emitFpuBinaryPseudo(const MachineInstr *MI,
   uint16_t Ext =
       BaseExt | 0x0100 | (getFPRNo(DstReg) << 4) | getFPRNo(RHSReg);
   emitFpuRaw(0x1f67, Ext, {});
+}
+
+void BedrockAsmPrinter::emitFusedPseudo(const MachineInstr *MI,
+                                        StringRef Mnemonic,
+                                        StringRef Pattern, bool IsDouble) {
+  Register DstReg = MI->getOperand(0).getReg();
+  Register LHSReg = MI->getOperand(1).getReg();
+  Register RHSReg = MI->getOperand(2).getReg();
+  assert(DstReg == MI->getOperand(3).getReg() &&
+         "fused accumulator must be tied to its destination");
+
+  if (OutStreamer->hasRawTextSupport()) {
+    SmallString<64> Text;
+    raw_svector_ostream OS(Text);
+    OS << "\t" << Mnemonic << "." << (IsDouble ? 'D' : 'S') << "\t"
+       << BedrockInstPrinter::getRegisterName(LHSReg) << ", "
+       << BedrockInstPrinter::getRegisterName(RHSReg) << ", "
+       << BedrockInstPrinter::getRegisterName(DstReg);
+    OutStreamer->emitRawText(OS.str());
+    return;
+  }
+
+  PatternFieldValue Fields[] = {{'z', IsDouble},
+                                {'l', getFPRNo(LHSReg)},
+                                {'r', getFPRNo(RHSReg)},
+                                {'d', getFPRNo(DstReg)}};
+  SmallVector<uint8_t, 4> Bytes;
+  if (!BedrockMC::encodeLong(applyPatternValues(Pattern, Fields), {}, Bytes))
+    report_fatal_error("failed to encode Bedrock fused FPU instruction");
+  emitRaw(Bytes);
+}
+
+void BedrockAsmPrinter::emitApproxUnaryPseudo(const MachineInstr *MI,
+                                              StringRef Mnemonic,
+                                              StringRef Pattern,
+                                              bool IsDouble) {
+  Register DstReg = MI->getOperand(0).getReg();
+  Register SrcReg = MI->getOperand(1).getReg();
+  if (OutStreamer->hasRawTextSupport()) {
+    SmallString<64> Text;
+    raw_svector_ostream OS(Text);
+    OS << "\t" << Mnemonic << "." << (IsDouble ? 'D' : 'S') << "\t"
+       << BedrockInstPrinter::getRegisterName(SrcReg) << ", "
+       << BedrockInstPrinter::getRegisterName(DstReg);
+    OutStreamer->emitRawText(OS.str());
+    return;
+  }
+
+  PatternFieldValue Fields[] = {{'z', IsDouble},
+                                {'s', getFPRNo(SrcReg)},
+                                {'d', getFPRNo(DstReg)}};
+  SmallVector<uint8_t, 4> Bytes;
+  if (!BedrockMC::encodeLong(applyPatternValues(Pattern, Fields), {}, Bytes))
+    report_fatal_error("failed to encode Bedrock FPTRANSA instruction");
+  emitRaw(Bytes);
+}
+
+void BedrockAsmPrinter::emitSincosPseudo(const MachineInstr *MI,
+                                         bool IsDouble) {
+  Register SinReg = MI->getOperand(0).getReg();
+  Register CosReg = MI->getOperand(1).getReg();
+  Register SrcReg = MI->getOperand(2).getReg();
+  if (OutStreamer->hasRawTextSupport()) {
+    SmallString<64> Text;
+    raw_svector_ostream OS(Text);
+    OS << "\tFSINCOSA." << (IsDouble ? 'D' : 'S') << "\t"
+       << BedrockInstPrinter::getRegisterName(SrcReg) << ", "
+       << BedrockInstPrinter::getRegisterName(SinReg) << ", "
+       << BedrockInstPrinter::getRegisterName(CosReg);
+    OutStreamer->emitRawText(OS.str());
+    return;
+  }
+
+  constexpr StringLiteral Pattern =
+      "1111110000001z01ssss000dddd000cccc";
+  PatternFieldValue Fields[] = {{'z', IsDouble},
+                                {'s', getFPRNo(SrcReg)},
+                                {'d', getFPRNo(SinReg)},
+                                {'c', getFPRNo(CosReg)}};
+  SmallVector<uint8_t, 5> Bytes;
+  if (!BedrockMC::encodeExtraLong(applyPatternValues64(Pattern, Fields), {},
+                                  Bytes))
+    report_fatal_error("failed to encode Bedrock FSINCOSA instruction");
+  emitRaw(Bytes);
 }
 
 void BedrockAsmPrinter::emitFpuConvert(const MachineInstr *MI,
@@ -7765,7 +7756,7 @@ void BedrockAsmPrinter::emitIJ(const MachineInstr *MI) {
 
   constexpr uint8_t EA = 0x66; // [pc + disp32]
   uint64_t Payload = applyPatternValues64(
-      "111111000101cccciiiibbbb000eeeeeee",
+      "111111000100cccciiii000bbbbeeeeeee",
       {{'c', Cond},
        {'i', getGPRNo(IndexReg)},
        {'b', getGPRNo(BoundReg)},
@@ -7901,14 +7892,14 @@ void BedrockAsmPrinter::emitTLSDescCall(const MachineInstr *MI) {
 
   SmallVector<uint8_t, 4> CallBytes;
   uint32_t CallPayload = applyPatternValues(
-      "1111000011100010000eeeeeee", {{'e', getRegEA(Bedrock::R1)}});
+      "1111000011011100000eeeeeee", {{'e', getRegEA(Bedrock::R1)}});
   if (!BedrockMC::encodeLong(CallPayload, {}, CallBytes))
     report_fatal_error("failed to encode Bedrock TLSDESC resolver call");
   emitRawExpr(CallBytes, 0,
               MCFixupKind(Bedrock::fixup_bedrock_tlsdesc_call), Expr);
   emitRaw({0x0e});
 
-  SmallVector<uint8_t, 2> GSTail = {0xb9, 0x20};
+  SmallVector<uint8_t, 2> GSTail = {0xa9, 0x20};
   SmallVector<uint8_t, 8> ResultBytes;
   if (!BedrockMC::encodeMedium(
           getLeaPayload(/*EXT0=*/0x74, /*Size=*/3, Bedrock::R0), GSTail,
@@ -7921,7 +7912,7 @@ void BedrockAsmPrinter::emitIndirectCall(const MachineInstr *MI) {
   Register CalleeReg = MI->getOperand(0).getReg();
   SmallVector<uint8_t, 4> Bytes;
   uint32_t CallPayload = applyPatternValues(
-      "1111000011100010000eeeeeee", {{'e', getRegEA(CalleeReg)}});
+      "1111000011011100000eeeeeee", {{'e', getRegEA(CalleeReg)}});
   if (!BedrockMC::encodeLong(CallPayload, {}, Bytes))
     report_fatal_error("failed to encode Bedrock indirect call");
   emitRaw(Bytes);
@@ -7931,63 +7922,11 @@ void BedrockAsmPrinter::emitIndirectJump(const MachineInstr *MI) {
   Register TargetReg = MI->getOperand(0).getReg();
   SmallVector<uint8_t, 4> Bytes;
   uint32_t JmpPayload = applyPatternValues(
-      "1111000011100010001eeeeeee", {{'e', getRegEA(TargetReg)}});
+      "1111001001z00000000eeeeeee",
+      {{'z', 1}, {'e', getRegEA(TargetReg)}});
   if (!BedrockMC::encodeLong(JmpPayload, {}, Bytes))
     report_fatal_error("failed to encode Bedrock indirect jump");
   emitRaw(Bytes);
-}
-
-void BedrockAsmPrinter::emitFarCall(const MachineInstr *MI) {
-  Register SegmentReg = MI->getOperand(0).getReg();
-  const MachineOperand &Target = MI->getOperand(1);
-  if (OutStreamer->hasRawTextSupport() && !Target.isReg()) {
-    SmallString<96> Text;
-    raw_svector_ostream OS(Text);
-    OS << "\tlcall\t" << BedrockInstPrinter::getRegisterName(SegmentReg)
-       << ", ";
-    MAI->printExpr(OS, *lowerSymbolOperand(Target));
-    OutStreamer->emitRawText(OS.str());
-    return;
-  }
-  SmallVector<uint8_t, 8> Bytes;
-  uint32_t Payload = applyPatternValues(
-      "111100001100100rrrreeeeeee",
-      {{'r', getGPRNo(SegmentReg)},
-       {'e', Target.isReg() ? unsigned(getRegEA(Target.getReg())) : 0x6eu}});
-  SmallVector<uint8_t, 4> Tail(Target.isReg() ? 0 : 4, 0);
-  if (!BedrockMC::encodeLong(Payload, Tail, Bytes))
-    report_fatal_error("failed to encode Bedrock far call");
-  if (Target.isReg()) {
-    emitRaw(Bytes);
-    return;
-  }
-  emitRawExpr(Bytes, 4, FK_Data_4, lowerSymbolOperand(Target));
-}
-
-void BedrockAsmPrinter::emitFarTailCall(const MachineInstr *MI) {
-  Register SegmentReg = MI->getOperand(0).getReg();
-  const MachineOperand &Target = MI->getOperand(1);
-  if (OutStreamer->hasRawTextSupport() && !Target.isReg()) {
-    SmallString<96> Text;
-    raw_svector_ostream OS(Text);
-    OS << "\tljmp\t" << BedrockInstPrinter::getRegisterName(SegmentReg) << ", ";
-    MAI->printExpr(OS, *lowerSymbolOperand(Target));
-    OutStreamer->emitRawText(OS.str());
-    return;
-  }
-  SmallVector<uint8_t, 8> Bytes;
-  uint32_t Payload = applyPatternValues(
-      "111100001100101rrrreeeeeee",
-      {{'r', getGPRNo(SegmentReg)},
-       {'e', Target.isReg() ? unsigned(getRegEA(Target.getReg())) : 0x6eu}});
-  SmallVector<uint8_t, 4> Tail(Target.isReg() ? 0 : 4, 0);
-  if (!BedrockMC::encodeLong(Payload, Tail, Bytes))
-    report_fatal_error("failed to encode Bedrock far tail call");
-  if (Target.isReg()) {
-    emitRaw(Bytes);
-    return;
-  }
-  emitRawExpr(Bytes, 4, FK_Data_4, lowerSymbolOperand(Target));
 }
 
 static unsigned getBedrockAtomicOrder(AtomicOrdering Order) {
@@ -8194,6 +8133,10 @@ void BedrockAsmPrinter::emitSystemIntrinsic(const MachineInstr *MI) {
                                  {{'s', unsigned(MI->getOperand(1).getImm())},
                                   {'d', getGPRNo(MI->getOperand(0).getReg())}});
     break;
+  case Bedrock::BEDROCK_RDSEG_CS:
+    Payload = applyPatternValues("1111101111010001111100dddd",
+                                 {{'d', getGPRNo(MI->getOperand(0).getReg())}});
+    break;
   case Bedrock::BEDROCK_WRSEG:
     Payload = applyPatternValues("1111101111010000001sssdddd",
                                  {{'s', unsigned(MI->getOperand(1).getImm())},
@@ -8280,11 +8223,6 @@ void BedrockAsmPrinter::emitSystemIntrinsic(const MachineInstr *MI) {
         Pattern, {{'e', RegEA(MI->getOperand(0).getReg(), Tail)}});
     break;
   }
-  case Bedrock::BEDROCK_ENCINST:
-    Payload =
-        applyPatternValues("1111101111010001100eeeeeee",
-                           {{'e', RegEA(MI->getOperand(1).getReg(), Tail)}});
-    break;
   default:
     llvm_unreachable("not a Bedrock system intrinsic pseudo");
   }
@@ -8840,6 +8778,50 @@ void BedrockAsmPrinter::emitInstruction(const MachineInstr *MI) {
   case Bedrock::FDIVDrr:
     emitFpuBinaryPseudo(MI, 0x2000);
     return;
+#define EMIT_FUSED(NAME, PATTERN)                                            \
+  case Bedrock::BEDROCK_##NAME##_S:                                          \
+    emitFusedPseudo(MI, #NAME, PATTERN, /*IsDouble=*/false);                 \
+    return;                                                                  \
+  case Bedrock::BEDROCK_##NAME##_D:                                          \
+    emitFusedPseudo(MI, #NAME, PATTERN, /*IsDouble=*/true);                  \
+    return;
+    EMIT_FUSED(FMADD, "1111010000zllllrrrr100dddd")
+    EMIT_FUSED(FMSUB, "1111010000zllllrrrr101dddd")
+    EMIT_FUSED(FNMADD, "1111010000zllllrrrr110dddd")
+    EMIT_FUSED(FNMSUB, "1111010000zllllrrrr111dddd")
+#undef EMIT_FUSED
+#define EMIT_APPROX(NAME, PATTERN)                                           \
+  case Bedrock::BEDROCK_##NAME##_S:                                          \
+    emitApproxUnaryPseudo(MI, #NAME, PATTERN, /*IsDouble=*/false);           \
+    return;                                                                  \
+  case Bedrock::BEDROCK_##NAME##_D:                                          \
+    emitApproxUnaryPseudo(MI, #NAME, PATTERN, /*IsDouble=*/true);            \
+    return;
+    EMIT_APPROX(FACOSA, "1111011100z0000dddd000ssss")
+    EMIT_APPROX(FASINA, "1111011100z0000dddd001ssss")
+    EMIT_APPROX(FATANA, "1111011100z0000dddd010ssss")
+    EMIT_APPROX(FATANHA, "1111011100z0000dddd011ssss")
+    EMIT_APPROX(FCOSA, "1111011100z0000dddd100ssss")
+    EMIT_APPROX(FCOSHA, "1111011100z0000dddd101ssss")
+    EMIT_APPROX(FETOXA, "1111011100z0000dddd110ssss")
+    EMIT_APPROX(FETOXM1A, "1111011100z0000dddd111ssss")
+    EMIT_APPROX(FLOG10A, "1111011100z0001dddd000ssss")
+    EMIT_APPROX(FLOG2A, "1111011100z0001dddd001ssss")
+    EMIT_APPROX(FLOGNA, "1111011100z0001dddd010ssss")
+    EMIT_APPROX(FLOGNP1A, "1111011100z0001dddd011ssss")
+    EMIT_APPROX(FSINA, "1111011100z0001dddd100ssss")
+    EMIT_APPROX(FSINHA, "1111011100z0001dddd110ssss")
+    EMIT_APPROX(FTANA, "1111011100z0001dddd111ssss")
+    EMIT_APPROX(FTANHA, "1111011100z0010dddd000ssss")
+    EMIT_APPROX(FTENTOXA, "1111011100z0010dddd001ssss")
+    EMIT_APPROX(FTWOTOXA, "1111011100z0010dddd010ssss")
+#undef EMIT_APPROX
+  case Bedrock::BEDROCK_FSINCOSA_S:
+    emitSincosPseudo(MI, /*IsDouble=*/false);
+    return;
+  case Bedrock::BEDROCK_FSINCOSA_D:
+    emitSincosPseudo(MI, /*IsDouble=*/true);
+    return;
   case Bedrock::FCVTSQDrr:
     emitFpuConvert(MI, /*IsUnsigned=*/false);
     return;
@@ -8890,36 +8872,6 @@ void BedrockAsmPrinter::emitInstruction(const MachineInstr *MI) {
     return;
   case Bedrock::FLOADDrr:
     emitFpuLoad(MI, /*IsFrame=*/false, /*IsDouble=*/true);
-    return;
-  case Bedrock::FAR_LOADB_Z:
-    emitFarLoad(MI, 0, /*IsExt=*/true, /*IsSigned=*/false);
-    return;
-  case Bedrock::FAR_LOADW_Z:
-    emitFarLoad(MI, 1, /*IsExt=*/true, /*IsSigned=*/false);
-    return;
-  case Bedrock::FAR_LOADL_Z:
-    emitFarLoad(MI, 2, /*IsExt=*/true, /*IsSigned=*/false);
-    return;
-  case Bedrock::FAR_LOADB_S:
-    emitFarLoad(MI, 0, /*IsExt=*/true, /*IsSigned=*/true);
-    return;
-  case Bedrock::FAR_LOADW_S:
-    emitFarLoad(MI, 1, /*IsExt=*/true, /*IsSigned=*/true);
-    return;
-  case Bedrock::FAR_LOADL_S:
-    emitFarLoad(MI, 2, /*IsExt=*/true, /*IsSigned=*/true);
-    return;
-  case Bedrock::FAR_LOADL:
-    emitFarLoad(MI, 2);
-    return;
-  case Bedrock::FAR_LOADQ:
-    emitFarLoad(MI, 3);
-    return;
-  case Bedrock::FAR_FLOADS:
-    emitFarFpuLoad(MI, /*IsDouble=*/false);
-    return;
-  case Bedrock::FAR_FLOADD:
-    emitFarFpuLoad(MI, /*IsDouble=*/true);
     return;
   case Bedrock::LOADB_Zrx:
     emitLoadIndex(MI, 0, /*IsExt=*/true, /*IsSigned=*/false);
@@ -9070,24 +9022,6 @@ void BedrockAsmPrinter::emitInstruction(const MachineInstr *MI) {
     return;
   case Bedrock::STOREQrr:
     emitStore(MI, 3, /*IsFrame=*/false);
-    return;
-  case Bedrock::FAR_STOREB:
-    emitFarStore(MI, 0);
-    return;
-  case Bedrock::FAR_STOREW:
-    emitFarStore(MI, 1);
-    return;
-  case Bedrock::FAR_STOREL:
-    emitFarStore(MI, 2);
-    return;
-  case Bedrock::FAR_STOREQ:
-    emitFarStore(MI, 3);
-    return;
-  case Bedrock::FAR_FSTORES:
-    emitFarFpuStore(MI, /*IsDouble=*/false);
-    return;
-  case Bedrock::FAR_FSTORED:
-    emitFarFpuStore(MI, /*IsDouble=*/true);
     return;
   case Bedrock::STOREBrx:
     emitStoreIndex(MI, 0);
@@ -9265,16 +9199,6 @@ void BedrockAsmPrinter::emitInstruction(const MachineInstr *MI) {
   case Bedrock::TLSDESC_CALL:
     emitTLSDescCall(MI);
     return;
-  case Bedrock::FARCALLr:
-  case Bedrock::FARCALLr_TAIL:
-  case Bedrock::FARCALLi:
-  case Bedrock::FARCALLi_TAIL:
-    emitFarCall(MI);
-    return;
-  case Bedrock::FARTAILr:
-  case Bedrock::FARTAILi:
-    emitFarTailCall(MI);
-    return;
   case Bedrock::BEDROCK_CPUID:
   case Bedrock::BEDROCK_RDSTATUS:
   case Bedrock::BEDROCK_RDPMC:
@@ -9299,6 +9223,7 @@ void BedrockAsmPrinter::emitInstruction(const MachineInstr *MI) {
   case Bedrock::BEDROCK_RDCR:
   case Bedrock::BEDROCK_WRCR:
   case Bedrock::BEDROCK_RDSEG:
+  case Bedrock::BEDROCK_RDSEG_CS:
   case Bedrock::BEDROCK_WRSEG:
   case Bedrock::BEDROCK_FLSHDCACHE:
   case Bedrock::BEDROCK_INVDCACHE:
@@ -9314,7 +9239,6 @@ void BedrockAsmPrinter::emitInstruction(const MachineInstr *MI) {
   case Bedrock::BEDROCK_PTQUERY:
   case Bedrock::BEDROCK_SAVE:
   case Bedrock::BEDROCK_RESTORE:
-  case Bedrock::BEDROCK_ENCINST:
     emitSystemIntrinsic(MI);
     return;
   }

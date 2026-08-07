@@ -35,7 +35,6 @@ public:
   void setGeneralCursor(unsigned Cursor) { GeneralCursor = Cursor; }
   unsigned getFloatCursor() const { return FloatCursor; }
   void setFloatCursor(unsigned Cursor) { FloatCursor = Cursor; }
-
   bool isGeneralExhausted() const { return GeneralExhausted; }
   void exhaustGeneral() {
     GeneralExhausted = true;
@@ -78,6 +77,15 @@ getBedrockIntegerLocInfo(const ISD::ArgFlagsTy &Flags) {
   return CCValAssign::AExt;
 }
 
+inline bool isBedrockComplexPair(Type *Ty) {
+  auto *StructTy = dyn_cast_or_null<StructType>(Ty);
+  if (!StructTy || StructTy->getNumElements() != 2)
+    return false;
+  Type *First = StructTy->getElementType(0);
+  return First == StructTy->getElementType(1) &&
+         (First->isFloatTy() || First->isDoubleTy());
+}
+
 inline bool CC_Bedrock(unsigned ValNo, MVT ValVT, MVT LocVT,
                        CCValAssign::LocInfo LocInfo, ISD::ArgFlagsTy ArgFlags,
                        Type *OrigTy, CCState &State) {
@@ -90,32 +98,53 @@ inline bool CC_Bedrock(unsigned ValNo, MVT ValVT, MVT LocVT,
       Bedrock::F0, Bedrock::F1, Bedrock::F2, Bedrock::F3,
       Bedrock::F4, Bedrock::F5, Bedrock::F6, Bedrock::F7,
   };
-
   if (BState.hasPendingPair()) {
     if (BState.pendingPairIsReg())
-      State.addLoc(CCValAssign::getReg(ValNo, ValVT,
-                                       BState.takePendingPairReg(), MVT::i64,
-                                       CCValAssign::Full));
+      State.addLoc(CCValAssign::getReg(
+          ValNo, ValVT, BState.takePendingPairReg(), ValVT, CCValAssign::Full));
     else
       State.addLoc(CCValAssign::getMem(ValNo, ValVT,
-                                       BState.takePendingPairOffset(), MVT::i64,
+                                       BState.takePendingPairOffset(), ValVT,
                                        CCValAssign::Full));
     return false;
   }
 
-  const bool IsGeneralPair =
-      OrigTy && (OrigTy->isIntegerTy(128) ||
-                 (OrigTy->isPointerTy() &&
-                  cast<PointerType>(OrigTy)->getAddressSpace() == 1));
+  const bool IsGeneralPair = OrigTy && OrigTy->isIntegerTy(128);
+  const bool IsFloatPair = isBedrockComplexPair(OrigTy) ||
+                           ((ValVT == MVT::f32 || ValVT == MVT::f64) &&
+                            (ArgFlags.isSplit() || ArgFlags.isInReg()));
   // The fixed and variable portions intentionally use different placement
   // rules. Every unnamed argument occupies one complete 16-byte stack slot;
   // it neither consumes nor exhausts either register cursor.
   if (ArgFlags.isVarArg()) {
     int64_t Offset = State.AllocateStack(16, Align(16));
-    if (IsGeneralPair)
-      BState.setPendingPairOffset(Offset + 8);
+    if (IsGeneralPair || IsFloatPair)
+      BState.setPendingPairOffset(Offset +
+                                  (IsFloatPair ? ValVT.getStoreSize() : 8));
     State.addLoc(CCValAssign::getMem(ValNo, ValVT, Offset, LocVT,
                                      CCValAssign::Full));
+    return false;
+  }
+
+  if (IsFloatPair) {
+    unsigned Cursor = BState.getFloatCursor();
+    if (!BState.isFloatExhausted() && Cursor + 1 < std::size(FPRs)) {
+      MCRegister Real = State.AllocateReg(FPRs[Cursor]);
+      MCRegister Imaginary = State.AllocateReg(FPRs[Cursor + 1]);
+      assert(Real && Imaginary &&
+             "Bedrock float-pair cursor disagrees with CC state");
+      BState.setFloatCursor(Cursor + 2);
+      BState.setPendingPairReg(Imaginary);
+      State.addLoc(
+          CCValAssign::getReg(ValNo, ValVT, Real, ValVT, CCValAssign::Full));
+      return false;
+    }
+
+    BState.exhaustFloat();
+    int64_t Offset = State.AllocateStack(16, Align(16));
+    BState.setPendingPairOffset(Offset + ValVT.getStoreSize());
+    State.addLoc(
+        CCValAssign::getMem(ValNo, ValVT, Offset, ValVT, CCValAssign::Full));
     return false;
   }
 

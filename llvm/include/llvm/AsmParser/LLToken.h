@@ -190,7 +190,6 @@ enum Kind {
   kw_cheriot_compartmentcallcc,
   kw_cheriot_compartmentcalleecc,
   kw_cheriot_librarycallcc,
-  kw_bedrock_farcc,
 
   // Attributes:
   kw_attributes,
@@ -411,7 +410,6 @@ enum Kind {
   kw_mayThrow,
   kw_hasUnknownCall,
   kw_mustBeUnreachable,
-  kw_crossSegmentAccess,
   kw_calls,
   kw_callee,
   kw_params,

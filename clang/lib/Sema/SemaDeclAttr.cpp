@@ -5163,10 +5163,6 @@ static void handleCallConvAttr(Sema &S, Decl *D, const ParsedAttr &AL) {
     return;
 
   if (!isa<ObjCMethodDecl>(D)) {
-    if (AL.getKind() == ParsedAttr::AT_BedrockFar) {
-      S.Diag(AL.getLoc(), diag::err_bedrock_far_wrong_type);
-      return;
-    }
     S.Diag(AL.getLoc(), diag::warn_attribute_wrong_decl_type)
         << AL << AL.isRegularKeywordAttribute() << ExpectedFunctionOrMethod;
     return;
@@ -5515,17 +5511,6 @@ bool Sema::CheckCallingConvAttr(const ParsedAttr &Attrs, CallingConv &CC,
     break;
   case ParsedAttr::AT_M68kRTD:
     CC = CC_M68kRTD;
-    break;
-  case ParsedAttr::AT_BedrockFar:
-    if (getLangOpts().CPlusPlus) {
-      Diag(Attrs.getLoc(), diag::err_attribute_not_supported_in_lang)
-          << Attrs << /*C++=*/1;
-      Attrs.setInvalid();
-      return true;
-    }
-    if (CheckAttrTarget(Attrs))
-      return true;
-    CC = CC_BedrockFar;
     break;
   case ParsedAttr::AT_PreserveNone:
     CC = CC_PreserveNone;

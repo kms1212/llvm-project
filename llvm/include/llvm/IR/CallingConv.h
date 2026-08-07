@@ -297,10 +297,6 @@ namespace CallingConv {
     /// stateless compartment.
     CHERIoT_LibraryCall = 127,
 
-    /// Bedrock C ABI far call. Argument and result assignment matches the C
-    /// convention, while control transfer uses a 16-byte PC:CS return frame.
-    Bedrock_Far = 128,
-
     /// The highest possible ID. Must be some 2^k - 1.
     MaxID = 1023
   };

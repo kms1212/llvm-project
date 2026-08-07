@@ -1,7 +1,7 @@
 // REQUIRES: bedrock-registered-target
 // RUN: %clang_cc1 -triple bedrock -emit-llvm -o - %s | FileCheck %s
 
-// CHECK: target datalayout = "e-m:e-p:64:64-p1:128:128:128:64-i64:64-i128:128-n64-S128"
+// CHECK: target datalayout = "e-m:e-p:64:64-i64:64-i128:128-n64-S128"
 // CHECK: target triple = "bedrock"
 
 struct Pair {

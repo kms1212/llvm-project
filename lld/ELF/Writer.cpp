@@ -70,7 +70,6 @@ private:
   SmallVector<std::unique_ptr<PhdrEntry>, 0> createPhdrs(Partition &part);
   void addPhdrForSection(Partition &part, unsigned shType, unsigned pType,
                          unsigned pFlags);
-  void addBedrockSegmentPhdrs(Partition &part);
   void assignFileOffsets();
   void assignFileOffsetsBinary();
   void setPhdrs(Partition &part);
@@ -81,7 +80,6 @@ private:
   void writeHeader();
   void writeSections();
   void writeSectionsBinary();
-  void writeBedrockSegmentDomains();
   void writeBuildId();
 
   Ctx &ctx;
@@ -376,8 +374,6 @@ template <class ELFT> void Writer<ELFT>::run() {
         writeTrapInstr();
       writeHeader();
       writeSections();
-      if (ctx.arg.emachine == EM_BEDROCK)
-        writeBedrockSegmentDomains();
     } else {
       writeSectionsBinary();
     }
@@ -614,10 +610,6 @@ static bool isRelroSection(Ctx &ctx, const OutputSection *sec) {
   // the dynamic linker when a module is loaded into memory, and after
   // that they are not expected to change. So, it can be in RELRO.
   if (ctx.in.got && sec == ctx.in.got->getParent())
-    return true;
-
-  // Far GOT entries are eagerly resolved and immutable after publication.
-  if (sec->name == ".got.far")
     return true;
 
   // .toc is a GOT-ish section for PowerPC64. Their contents are accessed
@@ -2076,8 +2068,6 @@ template <class ELFT> void Writer<ELFT>::finalizeSections() {
       if (ctx.arg.emachine == EM_RISCV)
         addPhdrForSection(part, SHT_RISCV_ATTRIBUTES, PT_RISCV_ATTRIBUTES,
                           PF_R);
-      if (ctx.arg.emachine == EM_BEDROCK)
-        addBedrockSegmentPhdrs(part);
     }
     ctx.out.programHeaders->size =
         sizeof(Elf_Phdr) * ctx.mainPart->phdrs.size();
@@ -2539,99 +2529,6 @@ void Writer<ELFT>::addPhdrForSection(Partition &part, unsigned shType,
   part.phdrs.push_back(std::move(entry));
 }
 
-template <class ELFT>
-void Writer<ELFT>::addBedrockSegmentPhdrs(Partition &part) {
-  struct Domain {
-    ELFFileBase *file;
-    uint32_t inputID;
-    SmallVector<InputSectionBase *, 0> sections;
-  };
-  SmallVector<Domain, 0> domains;
-
-  for (ELFFileBase *file : ctx.objectFiles) {
-    ObjFile<ELFT> *obj = cast<ObjFile<ELFT>>(file);
-    ArrayRef<InputSectionBase *> sections = obj->getSections();
-    bool usesFarProfile = false;
-    for (const typename ELFT::Sym &sym : obj->template getELFSyms<ELFT>())
-      usesFarProfile |= sym.getType() == STT_BEDROCK_FAR_FUNC ||
-                        sym.getType() == STT_BEDROCK_FAR_IFUNC;
-    for (InputSectionBase *meta : sections) {
-      if (!meta || meta == &InputSection::discarded ||
-          meta->name != ".bedrock.segdomains")
-        continue;
-      ArrayRef<uint8_t> data = meta->content();
-      usesFarProfile = true;
-      if (meta->type != SHT_PROGBITS || meta->flags != 0 ||
-          meta->entsize != 16 || data.size() % 16 != 0) {
-        Err(ctx) << meta << ": malformed .bedrock.segdomains section";
-        continue;
-      }
-      for (size_t off = 0; off != data.size(); off += 16) {
-        uint32_t sectionIndex = read32le(data.data() + off);
-        uint32_t inputID = read32le(data.data() + off + 4);
-        if (sectionIndex >= sections.size() || inputID == 0) {
-          Err(ctx) << meta << ": invalid segment-domain record";
-          continue;
-        }
-        InputSectionBase *isec = sections[sectionIndex];
-        if (!isec || isec == &InputSection::discarded || !isec->isLive())
-          continue;
-        if (!(isec->flags & SHF_ALLOC) || (isec->flags & SHF_TLS)) {
-          Err(ctx) << meta
-                   << ": segment domain must name an allocatable non-TLS "
-                      "section";
-          continue;
-        }
-        bool multiplyAssigned = llvm::any_of(domains, [&](const Domain &d) {
-          return d.file == file && d.inputID != inputID &&
-                 llvm::is_contained(d.sections, isec);
-        });
-        if (multiplyAssigned) {
-          Err(ctx) << meta
-                   << ": section is assigned to multiple Bedrock "
-                      "segment domains";
-          continue;
-        }
-        auto it = llvm::find_if(domains, [&](const Domain &domain) {
-          return domain.file == file && domain.inputID == inputID;
-        });
-        if (it == domains.end()) {
-          domains.push_back({file, inputID, {}});
-          it = std::prev(domains.end());
-        }
-        if (!llvm::is_contained(it->sections, isec))
-          it->sections.push_back(isec);
-      }
-    }
-    if (usesFarProfile && !hasBedrockFarAttributeNote(*file))
-      Err(ctx) << file
-               << ": far ELF construct requires Tag_Bedrock_Far_Model=1";
-  }
-
-  for (Domain &domain : domains) {
-    llvm::sort(domain.sections, [](InputSectionBase *a, InputSectionBase *b) {
-      OutputSection *ao = a->getOutputSection();
-      OutputSection *bo = b->getOutputSection();
-      return std::make_tuple(ao->sectionIndex, a->getOffset(0)) <
-             std::make_tuple(bo->sectionIndex, b->getOffset(0));
-    });
-    unsigned flags = PF_BEDROCK_BOUNDS_ONLY;
-    for (InputSectionBase *isec : domain.sections)
-      flags |= isec->getOutputSection()->getPhdrFlags();
-    if ((flags & (PF_W | PF_X)) == (PF_W | PF_X))
-      Err(ctx) << domain.file
-               << ": writable executable Bedrock segment domain is not "
-                  "permitted";
-
-    auto entry = std::make_unique<PhdrEntry>(ctx, PT_BEDROCK_SEGDOM, flags);
-    entry->p_paddr = getBedrockOutputDomainID(ctx, domain.file, domain.inputID);
-    entry->hasLMA = true;
-    entry->p_align = std::max<uint64_t>(4096, ctx.arg.maxPageSize);
-    entry->bedrockDomainSections = std::move(domain.sections);
-    part.phdrs.push_back(std::move(entry));
-  }
-}
-
 // Place the first section of each PT_LOAD to a different page (of maxPageSize).
 // This is achieved by assigning an alignment expression to addrExpr of each
 // such section.
@@ -2813,37 +2710,6 @@ template <class ELFT> void Writer<ELFT>::assignFileOffsets() {
 // file offsets and VAs to all sections.
 template <class ELFT> void Writer<ELFT>::setPhdrs(Partition &part) {
   for (std::unique_ptr<PhdrEntry> &p : part.phdrs) {
-    if (p->p_type == PT_BEDROCK_SEGDOM) {
-      uint64_t begin = UINT64_MAX;
-      uint64_t end = 0;
-      for (InputSectionBase *isec : p->bedrockDomainSections) {
-        uint64_t sectionBegin =
-            isec->getOutputSection()->addr + isec->getOffset(0);
-        begin = std::min(begin, sectionBegin);
-        end = std::max(end, sectionBegin + isec->getSize());
-      }
-      uint64_t alignedBegin = alignDown(begin, uint64_t(4096));
-      uint64_t requiredPages =
-          alignTo(end - alignedBegin, uint64_t(4096)) / 4096;
-      uint64_t representedPages = 0;
-      for (unsigned exponent = 0; exponent <= 31; ++exponent) {
-        uint64_t unit = uint64_t(1) << exponent;
-        uint64_t mantissa = divideCeil(requiredPages, unit);
-        if (mantissa <= 63) {
-          representedPages = mantissa * unit;
-          break;
-        }
-      }
-      if (!representedPages) {
-        Err(ctx) << "Bedrock segment domain is too large to represent";
-        representedPages = requiredPages;
-      }
-      p->p_offset = 0;
-      p->p_filesz = 0;
-      p->p_vaddr = begin == UINT64_MAX ? 0 : alignedBegin;
-      p->p_memsz = representedPages * 4096;
-      continue;
-    }
     OutputSection *first = p->firstSec;
     OutputSection *last = p->lastSec;
 
@@ -3047,49 +2913,6 @@ template <class ELFT> void Writer<ELFT>::writeHeader() {
 
   for (OutputSection *sec : ctx.outputSections)
     sec->writeHeaderTo<ELFT>(++sHdrs);
-}
-
-template <class ELFT> void Writer<ELFT>::writeBedrockSegmentDomains() {
-  for (ELFFileBase *file : ctx.objectFiles) {
-    ArrayRef<InputSectionBase *> sections = file->getSections();
-    for (InputSectionBase *meta : sections) {
-      if (!meta || meta == &InputSection::discarded || !meta->isLive() ||
-          meta->name != ".bedrock.segdomains" || meta->entsize != 16)
-        continue;
-      ArrayRef<uint8_t> data = meta->content();
-      for (size_t off = 0; off + 16 <= data.size(); off += 16) {
-        uint32_t inputSectionIndex = read32le(data.data() + off);
-        uint32_t inputDomainID = read32le(data.data() + off + 4);
-        if (inputSectionIndex >= sections.size())
-          continue;
-        InputSectionBase *target = sections[inputSectionIndex];
-        if (!target || target == &InputSection::discarded || !target->isLive())
-          continue;
-        uint32_t outputDomainID =
-            getBedrockOutputDomainID(ctx, file, inputDomainID);
-        uint64_t image = 0;
-        for (const std::unique_ptr<PhdrEntry> &phdr : ctx.mainPart->phdrs) {
-          if (phdr->p_type != PT_BEDROCK_SEGDOM ||
-              phdr->p_paddr != outputDomainID)
-            continue;
-          uint64_t pages = phdr->p_memsz / 4096;
-          unsigned exponent = 0;
-          while (pages > 63) {
-            pages = alignTo(pages, uint64_t(2)) / 2;
-            ++exponent;
-          }
-          image = (phdr->p_vaddr & ~uint64_t(4095)) |
-                  (uint64_t(exponent) << 7) | (pages << 1) | 1;
-          break;
-        }
-        uint8_t *out = ctx.bufferStart + meta->getOutputSection()->offset +
-                       meta->getOffset(off);
-        write32le(out, target->getOutputSection()->sectionIndex);
-        write32le(out + 4, outputDomainID);
-        write64le(out + 8, image);
-      }
-    }
-  }
 }
 
 // Open a result file.

@@ -21,8 +21,10 @@
 #include "llvm/IR/Function.h"
 #include "llvm/IR/IRBuilder.h"
 #include "llvm/IR/Instructions.h"
+#include "llvm/IR/IntrinsicsBedrock.h"
 #include "llvm/Support/ErrorHandling.h"
 #include "llvm/Target/TargetMachine.h"
+#include <cmath>
 
 using namespace llvm;
 
@@ -99,26 +101,135 @@ BedrockTargetLowering::BedrockTargetLowering(const TargetMachine &TM,
     setOperationAction(ISD::FSUB, VT, Legal);
     setOperationAction(ISD::FMUL, VT, Legal);
     setOperationAction(ISD::FDIV, VT, Legal);
+    setOperationAction(ISD::FMA, VT, Legal);
+    for (unsigned Opcode :
+         {ISD::FACOS, ISD::FASIN, ISD::FATAN, ISD::FCOS, ISD::FCOSH,
+          ISD::FEXP, ISD::FEXP2, ISD::FEXP10, ISD::FLOG, ISD::FLOG2,
+          ISD::FLOG10, ISD::FSIN, ISD::FSINCOS, ISD::FSINH, ISD::FTAN,
+          ISD::FTANH})
+      setOperationAction(Opcode, VT, Expand);
     setOperationAction(ISD::SINT_TO_FP, VT, Legal);
     setOperationAction(ISD::UINT_TO_FP, VT, Legal);
   }
+  if (Subtarget.hasFPTRANSA())
+    setTargetDAGCombine(
+        {ISD::FACOS, ISD::FASIN, ISD::FATAN, ISD::FCOS, ISD::FCOSH,
+         ISD::FEXP, ISD::FEXP2, ISD::FEXP10, ISD::FLOG, ISD::FLOG2,
+         ISD::FLOG10, ISD::FSIN, ISD::FSINCOS, ISD::FSINH, ISD::FTAN,
+         ISD::FTANH});
   setOperationAction(ISD::BR_JT, MVT::Other, Expand);
   setOperationAction(ISD::BRCOND, MVT::Other, Custom);
   setOperationAction(ISD::VASTART, MVT::Other, Custom);
   setOperationAction(ISD::DYNAMIC_STACKALLOC, MVT::i64, Custom);
-  setOperationAction(ISD::ADDRSPACECAST, MVT::i64, Custom);
-  setOperationAction(ISD::ADDRSPACECAST, MVT::i128, Custom);
-  setOperationAction(ISD::PTRADD, MVT::i128, Custom);
   setOperationAction(ISD::GlobalTLSAddress, MVT::i64, Custom);
-  // AS1 pointers are 128-bit address/image carriers. Custom lowering must
-  // split them before the integer type legalizer sees them as load/store
-  // address operands.
-  setOperationAction(ISD::LOAD, MVT::i128, Custom);
-  setOperationAction(ISD::STORE, MVT::i128, Custom);
   setMaxAtomicSizeInBitsSupported(64);
   setMinimumJumpTableEntries(16);
 
   computeRegisterProperties(Subtarget.getRegisterInfo());
+}
+
+bool BedrockTargetLowering::enableAggressiveFMAFusion(EVT VT) const {
+  return VT == MVT::f32 || VT == MVT::f64;
+}
+
+bool BedrockTargetLowering::isFMAFasterThanFMulAndFAdd(
+    const MachineFunction &MF, EVT VT) const {
+  return isFMAFasterThanFMulAndFAdd(
+      MF.getFunction(), VT.getTypeForEVT(MF.getFunction().getContext()));
+}
+
+bool BedrockTargetLowering::isFMAFasterThanFMulAndFAdd(
+    const Function &F, Type *Ty) const {
+  return Ty->isFloatTy() || Ty->isDoubleTy();
+}
+
+static bool isFPTRANSAConstantInPrimaryRange(SDValue Op) {
+  auto *Constant = dyn_cast<ConstantFPSDNode>(Op);
+  if (!Constant || !Constant->getValueAPF().isFinite())
+    return false;
+  constexpr double PiOverFour = 0.78539816339744830962;
+  return std::abs(Constant->getValueAPF().convertToDouble()) <= PiOverFour;
+}
+
+SDValue BedrockTargetLowering::PerformDAGCombine(
+    SDNode *N, DAGCombinerInfo &DCI) const {
+  if (!Subtarget.hasFPTRANSA() || !N->getFlags().hasApproximateFuncs())
+    return {};
+
+  SelectionDAG &DAG = DCI.DAG;
+  SDLoc DL(N);
+  SDValue Arg = N->getOperand(0);
+  EVT VT = N->getValueType(0);
+  if (VT != MVT::f32 && VT != MVT::f64)
+    return {};
+
+  Intrinsic::ID IID;
+  switch (N->getOpcode()) {
+  case ISD::FACOS:
+    IID = Intrinsic::bedrock_facosa;
+    break;
+  case ISD::FASIN:
+    IID = Intrinsic::bedrock_fasina;
+    break;
+  case ISD::FATAN:
+    IID = Intrinsic::bedrock_fatana;
+    break;
+  case ISD::FCOS:
+    if (!isFPTRANSAConstantInPrimaryRange(Arg))
+      return {};
+    IID = Intrinsic::bedrock_fcosa;
+    break;
+  case ISD::FCOSH:
+    IID = Intrinsic::bedrock_fcosha;
+    break;
+  case ISD::FEXP:
+    IID = Intrinsic::bedrock_fetoxa;
+    break;
+  case ISD::FEXP2:
+    IID = Intrinsic::bedrock_ftwotoxa;
+    break;
+  case ISD::FEXP10:
+    IID = Intrinsic::bedrock_ftentoxa;
+    break;
+  case ISD::FLOG:
+    IID = Intrinsic::bedrock_flogna;
+    break;
+  case ISD::FLOG2:
+    IID = Intrinsic::bedrock_flog2a;
+    break;
+  case ISD::FLOG10:
+    IID = Intrinsic::bedrock_flog10a;
+    break;
+  case ISD::FSIN:
+    if (!isFPTRANSAConstantInPrimaryRange(Arg))
+      return {};
+    IID = Intrinsic::bedrock_fsina;
+    break;
+  case ISD::FSINH:
+    IID = Intrinsic::bedrock_fsinha;
+    break;
+  case ISD::FTAN:
+    if (!isFPTRANSAConstantInPrimaryRange(Arg))
+      return {};
+    IID = Intrinsic::bedrock_ftana;
+    break;
+  case ISD::FTANH:
+    IID = Intrinsic::bedrock_ftanha;
+    break;
+  case ISD::FSINCOS: {
+    if (!isFPTRANSAConstantInPrimaryRange(Arg))
+      return {};
+    SDValue ID = DAG.getConstant(Intrinsic::bedrock_fsincosa, DL, MVT::i32);
+    SDValue Result = DAG.getNode(ISD::INTRINSIC_WO_CHAIN, DL,
+                                 DAG.getVTList(VT, VT), {ID, Arg});
+    return DCI.CombineTo(N, Result, Result.getValue(1));
+  }
+  default:
+    return {};
+  }
+
+  SDValue ID = DAG.getConstant(IID, DL, MVT::i32);
+  return DAG.getNode(ISD::INTRINSIC_WO_CHAIN, DL, VT, {ID, Arg});
 }
 
 bool BedrockTargetLowering::shouldInsertFencesForAtomic(
@@ -127,11 +238,6 @@ bool BedrockTargetLowering::shouldInsertFencesForAtomic(
   // Plain loads and stores use AFENCE sequences around an otherwise relaxed
   // memory operation.
   return isa<LoadInst, StoreInst>(I);
-}
-
-bool BedrockTargetLowering::shouldPreservePtrArith(const Function &F,
-                                                   EVT PtrVT) const {
-  return PtrVT == MVT::i128;
 }
 
 Instruction *BedrockTargetLowering::emitLeadingFence(
@@ -170,8 +276,6 @@ const char *BedrockTargetLowering::getTargetNodeName(unsigned Opcode) const {
   switch (Opcode) {
   case BedrockISD::RET_FLAG:
     return "BedrockISD::RET_FLAG";
-  case BedrockISD::FAR_RET_FLAG:
-    return "BedrockISD::FAR_RET_FLAG";
   case BedrockISD::CALL:
     return "BedrockISD::CALL";
   case BedrockISD::CALL_ADDRESS:
@@ -182,14 +286,6 @@ const char *BedrockTargetLowering::getTargetNodeName(unsigned Opcode) const {
     return "BedrockISD::TLSDESC_CALL";
   case BedrockISD::TAIL_CALL_CANDIDATE:
     return "BedrockISD::TAIL_CALL_CANDIDATE";
-  case BedrockISD::FAR_CALL:
-    return "BedrockISD::FAR_CALL";
-  case BedrockISD::FAR_TAIL_CALL_CANDIDATE:
-    return "BedrockISD::FAR_TAIL_CALL_CANDIDATE";
-  case BedrockISD::FAR_LOAD:
-    return "BedrockISD::FAR_LOAD";
-  case BedrockISD::FAR_STORE:
-    return "BedrockISD::FAR_STORE";
   case BedrockISD::CMP:
     return "BedrockISD::CMP";
   case BedrockISD::TEST:
@@ -299,10 +395,6 @@ static EVT getVTSDNodeOperand(SDValue Op, StringRef Context) {
 SDValue BedrockTargetLowering::LowerOperation(SDValue Op,
                                               SelectionDAG &DAG) const {
   switch (Op.getOpcode()) {
-  case ISD::LOAD:
-    return LowerFarLoad(Op, DAG);
-  case ISD::STORE:
-    return LowerFarStore(Op, DAG);
   case ISD::BRCOND:
     return LowerBRCOND(Op, DAG);
   case ISD::BR_CC:
@@ -324,53 +416,11 @@ SDValue BedrockTargetLowering::LowerOperation(SDValue Op,
     return LowerVASTART(Op, DAG);
   case ISD::DYNAMIC_STACKALLOC:
     return LowerDYNAMIC_STACKALLOC(Op, DAG);
-  case ISD::ADDRSPACECAST:
-    return LowerADDRSPACECAST(Op, DAG);
-  case ISD::PTRADD:
-    return LowerPTRADD(Op, DAG);
   case ISD::GlobalTLSAddress:
     return LowerGlobalTLSAddress(Op, DAG);
   default:
     llvm_unreachable("unhandled Bedrock lowering operation");
   }
-}
-
-void BedrockTargetLowering::ReplaceNodeResults(
-    SDNode *N, SmallVectorImpl<SDValue> &Results, SelectionDAG &DAG) const {
-  if (N->getOpcode() == ISD::ADDRSPACECAST && N->getValueType(0) == MVT::i128) {
-    Results.push_back(LowerADDRSPACECAST(SDValue(N, 0), DAG));
-    return;
-  }
-  if (N->getOpcode() == ISD::PTRADD && N->getValueType(0) == MVT::i128) {
-    Results.push_back(LowerPTRADD(SDValue(N, 0), DAG));
-    return;
-  }
-  if (N->getOpcode() != ISD::LOAD || N->getValueType(0) != MVT::i128)
-    llvm_unreachable("unhandled Bedrock custom result legalization");
-  SDValue Lowered = LowerFarLoad(SDValue(N, 0), DAG);
-  if (!Lowered)
-    llvm_unreachable("failed to split Bedrock i128 load");
-  Results.push_back(Lowered);
-  Results.push_back(Lowered.getValue(1));
-}
-
-SDValue BedrockTargetLowering::LowerADDRSPACECAST(SDValue Op,
-                                                  SelectionDAG &DAG) const {
-  const auto *Cast = cast<AddrSpaceCastSDNode>(Op);
-  SDLoc DL(Op);
-  SDValue Source = Op.getOperand(0);
-  if (Cast->getSrcAddressSpace() == 1 && Cast->getDestAddressSpace() == 0)
-    return DAG.getNode(ISD::TRUNCATE, DL, MVT::i64, Source);
-
-  if (Cast->getSrcAddressSpace() != 0 || Cast->getDestAddressSpace() != 1)
-    report_fatal_error("unsupported Bedrock address-space cast");
-  SDValue Image = DAG.getConstant(0, DL, MVT::i64);
-  if (!isNullConstant(Source)) {
-    SDNode *ReadDS = DAG.getMachineNode(Bedrock::BEDROCK_RDSEG, DL, MVT::i64,
-                                        DAG.getTargetConstant(1, DL, MVT::i32));
-    Image = SDValue(ReadDS, 0);
-  }
-  return DAG.getNode(ISD::BUILD_PAIR, DL, MVT::i128, Source, Image);
 }
 
 SDValue
@@ -390,96 +440,6 @@ BedrockTargetLowering::LowerDYNAMIC_STACKALLOC(SDValue Op,
                     DAG.getSignedConstant(-int64_t(Alignment), DL, MVT::i64));
   Chain = DAG.getCopyToReg(Chain, DL, Bedrock::SP, Result);
   return DAG.getMergeValues({Result, Chain}, DL);
-}
-
-static std::pair<SDValue, SDValue>
-splitFarPointer(SDValue Pointer, const SDLoc &DL, SelectionDAG &DAG) {
-  assert(Pointer.getValueType() == MVT::i128 &&
-         "Bedrock far pointer must use the i128 carrier");
-  SDValue Address = DAG.getNode(ISD::TRUNCATE, DL, MVT::i64, Pointer);
-  SDValue Shift = DAG.getConstant(64, DL, MVT::i64);
-  SDValue Shifted = DAG.getNode(ISD::SRL, DL, MVT::i128, Pointer, Shift);
-  SDValue Image = DAG.getNode(ISD::TRUNCATE, DL, MVT::i64, Shifted);
-  return {Address, Image};
-}
-
-SDValue BedrockTargetLowering::LowerPTRADD(SDValue Op,
-                                           SelectionDAG &DAG) const {
-  SDLoc DL(Op);
-  auto [Address, Image] = splitFarPointer(Op.getOperand(0), DL, DAG);
-  SDValue Offset = DAG.getNode(ISD::TRUNCATE, DL, MVT::i64, Op.getOperand(1));
-  SDNodeFlags Flags = Op->getFlags();
-  Flags.setInBounds(false);
-  Address = DAG.getNode(ISD::ADD, DL, MVT::i64, Address, Offset, Flags);
-  return DAG.getNode(ISD::BUILD_PAIR, DL, MVT::i128, Address, Image);
-}
-
-SDValue BedrockTargetLowering::LowerFarLoad(SDValue Op,
-                                            SelectionDAG &DAG) const {
-  auto *Load = cast<LoadSDNode>(Op);
-  if (Load->getAddressSpace() != 1) {
-    if (Load->getValueType(0) != MVT::i128 || !Load->isUnindexed())
-      return {};
-
-    // An AS1 pointer value stored in ordinary memory is a two-word carrier.
-    // Split it before the type legalizer asks the target to replace an illegal
-    // i128 load result.
-    SDLoc DL(Op);
-    SDValue Base = Load->getBasePtr();
-    SDValue HighPtr = DAG.getMemBasePlusOffset(Base, TypeSize::getFixed(8), DL);
-    MachineMemOperand::Flags Flags = Load->getMemOperand()->getFlags();
-    SDValue Low = DAG.getLoad(MVT::i64, DL, Load->getChain(), Base,
-                              Load->getPointerInfo(), Load->getBaseAlign(),
-                              Flags, Load->getAAInfo());
-    SDValue High = DAG.getLoad(MVT::i64, DL, Low.getValue(1), HighPtr,
-                               Load->getPointerInfo().getWithOffset(8),
-                               commonAlignment(Load->getBaseAlign(), 8), Flags,
-                               Load->getAAInfo());
-    SDValue Carrier = DAG.getNode(ISD::BUILD_PAIR, DL, MVT::i128, Low, High);
-    return DAG.getMergeValues({Carrier, High.getValue(1)}, DL);
-  }
-  if (!Load->isUnindexed())
-    report_fatal_error("indexed Bedrock far loads are unsupported");
-
-  SDLoc DL(Op);
-  auto [Address, Image] = splitFarPointer(Load->getBasePtr(), DL, DAG);
-  SDValue ExtKind = DAG.getTargetConstant(
-      static_cast<unsigned>(Load->getExtensionType()), DL, MVT::i32);
-  SDValue Result =
-      DAG.getMemIntrinsicNode(BedrockISD::FAR_LOAD, DL, Load->getVTList(),
-                              {Load->getChain(), Address, Image, ExtKind},
-                              Load->getMemoryVT(), Load->getMemOperand());
-  return DAG.getMergeValues({Result, Result.getValue(1)}, DL);
-}
-
-SDValue BedrockTargetLowering::LowerFarStore(SDValue Op,
-                                             SelectionDAG &DAG) const {
-  auto *Store = cast<StoreSDNode>(Op);
-  if (Store->getAddressSpace() != 1) {
-    if (Store->getValue().getValueType() != MVT::i128 || !Store->isUnindexed())
-      return {};
-
-    SDLoc DL(Op);
-    auto [Low, High] = splitFarPointer(Store->getValue(), DL, DAG);
-    SDValue Base = Store->getBasePtr();
-    SDValue HighPtr = DAG.getMemBasePlusOffset(Base, TypeSize::getFixed(8), DL);
-    MachineMemOperand::Flags Flags = Store->getMemOperand()->getFlags();
-    SDValue LowStore =
-        DAG.getStore(Store->getChain(), DL, Low, Base, Store->getPointerInfo(),
-                     Store->getBaseAlign(), Flags, Store->getAAInfo());
-    return DAG.getStore(
-        LowStore, DL, High, HighPtr, Store->getPointerInfo().getWithOffset(8),
-        commonAlignment(Store->getBaseAlign(), 8), Flags, Store->getAAInfo());
-  }
-  if (!Store->isUnindexed())
-    report_fatal_error("indexed Bedrock far stores are unsupported");
-
-  SDLoc DL(Op);
-  auto [Address, Image] = splitFarPointer(Store->getBasePtr(), DL, DAG);
-  return DAG.getMemIntrinsicNode(
-      BedrockISD::FAR_STORE, DL, DAG.getVTList(MVT::Other),
-      {Store->getChain(), Store->getValue(), Address, Image},
-      Store->getMemoryVT(), Store->getMemOperand());
 }
 
 static SDValue emitCompare(SDValue LHS, SDValue RHS, const SDLoc &DL,
@@ -824,8 +784,7 @@ static SDValue promoteToLocVT(SDValue Value, const CCValAssign &VA,
 }
 
 static bool isSupportedCallingConv(CallingConv::ID CallConv) {
-  return CallConv == CallingConv::C || CallConv == CallingConv::Fast ||
-         CallConv == CallingConv::Bedrock_Far;
+  return CallConv == CallingConv::C || CallConv == CallingConv::Fast;
 }
 
 static bool referencesFrameIndex(SDValue Value,
@@ -856,8 +815,8 @@ SDValue BedrockTargetLowering::LowerFormalArguments(
 
   if (IsVarArg) {
     // Named stack arguments precede the unnamed area. The fixed object uses
-    // the callee's entry-SP view, where both near and far ABIs start ordinary
-    // arguments at entry SP + 16.
+    // the callee's entry-SP view, where ordinary arguments start at entry
+    // SP + 16 after the return address and alignment padding.
     int64_t EntryOffset = 16 + CCInfo.getStackSize();
     int FI = MFI.CreateFixedObject(1, EntryOffset, /*IsImmutable=*/true);
     MFI.setObjectAlignment(FI, commonAlignment(Align(16), EntryOffset));
@@ -987,8 +946,7 @@ BedrockTargetLowering::LowerCall(TargetLowering::CallLoweringInfo &CLI,
     ArgValues[I] = FIPtr;
   }
 
-  bool IsFarCall = CallConv == CallingConv::Bedrock_Far;
-  uint64_t CallFrameSize = (IsFarCall ? 0 : 8) + CCInfo.getStackSize();
+  uint64_t CallFrameSize = 8 + CCInfo.getStackSize();
   Chain = DAG.getCALLSEQ_START(Chain, CallFrameSize, 0, DL);
 
   SmallVector<std::pair<Register, SDValue>, 8> RegsToPass;
@@ -1006,7 +964,7 @@ BedrockTargetLowering::LowerCall(TargetLowering::CallLoweringInfo &CLI,
     if (!StackPtr.getNode())
       StackPtr = DAG.getCopyFromReg(
           Chain, DL, Bedrock::SP, getPointerTy(DAG.getDataLayout()));
-    int64_t CallerOffset = (IsFarCall ? 0 : 8) + VA.getLocMemOffset();
+    int64_t CallerOffset = 8 + VA.getLocMemOffset();
     SDValue Address = DAG.getNode(
         ISD::ADD, DL, getPointerTy(DAG.getDataLayout()), StackPtr,
         DAG.getIntPtrConstant(CallerOffset, DL));
@@ -1023,22 +981,7 @@ BedrockTargetLowering::LowerCall(TargetLowering::CallLoweringInfo &CLI,
     InGlue = Chain.getValue(1);
   }
 
-  SDValue FarSegment;
-  if (IsFarCall) {
-    if (auto *G = dyn_cast<GlobalAddressSDNode>(Callee)) {
-      // The far ELF profile replaces the disabled image with SEG(symbol).
-      // Until relocation selection, keep the address and image as independent
-      // values so indirect and direct far calls share the same LCALL path.
-      Callee = DAG.getTargetGlobalAddress(G->getGlobal(), DL, MVT::i64,
-                                          G->getOffset());
-      FarSegment = DAG.getConstant(0, DL, MVT::i64);
-    } else if (auto *E = dyn_cast<ExternalSymbolSDNode>(Callee)) {
-      Callee = DAG.getTargetExternalSymbol(E->getSymbol(), MVT::i64);
-      FarSegment = DAG.getConstant(0, DL, MVT::i64);
-    } else {
-      std::tie(Callee, FarSegment) = splitFarPointer(Callee, DL, DAG);
-    }
-  } else if (auto *G = dyn_cast<GlobalAddressSDNode>(Callee)) {
+  if (auto *G = dyn_cast<GlobalAddressSDNode>(Callee)) {
     bool IsLarge = DAG.getTarget().getCodeModel() == CodeModel::Large;
     if (IsLarge) {
       unsigned Flag;
@@ -1088,8 +1031,6 @@ BedrockTargetLowering::LowerCall(TargetLowering::CallLoweringInfo &CLI,
   SDVTList NodeTys = DAG.getVTList(MVT::Other, MVT::Glue);
   SmallVector<SDValue, 16> Ops;
   Ops.push_back(Chain);
-  if (IsFarCall)
-    Ops.push_back(FarSegment);
   Ops.push_back(Callee);
   Ops.push_back(DAG.getRegisterMask(Mask));
   for (const auto &[Reg, Value] : RegsToPass)
@@ -1097,13 +1038,8 @@ BedrockTargetLowering::LowerCall(TargetLowering::CallLoweringInfo &CLI,
   if (InGlue.getNode())
     Ops.push_back(InGlue);
 
-  unsigned CallOpcode;
-  if (IsFarCall)
-    CallOpcode = TailCallEligible ? BedrockISD::FAR_TAIL_CALL_CANDIDATE
-                                  : BedrockISD::FAR_CALL;
-  else
-    CallOpcode =
-        TailCallEligible ? BedrockISD::TAIL_CALL_CANDIDATE : BedrockISD::CALL;
+  unsigned CallOpcode = TailCallEligible ? BedrockISD::TAIL_CALL_CANDIDATE
+                                         : BedrockISD::CALL;
   Chain = DAG.getNode(CallOpcode, DL, NodeTys, Ops);
   InGlue = Chain.getValue(1);
 
@@ -1223,8 +1159,5 @@ BedrockTargetLowering::LowerReturn(SDValue Chain, CallingConv::ID CallConv,
   RetOps[0] = Chain;
   if (Glue.getNode())
     RetOps.push_back(Glue);
-  unsigned RetOpcode = CallConv == CallingConv::Bedrock_Far
-                           ? BedrockISD::FAR_RET_FLAG
-                           : BedrockISD::RET_FLAG;
-  return DAG.getNode(RetOpcode, DL, MVT::Other, RetOps);
+  return DAG.getNode(BedrockISD::RET_FLAG, DL, MVT::Other, RetOps);
 }

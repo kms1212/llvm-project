@@ -44,7 +44,7 @@ lea.q ext_data, r3
 
 mov.q [ds:r4 + ext_data], r5
 ; ASM: mov.q	[ds:r4 + 0], r5
-; ASM-SAME: encoding: [0xd4,0x3a,0xf2,0x14,A,A,A,A]
+; ASM-SAME: encoding: [0xd4,0x3a,0xf2,0x04,A,A,A,A]
 ; ASM: fixup A - offset: 4, value: ext_data, kind: fixup_bedrock_disp32
 
 local_target:
@@ -68,5 +68,5 @@ ret
 ; DISASM: 1c: d0 38 ea 00 00 00 00 mov.q	[0], r1
 ; DISASM: 23: d0 39 66 00 00 00 00 mov.q	[pc + 0], r2
 ; DISASM: 2a: d1 b9 8e 00 00 00 00 lea.q	0, r3
-; DISASM: 31: d4 3a f2 14 00 00 00 00      mov.q	[ds:r4 + 0], r5
+; DISASM: 31: d4 3a f2 04 00 00 00 00      mov.q	[ds:r4 + 0], r5
 ; DISASM: 39: 02           	ret

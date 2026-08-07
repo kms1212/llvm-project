@@ -8,7 +8,6 @@
 
 #include "BedrockTargetMachine.h"
 #include "Bedrock.h"
-#include "BedrockAliasAnalysis.h"
 #include "BedrockMachineFunctionInfo.h"
 #include "BedrockTargetTransformInfo.h"
 #include "TargetInfo/BedrockTargetInfo.h"
@@ -174,20 +173,7 @@ BedrockTargetMachine::getTargetTransformInfo(const Function &F) const {
   return TargetTransformInfo(std::make_unique<BedrockTTIImpl>(this, F));
 }
 
-void BedrockTargetMachine::registerDefaultAliasAnalyses(AAManager &AAM) {
-  AAM.registerFunctionAnalysis<BedrockAA>();
-}
-
 void BedrockTargetMachine::registerPassBuilderCallbacks(PassBuilder &PB) {
-  PB.registerAnalysisRegistrationCallback([](FunctionAnalysisManager &FAM) {
-    FAM.registerPass([] { return BedrockAA(); });
-  });
-  PB.registerParseAACallback([](StringRef Name, AAManager &AAM) {
-    if (Name != "bedrock-aa")
-      return false;
-    AAM.registerFunctionAnalysis<BedrockAA>();
-    return true;
-  });
   PB.registerPeepholeEPCallback(
       [](FunctionPassManager &FPM, OptimizationLevel Level) {
         if (Level != OptimizationLevel::O0)

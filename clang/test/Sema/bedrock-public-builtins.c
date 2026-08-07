@@ -4,8 +4,9 @@
 
 #include <bedrockintrin.h>
 
-typedef int *__far far_int_ptr;
-typedef float *__far far_float_ptr;
+_Static_assert(__BEDROCK_PMC_CYCLE == 1, "");
+_Static_assert(__BEDROCK_PMC_INSTRET == 2, "");
+_Static_assert(__BEDROCK_PMC_PTWALK == 3, "");
 
 #ifndef TEST_NO_FPU
 void immediate_errors(unsigned value) {
@@ -15,12 +16,6 @@ void immediate_errors(unsigned value) {
   __bedrock_trace(65536); // expected-error {{argument value 65536 is outside the valid range [0, 65535]}}
 }
 
-void far_errors(int *near_pointer, far_int_ptr far_pointer,
-                far_float_ptr other_far_pointer, float value) {
-  (void)__builtin_bedrock_far_address(near_pointer); // expected-error {{bedrock builtin requires a far pointer operand}}
-  (void)__builtin_bedrock_far_same_encoding(far_pointer, other_far_pointer); // expected-error {{bedrock builtin requires compatible far pointer operands}}
-  (void)__builtin_bedrock_far_ptr_init(far_pointer, value, 0); // expected-error {{argument 2 to bedrock far pointer builtin must have integer type}}
-}
 #else
 // NOFPU: error: '__builtin_bedrock_fclass_f32' needs target feature fpu
 uint16_t no_fpu(float value) {

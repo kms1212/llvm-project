@@ -26,8 +26,6 @@ declare void @llvm.bedrock.write.fflags(i64)
 declare i64 @llvm.bedrock.fclass.f32(float)
 declare i64 @llvm.bedrock.fclass.f64(double)
 
-@far = global ptr addrspace(1) inttoptr (i128 -136023984058069262719674516306229037176 to ptr addrspace(1)), align 16
-
 ; CHECK-LABEL: core:
 ; CHECK: trace 4660
 ; CHECK: bkpt
@@ -127,7 +125,3 @@ define i64 @fpu(float %single, double %double) #0 {
 }
 
 attributes #0 = { "target-features"="+fpu" }
-
-; CHECK: far:
-; CHECK-NEXT: .quad 1234605616436508552
-; CHECK-NEXT: .quad -7373874951294615808

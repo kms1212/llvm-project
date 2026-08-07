@@ -21,7 +21,7 @@ class LLVM_LIBRARY_VISIBILITY BedrockTargetInfo : public TargetInfo {
   static const char *const GCCRegNames[];
   static const TargetInfo::GCCRegAlias GCCRegAliases[];
   bool HasFPU = true;
-  bool HasVirtAccel = false;
+  bool HasFPTRANSA = false;
 
 public:
   BedrockTargetInfo(const llvm::Triple &Triple, const TargetOptions &)
@@ -56,7 +56,7 @@ public:
 
   bool hasFeature(StringRef Feature) const override {
     return Feature == "bedrock" || (Feature == "fpu" && HasFPU) ||
-           (Feature == "virtaccel" && HasVirtAccel);
+           (Feature == "fptransa" && HasFPTRANSA);
   }
   bool
   initFeatureMap(llvm::StringMap<bool> &Features, DiagnosticsEngine &Diags,
@@ -79,19 +79,8 @@ public:
 
   bool hasBitIntType() const override { return true; }
 
-  CallingConvCheckResult checkCallingConvention(CallingConv CC) const override {
-    return CC == CC_C || CC == CC_BedrockFar ? CCCR_OK : CCCR_Warning;
-  }
+  bool useBitFieldTypeForAllocationUnits() const override { return true; }
 
-  uint64_t getMaxPointerWidth() const override { return 128; }
-
-protected:
-  uint64_t getPointerWidthV(LangAS AS) const override {
-    return getTargetAddressSpace(AS) == 1 ? 128 : PointerWidth;
-  }
-  uint64_t getPointerAlignV(LangAS AS) const override {
-    return getTargetAddressSpace(AS) == 1 ? 128 : PointerAlign;
-  }
 };
 
 } // namespace targets

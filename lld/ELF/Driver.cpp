@@ -2001,6 +2001,15 @@ static void setConfigs(Ctx &ctx, opt::InputArgList &args) {
   ctx.arg.picThunk = args.hasArg(OPT_pic_veneer, ctx.arg.isPic);
   ctx.arg.wordsize = ctx.arg.is64 ? 8 : 4;
 
+  if (m == EM_BEDROCK) {
+    for (opt::Arg *arg : args.filtered(OPT_z))
+      if (StringRef(arg->getValue()) == "lazy") {
+        ErrAlways(ctx) << "-z lazy is not supported for Bedrock";
+        break;
+      }
+    ctx.arg.zNow = true;
+  }
+
   // ELF defines two different ways to store relocation addends as shown below:
   //
   //  Rel: Addends are stored to the location where relocations are applied. It

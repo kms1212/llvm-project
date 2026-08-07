@@ -13,11 +13,10 @@ class Proc<string Name, list<SubtargetFeature> Features>
 
 def FeatureFPU : SubtargetFeature<"fpu", "HasFPU", "true",
                                   "Enable floating-point instructions">;
-def FeatureVirtAccel : SubtargetFeature<"virtaccel", "HasVirtAccel", "true",
-                                        "Enable virtualization acceleration">;
-def FeatureFarELF : SubtargetFeature<"far-elf", "HasFarELF", "true",
-                                     "Enable the bedrock-elf-far profile">;
-
+def FeatureFPTRANSA
+    : SubtargetFeature<"fptransa", "HasFPTRANSA", "true",
+                       "Enable approximate transcendental floating-point instructions",
+                       [FeatureFPU]>;
 def : Proc<"generic", [FeatureFPU]>;
 
 include "BedrockRegisterInfo.td"

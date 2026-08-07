@@ -8,6 +8,7 @@
 
 #include "BedrockFrameLowering.h"
 #include "MCTargetDesc/BedrockMCTargetDesc.h"
+#include "llvm/ADT/STLExtras.h"
 #include "llvm/CodeGen/MachineFrameInfo.h"
 #include "llvm/CodeGen/MachineFunction.h"
 #include "llvm/CodeGen/MachineInstrBuilder.h"
@@ -36,6 +37,62 @@ static bool needsDwarfCFI(const MachineFunction &MF) {
          !F.getParent()->debug_compile_units().empty();
 }
 
+static bool isCalleeSavedFPR(Register Reg) {
+  return Reg >= Bedrock::F8 && Reg <= Bedrock::F15;
+}
+
+static void getFPPairRegs(unsigned PairIndex, Register &First,
+                          Register &Second) {
+  switch (PairIndex) {
+  case 0:
+    First = Bedrock::F14;
+    Second = Bedrock::F15;
+    return;
+  case 1:
+    First = Bedrock::F12;
+    Second = Bedrock::F13;
+    return;
+  case 2:
+    First = Bedrock::F10;
+    Second = Bedrock::F11;
+    return;
+  case 3:
+    First = Bedrock::F8;
+    Second = Bedrock::F9;
+    return;
+  default:
+    llvm_unreachable("invalid Bedrock floating-point pair index");
+  }
+}
+
+static unsigned getSavedFPPairMask(const MachineFrameInfo &MFI) {
+  unsigned Mask = 0;
+  for (unsigned PairIndex = 0; PairIndex != 4; ++PairIndex) {
+    Register First;
+    Register Second;
+    getFPPairRegs(PairIndex, First, Second);
+    bool SavesFirst = false;
+    bool SavesSecond = false;
+    for (const CalleeSavedInfo &Info : MFI.getCalleeSavedInfo()) {
+      SavesFirst |= Register(Info.getReg()) == First;
+      SavesSecond |= Register(Info.getReg()) == Second;
+    }
+    assert(SavesFirst == SavesSecond &&
+           "Bedrock floating-point callee saves must be paired");
+    if (SavesFirst)
+      Mask |= 1u << PairIndex;
+  }
+  return Mask;
+}
+
+static uint64_t getFPPairStackSize(unsigned PairMask) {
+  uint64_t Size = 0;
+  for (unsigned PairIndex = 0; PairIndex != 4; ++PairIndex)
+    if (PairMask & (1u << PairIndex))
+      Size += 16;
+  return Size;
+}
+
 BedrockFrameLowering::BedrockFrameLowering(const BedrockSubtarget &STI)
     // Generic call-frame tracking rounds adjustments to this value.  Near
     // calls need an exact eight-byte phase adjustment; emitPrologue still
@@ -50,9 +107,7 @@ void BedrockFrameLowering::emitPrologue(MachineFunction &MF,
   const TargetRegisterInfo &TRI = *MF.getSubtarget().getRegisterInfo();
   MachineBasicBlock::iterator MBBI = MBB.begin();
   DebugLoc DL = MBBI != MBB.end() ? MBBI->getDebugLoc() : DebugLoc();
-  const bool IsFar =
-      MF.getFunction().getCallingConv() == CallingConv::Bedrock_Far;
-  const int64_t EntryFrameSize = IsFar ? 16 : 8;
+  const int64_t EntryFrameSize = 8;
   const bool NeedsFrameMoves = needsDwarfCFI(MF);
 
   auto emitCFI = [&](MCCFIInstruction CFI) {
@@ -64,17 +119,12 @@ void BedrockFrameLowering::emitPrologue(MachineFunction &MF,
         .setMIFlag(MachineInstr::FrameSetup);
   };
 
-  // CALL places the near PC at entry SP. LCALL places PC and CS in the
-  // two-word far linkage frame. Define the caller's CFA before describing any
-  // persistent body-frame allocation.
+  // CALL places the return PC at entry SP. Define the caller's CFA before
+  // describing any persistent body-frame allocation.
   emitCFI(MCCFIInstruction::cfiDefCfa(
       nullptr, TRI.getDwarfRegNum(Bedrock::SP, true), EntryFrameSize));
   emitCFI(MCCFIInstruction::createOffset(
       nullptr, TRI.getDwarfRegNum(Bedrock::PC, true), -EntryFrameSize));
-  if (IsFar)
-    emitCFI(MCCFIInstruction::createOffset(
-        nullptr, TRI.getDwarfRegNum(Bedrock::CS, true), -8));
-
   uint64_t StackSize = MFI.getStackSize();
   // A function observes a 16-byte-aligned SP on entry and keeps its body
   // frame aligned.  Near-call padding and outgoing arguments are allocated
@@ -84,15 +134,53 @@ void BedrockFrameLowering::emitPrologue(MachineFunction &MF,
   if (StackSize == 0)
     return;
 
-  BuildMI(MBB, MBBI, DL, TII.get(Bedrock::ADJSP_DOWN))
-      .addImm(StackSize)
-      .setMIFlag(MachineInstr::FrameSetup);
-  emitCFI(
-      MCCFIInstruction::cfiDefCfaOffset(nullptr, StackSize + EntryFrameSize));
+  const unsigned FPPairMask = getSavedFPPairMask(MFI);
+  const uint64_t FPPairStackSize = getFPPairStackSize(FPPairMask);
+  assert(StackSize >= FPPairStackSize &&
+         "floating-point save area exceeds the Bedrock frame");
+  const uint64_t RegularStackSize = StackSize - FPPairStackSize;
+
+  uint64_t PushedFPBytes = 0;
+  for (unsigned PairIndex = 0; PairIndex != 4; ++PairIndex) {
+    if (!(FPPairMask & (1u << PairIndex)))
+      continue;
+    Register First;
+    Register Second;
+    getFPPairRegs(PairIndex, First, Second);
+    BuildMI(MBB, MBBI, DL, TII.get(Bedrock::FPUSHPi))
+        .addImm(PairIndex)
+        .addReg(First, RegState::Implicit)
+        .addReg(Second, RegState::Implicit)
+        .setMIFlag(MachineInstr::FrameSetup);
+    PushedFPBytes += 16;
+    emitCFI(MCCFIInstruction::cfiDefCfaOffset(
+        nullptr, PushedFPBytes + EntryFrameSize));
+    for (const CalleeSavedInfo &Info : MFI.getCalleeSavedInfo()) {
+      if (Register(Info.getReg()) != First &&
+          Register(Info.getReg()) != Second)
+        continue;
+      int64_t Offset =
+          MFI.getObjectOffset(Info.getFrameIdx()) - EntryFrameSize;
+      emitCFI(MCCFIInstruction::createOffset(
+          nullptr, TRI.getDwarfRegNum(Info.getReg(), true), Offset));
+    }
+  }
+
+  if (RegularStackSize != 0) {
+    BuildMI(MBB, MBBI, DL, TII.get(Bedrock::ADJSP_DOWN))
+        .addImm(RegularStackSize)
+        .setMIFlag(MachineInstr::FrameSetup);
+    emitCFI(MCCFIInstruction::cfiDefCfaOffset(
+        nullptr, StackSize + EntryFrameSize));
+  }
 
   const auto &CSI = MFI.getCalleeSavedInfo();
-  std::advance(MBBI, CSI.size());
+  std::advance(MBBI, llvm::count_if(CSI, [](const CalleeSavedInfo &Info) {
+                 return !isCalleeSavedFPR(Info.getReg());
+               }));
   for (const CalleeSavedInfo &Info : CSI) {
+    if (isCalleeSavedFPR(Info.getReg()))
+      continue;
     int64_t Offset = MFI.getObjectOffset(Info.getFrameIdx()) - EntryFrameSize;
     emitCFI(MCCFIInstruction::createOffset(
         nullptr, TRI.getDwarfRegNum(Info.getReg(), true), Offset));
@@ -129,14 +217,21 @@ void BedrockFrameLowering::emitEpilogue(MachineFunction &MF,
   const TargetInstrInfo &TII = *MF.getSubtarget().getInstrInfo();
   MachineBasicBlock::iterator MBBI = MBB.getFirstTerminator();
   DebugLoc DL = MBBI != MBB.end() ? MBBI->getDebugLoc() : DebugLoc();
-  const bool IsFar =
-      MF.getFunction().getCallingConv() == CallingConv::Bedrock_Far;
-  const int64_t EntryFrameSize = IsFar ? 16 : 8;
+  const int64_t EntryFrameSize = 8;
+  const unsigned FPPairMask = getSavedFPPairMask(MFI);
+  const uint64_t FPPairStackSize = getFPPairStackSize(FPPairMask);
+  assert(StackSize >= FPPairStackSize &&
+         "floating-point save area exceeds the Bedrock frame");
+  const uint64_t RegularStackSize = StackSize - FPPairStackSize;
 
   if (hasFP(MF)) {
     MachineBasicBlock::iterator RestoreI = MBBI;
     const auto &CSI = MFI.getCalleeSavedInfo();
-    for (size_t I = 0; I != CSI.size() && RestoreI != MBB.begin(); ++I)
+    size_t RestoreCount =
+        llvm::count_if(CSI, [](const CalleeSavedInfo &Info) {
+          return !isCalleeSavedFPR(Info.getReg());
+        });
+    for (size_t I = 0; I != RestoreCount && RestoreI != MBB.begin(); ++I)
       --RestoreI;
     BuildMI(MBB, RestoreI, DL, TII.get(Bedrock::MOVQrs))
         .addReg(Bedrock::R15)
@@ -152,15 +247,43 @@ void BedrockFrameLowering::emitEpilogue(MachineFunction &MF,
     }
   }
 
-  BuildMI(MBB, MBBI, DL, TII.get(Bedrock::ADJSP_UP))
-      .addImm(StackSize)
-      .setMIFlag(MachineInstr::FrameDestroy);
-  if (needsDwarfCFI(MF)) {
-    unsigned CFIIndex = MF.addFrameInst(
-        MCCFIInstruction::cfiDefCfaOffset(nullptr, EntryFrameSize));
+  auto emitDestroyCFI = [&](MCCFIInstruction CFI) {
+    if (!needsDwarfCFI(MF))
+      return;
+    unsigned CFIIndex = MF.addFrameInst(CFI);
     BuildMI(MBB, MBBI, DL, TII.get(TargetOpcode::CFI_INSTRUCTION))
         .addCFIIndex(CFIIndex)
         .setMIFlag(MachineInstr::FrameDestroy);
+  };
+
+  if (RegularStackSize != 0) {
+    BuildMI(MBB, MBBI, DL, TII.get(Bedrock::ADJSP_UP))
+        .addImm(RegularStackSize)
+        .setMIFlag(MachineInstr::FrameDestroy);
+    emitDestroyCFI(MCCFIInstruction::cfiDefCfaOffset(
+        nullptr, FPPairStackSize + EntryFrameSize));
+  }
+
+  uint64_t RemainingFPBytes = FPPairStackSize;
+  const TargetRegisterInfo &TRI = *MF.getSubtarget().getRegisterInfo();
+  for (unsigned PairIndex = 4; PairIndex-- != 0;) {
+    if (!(FPPairMask & (1u << PairIndex)))
+      continue;
+    Register First;
+    Register Second;
+    getFPPairRegs(PairIndex, First, Second);
+    BuildMI(MBB, MBBI, DL, TII.get(Bedrock::FPOPPi))
+        .addImm(PairIndex)
+        .addReg(First, RegState::ImplicitDefine)
+        .addReg(Second, RegState::ImplicitDefine)
+        .setMIFlag(MachineInstr::FrameDestroy);
+    RemainingFPBytes -= 16;
+    emitDestroyCFI(MCCFIInstruction::cfiDefCfaOffset(
+        nullptr, RemainingFPBytes + EntryFrameSize));
+    emitDestroyCFI(MCCFIInstruction::createRestore(
+        nullptr, TRI.getDwarfRegNum(First, true)));
+    emitDestroyCFI(MCCFIInstruction::createRestore(
+        nullptr, TRI.getDwarfRegNum(Second, true)));
   }
 }
 
@@ -172,6 +295,72 @@ void BedrockFrameLowering::determineCalleeSaves(MachineFunction &MF,
     SavedRegs.set(Bedrock::R15);
   if (needsStackRealignment(MF))
     SavedRegs.set(Bedrock::R14);
+
+  for (unsigned PairIndex = 0; PairIndex != 4; ++PairIndex) {
+    Register First;
+    Register Second;
+    getFPPairRegs(PairIndex, First, Second);
+    if (SavedRegs.test(First) || SavedRegs.test(Second)) {
+      SavedRegs.set(First);
+      SavedRegs.set(Second);
+    }
+  }
+}
+
+bool BedrockFrameLowering::assignCalleeSavedSpillSlots(
+    MachineFunction &MF, const TargetRegisterInfo *TRI,
+    std::vector<CalleeSavedInfo> &CSI) const {
+  std::vector<CalleeSavedInfo> Ordered;
+  Ordered.reserve(CSI.size());
+  for (unsigned PairIndex = 0; PairIndex != 4; ++PairIndex) {
+    Register First;
+    Register Second;
+    getFPPairRegs(PairIndex, First, Second);
+    for (Register Reg : {First, Second}) {
+      auto I = llvm::find_if(CSI, [Reg](const CalleeSavedInfo &Info) {
+        return Register(Info.getReg()) == Reg;
+      });
+      if (I != CSI.end())
+        Ordered.push_back(*I);
+    }
+  }
+  for (const CalleeSavedInfo &Info : CSI)
+    if (!isCalleeSavedFPR(Info.getReg()))
+      Ordered.push_back(Info);
+  CSI = std::move(Ordered);
+
+  MachineFrameInfo &MFI = MF.getFrameInfo();
+  for (CalleeSavedInfo &Info : CSI) {
+    const TargetRegisterClass *RC =
+        TRI->getMinimalPhysRegClass(Info.getReg());
+    unsigned Size = TRI->getSpillSize(*RC);
+    Align Alignment = std::min(TRI->getSpillAlign(*RC), getStackAlign());
+    int FrameIndex = MFI.CreateStackObject(Size, Alignment, true);
+    MFI.setIsCalleeSavedObjectIndex(FrameIndex, true);
+    Info.setFrameIdx(FrameIndex);
+  }
+  return true;
+}
+
+bool BedrockFrameLowering::spillCalleeSavedRegisters(
+    MachineBasicBlock &MBB, MachineBasicBlock::iterator MI,
+    ArrayRef<CalleeSavedInfo> CSI, const TargetRegisterInfo *TRI) const {
+  const TargetInstrInfo *TII = MBB.getParent()->getSubtarget().getInstrInfo();
+  for (const CalleeSavedInfo &Info : CSI)
+    if (!isCalleeSavedFPR(Info.getReg()))
+      spillCalleeSavedRegister(MBB, MI, Info, TII, TRI);
+  return true;
+}
+
+bool BedrockFrameLowering::restoreCalleeSavedRegisters(
+    MachineBasicBlock &MBB, MachineBasicBlock::iterator MI,
+    MutableArrayRef<CalleeSavedInfo> CSI,
+    const TargetRegisterInfo *TRI) const {
+  const TargetInstrInfo *TII = MBB.getParent()->getSubtarget().getInstrInfo();
+  for (const CalleeSavedInfo &Info : llvm::reverse(CSI))
+    if (!isCalleeSavedFPR(Info.getReg()))
+      restoreCalleeSavedRegister(MBB, MI, Info, TII, TRI);
+  return true;
 }
 
 MachineBasicBlock::iterator BedrockFrameLowering::eliminateCallFramePseudoInstr(

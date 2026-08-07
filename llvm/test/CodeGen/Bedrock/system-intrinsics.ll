@@ -1,11 +1,12 @@
-; RUN: llc -mtriple=bedrock -mattr=+virtaccel < %s | FileCheck %s
-; RUN: llc -mtriple=bedrock -mattr=+virtaccel -filetype=obj < %s | llvm-objdump -d - | FileCheck %s --check-prefix=DIS
-; RUN: llc -mtriple=bedrock -mattr=+virtaccel -stop-after=finalize-isel < %s | FileCheck %s --check-prefix=MIR
+; RUN: llc -mtriple=bedrock < %s | FileCheck %s
+; RUN: llc -mtriple=bedrock -filetype=obj < %s | llvm-objdump -d - | FileCheck %s --check-prefix=DIS
+; RUN: llc -mtriple=bedrock -stop-after=finalize-isel < %s | FileCheck %s --check-prefix=MIR
 
 declare void @llvm.bedrock.write.status(i64)
 declare i64 @llvm.bedrock.read.control.register(i32 immarg)
 declare void @llvm.bedrock.write.control.register(i32 immarg, i64)
 declare i64 @llvm.bedrock.read.segment.register(i32 immarg)
+declare i64 @llvm.bedrock.read.code.segment()
 declare void @llvm.bedrock.write.segment.register(i32 immarg, i64)
 declare void @llvm.bedrock.flush.dcache(ptr, i64)
 declare void @llvm.bedrock.invalidate.dcache(ptr, i64)
@@ -21,26 +22,29 @@ declare { i64, i64 } @llvm.bedrock.virtual.to.physical(i64)
 declare { i64, i64 } @llvm.bedrock.page.table.query(i32 immarg, i64)
 declare void @llvm.bedrock.save.processor.state(ptr)
 declare void @llvm.bedrock.restore.processor.state(ptr)
-declare i64 @llvm.bedrock.encode.instruction(ptr, i64, i64, i64, i64)
 
 ; CHECK-LABEL: sysreg:
 ; CHECK: wrstatus
 ; CHECK: rdcr 4660
 ; CHECK: wrcr {{.*}}, 22136
 ; CHECK: rdseg ds
+; CHECK: rdseg cs
 ; CHECK: wrseg {{.*}}, gs4
 ; DIS: wrstatus
 ; DIS: rdcr 4660
 ; DIS: wrcr {{.*}}, 22136
 ; DIS: rdseg ds
+; DIS: rdseg cs
 ; DIS: wrseg {{.*}}, gs4
 define i64 @sysreg(i64 %value) {
   call void @llvm.bedrock.write.status(i64 %value)
   %cr = call i64 @llvm.bedrock.read.control.register(i32 4660)
   call void @llvm.bedrock.write.control.register(i32 22136, i64 %value)
-  %segment = call i64 @llvm.bedrock.read.segment.register(i32 1)
-  call void @llvm.bedrock.write.segment.register(i32 7, i64 %value)
-  %result = add i64 %cr, %segment
+  %segment = call i64 @llvm.bedrock.read.segment.register(i32 0)
+  %code_segment = call i64 @llvm.bedrock.read.code.segment()
+  call void @llvm.bedrock.write.segment.register(i32 6, i64 %value)
+  %sum = add i64 %cr, %segment
+  %result = add i64 %sum, %code_segment
   ret i64 %result
 }
 
@@ -103,33 +107,51 @@ define i64 @mmu(i64 %address) {
 ; CHECK: restore
 ; DIS: save
 ; DIS: restore
-; MIR: BEDROCK_RESTORE {{.*}}implicit-def dead $r0{{.*}}implicit-def dead $f15{{.*}}implicit-def dead $fflags
+; MIR: BEDROCK_RESTORE
+; MIR-SAME: implicit-def dead $r0
+; MIR-SAME: implicit-def dead $r1
+; MIR-SAME: implicit-def dead $r2
+; MIR-SAME: implicit-def dead $r3
+; MIR-SAME: implicit-def dead $r4
+; MIR-SAME: implicit-def dead $r5
+; MIR-SAME: implicit-def dead $r6
+; MIR-SAME: implicit-def dead $r7
+; MIR-SAME: implicit-def dead $r8
+; MIR-SAME: implicit-def dead $r9
+; MIR-SAME: implicit-def dead $r10
+; MIR-SAME: implicit-def dead $r11
+; MIR-SAME: implicit-def dead $r12
+; MIR-SAME: implicit-def dead $r13
+; MIR-SAME: implicit-def dead $r14
+; MIR-SAME: implicit-def dead $r15
+; MIR-SAME: implicit-def dead $flags
+; MIR-SAME: implicit-def dead $status
+; MIR-SAME: implicit-def dead $gs0
+; MIR-SAME: implicit-def dead $gs1
+; MIR-SAME: implicit-def dead $gs2
+; MIR-SAME: implicit-def dead $gs3
+; MIR-SAME: implicit-def dead $gs4
+; MIR-SAME: implicit-def dead $gs5
+; MIR-SAME: implicit-def dead $f0
+; MIR-SAME: implicit-def dead $f1
+; MIR-SAME: implicit-def dead $f2
+; MIR-SAME: implicit-def dead $f3
+; MIR-SAME: implicit-def dead $f4
+; MIR-SAME: implicit-def dead $f5
+; MIR-SAME: implicit-def dead $f6
+; MIR-SAME: implicit-def dead $f7
+; MIR-SAME: implicit-def dead $f8
+; MIR-SAME: implicit-def dead $f9
+; MIR-SAME: implicit-def dead $f10
+; MIR-SAME: implicit-def dead $f11
+; MIR-SAME: implicit-def dead $f12
+; MIR-SAME: implicit-def dead $f13
+; MIR-SAME: implicit-def dead $f14
+; MIR-SAME: implicit-def dead $f15
+; MIR-SAME: implicit-def dead $fstatus
+; MIR-SAME: implicit-def dead $fflags
 define void @state(ptr %area) {
   call void @llvm.bedrock.save.processor.state(ptr %area)
   call void @llvm.bedrock.restore.processor.state(ptr %area)
   ret void
 }
-
-; CHECK-LABEL: encode:
-; CHECK: encinst
-; DIS: encinst
-; MIR: :r0only = COPY
-; MIR: :r1only = COPY
-; MIR: :r2only = COPY
-; MIR: :r3only = COPY
-; MIR: :r0only = BEDROCK_ENCINST
-define i64 @encode(ptr %destination, ptr %descriptor) #0 {
-  %control = load i64, ptr %descriptor, align 8
-  %p1 = getelementptr i64, ptr %descriptor, i64 1
-  %operand1 = load i64, ptr %p1, align 8
-  %p2 = getelementptr i64, ptr %descriptor, i64 2
-  %operand2 = load i64, ptr %p2, align 8
-  %p3 = getelementptr i64, ptr %descriptor, i64 3
-  %operand3 = load i64, ptr %p3, align 8
-  %result = call i64 @llvm.bedrock.encode.instruction(
-      ptr %destination, i64 %control, i64 %operand1, i64 %operand2,
-      i64 %operand3)
-  ret i64 %result
-}
-
-attributes #0 = { "target-features"="+virtaccel" }

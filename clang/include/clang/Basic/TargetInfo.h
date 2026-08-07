@@ -948,6 +948,10 @@ public:
     return UseBitFieldTypeAlignment;
   }
 
+  /// Return true when consecutive bit-fields may share an allocation unit
+  /// only if their canonical declared base types are identical.
+  virtual bool useBitFieldTypeForAllocationUnits() const { return false; }
+
   /// Check whether zero length bitfields should force alignment of
   /// the next member.
   bool useZeroLengthBitfieldAlignment() const {

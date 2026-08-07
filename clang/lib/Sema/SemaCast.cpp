@@ -3004,15 +3004,6 @@ static void DiagnoseBadFunctionCast(Sema &Self, const ExprResult &SrcExpr,
             << SrcType << DestType << SrcExpr.get()->getSourceRange();
 }
 
-static bool isBedrockFarPointerType(Sema &S, QualType T) {
-  const auto *PT = T->getAs<PointerType>();
-  return PT &&
-         S.Context.getTargetInfo().getTriple().getArch() ==
-             llvm::Triple::bedrock &&
-         S.Context.getTargetAddressSpace(
-             PT->getPointeeType().getAddressSpace()) == 1;
-}
-
 /// Check the semantics of a C-style cast operation, in C.
 void CastOperation::CheckCStyleCast() {
   assert(!Self.getLangOpts().CPlusPlus);
@@ -3063,36 +3054,6 @@ void CastOperation::CheckCStyleCast() {
   if (SrcExpr.isInvalid())
     return;
   QualType SrcType = SrcExpr.get()->getType();
-
-  bool SrcFar = isBedrockFarPointerType(Self, SrcType);
-  bool DestFar = isBedrockFarPointerType(Self, DestType);
-  const auto *SrcPT = SrcType->getAs<PointerType>();
-  const auto *DestPT = DestType->getAs<PointerType>();
-  if ((SrcFar || DestFar) && SrcPT && DestPT && SrcFar != DestFar &&
-      (SrcPT->getPointeeType()->isFunctionType() ||
-       DestPT->getPointeeType()->isFunctionType())) {
-    Self.Diag(OpRange.getBegin(), diag::err_bedrock_far_function_pointer_cast);
-    SrcExpr = ExprError();
-    return;
-  }
-  if (SrcFar && DestType->isIntegralOrEnumerationType() &&
-      Self.Context.getTypeSize(DestType) < 128) {
-    Self.Diag(OpRange.getBegin(),
-              diag::err_bedrock_far_pointer_small_integer_cast)
-        << DestType;
-    SrcExpr = ExprError();
-    return;
-  }
-  if (DestFar && SrcType->isIntegralOrEnumerationType() &&
-      Self.Context.getTypeSize(SrcType) < 128 &&
-      !SrcExpr.get()->isNullPointerConstant(
-          Self.Context, Expr::NPC_ValueDependentIsNotNull)) {
-    Self.Diag(OpRange.getBegin(),
-              diag::err_bedrock_far_pointer_small_integer_cast)
-        << SrcType;
-    SrcExpr = ExprError();
-    return;
-  }
 
   if (SrcType->isWebAssemblyTableType()) {
     Self.Diag(OpRange.getBegin(), diag::err_wasm_cast_table)

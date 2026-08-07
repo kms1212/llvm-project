@@ -9,28 +9,14 @@ int near_debug_frame(int x) {
   return value;
 }
 
-int __far far_debug_frame(int x) {
-  volatile int value = x;
-  return value;
-}
-
-// CFI: Return address column: 33
+// CFI: Return address column: 17
 // CFI: DW_CFA_def_cfa: SP +8
 // CFI-NEXT: DW_CFA_offset: PC -8
 // CFI: DW_CFA_def_cfa_offset: +24
 // CFI: DW_CFA_def_cfa_offset: +8
-// CFI: DW_CFA_def_cfa: SP +16
-// CFI-NEXT: DW_CFA_offset: PC -16
-// CFI-NEXT: DW_CFA_offset: CS -8
-// CFI: DW_CFA_def_cfa_offset: +32
-// CFI: DW_CFA_def_cfa_offset: +16
-
 // SECTIONS: Name: .debug_frame
 // SECTIONS-NOT: Name: .eh_frame
 
 // ASM-LABEL: <near_debug_frame>:
 // ASM-NOT: r15
 // ASM: ret
-// ASM-LABEL: <far_debug_frame>:
-// ASM-NOT: r15
-// ASM: lret

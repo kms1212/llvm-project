@@ -32,7 +32,11 @@ public:
   unsigned getJumpTableEncoding() const override;
   bool isJumpTableRelative() const override { return true; }
   bool ShouldShrinkFPConstant(EVT VT) const override { return false; }
-  bool shouldPreservePtrArith(const Function &F, EVT PtrVT) const override;
+  bool enableAggressiveFMAFusion(EVT VT) const override;
+  bool isFMAFasterThanFMulAndFAdd(const MachineFunction &MF,
+                                  EVT VT) const override;
+  bool isFMAFasterThanFMulAndFAdd(const Function &F,
+                                  Type *Ty) const override;
   MachineBasicBlock *
   EmitInstrWithCustomInserter(MachineInstr &MI,
                               MachineBasicBlock *MBB) const override;
@@ -46,10 +50,9 @@ public:
   shouldExpandAtomicRMWInIR(AtomicRMWInst *RMW) const override;
 
 private:
+  SDValue PerformDAGCombine(SDNode *N,
+                            DAGCombinerInfo &DCI) const override;
   SDValue LowerOperation(SDValue Op, SelectionDAG &DAG) const override;
-  void ReplaceNodeResults(SDNode *N, SmallVectorImpl<SDValue> &Results,
-                          SelectionDAG &DAG) const override;
-
   SDValue LowerFormalArguments(SDValue Chain, CallingConv::ID CallConv,
                                bool IsVarArg,
                                const SmallVectorImpl<ISD::InputArg> &Ins,
@@ -83,11 +86,7 @@ private:
   SDValue LowerSIGN_EXTEND_INREG(SDValue Op, SelectionDAG &DAG) const;
   SDValue LowerVASTART(SDValue Op, SelectionDAG &DAG) const;
   SDValue LowerDYNAMIC_STACKALLOC(SDValue Op, SelectionDAG &DAG) const;
-  SDValue LowerADDRSPACECAST(SDValue Op, SelectionDAG &DAG) const;
-  SDValue LowerPTRADD(SDValue Op, SelectionDAG &DAG) const;
   SDValue LowerGlobalTLSAddress(SDValue Op, SelectionDAG &DAG) const;
-  SDValue LowerFarLoad(SDValue Op, SelectionDAG &DAG) const;
-  SDValue LowerFarStore(SDValue Op, SelectionDAG &DAG) const;
 };
 
 } // namespace llvm

@@ -66,6 +66,30 @@ let TargetPrefix = "bedrock" in {
   def int_bedrock_fclass_f64 :
       Intrinsic<[llvm_i64_ty], [llvm_double_ty], [IntrNoMem]>;
 
+  class BedrockApproxUnaryIntrinsic
+      : Intrinsic<[llvm_anyfloat_ty], [LLVMMatchType<0>], [IntrNoMem]>;
+  def int_bedrock_facosa : BedrockApproxUnaryIntrinsic;
+  def int_bedrock_fasina : BedrockApproxUnaryIntrinsic;
+  def int_bedrock_fatana : BedrockApproxUnaryIntrinsic;
+  def int_bedrock_fatanha : BedrockApproxUnaryIntrinsic;
+  def int_bedrock_fcosa : BedrockApproxUnaryIntrinsic;
+  def int_bedrock_fcosha : BedrockApproxUnaryIntrinsic;
+  def int_bedrock_fetoxa : BedrockApproxUnaryIntrinsic;
+  def int_bedrock_fetoxm1a : BedrockApproxUnaryIntrinsic;
+  def int_bedrock_flog10a : BedrockApproxUnaryIntrinsic;
+  def int_bedrock_flog2a : BedrockApproxUnaryIntrinsic;
+  def int_bedrock_flogna : BedrockApproxUnaryIntrinsic;
+  def int_bedrock_flognp1a : BedrockApproxUnaryIntrinsic;
+  def int_bedrock_fsina : BedrockApproxUnaryIntrinsic;
+  def int_bedrock_fsinha : BedrockApproxUnaryIntrinsic;
+  def int_bedrock_ftana : BedrockApproxUnaryIntrinsic;
+  def int_bedrock_ftanha : BedrockApproxUnaryIntrinsic;
+  def int_bedrock_ftentoxa : BedrockApproxUnaryIntrinsic;
+  def int_bedrock_ftwotoxa : BedrockApproxUnaryIntrinsic;
+  def int_bedrock_fsincosa
+      : Intrinsic<[llvm_anyfloat_ty, LLVMMatchType<0>], [LLVMMatchType<0>],
+                  [IntrNoMem]>;
+
   def int_bedrock_write_status :
       Intrinsic<[], [llvm_i64_ty], [IntrNoMem, IntrHasSideEffects]>;
   def int_bedrock_read_control_register :
@@ -77,6 +101,8 @@ let TargetPrefix = "bedrock" in {
   def int_bedrock_read_segment_register :
       Intrinsic<[llvm_i64_ty], [llvm_i32_ty],
                 [IntrNoMem, IntrHasSideEffects, ImmArg<ArgIndex<0>>]>;
+  def int_bedrock_read_code_segment :
+      Intrinsic<[llvm_i64_ty], [], [IntrNoMem, IntrHasSideEffects]>;
   def int_bedrock_write_segment_register :
       Intrinsic<[], [llvm_i32_ty, llvm_i64_ty],
                 [IntrHasSideEffects, ImmArg<ArgIndex<0>>]>;
@@ -114,10 +140,4 @@ let TargetPrefix = "bedrock" in {
       Intrinsic<[], [llvm_ptr_ty], [IntrHasSideEffects]>;
   def int_bedrock_restore_processor_state :
       Intrinsic<[], [llvm_ptr_ty], [IntrHasSideEffects]>;
-  def int_bedrock_encode_instruction :
-      Intrinsic<[llvm_i64_ty],
-                [llvm_ptr_ty, llvm_i64_ty, llvm_i64_ty, llvm_i64_ty,
-                 llvm_i64_ty],
-                [IntrWriteMem, IntrArgMemOnly, IntrHasSideEffects,
-                 NoCapture<ArgIndex<0>>]>;
 }

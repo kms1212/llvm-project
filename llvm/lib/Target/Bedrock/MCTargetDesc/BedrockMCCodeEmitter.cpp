@@ -66,7 +66,7 @@ void BedrockMCCodeEmitter::encodeInstruction(const MCInst &MI,
   case Bedrock::LRET:
     EmitByte(0x03);
     return;
-  case Bedrock::IRET:
+  case Bedrock::ERET:
     EmitByte(0x04);
     return;
   case Bedrock::SYSCALL:
@@ -110,6 +110,12 @@ void BedrockMCCodeEmitter::encodeInstruction(const MCInst &MI,
     return;
   case Bedrock::POPPi:
     EmitByte(0x18 | static_cast<uint8_t>(MI.getOperand(0).getImm()));
+    return;
+  case Bedrock::FPUSHPi:
+    EmitByte(0x70 | static_cast<uint8_t>(MI.getOperand(0).getImm()));
+    return;
+  case Bedrock::FPOPPi:
+    EmitByte(0x78 | static_cast<uint8_t>(MI.getOperand(0).getImm()));
     return;
   case Bedrock::PUSHr:
     EmitByte(0x20 | GetRegNo(0));

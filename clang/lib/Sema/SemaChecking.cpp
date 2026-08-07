@@ -2072,24 +2072,6 @@ static void CheckNonNullArgument(Sema &S, const Expr *ArgExpr,
 
 bool Sema::CheckTSBuiltinFunctionCall(const TargetInfo &TI, unsigned BuiltinID,
                                       CallExpr *TheCall) {
-  auto CheckBedrockFarPointer = [&](Expr *Arg) {
-    const auto *PT = Arg->getType()->getAs<PointerType>();
-    if (PT && Context.getTargetAddressSpace(
-                  PT->getPointeeType().getAddressSpace()) == 1)
-      return false;
-    Diag(Arg->getExprLoc(), diag::err_bedrock_builtin_requires_far_pointer)
-        << Arg->getSourceRange();
-    return true;
-  };
-  auto CheckBedrockInteger = [&](CallExpr *Call, unsigned ArgNo) {
-    Expr *Arg = Call->getArg(ArgNo);
-    if (Arg->getType()->isIntegerType())
-      return false;
-    Diag(Arg->getExprLoc(), diag::err_bedrock_builtin_requires_integer)
-        << ArgNo + 1 << Arg->getType() << Arg->getSourceRange();
-    return true;
-  };
-
   switch (TI.getTriple().getArch()) {
   default:
     // Some builtins don't require additional checking, so just consider these
@@ -2109,42 +2091,6 @@ bool Sema::CheckTSBuiltinFunctionCall(const TargetInfo &TI, unsigned BuiltinID,
     return BPF().CheckBPFBuiltinFunctionCall(BuiltinID, TheCall);
   case llvm::Triple::bedrock:
     switch (BuiltinID) {
-    case Bedrock::BI__builtin_bedrock_far_ptr_init:
-    case Bedrock::BI__builtin_bedrock_far_ptr_from_segment:
-      if (checkArgCount(TheCall, 3) ||
-          CheckBedrockFarPointer(TheCall->getArg(0)) ||
-          CheckBedrockInteger(TheCall, 1) || CheckBedrockInteger(TheCall, 2))
-        return true;
-      TheCall->setType(TheCall->getArg(0)->getType());
-      return false;
-    case Bedrock::BI__builtin_bedrock_far_flat_ptr_init:
-      if (checkArgCount(TheCall, 2) ||
-          CheckBedrockFarPointer(TheCall->getArg(0)) ||
-          CheckBedrockInteger(TheCall, 1))
-        return true;
-      TheCall->setType(TheCall->getArg(0)->getType());
-      return false;
-    case Bedrock::BI__builtin_bedrock_far_null:
-      if (checkArgCount(TheCall, 1) ||
-          CheckBedrockFarPointer(TheCall->getArg(0)))
-        return true;
-      TheCall->setType(TheCall->getArg(0)->getType());
-      return false;
-    case Bedrock::BI__builtin_bedrock_far_address:
-      return checkArgCount(TheCall, 1) ||
-             CheckBedrockFarPointer(TheCall->getArg(0));
-    case Bedrock::BI__builtin_bedrock_far_same_encoding:
-      if (checkArgCount(TheCall, 2) ||
-          CheckBedrockFarPointer(TheCall->getArg(0)) ||
-          CheckBedrockFarPointer(TheCall->getArg(1)))
-        return true;
-      if (!Context.hasSameType(TheCall->getArg(0)->getType(),
-                               TheCall->getArg(1)->getType())) {
-        Diag(TheCall->getExprLoc(),
-             diag::err_bedrock_builtin_incompatible_far_pointers);
-        return true;
-      }
-      return false;
     case Bedrock::BI__builtin_bedrock_rdpmc:
     case Bedrock::BI__builtin_bedrock_trace:
       return BuiltinConstantArgRange(TheCall, 0, 0, 65535);
@@ -2153,9 +2099,8 @@ bool Sema::CheckTSBuiltinFunctionCall(const TargetInfo &TI, unsigned BuiltinID,
     case Bedrock::BI__builtin_bedrock_invalidate_asid:
       return BuiltinConstantArgRange(TheCall, 0, 0, 65535);
     case Bedrock::BI__builtin_bedrock_read_segment_register:
-      return BuiltinConstantArgRange(TheCall, 0, 0, 7);
     case Bedrock::BI__builtin_bedrock_write_segment_register:
-      return BuiltinConstantArgRange(TheCall, 0, 1, 7);
+      return BuiltinConstantArgRange(TheCall, 0, 0, 7);
     case Bedrock::BI__builtin_bedrock_page_table_query:
       return BuiltinConstantArgRange(TheCall, 0, 0, 7);
     default:

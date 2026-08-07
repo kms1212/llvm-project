@@ -19,13 +19,13 @@ dwarf_registers:
 .cfi_offset ds, -72
 .cfi_offset ss, -80
 .cfi_offset gs0, -88
-.cfi_offset gs4, -96
-.cfi_offset fstatus, -104
-.cfi_offset fflags, -112
+.cfi_offset gs5, -96
+.cfi_offset fflags, -104
+.cfi_offset fstatus, -112
 ret
 .cfi_endproc
 
-; CHECK: Return address column: 33
+; CHECK: Return address column: 17
 ; CHECK: DW_CFA_def_cfa: SP +16
 ; CHECK-NEXT: DW_CFA_offset: R0 -8
 ; CHECK-NEXT: DW_CFA_offset: R15 -16
@@ -38,6 +38,6 @@ ret
 ; CHECK-NEXT: DW_CFA_offset: DS -72
 ; CHECK-NEXT: DW_CFA_offset: SS -80
 ; CHECK-NEXT: DW_CFA_offset: GS0 -88
-; CHECK-NEXT: DW_CFA_offset: GS4 -96
-; CHECK-NEXT: DW_CFA_offset: FSTATUS -104
-; CHECK-NEXT: DW_CFA_offset: FFLAGS -112
+; CHECK-NEXT: DW_CFA_offset: GS5 -96
+; CHECK-NEXT: DW_CFA_offset: FFLAGS -104
+; CHECK-NEXT: DW_CFA_offset: FSTATUS -112

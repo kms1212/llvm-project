@@ -11,7 +11,6 @@
 #include "MCTargetDesc/BedrockMCTargetDesc.h"
 #include "TargetInfo/BedrockTargetInfo.h"
 #include "llvm/ADT/StringSwitch.h"
-#include "llvm/BinaryFormat/ELF.h"
 #include "llvm/MC/MCContext.h"
 #include "llvm/MC/MCExpr.h"
 #include "llvm/MC/MCInst.h"
@@ -19,11 +18,8 @@
 #include "llvm/MC/MCParser/AsmLexer.h"
 #include "llvm/MC/MCParser/MCParsedAsmOperand.h"
 #include "llvm/MC/MCParser/MCTargetAsmParser.h"
-#include "llvm/MC/MCSectionELF.h"
 #include "llvm/MC/MCStreamer.h"
 #include "llvm/MC/MCSubtargetInfo.h"
-#include "llvm/MC/MCSymbolELF.h"
-#include "llvm/MC/MCValue.h"
 #include "llvm/MC/TargetRegistry.h"
 #include "llvm/Support/Casting.h"
 #include "llvm/Support/Compiler.h"
@@ -41,8 +37,6 @@ namespace {
 
 class BedrockAsmParser : public MCTargetAsmParser {
   MCAsmParser &Parser;
-  bool EmittedFarNote = false;
-
 #define GET_ASSEMBLER_HEADER
 #include "BedrockGenAsmMatcher.inc"
 
@@ -57,12 +51,6 @@ class BedrockAsmParser : public MCTargetAsmParser {
 
   bool parseInstruction(ParseInstructionInfo &Info, StringRef Name,
                         SMLoc NameLoc, OperandVector &Operands) override;
-
-  ParseStatus parseDirective(AsmToken DirectiveID) override;
-  ParseStatus parseDirectiveFarPtr(SMLoc Loc);
-  ParseStatus parseDirectiveSegmentDomain(SMLoc Loc);
-  ParseStatus parseDirectiveFarSymbol(SMLoc Loc, bool IsIFunc);
-  void emitFarABINote();
 
   bool parseOperand(OperandVector &Operands);
   bool parseMemoryOperand(OperandVector &Operands);
@@ -79,107 +67,6 @@ public:
     setAvailableFeatures(ComputeAvailableFeatures(STI.getFeatureBits()));
   }
 };
-
-void BedrockAsmParser::emitFarABINote() {
-  if (EmittedFarNote)
-    return;
-  EmittedFarNote = true;
-
-  MCStreamer &Out = getStreamer();
-  MCSection *Note = getContext().getELFSection(".note.bedrock", ELF::SHT_NOTE,
-                                               ELF::SHF_ALLOC);
-  Out.pushSection();
-  Out.switchSection(Note);
-  Out.emitInt32(8);
-  Out.emitInt32(8);
-  Out.emitInt32(ELF::NT_BEDROCK_ABI_ATTRIBUTES);
-  Out.emitBytes(StringRef("BEDROCK\0", 8));
-  Out.emitValueToAlignment(Align(4));
-  Out.emitInt32(ELF::TAG_BEDROCK_FAR_MODEL);
-  Out.emitInt32(0);
-  Out.popSection();
-}
-
-ParseStatus BedrockAsmParser::parseDirectiveFarPtr(SMLoc Loc) {
-  if (!getSTI().hasFeature(Bedrock::FeatureFarELF))
-    return Error(Loc, ".farptr requires the +far-elf target feature");
-
-  const MCExpr *Expr = nullptr;
-  if (Parser.parseExpression(Expr))
-    return ParseStatus::Failure;
-  MCValue Value;
-  if (!Expr->evaluateAsRelocatable(Value, nullptr) || !Value.getAddSym() ||
-      Value.getSubSym())
-    return Error(Loc, ".farptr requires a symbol with an optional addend");
-  if (Parser.parseEOL())
-    return ParseStatus::Failure;
-
-  emitFarABINote();
-  MCStreamer &Out = getStreamer();
-  Out.emitValueToAlignment(Align(16));
-  MCSymbol *Pair = getContext().createTempSymbol("farptr", true);
-  Out.emitLabel(Pair);
-  Out.emitZeros(16);
-
-  const MCExpr *Base = MCSymbolRefExpr::create(Pair, getContext());
-  const MCExpr *SegmentField = MCBinaryExpr::createAdd(
-      Base, MCConstantExpr::create(8, getContext()), getContext());
-  const MCExpr *Symbol =
-      MCSymbolRefExpr::create(Value.getAddSym(), getContext());
-  Out.emitRelocDirective(*Base, "R_BEDROCK_FAR_ADDR64", Expr, Loc);
-  Out.emitRelocDirective(*SegmentField, "R_BEDROCK_FAR_SEGMENT64", Symbol, Loc);
-  return ParseStatus::Success;
-}
-
-ParseStatus BedrockAsmParser::parseDirectiveSegmentDomain(SMLoc Loc) {
-  if (!getSTI().hasFeature(Bedrock::FeatureFarELF))
-    return Error(Loc,
-                 ".bedrock_segdomain requires the +far-elf target feature");
-  int64_t SectionIndex, DomainID, Image;
-  if (Parser.parseAbsoluteExpression(SectionIndex) || Parser.parseComma() ||
-      Parser.parseAbsoluteExpression(DomainID) || Parser.parseComma() ||
-      Parser.parseAbsoluteExpression(Image) || Parser.parseEOL())
-    return ParseStatus::Failure;
-  if (!isUInt<32>(SectionIndex) || !isUInt<32>(DomainID) || DomainID == 0)
-    return Error(Loc, "invalid Bedrock segment-domain index or identifier");
-
-  emitFarABINote();
-  MCSection *Meta = getContext().getELFSection(".bedrock.segdomains",
-                                               ELF::SHT_PROGBITS, 0, 16);
-  MCStreamer &Out = getStreamer();
-  Out.pushSection();
-  Out.switchSection(Meta);
-  Out.emitInt32(SectionIndex);
-  Out.emitInt32(DomainID);
-  Out.emitInt64(Image);
-  Out.popSection();
-  return ParseStatus::Success;
-}
-
-ParseStatus BedrockAsmParser::parseDirectiveFarSymbol(SMLoc Loc, bool IsIFunc) {
-  if (!getSTI().hasFeature(Bedrock::FeatureFarELF))
-    return Error(Loc, "far symbol type requires the +far-elf target feature");
-  MCSymbol *Symbol = nullptr;
-  if (Parser.parseSymbol(Symbol) || Parser.parseEOL())
-    return ParseStatus::Failure;
-  static_cast<MCSymbolELF *>(Symbol)->setType(
-      IsIFunc ? ELF::STT_BEDROCK_FAR_IFUNC : ELF::STT_BEDROCK_FAR_FUNC);
-  emitFarABINote();
-  return ParseStatus::Success;
-}
-
-ParseStatus BedrockAsmParser::parseDirective(AsmToken DirectiveID) {
-  StringRef Name = DirectiveID.getIdentifier();
-  if (Name == ".farptr")
-    return parseDirectiveFarPtr(DirectiveID.getLoc());
-  if (Name == ".bedrock_segdomain")
-    return parseDirectiveSegmentDomain(DirectiveID.getLoc());
-  if (Name == ".bedrock_far_func")
-    return parseDirectiveFarSymbol(DirectiveID.getLoc(), false);
-  if (Name == ".bedrock_far_ifunc")
-    return parseDirectiveFarSymbol(DirectiveID.getLoc(), true);
-  return ParseStatus::NoMatch;
-}
 
 class BedrockOperand : public MCParsedAsmOperand {
 public:
@@ -504,14 +391,14 @@ bool isAtomicOrderMnemonic(StringRef Mnemonic) {
 
 bool getSRegNo(StringRef Name, unsigned &RegNo) {
   int Value = StringSwitch<int>(Name)
-                  .Case("cs", 0)
-                  .Case("ds", 1)
-                  .Case("ss", 2)
-                  .Case("gs0", 3)
-                  .Case("gs1", 4)
-                  .Case("gs2", 5)
-                  .Case("gs3", 6)
-                  .Case("gs4", 7)
+                  .Case("ds", 0)
+                  .Case("ss", 1)
+                  .Case("gs0", 2)
+                  .Case("gs1", 3)
+                  .Case("gs2", 4)
+                  .Case("gs3", 5)
+                  .Case("gs4", 6)
+                  .Case("gs5", 7)
                   .Default(-1);
   if (Value < 0)
     return false;
@@ -525,33 +412,48 @@ bool getSRegNo(const BedrockOperand &Op, unsigned &RegNo) {
   if (!Op.isReg())
     return false;
   switch (Op.getReg()) {
-  case Bedrock::CS:
+  case Bedrock::DS:
     RegNo = 0;
     return true;
-  case Bedrock::DS:
+  case Bedrock::SS:
     RegNo = 1;
     return true;
-  case Bedrock::SS:
+  case Bedrock::GS0:
     RegNo = 2;
     return true;
-  case Bedrock::GS0:
+  case Bedrock::GS1:
     RegNo = 3;
     return true;
-  case Bedrock::GS1:
+  case Bedrock::GS2:
     RegNo = 4;
     return true;
-  case Bedrock::GS2:
+  case Bedrock::GS3:
     RegNo = 5;
     return true;
-  case Bedrock::GS3:
+  case Bedrock::GS4:
     RegNo = 6;
     return true;
-  case Bedrock::GS4:
+  case Bedrock::GS5:
     RegNo = 7;
     return true;
   default:
     return false;
   }
+}
+
+bool isCS(const BedrockOperand &Op) {
+  return (Op.isToken() && Op.getToken() == "cs") ||
+         (Op.isReg() && Op.getReg() == Bedrock::CS);
+}
+
+bool getFRegNo(MCRegister Reg, unsigned &RegNo) {
+  for (unsigned I = 0; I != 16; ++I) {
+    if (Reg == getFPRByNo(I)) {
+      RegNo = I;
+      return true;
+    }
+  }
+  return false;
 }
 
 bool getCRNo(StringRef Name, unsigned &RegNo) {
@@ -872,7 +774,7 @@ bool encodeExt0EA(const BedrockOperand &Op, uint8_t &EA,
     return false;
 
   SmallVector<uint8_t, 4> Descriptor;
-  unsigned Segment = Op.hasMemSegment() ? Op.getMemSegment() : 1;
+  unsigned Segment = Op.hasMemSegment() ? Op.getMemSegment() : 0;
   auto IndexMode = [&]() -> int {
     switch (Op.getMemIndexUpdate()) {
     case BedrockOperand::MemPostInc:
@@ -1205,6 +1107,24 @@ bool getSizeSuffix(StringRef Mnemonic, StringRef Base, unsigned &Size) {
   return Size < 4;
 }
 
+bool getFpuSizeSuffix(StringRef Mnemonic, StringRef Base, unsigned &Size) {
+  if (!Mnemonic.consume_front(Base) || !Mnemonic.consume_front("."))
+    return false;
+  Size = StringSwitch<unsigned>(Mnemonic).Case("s", 0).Case("d", 1).Default(2);
+  return Size < 2;
+}
+
+bool isFPTRANSAMnemonic(StringRef Mnemonic) {
+  StringRef Base = Mnemonic.split('.').first;
+  return StringSwitch<bool>(Base)
+      .Cases({"facosa", "fasina", "fatana", "fatanha"}, true)
+      .Cases({"fcosa", "fcosha", "fetoxa", "fetoxm1a"}, true)
+      .Cases({"flog10a", "flog2a", "flogna", "flognp1a"}, true)
+      .Cases({"fsina", "fsincosa", "fsinha", "ftana"}, true)
+      .Cases({"ftanha", "ftentoxa", "ftwotoxa"}, true)
+      .Default(false);
+}
+
 bool encodeMediumWithTail(uint32_t Payload, ArrayRef<uint8_t> Tail,
                           SmallVectorImpl<uint8_t> &Bytes,
                           SmallVectorImpl<RawFixup> *Fixups = nullptr) {
@@ -1291,7 +1211,7 @@ bool tryEncodeShortInstruction(OperandVector &Operands,
   };
   static const FixedForm ExtraShortForms[] = {
       {"illegal", 0x00}, {"nop", 0x01},    {"ret", 0x02},
-      {"lret", 0x03},    {"iret", 0x04},   {"syscall", 0x05},
+      {"lret", 0x03},    {"eret", 0x04},   {"syscall", 0x05},
       {"sysret", 0x06},  {"bkpt", 0x07},   {"wait", 0x08},
       {"yield", 0x09},   {"rfence", 0x0a}, {"wfence", 0x0b},
       {"afence", 0x0c},
@@ -1362,6 +1282,19 @@ bool tryEncodeShortInstruction(OperandVector &Operands,
   }
 
   if (Operands.size() == 2 && GetOp(1).isReg()) {
+    if (Mnemonic == "push" && isCS(GetOp(1))) {
+      encodeExtraShortPayload(0x0d, Bytes);
+      return true;
+    }
+
+    unsigned SRegNo;
+    if ((Mnemonic == "push" || Mnemonic == "pop") &&
+        getSRegNo(GetOp(1), SRegNo)) {
+      encodeShortPayload((Mnemonic == "push" ? 0x2280 : 0x2288) | SRegNo,
+                         Bytes);
+      return true;
+    }
+
     unsigned RegNo;
     if (!getRegNo(GetOp(1).getReg(), RegNo))
       return false;
@@ -1407,6 +1340,21 @@ bool tryEncodeShortInstruction(OperandVector &Operands,
     }
   }
 
+  if (Operands.size() == 2) {
+    if (Mnemonic == "push" && isCS(GetOp(1))) {
+      encodeExtraShortPayload(0x0d, Bytes);
+      return true;
+    }
+
+    unsigned SRegNo;
+    if ((Mnemonic == "push" || Mnemonic == "pop") &&
+        getSRegNo(GetOp(1), SRegNo)) {
+      encodeShortPayload((Mnemonic == "push" ? 0x2280 : 0x2288) | SRegNo,
+                         Bytes);
+      return true;
+    }
+  }
+
   if (Operands.size() == 3 && GetOp(1).isImm() && isToken(GetOp(2), "sp")) {
     int64_t Imm;
     if (!getConstantImm(GetOp(1), Imm))
@@ -1439,6 +1387,14 @@ bool tryEncodeShortInstruction(OperandVector &Operands,
     }
     if (Mnemonic == "popp" && isUIntN(3, Imm)) {
       encodeExtraShortPayload(0x18 | static_cast<uint8_t>(Imm), Bytes);
+      return true;
+    }
+    if (Mnemonic == "fpushp" && isUIntN(3, Imm)) {
+      encodeExtraShortPayload(0x70 | static_cast<uint8_t>(Imm), Bytes);
+      return true;
+    }
+    if (Mnemonic == "fpopp" && isUIntN(3, Imm)) {
+      encodeExtraShortPayload(0x78 | static_cast<uint8_t>(Imm), Bytes);
       return true;
     }
 
@@ -1955,6 +1911,46 @@ bool tryEncodeMediumInstruction(OperandVector &Operands,
   }
 
   if (Operands.size() == 3 && GetOp(1).isReg() && GetOp(2).isReg()) {
+    struct FPTRANSAForm {
+      StringRef Mnemonic;
+      StringRef Pattern;
+    };
+    static const FPTRANSAForm Forms[] = {
+        {"facosa", "1111011100z0000dddd000ssss"},
+        {"fasina", "1111011100z0000dddd001ssss"},
+        {"fatana", "1111011100z0000dddd010ssss"},
+        {"fatanha", "1111011100z0000dddd011ssss"},
+        {"fcosa", "1111011100z0000dddd100ssss"},
+        {"fcosha", "1111011100z0000dddd101ssss"},
+        {"fetoxa", "1111011100z0000dddd110ssss"},
+        {"fetoxm1a", "1111011100z0000dddd111ssss"},
+        {"flog10a", "1111011100z0001dddd000ssss"},
+        {"flog2a", "1111011100z0001dddd001ssss"},
+        {"flogna", "1111011100z0001dddd010ssss"},
+        {"flognp1a", "1111011100z0001dddd011ssss"},
+        {"fsina", "1111011100z0001dddd100ssss"},
+        {"fsinha", "1111011100z0001dddd110ssss"},
+        {"ftana", "1111011100z0001dddd111ssss"},
+        {"ftanha", "1111011100z0010dddd000ssss"},
+        {"ftentoxa", "1111011100z0010dddd001ssss"},
+        {"ftwotoxa", "1111011100z0010dddd010ssss"},
+    };
+    for (const FPTRANSAForm &Form : Forms) {
+      unsigned Size;
+      unsigned SrcReg;
+      unsigned DstReg;
+      if (getFpuSizeSuffix(Mnemonic, Form.Mnemonic, Size) &&
+          getFRegNo(GetOp(1).getReg(), SrcReg) &&
+          getFRegNo(GetOp(2).getReg(), DstReg)) {
+        PatternFieldValue Fields[] = {
+            {'z', Size}, {'s', SrcReg}, {'d', DstReg}};
+        return encodeLongWithTail(applyPatternValues(Form.Pattern, Fields), {},
+                                  Bytes);
+      }
+    }
+  }
+
+  if (Operands.size() == 3 && GetOp(1).isReg() && GetOp(2).isReg()) {
     unsigned Size;
     unsigned SrcReg;
     unsigned DstReg;
@@ -2058,7 +2054,7 @@ bool tryEncodeMediumInstruction(OperandVector &Operands,
          false, true},
         {"sbb", "1111000000zz010sssseeeeeee", "bwlq", LongDir::RnEA, 's', true,
          false, false},
-        {"sbb", "1111000000zz011sssseeeeeee", "bwlq", LongDir::EARn, 's', true,
+        {"sbb", "1111000000zz011ddddeeeeeee", "bwlq", LongDir::EARn, 'd', true,
          false, true},
         {"clz", "1111000000zz100ddddeeeeeee", "bwlq", LongDir::EARn, 'd', false,
          false, true},
@@ -2114,7 +2110,7 @@ bool tryEncodeMediumInstruction(OperandVector &Operands,
          false, true},
         {"clmulh.q", "111100001100110ddddeeeeeee", "", LongDir::EARn, 'd',
          false, false, true},
-        {"seglea", "1111000011010zzddddeeeeeee", "bwlq", LongDir::EARn, 'd',
+        {"seglea", "111100011zz0000ddddeeeeeee", "bwlq", LongDir::EARn, 'd',
          false, false, true},
         {"movnt", "1111001000zz000sssseeeeeee", "bwlq", LongDir::RnEA, 's',
          false, true, false},
@@ -2260,16 +2256,58 @@ bool tryEncodeMediumInstruction(OperandVector &Operands,
   }
 
   if (Operands.size() == 2) {
-    if (Mnemonic == "call" || Mnemonic == "jmp") {
+    if (Mnemonic == "call") {
       uint8_t EA;
       SmallVector<uint8_t, 8> Tail;
       SmallVector<RawFixup, 2> LocalFixups;
       if (encodeCompactEA(GetOp(1), /*AllowImmediate=*/false, EA, Tail,
                           &LocalFixups)) {
-        StringRef Pattern = Mnemonic == "call"
-                                ? "1111000011100010000eeeeeee"
-                                : "1111000011100010001eeeeeee";
+        StringRef Pattern = "1111000011011100000eeeeeee";
         uint32_t Payload = applyPatternValues(Pattern, {{'e', EA}});
+        return FinishLong(Payload, Tail, LocalFixups);
+      }
+    }
+
+    unsigned Cond;
+    if (getConditionSuffix(Mnemonic, "call", Cond)) {
+      uint8_t EA;
+      SmallVector<uint8_t, 8> Tail;
+      SmallVector<RawFixup, 2> LocalFixups;
+      if (encodeCompactEA(GetOp(1), /*AllowImmediate=*/false, EA, Tail,
+                          &LocalFixups)) {
+        StringRef Pattern = "111100001101110cccceeeeeee";
+        PatternFieldValue Fields[] = {{'c', Cond}, {'e', EA}};
+        uint32_t Payload = applyPatternValues(Pattern, Fields);
+        return FinishLong(Payload, Tail, LocalFixups);
+      }
+    }
+
+    unsigned Size;
+    if (getSizeSuffix(Mnemonic, "jmp", Size) && Size >= 2) {
+      uint8_t EA;
+      SmallVector<uint8_t, 8> Tail;
+      SmallVector<RawFixup, 2> LocalFixups;
+      if (encodeCompactEA(GetOp(1), /*AllowImmediate=*/false, EA, Tail,
+                          &LocalFixups)) {
+        StringRef Pattern = "1111001001z00000000eeeeeee";
+        PatternFieldValue Fields[] = {{'z', Size - 2}, {'e', EA}};
+        uint32_t Payload = applyPatternValues(Pattern, Fields);
+        return FinishLong(Payload, Tail, LocalFixups);
+      }
+    }
+
+    if (getConditionSizeSuffix(Mnemonic, "j", Cond, Size,
+                               /*AllowTF=*/false) &&
+        Size >= 2) {
+      uint8_t EA;
+      SmallVector<uint8_t, 8> Tail;
+      SmallVector<RawFixup, 2> LocalFixups;
+      if (encodeCompactEA(GetOp(1), /*AllowImmediate=*/false, EA, Tail,
+                          &LocalFixups)) {
+        StringRef Pattern = "1111001001z0000cccceeeeeee";
+        PatternFieldValue Fields[] = {
+            {'z', Size - 2}, {'c', Cond}, {'e', EA}};
+        uint32_t Payload = applyPatternValues(Pattern, Fields);
         return FinishLong(Payload, Tail, LocalFixups);
       }
     }
@@ -2293,7 +2331,6 @@ bool tryEncodeMediumInstruction(OperandVector &Operands,
         {"save", "1111101111010001001eeeeeee", "", true, false},
         {"restore", "1111101111010001010eeeeeee", "", true, false},
         {"prefetchnt", "1111101111010001011eeeeeee", "", false, true},
-        {"encinst", "1111101111010001100eeeeeee", "", false, true},
     };
 
     for (const LongEAOnlyForm &Form : LongEAOnlyForms) {
@@ -2498,6 +2535,13 @@ bool tryEncodeMediumInstruction(OperandVector &Operands,
           applyPatternValues("111110111101001aaaa001pppp", Fields);
       return encodeLongWithTail(Payload, {}, Bytes);
     }
+    if (Mnemonic == "rdseg" && GetOp(2).isReg() && isCS(GetOp(1)) &&
+        getRegNo(GetOp(2).getReg(), RegB)) {
+      PatternFieldValue Fields[] = {{'d', RegB}};
+      uint32_t Payload =
+          applyPatternValues("1111101111010001111100dddd", Fields);
+      return encodeLongWithTail(Payload, {}, Bytes);
+    }
     if (Mnemonic == "rdseg" && GetOp(2).isReg() && getSRegNo(GetOp(1), RegA) &&
         getRegNo(GetOp(2).getReg(), RegB)) {
       PatternFieldValue Fields[] = {{'s', RegA}, {'d', RegB}};
@@ -2511,6 +2555,22 @@ bool tryEncodeMediumInstruction(OperandVector &Operands,
       uint32_t Payload =
           applyPatternValues("1111101111010000001sssdddd", Fields);
       return encodeLongWithTail(Payload, {}, Bytes);
+    }
+  }
+
+  if (Operands.size() == 3) {
+    unsigned Size;
+    int64_t ConstantID;
+    unsigned DstReg;
+    if (getFpuSizeSuffix(Mnemonic, "fmovcr", Size) && GetOp(1).isImm() &&
+        getConstantImm(GetOp(1), ConstantID) && isUIntN(16, ConstantID) &&
+        GetOp(2).isReg() && getFRegNo(GetOp(2).getReg(), DstReg)) {
+      StringRef Pattern = "1111010110z01100010000dddd";
+      PatternFieldValue Fields[] = {{'z', Size}, {'d', DstReg}};
+      SmallVector<uint8_t, 2> Tail;
+      appendLE(Tail, static_cast<uint64_t>(ConstantID), 2);
+      return encodeLongWithTail(applyPatternValues(Pattern, Fields), Tail,
+                                Bytes);
     }
   }
 
@@ -2621,12 +2681,12 @@ bool tryEncodeMediumInstruction(OperandVector &Operands,
       if (GetOp(1).isReg() && getRegNo(GetOp(1).getReg(), RegNo) &&
           encodeCompactEA(GetOp(2), /*AllowImmediate=*/false, EA, Tail,
                           &LocalFixups)) {
-        Pattern = "1111110001000cccczzssss0000eeeeeee";
+        Pattern = "111111000011zz00cccc000sssseeeeeee";
         RegField = 's';
       } else if (encodeCompactEA(GetOp(1), /*AllowImmediate=*/true, EA, Tail,
                                  &LocalFixups) &&
                  GetOp(2).isReg() && getRegNo(GetOp(2).getReg(), RegNo)) {
-        Pattern = "1111110001001cccczzdddd0000eeeeeee";
+        Pattern = "111111000011zz00cccc001ddddeeeeeee";
         RegField = 'd';
       } else {
         Pattern = StringRef();
@@ -2646,6 +2706,96 @@ bool tryEncodeMediumInstruction(OperandVector &Operands,
   }
 
   if (Operands.size() == 4) {
+    struct FMAForm {
+      StringRef Mnemonic;
+      StringRef RRPattern;
+      StringRef LeftEAPattern;
+      StringRef RightEAPattern;
+    };
+    static const FMAForm FMAForms[] = {
+        {"fmadd", "1111010000zllllrrrr100dddd",
+         "1111110000001z00rrrr000ddddlllllll",
+         "1111110000001z00llll100ddddrrrrrrr"},
+        {"fmsub", "1111010000zllllrrrr101dddd",
+         "1111110000001z00rrrr001ddddlllllll",
+         "1111110000001z00llll101ddddrrrrrrr"},
+        {"fnmadd", "1111010000zllllrrrr110dddd",
+         "1111110000001z00rrrr010ddddlllllll",
+         "1111110000001z00llll110ddddrrrrrrr"},
+        {"fnmsub", "1111010000zllllrrrr111dddd",
+         "1111110000001z00rrrr011ddddlllllll",
+         "1111110000001z00llll111ddddrrrrrrr"},
+    };
+    for (const FMAForm &Form : FMAForms) {
+      unsigned Size;
+      if (!getFpuSizeSuffix(Mnemonic, Form.Mnemonic, Size))
+        continue;
+
+      unsigned LHSReg;
+      unsigned RHSReg;
+      unsigned DstReg;
+      if (GetOp(1).isReg() && GetOp(2).isReg() && GetOp(3).isReg() &&
+          getFRegNo(GetOp(1).getReg(), LHSReg) &&
+          getFRegNo(GetOp(2).getReg(), RHSReg) &&
+          getFRegNo(GetOp(3).getReg(), DstReg)) {
+        PatternFieldValue Fields[] = {{'z', Size},
+                                      {'l', LHSReg},
+                                      {'r', RHSReg},
+                                      {'d', DstReg}};
+        return encodeLongWithTail(
+            applyPatternValues(Form.RRPattern, Fields), {}, Bytes);
+      }
+
+      uint8_t EA;
+      SmallVector<uint8_t, 8> Tail;
+      SmallVector<RawFixup, 2> LocalFixups;
+      if (GetOp(2).isReg() && GetOp(3).isReg() &&
+          getFRegNo(GetOp(2).getReg(), RHSReg) &&
+          getFRegNo(GetOp(3).getReg(), DstReg) &&
+          encodeCompactEA(GetOp(1), /*AllowImmediate=*/true, EA, Tail,
+                          &LocalFixups) &&
+          EA >= 0x10) {
+        PatternFieldValue Fields[] = {
+            {'z', Size}, {'r', RHSReg}, {'d', DstReg}, {'l', EA}};
+        return FinishExtraLong(
+            applyPatternValues64(Form.LeftEAPattern, Fields), Tail,
+            LocalFixups);
+      }
+
+      Tail.clear();
+      LocalFixups.clear();
+      if (GetOp(1).isReg() && GetOp(3).isReg() &&
+          getFRegNo(GetOp(1).getReg(), LHSReg) &&
+          getFRegNo(GetOp(3).getReg(), DstReg) &&
+          encodeCompactEA(GetOp(2), /*AllowImmediate=*/true, EA, Tail,
+                          &LocalFixups) &&
+          EA >= 0x10) {
+        PatternFieldValue Fields[] = {
+            {'z', Size}, {'l', LHSReg}, {'d', DstReg}, {'r', EA}};
+        return FinishExtraLong(
+            applyPatternValues64(Form.RightEAPattern, Fields), Tail,
+            LocalFixups);
+      }
+    }
+
+    unsigned Size;
+    unsigned SrcReg;
+    unsigned SinReg;
+    unsigned CosReg;
+    if (getFpuSizeSuffix(Mnemonic, "fsincosa", Size) && GetOp(1).isReg() &&
+        GetOp(2).isReg() && GetOp(3).isReg() &&
+        getFRegNo(GetOp(1).getReg(), SrcReg) &&
+        getFRegNo(GetOp(2).getReg(), SinReg) &&
+        getFRegNo(GetOp(3).getReg(), CosReg)) {
+      StringRef Pattern = "1111110000001z01ssss000dddd000cccc";
+      PatternFieldValue Fields[] = {{'z', Size},
+                                    {'s', SrcReg},
+                                    {'d', SinReg},
+                                    {'c', CosReg}};
+      return encodeExtraLongWithTail(
+          applyPatternValues64(Pattern, Fields), {}, Bytes);
+    }
+
     unsigned Cond;
     if (getConditionSuffix(Mnemonic, "ij", Cond, /*AllowTF=*/true) &&
         Cond != 0x1) {
@@ -2666,7 +2816,7 @@ bool tryEncodeMediumInstruction(OperandVector &Operands,
             {'e', EA},
         };
         uint64_t Payload =
-            applyPatternValues64("111111000101cccciiiibbbb000eeeeeee",
+            applyPatternValues64("111111000100cccciiii000bbbbeeeeeee",
                                  Fields);
         return FinishExtraLong(Payload, Tail, LocalFixups);
       }
@@ -2677,14 +2827,14 @@ bool tryEncodeMediumInstruction(OperandVector &Operands,
       StringRef Pattern;
     };
     static const ExtraBndForm BndForms[] = {
-        {"bndsii", "111111000010zz000llllhhhh00eeeeeee"},
-        {"bndsix", "111111000010zz001llllhhhh00eeeeeee"},
-        {"bndsxi", "111111000010zz010llllhhhh00eeeeeee"},
-        {"bndsxx", "111111000010zz011llllhhhh00eeeeeee"},
-        {"bnduii", "111111000010zz100llllhhhh00eeeeeee"},
-        {"bnduix", "111111000010zz101llllhhhh00eeeeeee"},
-        {"bnduxi", "111111000010zz110llllhhhh00eeeeeee"},
-        {"bnduxx", "111111000010zz111llllhhhh00eeeeeee"},
+        {"bndsii", "111111000001zz00llll000hhhheeeeeee"},
+        {"bndsix", "111111000001zz00llll001hhhheeeeeee"},
+        {"bndsxi", "111111000001zz00llll010hhhheeeeeee"},
+        {"bndsxx", "111111000001zz00llll011hhhheeeeeee"},
+        {"bnduii", "111111000001zz00llll100hhhheeeeeee"},
+        {"bnduix", "111111000001zz00llll101hhhheeeeeee"},
+        {"bnduxi", "111111000001zz00llll110hhhheeeeeee"},
+        {"bnduxx", "111111000001zz00llll111hhhheeeeeee"},
     };
     for (const ExtraBndForm &Form : BndForms) {
       unsigned Size;
@@ -2714,8 +2864,8 @@ bool tryEncodeMediumInstruction(OperandVector &Operands,
       StringRef Pattern;
     };
     static const ExtraDivModForm DivModForms[] = {
-        {"divmodu", "111111000011zz0qqqqrrrr0000eeeeeee"},
-        {"divmods", "111111000011zz1qqqqrrrr0000eeeeeee"},
+        {"divmodu", "111111000010zz00qqqq000rrrreeeeeee"},
+        {"divmods", "111111000010zz00qqqq001rrrreeeeeee"},
     };
     for (const ExtraDivModForm &Form : DivModForms) {
       unsigned Size;
@@ -2746,11 +2896,11 @@ bool tryEncodeMediumInstruction(OperandVector &Operands,
       StringRef Pattern;
     };
     static const ExtraFetchForm FetchForms[] = {
-        {"fetchadd", "111111000111zz000ooossss000eeeeeee"},
-        {"fetchand", "111111000111zz001ooossss000eeeeeee"},
-        {"fetchor", "111111000111zz010ooossss000eeeeeee"},
-        {"fetchsub", "111111000111zz011ooossss000eeeeeee"},
-        {"fetchxor", "111111000111zz100ooossss000eeeeeee"},
+        {"fetchadd", "111111000101zz000000ooosssseeeeeee"},
+        {"fetchand", "111111000101zz000001ooosssseeeeeee"},
+        {"fetchor", "111111000101zz000010ooosssseeeeeee"},
+        {"fetchsub", "111111000101zz000011ooosssseeeeeee"},
+        {"fetchxor", "111111000101zz000100ooosssseeeeeee"},
     };
     for (const ExtraFetchForm &Form : FetchForms) {
       unsigned Size;
@@ -2801,7 +2951,7 @@ bool tryEncodeMediumInstruction(OperandVector &Operands,
           {'e', EA},
       };
       uint64_t Payload =
-          applyPatternValues64("1111110010000zzoooxxxxdddd0eeeeeee", Fields);
+          applyPatternValues64("111111000101zz01xxxxoooddddeeeeeee", Fields);
       return FinishExtraLong(Payload, Tail, LocalFixups);
     }
   }
@@ -2895,6 +3045,12 @@ bool BedrockAsmParser::matchAndEmitInstruction(SMLoc IDLoc, unsigned &Opcode,
                                                uint64_t &ErrorInfo,
                                                bool MatchingInlineAsm) {
   MCInst Inst;
+  if (!Operands.empty()) {
+    const auto &MnemonicOp = static_cast<const BedrockOperand &>(*Operands[0]);
+    if (MnemonicOp.isToken() && isFPTRANSAMnemonic(MnemonicOp.getToken()) &&
+        !getSTI().hasFeature(Bedrock::FeatureFPTRANSA))
+      return Error(IDLoc, "instruction requires the +fptransa feature");
+  }
   unsigned RepCond = 0;
   unsigned RepRegNo = 0;
   SmallVector<std::unique_ptr<MCParsedAsmOperand>, 8> RepeatBodyOperands;
@@ -3021,7 +3177,8 @@ bool BedrockAsmParser::parseOperand(OperandVector &Operands) {
     unsigned Ignored;
     if (Lower == "sp" || Lower == "pc" || Lower == "cs" || Lower == "ds" ||
         Lower == "ss" || Lower == "gs0" || Lower == "gs1" || Lower == "gs2" ||
-        Lower == "gs3" || Lower == "gs4" || getCRNo(Lower, Ignored)) {
+        Lower == "gs3" || Lower == "gs4" || Lower == "gs5" ||
+        getCRNo(Lower, Ignored)) {
       StartLoc = getLexer().getTok().getLoc();
       Operands.push_back(BedrockOperand::createToken(Lower, StartLoc));
       getLexer().Lex();

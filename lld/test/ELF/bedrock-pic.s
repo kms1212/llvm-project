@@ -2,9 +2,15 @@
 # RUN: split-file %s %t
 # RUN: llvm-mc -triple=bedrock -filetype=obj %t/shared.s -o %t/shared.o
 # RUN: ld.lld -shared %t/shared.o -o %t/shared.so
+# RUN: ld.lld -shared -z now %t/shared.o -o %t/shared-now.so
+# RUN: cmp %t/shared.so %t/shared-now.so
 # RUN: llvm-readobj -S -r -d %t/shared.so | FileCheck %s --check-prefix=SHARED
-# RUN: llvm-readobj -x .got.plt %t/shared.so | FileCheck %s --check-prefix=GOT
+# RUN: llvm-readobj -x .plt -x .got.plt %t/shared.so | FileCheck %s --check-prefixes=PLT-GOLDEN,GOT
 # RUN: llvm-objdump -d -j .plt %t/shared.so | FileCheck %s --check-prefix=PLT
+# RUN: llvm-readelf -l %t/shared.so | FileCheck %s --check-prefix=RELRO
+# RUN: not ld.lld -shared -z lazy %t/shared.o -o /dev/null 2>&1 | FileCheck %s --check-prefix=LAZY
+# RUN: ld.lld -shared -z separate-code %t/shared.o -o %t/trap.so
+# RUN: od -Ax -t x1 -N16 -j0x1ff0 %t/trap.so | FileCheck %s --check-prefix=TRAP
 # RUN: llvm-mc -triple=bedrock -filetype=obj %t/tls-ref.s -o %t/tls-ref.o
 # RUN: llvm-mc -triple=bedrock -filetype=obj %t/tls-def.s -o %t/tls-def.o
 # RUN: ld.lld %t/tls-ref.o %t/tls-def.o -e tls_ref -o %t/tls.exe
@@ -20,36 +26,44 @@
 # SHARED: Name: .rela.plt
 # SHARED: Type: SHT_RELA
 # SHARED: Name: .plt
-# SHARED: Size: 64
+# SHARED: Size: 32
 # SHARED: AddressAlignment: 16
 # SHARED: Name: .got.plt
 # SHARED: Size: 32
+# SHARED: FLAGS    BIND_NOW
+# SHARED: FLAGS_1  NOW
 # SHARED: PLTREL   RELA
 # SHARED-DAG: R_BEDROCK_TLSDESC tls 0x0
 # SHARED-DAG: R_BEDROCK_GLOB_DAT data 0x0
 # SHARED-DAG: R_BEDROCK_JUMP_SLOT function 0x0
 
 # PLT-LABEL: <.plt>:
-# PLT: jmp	[pc +
-# PLT: nop
-# PLT: jmp	[pc +
-# PLT: lea.q	0, r0
-# PLT: lea.q	[pc + {{.*}}], r1
-# PLT: jmp
+# PLT: jmp.q	[pc +
+# PLT-NEXT: nop
+# PLT-NOT: jmp
+
+# PLT-GOLDEN: Hex dump of section '.plt':
+# PLT-GOLDEN-NEXT: {{0x[0-9a-f]+}} e7c98067 {{[0-9a-f]+}} 00000000 01010101
+# PLT-GOLDEN-NEXT: {{0x[0-9a-f]+}} 01010101 01010101 01010101 01010101
 
 # GOT: Hex dump of section '.got.plt':
-# GOT: {{0x[0-9a-f]+}} {{[0-9a-f]+}} 00000000 00000000 00000000
-# GOT-NEXT: {{0x[0-9a-f]+}} 00000000 00000000 {{[0-9a-f]+}} 00000000
+# GOT: {{0x[0-9a-f]+}} {{[1-9a-f][0-9a-f]*}} 00000000 00000000 00000000
+# GOT-NEXT: {{0x[0-9a-f]+}} 00000000 00000000 00000000 00000000
+
+# RELRO: Section to Segment mapping:
+# RELRO: {{[0-9]+}}     .dynamic .got .got.plt .relro_padding
+# LAZY: error: -z lazy is not supported for Bedrock
+# TRAP: 001ff0 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00
 
 # RELAX-RELOC: Relocations [
 # RELAX-RELOC-NEXT: ]
 # RELAX-LABEL: <tls_ref>:
-# RELAX: lea.q	[gs0:0 + 0], r0
+# RELAX: db c7 80 72 a3 00 00 00 00 {{.*}}seglea.q	[gs0:0 + 0], r0
 # RELAX-NEXT: nop
 # RELAX: ret
 
 # RELAX64-LABEL: <tls_ref_large>:
-# RELAX64: lea.q	[gs0:0 + 0], r0
+# RELAX64: eb c7 80 73 a3 00 00 00 00 00 00 00 00 {{.*}}seglea.q	[gs0:0 + 0], r0
 # RELAX64-NEXT: nop
 # RELAX64: ret
 

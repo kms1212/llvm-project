@@ -96,11 +96,11 @@ jmp 1000
 
 call r3
 ; CHECK-INST: call	r3
-; CHECK-ENCODING: encoding: [0xc7,0xc3,0x88,0x03]
+; CHECK-ENCODING: encoding: [0xc7,0xc3,0x70,0x03]
 
-jmp r4
-; CHECK-INST: jmp	r4
-; CHECK-ENCODING: encoding: [0xc7,0xc3,0x88,0x84]
+jmp.q r4
+; CHECK-INST: jmp.q	r4
+; CHECK-ENCODING: encoding: [0xc7,0xc9,0x80,0x04]
 
 inc.b r1
 ; CHECK-INST: inc.b	r1
@@ -116,7 +116,7 @@ mov.q r1, [r2]
 
 mov.q r1, [ds:r2]
 ; CHECK-INST: mov.q	r1, [ds:r2]
-; CHECK-ENCODING: encoding: [0xc4,0x18,0xf4,0x12]
+; CHECK-ENCODING: encoding: [0xc4,0x18,0xf4,0x02]
 
 mov.q r1, [r2++]
 ; CHECK-INST: mov.q	r1, [r2++]
@@ -128,15 +128,15 @@ mov.q r1, [--r2]
 
 mov.q r1, [r2 + r3]
 ; CHECK-INST: mov.q	r1, [ds:r2 + r3]
-; CHECK-ENCODING: encoding: [0xc8,0x18,0xf4,0x92,0x23]
+; CHECK-ENCODING: encoding: [0xc8,0x18,0xf4,0x82,0x23]
 
 mov.q r1, [r2 + r3++ + 4]
 ; CHECK-INST: mov.q	r1, [ds:r2 + r3++ + 4]
-; CHECK-ENCODING: encoding: [0xcc,0x18,0xf0,0x90,0x23,0x04]
+; CHECK-ENCODING: encoding: [0xcc,0x18,0xf0,0x80,0x23,0x04]
 
 mov.q r1, [ds:0 + --r3 - 5]
 ; CHECK-INST: mov.q	r1, [ds:0 + --r3 - 5]
-; CHECK-ENCODING: encoding: [0xcc,0x18,0xf0,0x99,0x13,0xfb]
+; CHECK-ENCODING: encoding: [0xcc,0x18,0xf0,0x89,0x13,0xfb]
 
 mov.q r1, [sp + r3]
 ; CHECK-INST: mov.q	r1, [sp + r3]
@@ -160,7 +160,7 @@ rol.q 3, [r8]
 
 rdseg cs, r5
 ; CHECK-INST: rdseg	cs, r5
-; CHECK-ENCODING: encoding: [0xc7,0xef,0x40,0x05]
+; CHECK-ENCODING: encoding: [0xc7,0xef,0x47,0xc5]
 
 invtlb
 ; CHECK-INST: invtlb

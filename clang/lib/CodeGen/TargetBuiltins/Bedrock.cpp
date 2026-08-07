@@ -29,66 +29,7 @@ Value *CodeGenFunction::EmitBedrockBuiltinExpr(unsigned BuiltinID,
     return ResultTy == V->getType() ? V
                                     : Builder.CreateZExtOrTrunc(V, ResultTy);
   };
-  auto ToBoundsOnlyImage = [&](Value *Image) {
-    Value *HasMantissa = Builder.CreateICmpNE(
-        Builder.CreateAnd(Image, Builder.getInt64(0x7e)), Builder.getInt64(0));
-    return Builder.CreateOr(
-        Image, Builder.CreateZExt(HasMantissa, Builder.getInt64Ty()));
-  };
-  auto EmitFarPointer = [&](Value *Address, Value *Image,
-                            Value *ForceInvalid = nullptr) {
-    Value *Raw = Builder.CreateOr(
-        Builder.CreateZExt(Address, Builder.getInt128Ty()),
-        Builder.CreateShl(Builder.CreateZExt(Image, Builder.getInt128Ty()),
-                          64));
-    Value *IsNull = Builder.CreateICmpEQ(Address, Builder.getInt64(0));
-    if (ForceInvalid)
-      IsNull = Builder.CreateAnd(IsNull, Builder.CreateNot(ForceInvalid));
-    Raw = Builder.CreateSelect(IsNull,
-                               ConstantInt::get(Builder.getInt128Ty(), 0), Raw);
-    if (ForceInvalid)
-      Raw = Builder.CreateSelect(
-          ForceInvalid, ConstantInt::getAllOnesValue(Builder.getInt128Ty()),
-          Raw);
-    return Builder.CreateIntToPtr(Raw, ConvertType(E->getType()));
-  };
-
   switch (BuiltinID) {
-  case Bedrock::BI__builtin_bedrock_far_ptr_init: {
-    Value *Address = EmitI64(1);
-    return EmitFarPointer(Address, ToBoundsOnlyImage(EmitI64(2)));
-  }
-  case Bedrock::BI__builtin_bedrock_far_ptr_from_segment: {
-    Value *Offset = EmitI64(1);
-    Value *Image = EmitI64(2);
-    Value *Base = Builder.CreateAnd(
-        Image, Builder.getInt64(UINT64_C(0xfffffffffffff000)));
-    Value *SumAndOverflow = Builder.CreateBinaryIntrinsic(
-        Intrinsic::uadd_with_overflow, Base, Offset);
-    Value *Address = Builder.CreateExtractValue(SumAndOverflow, 0);
-    Value *Overflow = Builder.CreateExtractValue(SumAndOverflow, 1);
-    return EmitFarPointer(Address, ToBoundsOnlyImage(Image), Overflow);
-  }
-  case Bedrock::BI__builtin_bedrock_far_flat_ptr_init: {
-    return EmitFarPointer(EmitI64(1), Builder.getInt64(0));
-  }
-  case Bedrock::BI__builtin_bedrock_far_null:
-    return ConstantPointerNull::get(
-        cast<llvm::PointerType>(ConvertType(E->getType())));
-  case Bedrock::BI__builtin_bedrock_far_address: {
-    Value *Raw = Builder.CreatePtrToInt(EmitScalarExpr(E->getArg(0)),
-                                        Builder.getInt128Ty());
-    return Builder.CreateTrunc(Raw, Builder.getInt64Ty());
-  }
-  case Bedrock::BI__builtin_bedrock_far_same_encoding: {
-    Value *Left = Builder.CreatePtrToInt(EmitScalarExpr(E->getArg(0)),
-                                         Builder.getInt128Ty());
-    Value *Right = Builder.CreatePtrToInt(EmitScalarExpr(E->getArg(1)),
-                                          Builder.getInt128Ty());
-    return Builder.CreateZExt(Builder.CreateICmpEQ(Left, Right),
-                              Builder.getInt32Ty());
-  }
-
   case Bedrock::BI__builtin_bedrock_cpuid:
     return EmitCall(Intrinsic::bedrock_cpuid, {EmitI64(0)});
   case Bedrock::BI__builtin_bedrock_read_status:
@@ -154,6 +95,73 @@ Value *CodeGenFunction::EmitBedrockBuiltinExpr(unsigned BuiltinID,
     return TruncateResult(EmitCall(ID, {EmitScalarExpr(E->getArg(0))}));
   }
 
+#define BEDROCK_APPROX_CASES(NAME)                                           \
+  case Bedrock::BI__builtin_bedrock_##NAME##_f32:                           \
+  case Bedrock::BI__builtin_bedrock_##NAME##_f64:
+    BEDROCK_APPROX_CASES(facosa)
+    BEDROCK_APPROX_CASES(fasina)
+    BEDROCK_APPROX_CASES(fatana)
+    BEDROCK_APPROX_CASES(fatanha)
+    BEDROCK_APPROX_CASES(fcosa)
+    BEDROCK_APPROX_CASES(fcosha)
+    BEDROCK_APPROX_CASES(fetoxa)
+    BEDROCK_APPROX_CASES(fetoxm1a)
+    BEDROCK_APPROX_CASES(flog10a)
+    BEDROCK_APPROX_CASES(flog2a)
+    BEDROCK_APPROX_CASES(flogna)
+    BEDROCK_APPROX_CASES(flognp1a)
+    BEDROCK_APPROX_CASES(fsina)
+    BEDROCK_APPROX_CASES(fsinha)
+    BEDROCK_APPROX_CASES(ftana)
+    BEDROCK_APPROX_CASES(ftanha)
+    BEDROCK_APPROX_CASES(ftentoxa)
+    BEDROCK_APPROX_CASES(ftwotoxa) {
+      Intrinsic::ID ID;
+      switch (BuiltinID) {
+#define BEDROCK_APPROX_ID(NAME)                                              \
+  case Bedrock::BI__builtin_bedrock_##NAME##_f32:                           \
+  case Bedrock::BI__builtin_bedrock_##NAME##_f64:                           \
+    ID = Intrinsic::bedrock_##NAME;                                         \
+    break;
+        BEDROCK_APPROX_ID(facosa)
+        BEDROCK_APPROX_ID(fasina)
+        BEDROCK_APPROX_ID(fatana)
+        BEDROCK_APPROX_ID(fatanha)
+        BEDROCK_APPROX_ID(fcosa)
+        BEDROCK_APPROX_ID(fcosha)
+        BEDROCK_APPROX_ID(fetoxa)
+        BEDROCK_APPROX_ID(fetoxm1a)
+        BEDROCK_APPROX_ID(flog10a)
+        BEDROCK_APPROX_ID(flog2a)
+        BEDROCK_APPROX_ID(flogna)
+        BEDROCK_APPROX_ID(flognp1a)
+        BEDROCK_APPROX_ID(fsina)
+        BEDROCK_APPROX_ID(fsinha)
+        BEDROCK_APPROX_ID(ftana)
+        BEDROCK_APPROX_ID(ftanha)
+        BEDROCK_APPROX_ID(ftentoxa)
+        BEDROCK_APPROX_ID(ftwotoxa)
+#undef BEDROCK_APPROX_ID
+      default:
+        llvm_unreachable("unexpected Bedrock approximate builtin");
+      }
+      Value *Arg = EmitScalarExpr(E->getArg(0));
+      return Builder.CreateCall(CGM.getIntrinsic(ID, {Arg->getType()}), {Arg});
+    }
+#undef BEDROCK_APPROX_CASES
+
+  case Bedrock::BI__builtin_bedrock_fsincosa_f32:
+  case Bedrock::BI__builtin_bedrock_fsincosa_f64: {
+    Value *Arg = EmitScalarExpr(E->getArg(0));
+    CallInst *Pair = Builder.CreateCall(
+        CGM.getIntrinsic(Intrinsic::bedrock_fsincosa, {Arg->getType()}),
+        {Arg});
+    Builder.CreateDefaultAlignedStore(Builder.CreateExtractValue(Pair, 0),
+                                      EmitScalarExpr(E->getArg(1)));
+    return Builder.CreateDefaultAlignedStore(Builder.CreateExtractValue(Pair, 1),
+                                             EmitScalarExpr(E->getArg(2)));
+  }
+
   case Bedrock::BI__builtin_bedrock_write_status:
     return EmitCall(Intrinsic::bedrock_write_status, {EmitI64(0)});
   case Bedrock::BI__builtin_bedrock_read_control_register:
@@ -165,6 +173,8 @@ Value *CodeGenFunction::EmitBedrockBuiltinExpr(unsigned BuiltinID,
   case Bedrock::BI__builtin_bedrock_read_segment_register:
     return EmitCall(Intrinsic::bedrock_read_segment_register,
                     {EmitScalarExpr(E->getArg(0))});
+  case Bedrock::BI__builtin_bedrock_read_code_segment:
+    return EmitCall(Intrinsic::bedrock_read_code_segment);
   case Bedrock::BI__builtin_bedrock_write_segment_register:
     return EmitCall(Intrinsic::bedrock_write_segment_register,
                     {EmitScalarExpr(E->getArg(0)), EmitI64(1)});
@@ -254,10 +264,6 @@ Value *CodeGenFunction::EmitBedrockBuiltinExpr(unsigned BuiltinID,
   case Bedrock::BI__builtin_bedrock_restore_processor_state:
     return EmitCall(Intrinsic::bedrock_restore_processor_state,
                     {EmitScalarExpr(E->getArg(0))});
-  case Bedrock::BI__builtin_bedrock_encode_instruction:
-    return EmitCall(Intrinsic::bedrock_encode_instruction,
-                    {EmitScalarExpr(E->getArg(0)), EmitI64(1), EmitI64(2),
-                     EmitI64(3), EmitI64(4)});
   }
   return nullptr;
 }

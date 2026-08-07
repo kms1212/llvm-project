@@ -617,9 +617,12 @@ protected:
   /// a byte, but larger units are used if IsMsStruct.
   unsigned char UnfilledBitsInLastUnit;
 
-  /// LastBitfieldStorageUnitSize - If IsMsStruct, represents the size of the
-  /// storage unit of the previous field if it was a bitfield.
+  /// LastBitfieldStorageUnitSize - For allocation-unit layouts, represents
+  /// the size of the previous field's unit if it was a bitfield.
   unsigned char LastBitfieldStorageUnitSize;
+
+  /// Canonical declared type of the active target-defined bit-field unit.
+  QualType LastBitfieldType;
 
   /// MaxFieldAlignment - The maximum allowed field alignment. This is set by
   /// #pragma pack.
@@ -1490,6 +1493,7 @@ void ItaniumRecordLayoutBuilder::LayoutWideBitField(uint64_t FieldSize,
   // We're not going to use any of the unfilled bits in the last byte.
   UnfilledBitsInLastUnit = 0;
   LastBitfieldStorageUnitSize = 0;
+  LastBitfieldType = QualType();
 
   uint64_t FieldOffset;
   uint64_t UnpaddedFieldOffset = getDataSizeInBits() - UnfilledBitsInLastUnit;
@@ -1537,6 +1541,10 @@ void ItaniumRecordLayoutBuilder::LayoutBitField(const FieldDecl *D) {
   unsigned FieldAlign = FieldInfo.Align;
   bool AlignIsRequired = FieldInfo.isAlignRequired();
   unsigned char PaddingInLastUnit = 0;
+  const bool UseDeclaredTypeUnits =
+      !IsMsStruct &&
+      Context.getTargetInfo().useBitFieldTypeForAllocationUnits();
+  QualType FieldType = D->getType().getCanonicalType().getUnqualifiedType();
 
   // UnfilledBitsInLastUnit is the difference between the end of the
   // last allocated bitfield (i.e. the first bit offset available for
@@ -1613,6 +1621,14 @@ void ItaniumRecordLayoutBuilder::LayoutBitField(const FieldDecl *D) {
       UnfilledBitsInLastUnit = 0;
       LastBitfieldStorageUnitSize = 0;
     }
+  } else if (UseDeclaredTypeUnits &&
+             (!FieldSize || LastBitfieldType.isNull() ||
+              !Context.hasSameType(FieldType, LastBitfieldType) ||
+              UnfilledBitsInLastUnit < FieldSize)) {
+    PaddingInLastUnit = UnfilledBitsInLastUnit;
+    UnfilledBitsInLastUnit = 0;
+    LastBitfieldStorageUnitSize = 0;
+    LastBitfieldType = QualType();
   }
 
   if (isAIXLayout(Context)) {
@@ -1712,7 +1728,7 @@ void ItaniumRecordLayoutBuilder::LayoutBitField(const FieldDecl *D) {
   // Check if we need to add padding to fit the bitfield within an
   // allocation unit with the right size and alignment.  The rules are
   // somewhat different here for ms_struct structs.
-  if (IsMsStruct) {
+  if (IsMsStruct || UseDeclaredTypeUnits) {
     // If it's not a zero-width bitfield, and we can fit the bitfield
     // into the active storage unit (and we haven't already decided to
     // start a new storage unit), just do so, regardless of any other
@@ -1802,6 +1818,8 @@ void ItaniumRecordLayoutBuilder::LayoutBitField(const FieldDecl *D) {
     if (IsMsStruct) {
       RoundedFieldSize = (FieldSize ? StorageUnitSize
                                     : Context.getTargetInfo().getCharWidth());
+    } else if (UseDeclaredTypeUnits) {
+      RoundedFieldSize = FieldSize ? StorageUnitSize : 0;
 
       // Otherwise, allocate just the number of bytes required to store
       // the bitfield.
@@ -1810,9 +1828,9 @@ void ItaniumRecordLayoutBuilder::LayoutBitField(const FieldDecl *D) {
     }
     setDataSize(std::max(getDataSizeInBits(), RoundedFieldSize));
 
-  // For non-zero-width bitfields in ms_struct structs, allocate a new
+  // For non-zero-width bitfields in allocation-unit layouts, allocate a new
   // storage unit if necessary.
-  } else if (IsMsStruct && FieldSize) {
+  } else if ((IsMsStruct || UseDeclaredTypeUnits) && FieldSize) {
     // We should have cleared UnfilledBitsInLastUnit in every case
     // where we changed storage units.
     if (!UnfilledBitsInLastUnit) {
@@ -1821,6 +1839,8 @@ void ItaniumRecordLayoutBuilder::LayoutBitField(const FieldDecl *D) {
     }
     UnfilledBitsInLastUnit -= FieldSize;
     LastBitfieldStorageUnitSize = StorageUnitSize;
+    if (UseDeclaredTypeUnits)
+      LastBitfieldType = FieldType;
 
     // Otherwise, bump the data size up to include the bitfield,
     // including padding up to char alignment, and then remember how
@@ -1835,6 +1855,7 @@ void ItaniumRecordLayoutBuilder::LayoutBitField(const FieldDecl *D) {
     // zero-width bitfield, which doesn't count as anything for the
     // purposes of unfilled bits.
     LastBitfieldStorageUnitSize = 0;
+    LastBitfieldType = QualType();
   }
 
   // Update the size.
@@ -1884,6 +1905,7 @@ void ItaniumRecordLayoutBuilder::LayoutField(const FieldDecl *D,
   // Reset the unfilled bits.
   UnfilledBitsInLastUnit = 0;
   LastBitfieldStorageUnitSize = 0;
+  LastBitfieldType = QualType();
 
   llvm::Triple Target = Context.getTargetInfo().getTriple();
 

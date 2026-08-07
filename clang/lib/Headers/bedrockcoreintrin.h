@@ -3,6 +3,12 @@
 
 #include <stdint.h>
 
+typedef enum __bedrock_performance_counter {
+  __BEDROCK_PMC_CYCLE = 1,
+  __BEDROCK_PMC_INSTRET = 2,
+  __BEDROCK_PMC_PTWALK = 3
+} __bedrock_performance_counter_t;
+
 static __inline__ uint64_t __bedrock_cpuid(uint64_t selector) {
   return __builtin_bedrock_cpuid(selector);
 }

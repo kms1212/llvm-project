@@ -31,30 +31,6 @@ entry:
   ret i64 %v
 }
 
-define bedrock_farcc i64 @far(i64 %x) addrspace(1) uwtable {
-; ASM-LABEL: far:
-; ASM: .cfi_def_cfa sp, 16
-; ASM-NEXT: .cfi_offset pc, -16
-; ASM-NEXT: .cfi_offset cs, -8
-; ASM: sub.q 16, sp
-; ASM-NEXT: .cfi_def_cfa_offset 32
-; ASM: add.q 16, sp
-; ASM-NEXT: .cfi_def_cfa_offset 16
-; ASM-NEXT: lret
-;
-; FP-LABEL: far:
-; FP: .cfi_def_cfa sp, 16
-; FP: mov.q r15, [sp + 8]
-; FP-NEXT: .cfi_offset r15, -24
-; FP: mov.q sp, r15
-; FP-NEXT: .cfi_def_cfa r15, 32
-entry:
-  %slot = alloca i64, align 16
-  store volatile i64 %x, ptr %slot, align 16
-  %v = load volatile i64, ptr %slot, align 16
-  ret i64 %v
-}
-
 define void @realign(i64 %x) uwtable {
 ; ASM-LABEL: realign:
 ; ASM: mov.q r14, [sp + 24]
@@ -92,11 +68,7 @@ entry:
   ret void
 }
 
-; CFI: Return address column: 33
+; CFI: Return address column: 17
 ; CFI: DW_CFA_def_cfa: SP +8
 ; CFI-NEXT: DW_CFA_offset: PC -8
 ; CFI: CFA=SP+8: PC=[CFA-8]
-; CFI: DW_CFA_def_cfa: SP +16
-; CFI-NEXT: DW_CFA_offset: PC -16
-; CFI-NEXT: DW_CFA_offset: CS -8
-; CFI: CFA=SP+16: PC=[CFA-16], CS=[CFA-8]

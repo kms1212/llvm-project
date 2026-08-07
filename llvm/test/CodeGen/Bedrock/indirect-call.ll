@@ -38,12 +38,12 @@ define i64 @indirect_tail_call(ptr %fn, i64 %x) {
 ; CHECK-LABEL: indirect_tail_call:
 ; CHECK-NOT: rdseg cs
 ; CHECK-NOT: lcall
-; CHECK: jmp r{{[0-9]+}}
+; CHECK: jmp.q r{{[0-9]+}}
 ; CHECK-NOT: ret
 ; OBJ-LABEL: <indirect_tail_call>:
 ; OBJ-NOT: rdseg cs
 ; OBJ-NOT: lcall
-; OBJ: jmp r{{[0-9]+}}
+; OBJ: jmp.q r{{[0-9]+}}
 ; OBJ-NOT: ret
   %value = tail call i64 %fn(i64 %x)
   ret i64 %value

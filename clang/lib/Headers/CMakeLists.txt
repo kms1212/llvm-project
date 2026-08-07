@@ -301,7 +301,6 @@ set(gpu_files
   )
 
 set(bedrock_files
-  bedrockfarintrin.h
   bedrockcoreintrin.h
   bedrockmemoryintrin.h
   bedrockintegerintrin.h
@@ -311,7 +310,6 @@ set(bedrock_files
   bedrockcacheintrin.h
   bedrockmmuintrin.h
   bedrockstateintrin.h
-  bedrockvirtintrin.h
   bedrocksystemintrin.h
   )
 

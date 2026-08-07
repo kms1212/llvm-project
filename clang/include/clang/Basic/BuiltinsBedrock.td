@@ -14,15 +14,6 @@ class BedrockBuiltin<string prototype, string features = ""> : TargetBuiltin {
   let Features = features;
 }
 
-let Attributes = [NoThrow, CustomTypeChecking] in {
-def far_ptr_init : BedrockBuiltin<"void *(...)">;
-def far_flat_ptr_init : BedrockBuiltin<"void *(...)">;
-def far_null : BedrockBuiltin<"void *(...)">;
-def far_ptr_from_segment : BedrockBuiltin<"void *(...)">;
-def far_address : BedrockBuiltin<"uint64_t(...)">;
-def far_same_encoding : BedrockBuiltin<"int(...)">;
-}
-
 let Attributes = [NoThrow] in {
 def cpuid : BedrockBuiltin<"uint64_t(uint64_t)">;
 def read_status : BedrockBuiltin<"unsigned short()">;
@@ -53,9 +44,38 @@ def clmul_u32 : BedrockBuiltin<"unsigned int(unsigned int, unsigned int)">;
 def clmul_u64 : BedrockBuiltin<"uint64_t(uint64_t, uint64_t)">;
 def fclass_f32 : BedrockBuiltin<"unsigned short(float)", "fpu">;
 def fclass_f64 : BedrockBuiltin<"unsigned short(double)", "fpu">;
+
+multiclass BedrockApproxUnaryBuiltins {
+  def _f32 : BedrockBuiltin<"float(float)", "fptransa">;
+  def _f64 : BedrockBuiltin<"double(double)", "fptransa">;
+}
+
+defm facosa : BedrockApproxUnaryBuiltins;
+defm fasina : BedrockApproxUnaryBuiltins;
+defm fatana : BedrockApproxUnaryBuiltins;
+defm fatanha : BedrockApproxUnaryBuiltins;
+defm fcosa : BedrockApproxUnaryBuiltins;
+defm fcosha : BedrockApproxUnaryBuiltins;
+defm fetoxa : BedrockApproxUnaryBuiltins;
+defm fetoxm1a : BedrockApproxUnaryBuiltins;
+defm flog10a : BedrockApproxUnaryBuiltins;
+defm flog2a : BedrockApproxUnaryBuiltins;
+defm flogna : BedrockApproxUnaryBuiltins;
+defm flognp1a : BedrockApproxUnaryBuiltins;
+defm fsina : BedrockApproxUnaryBuiltins;
+defm fsinha : BedrockApproxUnaryBuiltins;
+defm ftana : BedrockApproxUnaryBuiltins;
+defm ftanha : BedrockApproxUnaryBuiltins;
+defm ftentoxa : BedrockApproxUnaryBuiltins;
+defm ftwotoxa : BedrockApproxUnaryBuiltins;
 }
 
 let Attributes = [NoThrow] in {
+def fsincosa_f32 :
+    BedrockBuiltin<"void(float, float *, float *)", "fptransa">;
+def fsincosa_f64 :
+    BedrockBuiltin<"void(double, double *, double *)", "fptransa">;
+
 def write_status : BedrockBuiltin<"void(unsigned short)">;
 def read_control_register :
     BedrockBuiltin<"uint64_t(_Constant unsigned int)">;
@@ -63,6 +83,7 @@ def write_control_register :
     BedrockBuiltin<"void(_Constant unsigned int, uint64_t)">;
 def read_segment_register :
     BedrockBuiltin<"uint64_t(_Constant unsigned int)">;
+def read_code_segment : BedrockBuiltin<"uint64_t()">;
 def write_segment_register :
     BedrockBuiltin<"void(_Constant unsigned int, uint64_t)">;
 
@@ -86,7 +107,4 @@ def page_table_query :
 
 def save_processor_state : BedrockBuiltin<"void(void *)">;
 def restore_processor_state : BedrockBuiltin<"void(void const *)">;
-def encode_instruction :
-    BedrockBuiltin<"long int(void *, uint64_t, uint64_t, uint64_t, uint64_t)",
-                   "virtaccel">;
 }

@@ -1,0 +1,68 @@
+schema: 1
+isa_revision: e6c432a63577218dd2a13e8537e7653707b29a7b
+
+# These builtins are LLVM/Clang APIs layered on top of the optional ISA
+# extension. They are deliberately absent from isa/c/target_intrinsics.yaml.
+fptransa_c_api:
+  unary_mnemonics:
+    - facosa
+    - fasina
+    - fatana
+    - fatanha
+    - fcosa
+    - fcosha
+    - fetoxa
+    - fetoxm1a
+    - flog10a
+    - flog2a
+    - flogna
+    - flognp1a
+    - fsina
+    - fsinha
+    - ftana
+    - ftanha
+    - ftentoxa
+    - ftwotoxa
+  paired_mnemonics:
+    - fsincosa
+  suffixes:
+    - f32
+    - f64
+
+# Form references are sorted as "path#id" before hashing. The round-trip set
+# is the intersection of patterns implemented by the assembler and decoder.
+# Decoder-only forms are tracked separately so that moving them into the
+# round-trip set is an intentional inventory change.
+mc_form_inventory:
+  round_trip:
+    count: 239
+    sha256: 53fd4424afcbf1d35ecf0595a1d070cf61e322f734d78e2e304a6f3cb70ab919
+  decoder_only:
+    count: 3
+    sha256: 93efca5b67cf28f7936198020a920aaee8c5906f23070d4aaa3b0081778d3f2e
+  assembler_only:
+    count: 0
+    sha256: e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855
+
+# Fixed-width forms use numeric payloads in the MC implementation instead of
+# symbolic bit patterns. These probes derive bytes from the specification and
+# compare them with the assembly/disassembly golden.
+fixed_encoding_probes:
+  - form: isa/defs/instructions/ERET/encodings.yaml#extrashort.eret
+    assembly: eret
+    fields: {}
+  - form: isa/defs/instructions/PUSH/encodings.yaml#extrashort.push_cs
+    assembly: push cs
+    fields: {}
+  - form: isa/defs/instructions/PUSH/encodings.yaml#short.push_sreg_s
+    assembly: push ds
+    fields: {s: 0}
+  - form: isa/defs/instructions/PUSH/encodings.yaml#short.push_sreg_s
+    assembly: push gs5
+    fields: {s: 7}
+  - form: isa/defs/instructions/POP/encodings.yaml#short.pop_sreg_s
+    assembly: pop ss
+    fields: {s: 1}
+  - form: isa/defs/instructions/POP/encodings.yaml#short.pop_sreg_s
+    assembly: pop gs5
+    fields: {s: 7}

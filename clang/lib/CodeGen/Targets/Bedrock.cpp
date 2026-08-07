@@ -8,6 +8,9 @@
 
 #include "ABIInfoImpl.h"
 #include "TargetInfo.h"
+#include "clang/AST/Attr.h"
+#include "clang/AST/RecordLayout.h"
+#include "llvm/ADT/SmallPtrSet.h"
 
 using namespace clang;
 using namespace clang::CodeGen;
@@ -56,9 +59,102 @@ public:
     // 16-byte slot sequence.
     return 0;
   }
+
+  void checkFunctionABI(CodeGenModule &CGM,
+                        const FunctionDecl *Decl) const override;
+  void checkFunctionCallABI(CodeGenModule &CGM, SourceLocation CallLoc,
+                            const FunctionDecl *Caller,
+                            const FunctionDecl *Callee, const CallArgList &Args,
+                            QualType ReturnType) const override;
 };
 
 } // namespace
+
+static bool hasNonBaselineAggregateLayout(
+    ASTContext &Context, QualType Ty,
+    llvm::SmallPtrSetImpl<const RecordDecl *> &Visited) {
+  Ty = Ty.getCanonicalType();
+  if (const auto *ArrayTy = Context.getAsArrayType(Ty))
+    return hasNonBaselineAggregateLayout(Context, ArrayTy->getElementType(),
+                                         Visited);
+
+  const auto *RecordTy = Ty->getAs<RecordType>();
+  if (!RecordTy)
+    return false;
+  const RecordDecl *Record = RecordTy->getDecl()->getDefinition();
+  if (!Record || !Visited.insert(Record).second)
+    return false;
+
+  if (Record->hasAttr<PackedAttr>() || Record->hasAttr<MaxFieldAlignmentAttr>())
+    return true;
+
+  const ASTRecordLayout &Layout = Context.getASTRecordLayout(Record);
+  unsigned Index = 0;
+  for (const FieldDecl *Field : Record->fields()) {
+    QualType FieldTy = Field->getType();
+    if (Field->hasAttr<PackedAttr>())
+      return true;
+
+    if (!Field->isBitField()) {
+      QualType AlignmentTy = FieldTy;
+      if (const auto *ArrayTy = Context.getAsArrayType(FieldTy))
+        AlignmentTy = ArrayTy->getElementType();
+      unsigned NaturalAlign = Context.getTypeAlign(AlignmentTy);
+      if (NaturalAlign && Layout.getFieldOffset(Index) % NaturalAlign != 0)
+        return true;
+    }
+
+    if (hasNonBaselineAggregateLayout(Context, FieldTy, Visited))
+      return true;
+    ++Index;
+  }
+  return false;
+}
+
+static void diagnoseNonBaselineAggregateTypes(CodeGenModule &CGM,
+                                              SourceLocation Loc,
+                                              ArrayRef<QualType> Types) {
+  llvm::SmallPtrSet<const Type *, 4> Diagnosed;
+  for (QualType Ty : Types) {
+    if (!Ty->isAggregateType() ||
+        !Diagnosed.insert(Ty.getCanonicalType().getTypePtr()).second)
+      continue;
+    llvm::SmallPtrSet<const RecordDecl *, 4> Visited;
+    if (!hasNonBaselineAggregateLayout(CGM.getContext(), Ty, Visited))
+      continue;
+    std::string Message = "Bedrock C ABI does not permit packed or "
+                          "under-aligned aggregate type '" +
+                          Ty.getAsString() +
+                          "' across an external ABI boundary";
+    CGM.Error(Loc, Message);
+  }
+}
+
+void BedrockTargetCodeGenInfo::checkFunctionABI(
+    CodeGenModule &CGM, const FunctionDecl *Decl) const {
+  if (!Decl->isExternallyVisible())
+    return;
+  SmallVector<QualType, 8> Types;
+  Types.push_back(Decl->getReturnType());
+  for (const ParmVarDecl *Param : Decl->parameters())
+    Types.push_back(Param->getType());
+  diagnoseNonBaselineAggregateTypes(CGM, Decl->getLocation(), Types);
+}
+
+void BedrockTargetCodeGenInfo::checkFunctionCallABI(CodeGenModule &CGM,
+                                                    SourceLocation CallLoc,
+                                                    const FunctionDecl *Caller,
+                                                    const FunctionDecl *Callee,
+                                                    const CallArgList &Args,
+                                                    QualType ReturnType) const {
+  if (Callee && !Callee->isExternallyVisible())
+    return;
+  SmallVector<QualType, 8> Types;
+  Types.push_back(ReturnType);
+  for (const CallArg &Arg : Args)
+    Types.push_back(Arg.getType());
+  diagnoseNonBaselineAggregateTypes(CGM, CallLoc, Types);
+}
 
 ABIArgInfo BedrockABIInfo::getByValAggregate(QualType Ty) const {
   unsigned TypeAlign = getContext().getTypeAlign(Ty) / 8;
@@ -79,6 +175,19 @@ llvm::Type *BedrockABIInfo::getSmallAggregateCoerceType(QualType Ty) const {
 
 ABIArgInfo BedrockABIInfo::classifyArgumentType(QualType Ty) const {
   Ty = useFirstFieldIfTransparentUnion(Ty);
+
+  // Complex scalars use two consecutive floating-point registers. Keeping
+  // the ABI form direct lets Clang expose the real and imaginary components
+  // independently to the backend rather than treating the value as an
+  // aggregate copy.
+  if (Ty->isAnyComplexType()) {
+    ABIArgInfo Info = ABIArgInfo::getDirect(CGT.ConvertType(Ty), /*Offset=*/0,
+                                            /*Padding=*/nullptr,
+                                            /*CanBeFlattened=*/false);
+    // Preserve the FLOAT-PAIR grouping through IR argument legalization.
+    Info.setInReg(true);
+    return Info;
+  }
 
   const RecordType *RT = Ty->getAsCanonical<RecordType>();
   if (RT) {
@@ -113,6 +222,11 @@ ABIArgInfo BedrockABIInfo::classifyArgumentType(QualType Ty) const {
 ABIArgInfo BedrockABIInfo::classifyReturnType(QualType RetTy) const {
   if (RetTy->isVoidType())
     return ABIArgInfo::getIgnore();
+
+  if (RetTy->isAnyComplexType())
+    return ABIArgInfo::getDirect(CGT.ConvertType(RetTy), /*Offset=*/0,
+                                 /*Padding=*/nullptr,
+                                 /*CanBeFlattened=*/false);
 
   if (isAggregateTypeForABI(RetTy)) {
     if (isEmptyRecord(getContext(), RetTy, /*AllowArrays=*/true))

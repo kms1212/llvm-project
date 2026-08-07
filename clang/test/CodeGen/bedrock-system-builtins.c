@@ -1,21 +1,50 @@
 // REQUIRES: bedrock-registered-target
-// RUN: %clang_cc1 -triple bedrock -std=c11 -ffreestanding -O1 -target-feature +virtaccel -internal-isystem %S/../../lib/Headers -emit-llvm -o - %s | FileCheck %s
+// RUN: %clang_cc1 -triple bedrock -std=c11 -ffreestanding -O1 -internal-isystem %S/../../lib/Headers -emit-llvm -o - %s | FileCheck %s
 
 #include <bedrocksystemintrin.h>
 
+// CHECK: @packed_segment_image ={{.*}} global i64 305418371, align 8
+// CHECK: @based_segment_image ={{.*}} global i64 305418502, align 8
+// CHECK: @disabled_segment_image ={{.*}} global i64 0, align 8
+uint64_t packed_segment_image =
+    __BEDROCK_SEGMENT_IMAGE(0x12345, 33, 65, 2);
+uint64_t based_segment_image =
+    __BEDROCK_SEGMENT_IMAGE_FOR_BASE(0x12345fff, 2, 3, 0);
+uint64_t disabled_segment_image = __BEDROCK_SEGMENT_DISABLED;
+
+_Static_assert(__BEDROCK_SEGMENT_IMAGE(0x12345, 33, 65, 2) ==
+                   UINT64_C(0x12345083),
+               "segment fields must be masked and packed");
+_Static_assert(__BEDROCK_SEGMENT_IMAGE_FOR_BASE(0x12345fff, 2, 3, 0) ==
+                   UINT64_C(0x12345106),
+               "byte bases must be converted to page bases");
+_Static_assert(__BEDROCK_SEGMENT_DISABLED == 0,
+               "the disabled image must be canonical");
+
+// CHECK-LABEL: define{{.*}} i64 @segment_image_single_evaluation
+// CHECK-COUNT-4: store i64
+// CHECK-NOT: store i64
+// CHECK: ret i64
+uint64_t segment_image_single_evaluation(uint64_t *values) {
+  return __BEDROCK_SEGMENT_IMAGE(values[0]++, values[1]++, values[2]++,
+                                 values[3]++);
+}
+
 // CHECK-LABEL: define{{.*}} i64 @sysreg
 // CHECK: call void @llvm.bedrock.write.status(i64
-// CHECK: call i64 @llvm.bedrock.read.control.register(i32 3)
-// CHECK: call void @llvm.bedrock.write.control.register(i32 4, i64
-// CHECK: call i64 @llvm.bedrock.read.segment.register(i32 1)
-// CHECK: call void @llvm.bedrock.write.segment.register(i32 7, i64
+// CHECK: call i64 @llvm.bedrock.read.control.register(i32 4097)
+// CHECK: call void @llvm.bedrock.write.control.register(i32 4352, i64
+// CHECK: call i64 @llvm.bedrock.read.segment.register(i32 0)
+// CHECK: call i64 @llvm.bedrock.read.code.segment()
+// CHECK: call void @llvm.bedrock.write.segment.register(i32 6, i64
 uint64_t sysreg(uint64_t value) {
   __bedrock_write_status(value);
-  uint64_t cr = __bedrock_read_control_register(3);
-  __bedrock_write_control_register(4, value);
+  uint64_t cr = __bedrock_read_control_register(__BEDROCK_CR_BOOTCFG);
+  __bedrock_write_control_register(__BEDROCK_CR_PMC, value);
   uint64_t segment = __bedrock_read_segment_register(__BEDROCK_SEG_DS);
+  uint64_t code_segment = __bedrock_read_code_segment();
   __bedrock_write_segment_register(__BEDROCK_SEG_GS4, value);
-  return cr + segment;
+  return cr + segment + code_segment;
 }
 
 // CHECK-LABEL: define{{.*}} void @cache
@@ -66,11 +95,3 @@ void state(void *area) {
   __bedrock_save_processor_state(area);
   __bedrock_restore_processor_state(area);
 }
-
-// CHECK-LABEL: define{{.*}} i64 @encode
-// CHECK: call i64 @llvm.bedrock.encode.instruction(ptr
-intptr_t encode(void *destination,
-                const __bedrock_instruction_descriptor_t *descriptor) {
-  return __bedrock_encode_instruction(destination, descriptor);
-}
-

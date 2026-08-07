@@ -1329,11 +1329,6 @@ const EnumEntry<unsigned> AMDGPUSymbolTypes[] = {
   { "AMDGPU_HSA_KERNEL",            ELF::STT_AMDGPU_HSA_KERNEL }
 };
 
-const EnumEntry<unsigned> BedrockSymbolTypes[] = {
-    {"BEDROCK_FAR_FUNC", ELF::STT_BEDROCK_FAR_FUNC},
-    {"BEDROCK_FAR_IFUNC", ELF::STT_BEDROCK_FAR_IFUNC},
-};
-
 static const char *getGroupType(uint32_t Flag) {
   if (Flag & ELF::GRP_COMDAT)
     return "COMDAT";
@@ -1504,9 +1499,6 @@ static StringRef segmentTypeToString(unsigned Arch, unsigned Type) {
   case ELF::EM_RISCV:
     switch (Type) { LLVM_READOBJ_ENUM_CASE(ELF, PT_RISCV_ATTRIBUTES); }
     break;
-  case ELF::EM_BEDROCK:
-    switch (Type) { LLVM_READOBJ_ENUM_CASE(ELF, PT_BEDROCK_SEGDOM); }
-    break;
   }
 
   switch (Type) {
@@ -1564,13 +1556,6 @@ const EnumEntry<unsigned> ElfSegmentFlags[] = {
   LLVM_READOBJ_ENUM_ENT(ELF, PF_X),
   LLVM_READOBJ_ENUM_ENT(ELF, PF_W),
   LLVM_READOBJ_ENUM_ENT(ELF, PF_R)
-};
-
-const EnumEntry<unsigned> BedrockSegmentFlags[] = {
-    LLVM_READOBJ_ENUM_ENT(ELF, PF_X),
-    LLVM_READOBJ_ENUM_ENT(ELF, PF_W),
-    LLVM_READOBJ_ENUM_ENT(ELF, PF_R),
-    LLVM_READOBJ_ENUM_ENT(ELF, PF_BEDROCK_BOUNDS_ONLY),
 };
 
 const EnumEntry<unsigned> ElfHeaderMipsFlags[] = {
@@ -4428,9 +4413,6 @@ void GNUELFDumper<ELFT>::printSymbol(const Elf_Sym &Symbol, unsigned SymIndex,
   if (this->Obj.getHeader().e_machine == ELF::EM_AMDGPU &&
       SymbolType >= ELF::STT_LOOS && SymbolType < ELF::STT_HIOS)
     Fields[3].Str = enumToString(SymbolType, ArrayRef(AMDGPUSymbolTypes));
-  else if (this->Obj.getHeader().e_machine == ELF::EM_BEDROCK &&
-           SymbolType >= ELF::STT_LOPROC)
-    Fields[3].Str = enumToString(SymbolType, ArrayRef(BedrockSymbolTypes));
   else
     Fields[3].Str = enumToString(SymbolType, ArrayRef(ElfSymbolTypes));
 
@@ -4496,9 +4478,6 @@ void GNUELFDumper<ELFT>::printHashedSymbol(const Elf_Sym *Symbol,
   if (this->Obj.getHeader().e_machine == ELF::EM_AMDGPU &&
       SymbolType >= ELF::STT_LOOS && SymbolType < ELF::STT_HIOS)
     Fields[4].Str = enumToString(SymbolType, ArrayRef(AMDGPUSymbolTypes));
-  else if (this->Obj.getHeader().e_machine == ELF::EM_BEDROCK &&
-           SymbolType >= ELF::STT_LOPROC)
-    Fields[4].Str = enumToString(SymbolType, ArrayRef(BedrockSymbolTypes));
   else
     Fields[4].Str = enumToString(SymbolType, ArrayRef(ElfSymbolTypes));
 
@@ -7810,9 +7789,6 @@ void LLVMELFDumper<ELFT>::printSymbol(const Elf_Sym &Symbol, unsigned SymIndex,
   if (this->Obj.getHeader().e_machine == ELF::EM_AMDGPU &&
       SymbolType >= ELF::STT_LOOS && SymbolType < ELF::STT_HIOS)
     W.printEnum("Type", SymbolType, ArrayRef(AMDGPUSymbolTypes));
-  else if (this->Obj.getHeader().e_machine == ELF::EM_BEDROCK &&
-           SymbolType >= ELF::STT_LOPROC)
-    W.printEnum("Type", SymbolType, ArrayRef(BedrockSymbolTypes));
   else
     W.printEnum("Type", SymbolType, ArrayRef(ElfSymbolTypes));
   if (Symbol.st_other == 0)
@@ -7958,10 +7934,7 @@ template <class ELFT> void LLVMELFDumper<ELFT>::printProgramHeaders() {
     W.printHex("PhysicalAddress", Phdr.p_paddr);
     W.printNumber("FileSize", Phdr.p_filesz);
     W.printNumber("MemSize", Phdr.p_memsz);
-    if (this->Obj.getHeader().e_machine == ELF::EM_BEDROCK)
-      W.printFlags("Flags", Phdr.p_flags, ArrayRef(BedrockSegmentFlags));
-    else
-      W.printFlags("Flags", Phdr.p_flags, ArrayRef(ElfSegmentFlags));
+    W.printFlags("Flags", Phdr.p_flags, ArrayRef(ElfSegmentFlags));
     W.printNumber("Alignment", Phdr.p_align);
   }
 }

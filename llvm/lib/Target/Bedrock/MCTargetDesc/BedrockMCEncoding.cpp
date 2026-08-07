@@ -126,8 +126,8 @@ bool isRepgPayload(uint32_t Payload) {
 }
 
 const char *getSRegName(unsigned Reg) {
-  static const char *Names[] = {"cs",  "ds",  "ss",  "gs0",
-                                "gs1", "gs2", "gs3", "gs4"};
+  static const char *Names[] = {"ds",  "ss",  "gs0", "gs1",
+                                "gs2", "gs3", "gs4", "gs5"};
   return Reg < std::size(Names) ? Names[Reg] : nullptr;
 }
 
@@ -292,7 +292,7 @@ bool decodeExtraShortPayload(uint8_t Payload, SmallString<128> &Text) {
 
   static const FixedForm FixedForms[] = {
       {0x00, "illegal"}, {0x01, "nop"},    {0x02, "ret"},
-      {0x03, "lret"},    {0x04, "iret"},   {0x05, "syscall"},
+      {0x03, "lret"},    {0x04, "eret"},   {0x05, "syscall"},
       {0x06, "sysret"},  {0x07, "bkpt"},   {0x08, "wait"},
       {0x09, "yield"},   {0x0a, "rfence"}, {0x0b, "wfence"},
       {0x0c, "afence"},  {0x0e, "add.q\t8, sp"},
@@ -306,12 +306,25 @@ bool decodeExtraShortPayload(uint8_t Payload, SmallString<128> &Text) {
     }
   }
 
+  if (Payload == 0x0d) {
+    Text = "push\tcs";
+    return true;
+  }
+
   if ((Payload & 0x78) == 0x10) {
     Text = formatv("pushp\t{0}", Payload & 0x7).str();
     return true;
   }
   if ((Payload & 0x78) == 0x18) {
     Text = formatv("popp\t{0}", Payload & 0x7).str();
+    return true;
+  }
+  if ((Payload & 0x78) == 0x70) {
+    Text = formatv("fpushp\t{0}", Payload & 0x7).str();
+    return true;
+  }
+  if ((Payload & 0x78) == 0x78) {
+    Text = formatv("fpopp\t{0}", Payload & 0x7).str();
     return true;
   }
 
@@ -353,6 +366,15 @@ bool decodeShortPayload(uint16_t Payload, SmallString<128> &Text) {
       Text = Form.Mnemonic;
       return true;
     }
+  }
+
+  if ((Payload & 0x3ff8) == 0x2280 ||
+      (Payload & 0x3ff8) == 0x2288) {
+    const char *SReg = getSRegName(Payload & 0x7);
+    if (!SReg)
+      return false;
+    Text = formatv("{0}\t{1}", (Payload & 0x8) ? "pop" : "push", SReg).str();
+    return true;
   }
 
   static const char *RRForms[] = {
@@ -1168,6 +1190,64 @@ bool decodeMediumPayload(uint32_t Payload, ArrayRef<uint8_t> Tail,
 
 bool decodeLongPayload(uint32_t Payload, ArrayRef<uint8_t> Tail,
                        SmallString<128> &Text) {
+  struct LongFMAForm {
+    StringRef Mnemonic;
+    StringRef Pattern;
+  };
+  static const LongFMAForm FMAForms[] = {
+      {"fmadd", "1111010000zllllrrrr100dddd"},
+      {"fmsub", "1111010000zllllrrrr101dddd"},
+      {"fnmadd", "1111010000zllllrrrr110dddd"},
+      {"fnmsub", "1111010000zllllrrrr111dddd"},
+  };
+  for (const LongFMAForm &F : FMAForms) {
+    if (!matchPattern(F.Pattern, Payload))
+      continue;
+    unsigned Size = extractPatternField(F.Pattern, Payload, 'z');
+    Text = formatv("{0}.{1}\tf{2}, f{3}, f{4}", F.Mnemonic,
+                   Size ? 'd' : 's',
+                   extractPatternField(F.Pattern, Payload, 'l'),
+                   extractPatternField(F.Pattern, Payload, 'r'),
+                   extractPatternField(F.Pattern, Payload, 'd'))
+               .str();
+    return true;
+  }
+
+  struct LongFPTRANSAForm {
+    StringRef Mnemonic;
+    StringRef Pattern;
+  };
+  static const LongFPTRANSAForm FPTRANSAForms[] = {
+      {"facosa", "1111011100z0000dddd000ssss"},
+      {"fasina", "1111011100z0000dddd001ssss"},
+      {"fatana", "1111011100z0000dddd010ssss"},
+      {"fatanha", "1111011100z0000dddd011ssss"},
+      {"fcosa", "1111011100z0000dddd100ssss"},
+      {"fcosha", "1111011100z0000dddd101ssss"},
+      {"fetoxa", "1111011100z0000dddd110ssss"},
+      {"fetoxm1a", "1111011100z0000dddd111ssss"},
+      {"flog10a", "1111011100z0001dddd000ssss"},
+      {"flog2a", "1111011100z0001dddd001ssss"},
+      {"flogna", "1111011100z0001dddd010ssss"},
+      {"flognp1a", "1111011100z0001dddd011ssss"},
+      {"fsina", "1111011100z0001dddd100ssss"},
+      {"fsinha", "1111011100z0001dddd110ssss"},
+      {"ftana", "1111011100z0001dddd111ssss"},
+      {"ftanha", "1111011100z0010dddd000ssss"},
+      {"ftentoxa", "1111011100z0010dddd001ssss"},
+      {"ftwotoxa", "1111011100z0010dddd010ssss"},
+  };
+  for (const LongFPTRANSAForm &F : FPTRANSAForms) {
+    if (!matchPattern(F.Pattern, Payload))
+      continue;
+    unsigned Size = extractPatternField(F.Pattern, Payload, 'z');
+    Text = formatv("{0}.{1}\tf{2}, f{3}", F.Mnemonic, Size ? 'd' : 's',
+                   extractPatternField(F.Pattern, Payload, 's'),
+                   extractPatternField(F.Pattern, Payload, 'd'))
+               .str();
+    return true;
+  }
+
   struct LongFpuMemoryForm {
     StringRef Pattern;
     bool IsLoad;
@@ -1205,6 +1285,18 @@ bool decodeLongPayload(uint32_t Payload, ArrayRef<uint8_t> Tail,
     return true;
   }
 
+  constexpr StringLiteral FMovCRPattern = "1111010110z01100010000dddd";
+  if (matchPattern(FMovCRPattern, Payload)) {
+    if (Tail.size() < 2)
+      return false;
+    unsigned Size = extractPatternField(FMovCRPattern, Payload, 'z');
+    unsigned Dst = extractPatternField(FMovCRPattern, Payload, 'd');
+    Text = formatv("fmovcr.{0}\t{1}, f{2}", Size ? 'd' : 's',
+                   readLE(Tail, 0, 2), Dst)
+               .str();
+    return true;
+  }
+
   enum class LongDir { RnEA, EARn };
   struct LongRegEAForm {
     StringRef Mnemonic;
@@ -1224,7 +1316,7 @@ bool decodeLongPayload(uint32_t Payload, ArrayRef<uint8_t> Tail,
        false, true},
       {"sbb", "1111000000zz010sssseeeeeee", "bwlq", LongDir::RnEA, 's', true,
        false, false},
-      {"sbb", "1111000000zz011sssseeeeeee", "bwlq", LongDir::EARn, 's', true,
+      {"sbb", "1111000000zz011ddddeeeeeee", "bwlq", LongDir::EARn, 'd', true,
        false, true},
       {"clz", "1111000000zz100ddddeeeeeee", "bwlq", LongDir::EARn, 'd', false,
        false, true},
@@ -1280,7 +1372,7 @@ bool decodeLongPayload(uint32_t Payload, ArrayRef<uint8_t> Tail,
        false, true},
       {"clmulh.q", "111100001100110ddddeeeeeee", "", LongDir::EARn, 'd', false,
        false, true},
-      {"seglea", "1111000011010zzddddeeeeeee", "bwlq", LongDir::EARn, 'd',
+      {"seglea", "111100011zz0000ddddeeeeeee", "bwlq", LongDir::EARn, 'd',
        false, false, true},
       {"movnt", "1111001000zz000sssseeeeeee", "bwlq", LongDir::RnEA, 's',
        false, true, false},
@@ -1371,8 +1463,7 @@ bool decodeLongPayload(uint32_t Payload, ArrayRef<uint8_t> Tail,
     StringRef Pattern;
   };
   static const LongControlEAForm LongControlEAForms[] = {
-      {"call", "1111000011100010000eeeeeee"},
-      {"jmp", "1111000011100010001eeeeeee"},
+      {"call", "1111000011011100000eeeeeee"},
   };
   for (const LongControlEAForm &F : LongControlEAForms) {
     if (!matchPattern(F.Pattern, Payload))
@@ -1383,6 +1474,50 @@ bool decodeLongPayload(uint32_t Payload, ArrayRef<uint8_t> Tail,
     if (!decodeCompactEA(EA, Tail, Consumed, EAText))
       return false;
     Text = formatv("{0}\t{1}", F.Mnemonic, EAText).str();
+    return true;
+  }
+
+
+  constexpr StringLiteral CallCCPattern = "111100001101110cccceeeeeee";
+  if (matchPattern(CallCCPattern, Payload)) {
+    unsigned CondCode = extractPatternField(CallCCPattern, Payload, 'c');
+    const char *Cond = getCondName(CondCode);
+    if (!Cond)
+      return false;
+    uint8_t EA = extractPatternField(CallCCPattern, Payload, 'e');
+    unsigned Consumed = 0;
+    SmallString<64> EAText;
+    if (!decodeCompactEA(EA, Tail, Consumed, EAText))
+      return false;
+    Text = formatv("call{0}\t{1}", Cond, EAText).str();
+    return true;
+  }
+
+  constexpr StringLiteral JmpXPattern = "1111001001z00000000eeeeeee";
+  if (matchPattern(JmpXPattern, Payload)) {
+    uint8_t EA = extractPatternField(JmpXPattern, Payload, 'e');
+    unsigned Consumed = 0;
+    SmallString<64> EAText;
+    if (!decodeCompactEA(EA, Tail, Consumed, EAText))
+      return false;
+    unsigned Size = extractPatternField(JmpXPattern, Payload, 'z');
+    Text = formatv("jmp.{0}\t{1}", Size ? 'q' : 'l', EAText).str();
+    return true;
+  }
+
+  constexpr StringLiteral JccXPattern = "1111001001z0000cccceeeeeee";
+  if (matchPattern(JccXPattern, Payload)) {
+    unsigned CondCode = extractPatternField(JccXPattern, Payload, 'c');
+    const char *Cond = getCondName(CondCode);
+    if (!Cond)
+      return false;
+    uint8_t EA = extractPatternField(JccXPattern, Payload, 'e');
+    unsigned Consumed = 0;
+    SmallString<64> EAText;
+    if (!decodeCompactEA(EA, Tail, Consumed, EAText))
+      return false;
+    unsigned Size = extractPatternField(JccXPattern, Payload, 'z');
+    Text = formatv("j{0}.{1}\t{2}", Cond, Size ? 'q' : 'l', EAText).str();
     return true;
   }
 
@@ -1424,7 +1559,6 @@ bool decodeLongPayload(uint32_t Payload, ArrayRef<uint8_t> Tail,
       {"save", "1111101111010001001eeeeeee", "", false},
       {"restore", "1111101111010001010eeeeeee", "", false},
       {"prefetchnt", "1111101111010001011eeeeeee", "", true},
-      {"encinst", "1111101111010001100eeeeeee", "", true},
   };
 
   for (const LongEAOnlyForm &F : LongEAOnlyForms) {
@@ -1598,6 +1732,14 @@ bool decodeLongPayload(uint32_t Payload, ArrayRef<uint8_t> Tail,
             .str();
     return true;
   }
+  if (matchPattern("1111101111010001111100dddd", Payload)) {
+    Text = formatv(
+               "rdseg\tcs, r{0}",
+               extractPatternField("1111101111010001111100dddd", Payload,
+                                   'd'))
+               .str();
+    return true;
+  }
   if (matchPattern("1111101111010000000sssdddd", Payload)) {
     unsigned SReg =
         extractPatternField("1111101111010000000sssdddd", Payload, 's');
@@ -1709,13 +1851,66 @@ bool decodeLongPayload(uint32_t Payload, ArrayRef<uint8_t> Tail,
 
 bool decodeExtraLongPayload(uint64_t Payload, ArrayRef<uint8_t> Tail,
                             SmallString<128> &Text) {
+  struct ExtraFMAForm {
+    StringRef Mnemonic;
+    StringRef Pattern;
+    bool LeftEA;
+  };
+  static const ExtraFMAForm FMAForms[] = {
+      {"fmadd", "1111110000001z00rrrr000ddddlllllll", true},
+      {"fmadd", "1111110000001z00llll100ddddrrrrrrr", false},
+      {"fmsub", "1111110000001z00rrrr001ddddlllllll", true},
+      {"fmsub", "1111110000001z00llll101ddddrrrrrrr", false},
+      {"fnmadd", "1111110000001z00rrrr010ddddlllllll", true},
+      {"fnmadd", "1111110000001z00llll110ddddrrrrrrr", false},
+      {"fnmsub", "1111110000001z00rrrr011ddddlllllll", true},
+      {"fnmsub", "1111110000001z00llll111ddddrrrrrrr", false},
+  };
+  for (const ExtraFMAForm &F : FMAForms) {
+    if (!matchPattern64(F.Pattern, Payload))
+      continue;
+    char EAField = F.LeftEA ? 'l' : 'r';
+    uint8_t EA = extractPatternField64(F.Pattern, Payload, EAField);
+    if (EA < 0x10)
+      return false;
+    unsigned Consumed = 0;
+    SmallString<64> EAText;
+    if (!decodeCompactEA(EA, Tail, Consumed, EAText))
+      return false;
+    unsigned Size = extractPatternField64(F.Pattern, Payload, 'z');
+    unsigned Reg = extractPatternField64(F.Pattern, Payload,
+                                         F.LeftEA ? 'r' : 'l');
+    unsigned Dst = extractPatternField64(F.Pattern, Payload, 'd');
+    if (F.LeftEA)
+      Text = formatv("{0}.{1}\t{2}, f{3}, f{4}", F.Mnemonic,
+                     Size ? 'd' : 's', EAText, Reg, Dst)
+                 .str();
+    else
+      Text = formatv("{0}.{1}\tf{2}, {3}, f{4}", F.Mnemonic,
+                     Size ? 'd' : 's', Reg, EAText, Dst)
+                 .str();
+    return true;
+  }
+
+  constexpr StringLiteral FSincosPattern =
+      "1111110000001z01ssss000dddd000cccc";
+  if (matchPattern64(FSincosPattern, Payload)) {
+    unsigned Size = extractPatternField64(FSincosPattern, Payload, 'z');
+    Text = formatv("fsincosa.{0}\tf{1}, f{2}, f{3}", Size ? 'd' : 's',
+                   extractPatternField64(FSincosPattern, Payload, 's'),
+                   extractPatternField64(FSincosPattern, Payload, 'd'),
+                   extractPatternField64(FSincosPattern, Payload, 'c'))
+               .str();
+    return true;
+  }
+
   struct ExtraMovccForm {
     StringRef Pattern;
     bool RegToEA;
   };
   static const ExtraMovccForm MovccForms[] = {
-      {"1111110001000cccczzssss0000eeeeeee", true},
-      {"1111110001001cccczzdddd0000eeeeeee", false},
+      {"111111000011zz00cccc000sssseeeeeee", true},
+      {"111111000011zz00cccc001ddddeeeeeee", false},
   };
   for (const ExtraMovccForm &F : MovccForms) {
     if (!matchPattern64(F.Pattern, Payload))
@@ -1746,9 +1941,9 @@ bool decodeExtraLongPayload(uint64_t Payload, ArrayRef<uint8_t> Tail,
     return true;
   }
 
-  if (matchPattern64("111111000101cccciiiibbbb000eeeeeee", Payload)) {
+  if (matchPattern64("111111000100cccciiii000bbbbeeeeeee", Payload)) {
     unsigned CondCode =
-        extractPatternField64("111111000101cccciiiibbbb000eeeeeee", Payload,
+        extractPatternField64("111111000100cccciiii000bbbbeeeeeee", Payload,
                               'c');
     if (CondCode == 0x1)
       return false;
@@ -1757,7 +1952,7 @@ bool decodeExtraLongPayload(uint64_t Payload, ArrayRef<uint8_t> Tail,
       return false;
 
     uint8_t EA =
-        extractPatternField64("111111000101cccciiiibbbb000eeeeeee", Payload,
+        extractPatternField64("111111000100cccciiii000bbbbeeeeeee", Payload,
                               'e');
     unsigned Consumed = 0;
     SmallString<64> EAText;
@@ -1766,9 +1961,9 @@ bool decodeExtraLongPayload(uint64_t Payload, ArrayRef<uint8_t> Tail,
 
     Text =
         formatv("ij{0}\tr{1}, r{2}, {3}", Cond,
-                extractPatternField64("111111000101cccciiiibbbb000eeeeeee",
+                extractPatternField64("111111000100cccciiii000bbbbeeeeeee",
                                       Payload, 'i'),
-                extractPatternField64("111111000101cccciiiibbbb000eeeeeee",
+                extractPatternField64("111111000100cccciiii000bbbbeeeeeee",
                                       Payload, 'b'),
                 EAText)
             .str();
@@ -1780,14 +1975,14 @@ bool decodeExtraLongPayload(uint64_t Payload, ArrayRef<uint8_t> Tail,
     StringRef Pattern;
   };
   static const ExtraBndForm BndForms[] = {
-      {"bndsii", "111111000010zz000llllhhhh00eeeeeee"},
-      {"bndsix", "111111000010zz001llllhhhh00eeeeeee"},
-      {"bndsxi", "111111000010zz010llllhhhh00eeeeeee"},
-      {"bndsxx", "111111000010zz011llllhhhh00eeeeeee"},
-      {"bnduii", "111111000010zz100llllhhhh00eeeeeee"},
-      {"bnduix", "111111000010zz101llllhhhh00eeeeeee"},
-      {"bnduxi", "111111000010zz110llllhhhh00eeeeeee"},
-      {"bnduxx", "111111000010zz111llllhhhh00eeeeeee"},
+      {"bndsii", "111111000001zz00llll000hhhheeeeeee"},
+      {"bndsix", "111111000001zz00llll001hhhheeeeeee"},
+      {"bndsxi", "111111000001zz00llll010hhhheeeeeee"},
+      {"bndsxx", "111111000001zz00llll011hhhheeeeeee"},
+      {"bnduii", "111111000001zz00llll100hhhheeeeeee"},
+      {"bnduix", "111111000001zz00llll101hhhheeeeeee"},
+      {"bnduxi", "111111000001zz00llll110hhhheeeeeee"},
+      {"bnduxx", "111111000001zz00llll111hhhheeeeeee"},
   };
   for (const ExtraBndForm &F : BndForms) {
     if (!matchPattern64(F.Pattern, Payload))
@@ -1813,8 +2008,8 @@ bool decodeExtraLongPayload(uint64_t Payload, ArrayRef<uint8_t> Tail,
     StringRef Pattern;
   };
   static const ExtraDivModForm DivModForms[] = {
-      {"divmodu", "111111000011zz0qqqqrrrr0000eeeeeee"},
-      {"divmods", "111111000011zz1qqqqrrrr0000eeeeeee"},
+      {"divmodu", "111111000010zz00qqqq000rrrreeeeeee"},
+      {"divmods", "111111000010zz00qqqq001rrrreeeeeee"},
   };
   for (const ExtraDivModForm &F : DivModForms) {
     if (!matchPattern64(F.Pattern, Payload))
@@ -1840,11 +2035,11 @@ bool decodeExtraLongPayload(uint64_t Payload, ArrayRef<uint8_t> Tail,
     StringRef Pattern;
   };
   static const ExtraFetchForm FetchForms[] = {
-      {"fetchadd", "111111000111zz000ooossss000eeeeeee"},
-      {"fetchand", "111111000111zz001ooossss000eeeeeee"},
-      {"fetchor", "111111000111zz010ooossss000eeeeeee"},
-      {"fetchsub", "111111000111zz011ooossss000eeeeeee"},
-      {"fetchxor", "111111000111zz100ooossss000eeeeeee"},
+      {"fetchadd", "111111000101zz000000ooosssseeeeeee"},
+      {"fetchand", "111111000101zz000001ooosssseeeeeee"},
+      {"fetchor", "111111000101zz000010ooosssseeeeeee"},
+      {"fetchsub", "111111000101zz000011ooosssseeeeeee"},
+      {"fetchxor", "111111000101zz000100ooosssseeeeeee"},
   };
   for (const ExtraFetchForm &F : FetchForms) {
     if (!matchPattern64(F.Pattern, Payload))
@@ -1871,16 +2066,16 @@ bool decodeExtraLongPayload(uint64_t Payload, ArrayRef<uint8_t> Tail,
     return true;
   }
 
-  if (matchPattern64("1111110010000zzoooxxxxdddd0eeeeeee", Payload)) {
+  if (matchPattern64("111111000101zz01xxxxoooddddeeeeeee", Payload)) {
     unsigned Order =
-        extractPatternField64("1111110010000zzoooxxxxdddd0eeeeeee", Payload,
+        extractPatternField64("111111000101zz01xxxxoooddddeeeeeee", Payload,
                               'o');
     const char *OrderName = getMemoryOrderName(Order);
     if (!OrderName)
       return false;
 
     uint8_t EA =
-        extractPatternField64("1111110010000zzoooxxxxdddd0eeeeeee", Payload,
+        extractPatternField64("111111000101zz01xxxxoooddddeeeeeee", Payload,
                               'e');
     if (!isCompactEAMemory(EA))
       return false;
@@ -1889,15 +2084,15 @@ bool decodeExtraLongPayload(uint64_t Payload, ArrayRef<uint8_t> Tail,
     if (!decodeCompactEA(EA, Tail, Consumed, EAText))
       return false;
     unsigned Z =
-        extractPatternField64("1111110010000zzoooxxxxdddd0eeeeeee", Payload,
+        extractPatternField64("111111000101zz01xxxxoooddddeeeeeee", Payload,
                               'z');
     if (Z >= 4)
       return false;
     Text =
         formatv("cmpxchg.{0}/{1}\tr{2}, r{3}, {4}", "bwlq"[Z], OrderName,
-                extractPatternField64("1111110010000zzoooxxxxdddd0eeeeeee",
+                extractPatternField64("111111000101zz01xxxxoooddddeeeeeee",
                                       Payload, 'x'),
-                extractPatternField64("1111110010000zzoooxxxxdddd0eeeeeee",
+                extractPatternField64("111111000101zz01xxxxoooddddeeeeeee",
                                       Payload, 'd'),
                 EAText)
             .str();

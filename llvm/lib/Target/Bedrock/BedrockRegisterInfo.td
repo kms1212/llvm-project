@@ -34,42 +34,43 @@ def R12 : BedrockGPR<12, "r12">;
 def R13 : BedrockGPR<13, "r13">;
 def R14 : BedrockGPR<14, "r14">;
 def R15 : BedrockGPR<15, "r15">;
-def SP  : BedrockReg<0, 32, "sp">;
-def PC  : BedrockReg<0, 33, "pc">;
-def FLAGS : BedrockReg<0, 34, "flags">;
-def STATUS : BedrockReg<0, 35, "status">;
+def SP  : BedrockReg<0, 16, "sp">;
+def PC  : BedrockReg<0, 17, "pc">;
+def FLAGS : BedrockReg<0, 18, "flags">;
+def STATUS : BedrockReg<0, 19, "status">;
 
 // Segment and architectural state registers are deliberately absent from
 // allocatable register classes. They are named physical resources so calls,
-// far-memory pseudos, unwind information, and system intrinsics can model
-// their effects without exposing them to the register allocator.
-def CS  : BedrockReg<0, 36, "cs">;
-def DS  : BedrockReg<1, 37, "ds">;
-def SS  : BedrockReg<2, 38, "ss">;
-def GS0 : BedrockReg<3, 39, "gs0">;
-def GS1 : BedrockReg<4, 40, "gs1">;
-def GS2 : BedrockReg<5, 41, "gs2">;
-def GS3 : BedrockReg<6, 42, "gs3">;
-def GS4 : BedrockReg<7, 43, "gs4">;
-def FSTATUS : BedrockReg<0, 44, "fstatus">;
-def FFLAGS : BedrockReg<0, 45, "fflags">;
+// unwind information, and system intrinsics can model their effects without
+// exposing them to the register allocator.
+def CS  : BedrockReg<0, 48, "cs">;
+def DS  : BedrockReg<0, 49, "ds">;
+def SS  : BedrockReg<1, 50, "ss">;
+def GS0 : BedrockReg<2, 51, "gs0">;
+def GS1 : BedrockReg<3, 52, "gs1">;
+def GS2 : BedrockReg<4, 53, "gs2">;
+def GS3 : BedrockReg<5, 54, "gs3">;
+def GS4 : BedrockReg<6, 55, "gs4">;
+def GS5 : BedrockReg<7, 56, "gs5">;
+def FFLAGS : BedrockReg<0, 57, "fflags">;
+def FSTATUS : BedrockReg<0, 58, "fstatus">;
 
-def F0  : BedrockFPR<0,  16, "f0">;
-def F1  : BedrockFPR<1,  17, "f1">;
-def F2  : BedrockFPR<2,  18, "f2">;
-def F3  : BedrockFPR<3,  19, "f3">;
-def F4  : BedrockFPR<4,  20, "f4">;
-def F5  : BedrockFPR<5,  21, "f5">;
-def F6  : BedrockFPR<6,  22, "f6">;
-def F7  : BedrockFPR<7,  23, "f7">;
-def F8  : BedrockFPR<8,  24, "f8">;
-def F9  : BedrockFPR<9,  25, "f9">;
-def F10 : BedrockFPR<10, 26, "f10">;
-def F11 : BedrockFPR<11, 27, "f11">;
-def F12 : BedrockFPR<12, 28, "f12">;
-def F13 : BedrockFPR<13, 29, "f13">;
-def F14 : BedrockFPR<14, 30, "f14">;
-def F15 : BedrockFPR<15, 31, "f15">;
+def F0  : BedrockFPR<0,  32, "f0">;
+def F1  : BedrockFPR<1,  33, "f1">;
+def F2  : BedrockFPR<2,  34, "f2">;
+def F3  : BedrockFPR<3,  35, "f3">;
+def F4  : BedrockFPR<4,  36, "f4">;
+def F5  : BedrockFPR<5,  37, "f5">;
+def F6  : BedrockFPR<6,  38, "f6">;
+def F7  : BedrockFPR<7,  39, "f7">;
+def F8  : BedrockFPR<8,  40, "f8">;
+def F9  : BedrockFPR<9,  41, "f9">;
+def F10 : BedrockFPR<10, 42, "f10">;
+def F11 : BedrockFPR<11, 43, "f11">;
+def F12 : BedrockFPR<12, 44, "f12">;
+def F13 : BedrockFPR<13, 45, "f13">;
+def F14 : BedrockFPR<14, 46, "f14">;
+def F15 : BedrockFPR<15, 47, "f15">;
 
 def GPR64 : RegisterClass<"Bedrock", [i32, i64], 64, (sequence "R%u", 0, 15)> {
   let DecoderMethod = "DecodeGPR64RegisterClass";

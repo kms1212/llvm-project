@@ -1155,7 +1155,6 @@ static FunctionSummary::FFlags getDecodedFFlags(uint64_t RawFlags) {
   Flags.MayThrow = (RawFlags >> 7) & 0x1;
   Flags.HasUnknownCall = (RawFlags >> 8) & 0x1;
   Flags.MustBeUnreachable = (RawFlags >> 9) & 0x1;
-  Flags.CrossSegmentAccess = (RawFlags >> 10) & 0x1;
   return Flags;
 }
 
@@ -2089,8 +2088,6 @@ static Attribute::AttrKind getAttrFromCode(uint64_t Code) {
     return Attribute::ElementType;
   case bitc::ATTR_KIND_FNRETTHUNK_EXTERN:
     return Attribute::FnRetThunkExtern;
-  case bitc::ATTR_KIND_CROSS_SEGMENT_ACCESS:
-    return Attribute::CrossSegmentAccess;
   case bitc::ATTR_KIND_INLINE_HINT:
     return Attribute::InlineHint;
   case bitc::ATTR_KIND_IN_REG:

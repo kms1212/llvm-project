@@ -5,6 +5,5 @@
 #include <bedrockmmuintrin.h>
 #include <bedrockstateintrin.h>
 #include <bedrocksysregintrin.h>
-#include <bedrockvirtintrin.h>
 
 #endif

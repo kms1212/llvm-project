@@ -994,14 +994,6 @@ void Parser::ParseWebAssemblyFuncrefTypeAttribute(ParsedAttributes &attrs) {
                /*numArgs=*/0, tok::kw___funcref);
 }
 
-void Parser::ParseBedrockFarTypeAttribute(ParsedAttributes &attrs) {
-  assert(Tok.is(tok::kw___far));
-  IdentifierInfo *AttrName = Tok.getIdentifierInfo();
-  SourceLocation AttrNameLoc = ConsumeToken();
-  attrs.addNew(AttrName, AttrNameLoc, AttributeScopeInfo(), /*Args=*/nullptr,
-               /*numArgs=*/0, tok::kw___far);
-}
-
 void Parser::DiagnoseAndSkipExtendedMicrosoftTypeAttributes() {
   SourceLocation StartLoc = Tok.getLocation();
   SourceLocation EndLoc = SkipExtendedMicrosoftTypeAttributes();
@@ -4043,10 +4035,6 @@ void Parser::ParseDeclarationSpecifiers(
       ParseWebAssemblyFuncrefTypeAttribute(DS.getAttributes());
       continue;
 
-    case tok::kw___far:
-      ParseBedrockFarTypeAttribute(DS.getAttributes());
-      continue;
-
     // Borland single token adornments.
     case tok::kw___pascal:
       ParseBorlandTypeAttributes(DS.getAttributes());
@@ -5693,7 +5681,6 @@ bool Parser::isTypeSpecifierQualifier() {
   case tok::kw___read_write:
   case tok::kw___write_only:
   case tok::kw___funcref:
-  case tok::kw___far:
     return true;
 
   case tok::kw_private:
@@ -5981,7 +5968,6 @@ bool Parser::isDeclarationSpecifier(
 #include "clang/Basic/HLSLIntangibleTypes.def"
 
   case tok::kw___funcref:
-  case tok::kw___far:
   case tok::kw_groupshared:
     return true;
 
@@ -6250,10 +6236,6 @@ void Parser::ParseTypeQualifierListOpt(
 
     case tok::kw___funcref:
       ParseWebAssemblyFuncrefTypeAttribute(DS.getAttributes());
-      continue;
-
-    case tok::kw___far:
-      ParseBedrockFarTypeAttribute(DS.getAttributes());
       continue;
 
     case tok::kw___pascal:

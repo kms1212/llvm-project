@@ -2403,12 +2403,6 @@ void Verifier::verifyFunctionAttrs(FunctionType *FT, AttributeList Attrs,
           Attrs.hasFnAttr(Attribute::AlwaysInline)),
         "Attributes 'noinline and alwaysinline' are incompatible!", V);
 
-  Check(!Attrs.hasFnAttr(Attribute::CrossSegmentAccess) ||
-            Attrs.getMemoryEffects() == MemoryEffects::unknown(),
-        "Attribute 'cross_segment_access' requires unrestricted memory "
-        "effects!",
-        V);
-
   if (Attrs.hasFnAttr(Attribute::OptimizeNone)) {
     Check(Attrs.hasFnAttr(Attribute::NoInline),
           "Attribute 'optnone' requires 'noinline'!", V);

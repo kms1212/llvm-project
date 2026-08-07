@@ -15,7 +15,6 @@
 
 namespace llvm {
 
-class AAManager;
 class PassBuilder;
 
 class BedrockTargetMachine : public CodeGenTargetMachineImpl {
@@ -35,7 +34,6 @@ public:
 
   TargetTransformInfo getTargetTransformInfo(const Function &F) const override;
 
-  void registerDefaultAliasAnalyses(AAManager &AAM) override;
   void registerPassBuilderCallbacks(PassBuilder &PB) override;
 
   TargetLoweringObjectFile *getObjFileLowering() const override {

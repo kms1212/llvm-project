@@ -3826,17 +3826,6 @@ bool Sema::MergeFunctionDecl(FunctionDecl *New, NamedDecl *&OldD, Scope *S,
     return true;
   }
 
-  if (Context.getTargetInfo().getTriple().getArch() == llvm::Triple::bedrock) {
-    auto IsFarFunction = [&](QualType T) {
-      return Context.getTargetAddressSpace(T.getAddressSpace()) == 1;
-    };
-    if (IsFarFunction(Old->getType()) != IsFarFunction(New->getType())) {
-      Diag(New->getLocation(), diag::err_bedrock_far_function_redeclaration);
-      Diag(OldLocation, diag::note_previous_declaration);
-      return true;
-    }
-  }
-
   // If a function is first declared with a calling convention, but is later
   // declared or defined without one, all following decls assume the calling
   // convention of the first.
@@ -12203,16 +12192,6 @@ static bool CheckMultiVersionFunction(Sema &S, FunctionDecl *NewFD,
 static void CheckConstPureAttributesUsage(Sema &S, FunctionDecl *NewFD) {
   bool IsPure = NewFD->hasAttr<PureAttr>();
   bool IsConst = NewFD->hasAttr<ConstAttr>();
-
-  const auto *FT = NewFD->getType()->getAs<FunctionType>();
-  bool IsCrossSegment = NewFD->hasAttr<CrossSegmentAccessAttr>() ||
-                        (FT && FT->getCallConv() == CC_BedrockFar);
-  if (IsCrossSegment && (IsPure || IsConst)) {
-    S.Diag(NewFD->getLocation(), diag::err_bedrock_cross_segment_memory_attr)
-        << (IsConst ? "const" : "pure");
-    NewFD->dropAttrs<PureAttr, ConstAttr>();
-    return;
-  }
 
   // If there are no pure or const attributes, there's nothing to check.
   if (!IsPure && !IsConst)

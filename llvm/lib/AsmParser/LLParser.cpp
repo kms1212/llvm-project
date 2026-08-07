@@ -2301,9 +2301,6 @@ bool LLParser::parseOptionalCallingConv(unsigned &CC) {
     break;
   case lltok::kw_tailcc:         CC = CallingConv::Tail; break;
   case lltok::kw_m68k_rtdcc:     CC = CallingConv::M68k_RTD; break;
-  case lltok::kw_bedrock_farcc:
-    CC = CallingConv::Bedrock_Far;
-    break;
   case lltok::kw_graalcc:        CC = CallingConv::GRAAL; break;
   case lltok::kw_riscv_vector_cc:
     CC = CallingConv::RISCV_VectorCall;
@@ -10045,7 +10042,6 @@ bool LLParser::parseFlag(unsigned &Val) {
 ///        [',' 'mayThrow' ':' Flag]? ')'
 ///        [',' 'hasUnknownCall' ':' Flag]? ')'
 ///        [',' 'mustBeUnreachable' ':' Flag]? ')'
-///        [',' 'crossSegmentAccess' ':' Flag]? ')'
 
 bool LLParser::parseOptionalFFlags(FunctionSummary::FFlags &FFlags) {
   assert(Lex.getKind() == lltok::kw_funcFlags);
@@ -10117,12 +10113,6 @@ bool LLParser::parseOptionalFFlags(FunctionSummary::FFlags &FFlags) {
       if (parseToken(lltok::colon, "expected ':'") || parseFlag(Val))
         return true;
       FFlags.MustBeUnreachable = Val;
-      break;
-    case lltok::kw_crossSegmentAccess:
-      Lex.Lex();
-      if (parseToken(lltok::colon, "expected ':'") || parseFlag(Val))
-        return true;
-      FFlags.CrossSegmentAccess = Val;
       break;
     default:
       return error(Lex.getLoc(), "expected function flag type");

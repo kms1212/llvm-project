@@ -2322,7 +2322,6 @@ private:
                                   ParsedAttributes &Attrs);
   void ParseMicrosoftTypeAttributes(ParsedAttributes &attrs);
   void ParseWebAssemblyFuncrefTypeAttribute(ParsedAttributes &Attrs);
-  void ParseBedrockFarTypeAttribute(ParsedAttributes &Attrs);
   void DiagnoseAndSkipExtendedMicrosoftTypeAttributes();
   SourceLocation SkipExtendedMicrosoftTypeAttributes();
 

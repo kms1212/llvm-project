@@ -781,15 +781,6 @@ def err_falloff_nonvoid : Error<
 def warn_const_attr_with_pure_attr : Warning<
   "'const' attribute imposes more restrictions; 'pure' attribute ignored">,
   InGroup<IgnoredAttributes>;
-def err_bedrock_cross_segment_memory_attr : Error<
-  "'%0' cannot be combined with cross-segment access">;
-def err_bedrock_builtin_requires_far_pointer : Error<
-  "bedrock builtin requires a far pointer operand">;
-def err_bedrock_builtin_incompatible_far_pointers : Error<
-  "bedrock builtin requires compatible far pointer operands">;
-def err_bedrock_builtin_requires_integer : Error<
-  "argument %0 to bedrock far pointer builtin must have integer type (has "
-  "type %1)">;
 def warn_pure_function_returns_void : Warning<
   "'%select{pure|const}0' attribute on function returning 'void'; attribute ignored">,
   InGroup<IgnoredAttributes>;
@@ -7348,8 +7339,6 @@ def err_atomic_specifier_bad_type
             "%select{incomplete |array |function |reference |atomic |qualified "
             "|sizeless ||integer |}0type "
             "%1 %select{|||||||which is not trivially copyable||in C23}0">;
-def err_bedrock_far_atomic_type
-    : Error<"a Bedrock far pointer cannot be the type of an atomic object">;
 def err_bedrock_wide_atomic_type
     : Error<"bedrock atomic object type %0 is wider than 64 bits">;
 def err_bedrock_atomic_size
@@ -8380,17 +8369,6 @@ def err_bad_cxx_cast_addr_space_mismatch : Error<
   "%select{const_cast|static_cast|reinterpret_cast|dynamic_cast|"
   "C-style cast|functional-style cast|addrspace_cast}0 from %1 to %2 converts between mismatching address"
   " spaces">;
-def err_bedrock_far_function_pointer_cast
-    : Error<"conversion between ordinary and far function-pointer categories "
-            "is not allowed">;
-def err_bedrock_far_function_redeclaration
-    : Error<"redeclaration changes a function between ordinary and far calling "
-            "categories">;
-def err_bedrock_far_wrong_type
-    : Error<"'__far' only applies to pointer and function declarators">;
-def err_bedrock_far_pointer_small_integer_cast
-    : Error<"conversion between a Bedrock far pointer and integer type %0 "
-            "loses the far representation">;
 def ext_bad_cxx_cast_qualifiers_away_incoherent : ExtWarn<
   "ISO C++ does not allow "
   "%select{const_cast|static_cast|reinterpret_cast|dynamic_cast|C-style cast|"

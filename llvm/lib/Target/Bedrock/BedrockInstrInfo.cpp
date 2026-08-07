@@ -30,6 +30,23 @@ static bool isBranchOpcode(unsigned Opc) {
   return isUncondBranchOpcode(Opc) || isCondBranchOpcode(Opc);
 }
 
+static std::optional<unsigned> getGSSelector(Register Reg) {
+  switch (Reg.id()) {
+  case Bedrock::GS1:
+    return 3;
+  case Bedrock::GS2:
+    return 4;
+  case Bedrock::GS3:
+    return 5;
+  case Bedrock::GS4:
+    return 6;
+  case Bedrock::GS5:
+    return 7;
+  default:
+    return std::nullopt;
+  }
+}
+
 static unsigned getOppositeCondition(unsigned CC) {
   switch (CC) {
   case 0x2:
@@ -87,6 +104,23 @@ void BedrockInstrInfo::copyPhysReg(MachineBasicBlock &MBB,
                                    Register SrcReg, bool KillSrc,
                                    bool RenamableDest,
                                    bool RenamableSrc) const {
+  if (std::optional<unsigned> Selector = getGSSelector(DestReg);
+      Selector && Bedrock::GPR64RegClass.contains(SrcReg)) {
+    BuildMI(MBB, I, DL, get(Bedrock::BEDROCK_WRSEG))
+        .addReg(SrcReg, getKillRegState(KillSrc))
+        .addImm(*Selector)
+        .addReg(DestReg, RegState::Define | RegState::Implicit);
+    return;
+  }
+
+  if (std::optional<unsigned> Selector = getGSSelector(SrcReg);
+      Selector && Bedrock::GPR64RegClass.contains(DestReg)) {
+    BuildMI(MBB, I, DL, get(Bedrock::BEDROCK_RDSEG), DestReg)
+        .addImm(*Selector)
+        .addReg(SrcReg, RegState::Implicit | getKillRegState(KillSrc));
+    return;
+  }
+
   if (DestReg == Bedrock::SP && Bedrock::GPR64RegClass.contains(SrcReg)) {
     BuildMI(MBB, I, DL, get(Bedrock::MOVQrs))
         .addReg(SrcReg, getKillRegState(KillSrc));

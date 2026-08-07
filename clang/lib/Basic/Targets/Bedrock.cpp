@@ -51,11 +51,13 @@ bool BedrockTargetInfo::handleTargetFeatures(std::vector<std::string> &Features,
       HasFPU = true;
     else if (Feature == "-fpu")
       HasFPU = false;
-    else if (Feature == "+virtaccel")
-      HasVirtAccel = true;
-    else if (Feature == "-virtaccel")
-      HasVirtAccel = false;
+    else if (Feature == "+fptransa")
+      HasFPTRANSA = true;
+    else if (Feature == "-fptransa")
+      HasFPTRANSA = false;
   }
+  if (HasFPTRANSA)
+    HasFPU = true;
   return true;
 }
 

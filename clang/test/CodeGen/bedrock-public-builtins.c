@@ -3,108 +3,20 @@
 
 #include <bedrockintrin.h>
 
-typedef int *__far far_int_ptr;
-
-// CHECK: @packed_segment_image ={{.*}} global i64 305418371, align 8
-// CHECK: @based_segment_image ={{.*}} global i64 305418502, align 8
-// CHECK: @disabled_segment_image ={{.*}} global i64 0, align 8
-uint64_t packed_segment_image =
-    __BEDROCK_SEGMENT_IMAGE(0x12345, 33, 65, 2);
-uint64_t based_segment_image =
-    __BEDROCK_SEGMENT_IMAGE_FOR_BASE(0x12345fff, 2, 3, 0);
-uint64_t disabled_segment_image = __BEDROCK_SEGMENT_DISABLED;
-
-_Static_assert(__BEDROCK_SEGMENT_IMAGE(0x12345, 33, 65, 2) ==
-                   UINT64_C(0x12345083),
-               "segment fields must be masked and packed");
-_Static_assert(__BEDROCK_SEGMENT_IMAGE_FOR_BASE(0x12345fff, 2, 3, 0) ==
-                   UINT64_C(0x12345106),
-               "byte bases must be converted to page bases");
-_Static_assert(__BEDROCK_SEGMENT_DISABLED == 0,
-               "the disabled image must be canonical");
-
-// CHECK: @far_constant ={{.*}} global ptr addrspace(1) inttoptr (i128 -136023984058069262664334284085100382328 to ptr addrspace(1)), align 16
-// CHECK: @far_translated_constant ={{.*}} global ptr addrspace(1) inttoptr (i128 19342868454066287925032840 to ptr addrspace(1)), align 16
-// CHECK: @far_null_constant ={{.*}} global ptr addrspace(1) null, align 16
-// CHECK: @far_overflow_constant ={{.*}} global ptr addrspace(1) inttoptr (i128 -1 to ptr addrspace(1)), align 16
-far_int_ptr far_constant =
-    __BEDROCK_FAR_PTR_INIT(far_int_ptr, 0x1122334455667788ULL,
-                          0x99aabbccddeeff02ULL);
-far_int_ptr far_translated_constant = __BEDROCK_FAR_PTR_FROM_SEGMENT(
-    far_int_ptr, 0x7788ULL, 0x0000000000100002ULL);
-far_int_ptr far_null_constant =
-    __BEDROCK_FAR_PTR_INIT(far_int_ptr, 0, 0x0000000000100002ULL);
-far_int_ptr far_overflow_constant = __BEDROCK_FAR_PTR_FROM_SEGMENT(
-    far_int_ptr, 0x1000ULL, 0xfffffffffffff002ULL);
-
-// CHECK-LABEL: define{{.*}} i64 @segment_image_single_evaluation
-// CHECK-COUNT-4: store i64
-// CHECK-NOT: store i64
-// CHECK: ret i64
-uint64_t segment_image_single_evaluation(uint64_t *values) {
-  return __BEDROCK_SEGMENT_IMAGE(values[0]++, values[1]++, values[2]++,
-                                 values[3]++);
-}
-
-// CHECK-LABEL: define{{.*}} ptr addrspace(1) @far_init_runtime
-// CHECK: and i64 %image, 126
-// CHECK: or i64 %image, %{{.*}}
-// CHECK: icmp eq i64 %address, 0
-// CHECK: select i1 %{{.*}}, ptr addrspace(1) null,
-far_int_ptr far_init_runtime(uint64_t address, uint64_t image) {
-  return __BEDROCK_FAR_PTR_INIT(far_int_ptr, address, image);
-}
-
-// CHECK-LABEL: define{{.*}} ptr addrspace(1) @far_from_segment_runtime
-// CHECK: and i64 %image, -4096
-// CHECK: call { i64, i1 } @llvm.uadd.with.overflow.i64
-// CHECK: and i64 %image, 126
-// CHECK: select i1 %{{.*}}, ptr addrspace(1) inttoptr (i128 -1 to ptr addrspace(1)),
-// CHECK: ret ptr addrspace(1)
-far_int_ptr far_from_segment_runtime(uint64_t offset, uint64_t image) {
-  return __BEDROCK_FAR_PTR_FROM_SEGMENT(far_int_ptr, offset, image);
-}
-
-// CHECK-LABEL: define{{.*}} ptr addrspace(1) @far_flat_runtime
-// CHECK: zext i64 %address to i128
-// CHECK: inttoptr i128 %{{.*}} to ptr addrspace(1)
-far_int_ptr far_flat_runtime(uint64_t address) {
-  return __BEDROCK_FAR_FLAT_PTR_INIT(far_int_ptr, address);
-}
-
-// CHECK-LABEL: define{{.*}} ptr addrspace(1) @far_null_runtime
-// CHECK: ret ptr addrspace(1) null
-far_int_ptr far_null_runtime(void) {
-  return __BEDROCK_FAR_NULL(far_int_ptr);
-}
-
-// CHECK-LABEL: define{{.*}} i32 @far_same
-// CHECK: icmp eq ptr addrspace(1) %left, %right
-int far_same(far_int_ptr left, far_int_ptr right) {
-  return __bedrock_far_same_encoding(left, right);
-}
-
-// CHECK-LABEL: define{{.*}} i64 @far_address
-// CHECK: ptrtoint ptr addrspace(1) %{{.*}} to i128
-// CHECK: trunc i128 %{{.*}} to i64
-uint64_t far_address(far_int_ptr value) {
-  return __bedrock_far_address(value);
-}
-
 // CHECK-LABEL: define{{.*}} i64 @core
 // CHECK: call void @llvm.bedrock.trace(i32 7)
 // CHECK: call void @llvm.bedrock.breakpoint()
 // CHECK: call void @llvm.bedrock.yield()
 // CHECK: call void @llvm.bedrock.wait()
 // CHECK: call i64 @llvm.bedrock.cpuid(i64
-// CHECK: call i64 @llvm.bedrock.rdpmc(i32 9)
+// CHECK: call i64 @llvm.bedrock.rdpmc(i32 3)
 // CHECK: call i64 @llvm.bedrock.read.status()
 uint64_t core(uint64_t value) {
   __bedrock_trace(7);
   __bedrock_breakpoint();
   __bedrock_yield();
   __bedrock_wait();
-  return __bedrock_cpuid(value) + __bedrock_rdpmc(9) +
+  return __bedrock_cpuid(value) + __bedrock_rdpmc(__BEDROCK_PMC_PTWALK) +
          __bedrock_read_status();
 }
 

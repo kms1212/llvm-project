@@ -26,7 +26,7 @@ BedrockRegisterInfo::BedrockRegisterInfo()
 
 const MCPhysReg *
 BedrockRegisterInfo::getCalleeSavedRegs(const MachineFunction *MF) const {
-  return CSR_Bedrock_SaveList;
+  return CSR_Bedrock_Save_SaveList;
 }
 
 const uint32_t *
@@ -44,18 +44,8 @@ BedrockRegisterInfo::getReservedRegs(const MachineFunction &MF) const {
   for (MCPhysReg Reg :
        {Bedrock::PC, Bedrock::FLAGS, Bedrock::STATUS, Bedrock::CS, Bedrock::DS,
         Bedrock::SS, Bedrock::GS0, Bedrock::GS1, Bedrock::GS2, Bedrock::GS3,
-        Bedrock::GS4, Bedrock::FSTATUS, Bedrock::FFLAGS})
+        Bedrock::GS4, Bedrock::GS5, Bedrock::FSTATUS, Bedrock::FFLAGS})
     Reserved.set(Reg);
-
-  // FPR callee-save lowering needs separate validation before allocation.
-  Reserved.set(Bedrock::F8);
-  Reserved.set(Bedrock::F9);
-  Reserved.set(Bedrock::F10);
-  Reserved.set(Bedrock::F11);
-  Reserved.set(Bedrock::F12);
-  Reserved.set(Bedrock::F13);
-  Reserved.set(Bedrock::F14);
-  Reserved.set(Bedrock::F15);
 
   return Reserved;
 }
