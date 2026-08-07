@@ -85,11 +85,23 @@ uint32_t Bedrock::calcEFlags() const {
       ErrAlways(ctx) << file << ": invalid e_phentsize: " << hdr.e_phentsize;
     if (hdr.e_shentsize != sizeof(object::ELF64LE::Shdr))
       ErrAlways(ctx) << file << ": invalid e_shentsize: " << hdr.e_shentsize;
+    object::ELFFile<object::ELF64LE> obj =
+        file->getObj<object::ELF64LE>();
     for (const object::ELF64LE::Shdr &sec :
-         file->getELFShdrs<object::ELF64LE>())
-      if (sec.sh_type == SHT_REL)
+         file->getELFShdrs<object::ELF64LE>()) {
+      if (sec.sh_type == SHT_REL || sec.sh_type == SHT_RELR ||
+          sec.sh_type == SHT_CREL || sec.sh_type == SHT_ANDROID_REL ||
+          sec.sh_type == SHT_ANDROID_RELA ||
+          sec.sh_type == SHT_ANDROID_RELR)
         ErrAlways(ctx) << file
-                       << ": SHT_REL relocation sections are not permitted";
+                       << ": only SHT_RELA relocation sections are permitted";
+      if (sec.sh_type == SHT_RELA) {
+        StringRef name = CHECK2(obj.getSectionName(sec), file);
+        if (!name.starts_with(".rela"))
+          ErrAlways(ctx) << file << ": SHT_RELA section name must begin with "
+                         << ".rela: " << name;
+      }
+    }
     for (const object::ELF64LE::Sym &sym :
          file->getELFSyms<object::ELF64LE>())
       if (sym.st_other & 0xfc)
