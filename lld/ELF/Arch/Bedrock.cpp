@@ -26,6 +26,7 @@ public:
   uint32_t calcEFlags() const override;
   RelExpr getRelExpr(RelType type, const Symbol &s,
                      const uint8_t *loc) const override;
+  void scanSection(InputSectionBase &sec) override;
   void relocate(uint8_t *loc, const Relocation &rel,
                 uint64_t val) const override;
   void writeGotPltHeader(uint8_t *buf) const override;
@@ -178,6 +179,106 @@ RelExpr Bedrock::getRelExpr(RelType type, const Symbol &s,
   default:
     return R_ABS;
   }
+}
+
+void Bedrock::scanSection(InputSectionBase &sec) {
+  using ELFT = object::ELF64LE;
+  using Elf_Rela = ELFT::Rela;
+  Relocs<Elf_Rela> relas = sec.relsOrRelas<ELFT>().relas;
+  ArrayRef<uint8_t> content = sec.content();
+
+  auto report = [&](uint64_t offset, const Twine &message) {
+    Err(ctx) << sec.getLocation(offset) << ": " << message;
+  };
+  auto getSymbol = [&](const Elf_Rela &rel) -> Symbol & {
+    return sec.getFile<ELFT>()->getSymbol(rel.getSymbol(false));
+  };
+  auto checkTlsSymbol = [&](const Elf_Rela &rel) {
+    Symbol &sym = getSymbol(rel);
+    if (!sym.isTls())
+      report(rel.r_offset, "TLSDESC relocation requires an STT_TLS symbol");
+    if (sym.isUndefWeak())
+      report(rel.r_offset,
+             "TLSDESC relocation cannot leave a weak TLS symbol unresolved");
+  };
+
+  for (const Elf_Rela &rel : relas) {
+    RelType type = rel.getType(false);
+    bool isAddr32 = type == R_BEDROCK_TLSDESC_GOTPCREL32S;
+    bool isAddr64 = type == R_BEDROCK_TLSDESC_GOTPCREL64;
+    if (isAddr32 || isAddr64) {
+      checkTlsSymbol(rel);
+      if (rel.r_addend != 3)
+        report(rel.r_offset,
+               "TLSDESC GOTPCREL relocation addend must be 3");
+
+      uint64_t fieldSize = isAddr32 ? 4 : 8;
+      uint64_t callOffset = rel.r_offset + fieldSize;
+      const Elf_Rela *marker = nullptr;
+      for (const Elf_Rela &candidate : relas)
+        if (candidate.r_offset == callOffset &&
+            candidate.getType(false) == R_BEDROCK_TLSDESC_CALL) {
+          if (marker)
+            report(callOffset, "duplicate TLSDESC call marker");
+          marker = &candidate;
+        }
+      if (!marker) {
+        report(rel.r_offset,
+               "TLSDESC GOTPCREL relocation is not followed by a call marker");
+      } else {
+        if (marker->getSymbol(false) != rel.getSymbol(false))
+          report(callOffset,
+                 "TLSDESC relocation pair must name the same TLS symbol");
+        if (marker->r_addend != 0)
+          report(callOffset, "TLSDESC call marker addend must be zero");
+      }
+
+      static constexpr uint8_t Lea32[] = {0xd1, 0xb8, 0x06};
+      static constexpr uint8_t Lea64[] = {0xe1, 0xb8, 0x07};
+      static constexpr uint8_t CallR0[] = {0xc7, 0xc3, 0x70, 0x10};
+      ArrayRef<uint8_t> lea = isAddr32 ? ArrayRef(Lea32) : ArrayRef(Lea64);
+      bool inBounds = rel.r_offset >= lea.size() &&
+                      callOffset + std::size(CallR0) <= content.size();
+      if (!inBounds ||
+          content.slice(rel.r_offset - lea.size(), lea.size()) != lea ||
+          content.slice(callOffset, std::size(CallR0)) != ArrayRef(CallR0))
+        report(rel.r_offset,
+               "TLSDESC relocations require the canonical LEA.Q/CALL [R0] "
+               "sequence");
+      continue;
+    }
+
+    if (type == R_BEDROCK_TLSDESC_CALL) {
+      checkTlsSymbol(rel);
+      if (rel.r_addend != 0)
+        report(rel.r_offset, "TLSDESC call marker addend must be zero");
+      bool hasAddressRelocation = false;
+      for (const Elf_Rela &candidate : relas) {
+        RelType candidateType = candidate.getType(false);
+        hasAddressRelocation |=
+            (candidateType == R_BEDROCK_TLSDESC_GOTPCREL32S &&
+             candidate.r_offset + 4 == rel.r_offset) ||
+            (candidateType == R_BEDROCK_TLSDESC_GOTPCREL64 &&
+             candidate.r_offset + 8 == rel.r_offset);
+      }
+      if (!hasAddressRelocation)
+        report(rel.r_offset,
+               "TLSDESC call marker has no immediately preceding address "
+               "relocation");
+      continue;
+    }
+
+    if (type == R_BEDROCK_TLSDESC) {
+      checkTlsSymbol(rel);
+      if (rel.r_addend != 0)
+        report(rel.r_offset, "TLSDESC relocation addend must be zero");
+      if (sec.addralign < 16 || rel.r_offset % 16 != 0)
+        report(rel.r_offset,
+               "TLSDESC relocation requires a 16-byte-aligned descriptor");
+    }
+  }
+
+  TargetInfo::scanSection(sec);
 }
 
 static int64_t getNextIPRelativeBias(RelType type) {
