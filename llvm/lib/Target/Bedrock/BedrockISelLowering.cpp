@@ -134,10 +134,17 @@ BedrockTargetLowering::BedrockTargetLowering(const TargetMachine &TM,
     setOperationAction(ISD::FCEIL, VT, Legal);
     setOperationAction(ISD::FFLOOR, VT, Legal);
     setOperationAction(ISD::FRINT, VT, Legal);
+    for (unsigned Opcode :
+         {ISD::STRICT_FADD, ISD::STRICT_FSUB, ISD::STRICT_FMUL,
+          ISD::STRICT_FDIV, ISD::STRICT_FREM, ISD::STRICT_FMA,
+          ISD::STRICT_FSQRT, ISD::STRICT_FROUNDEVEN, ISD::STRICT_FTRUNC,
+          ISD::STRICT_FCEIL, ISD::STRICT_FFLOOR, ISD::STRICT_FRINT})
+      setOperationAction(Opcode, VT, Legal);
     setOperationAction(ISD::FLDEXP, VT, Legal);
     setOperationAction(ISD::FFREXP, VT, Custom);
     setOperationAction(ISD::IS_FPCLASS, VT, Custom);
     setOperationAction(ISD::SETCC, VT, Custom);
+    setOperationAction(ISD::STRICT_FSETCC, VT, Custom);
     setOperationAction(ISD::SELECT, VT, Custom);
     setOperationAction(ISD::SELECT_CC, VT, Custom);
     for (unsigned Opcode :
@@ -153,8 +160,20 @@ BedrockTargetLowering::BedrockTargetLowering(const TargetMachine &TM,
   setOperationAction(ISD::FP_TO_SINT, MVT::i64, Legal);
   setOperationAction(ISD::FP_TO_UINT, MVT::i32, Legal);
   setOperationAction(ISD::FP_TO_UINT, MVT::i64, Legal);
+  setOperationAction(ISD::STRICT_FP_TO_SINT, MVT::i32, Legal);
+  setOperationAction(ISD::STRICT_FP_TO_SINT, MVT::i64, Legal);
+  setOperationAction(ISD::STRICT_FP_TO_UINT, MVT::i32, Legal);
+  setOperationAction(ISD::STRICT_FP_TO_UINT, MVT::i64, Legal);
+  for (MVT VT : {MVT::i32, MVT::i64}) {
+    setOperationAction(ISD::SINT_TO_FP, VT, Legal);
+    setOperationAction(ISD::UINT_TO_FP, VT, Legal);
+    setOperationAction(ISD::STRICT_SINT_TO_FP, VT, Legal);
+    setOperationAction(ISD::STRICT_UINT_TO_FP, VT, Legal);
+  }
   setOperationAction(ISD::FP_ROUND, MVT::f32, Legal);
   setOperationAction(ISD::FP_EXTEND, MVT::f64, Legal);
+  setOperationAction(ISD::STRICT_FP_ROUND, MVT::f32, Legal);
+  setOperationAction(ISD::STRICT_FP_EXTEND, MVT::f64, Legal);
   setTargetDAGCombine(ISD::ConstantFP);
   if (Subtarget.hasFPTRANSA())
     setTargetDAGCombine(
@@ -536,8 +555,12 @@ const char *BedrockTargetLowering::getTargetNodeName(unsigned Opcode) const {
     return "BedrockISD::CMP";
   case BedrockISD::FCMP:
     return "BedrockISD::FCMP";
+  case BedrockISD::STRICT_FCMP:
+    return "BedrockISD::STRICT_FCMP";
   case BedrockISD::FTEST:
     return "BedrockISD::FTEST";
+  case BedrockISD::STRICT_FTEST:
+    return "BedrockISD::STRICT_FTEST";
   case BedrockISD::TEST:
     return "BedrockISD::TEST";
   case BedrockISD::BTEST:
@@ -554,6 +577,8 @@ const char *BedrockTargetLowering::getTargetNodeName(unsigned Opcode) const {
     return "BedrockISD::FP_SELECT_TEST";
   case BedrockISD::FP_SET_CC:
     return "BedrockISD::FP_SET_CC";
+  case BedrockISD::STRICT_FP_SET_CC:
+    return "BedrockISD::STRICT_FP_SET_CC";
   case BedrockISD::SMAX:
     return "BedrockISD::SMAX";
   case BedrockISD::SMIN:
@@ -758,6 +783,8 @@ SDValue BedrockTargetLowering::LowerOperation(SDValue Op,
   case ISD::BR_CC:
     return LowerBR_CC(Op, DAG);
   case ISD::SETCC:
+    return LowerSETCC(Op, DAG);
+  case ISD::STRICT_FSETCC:
     return LowerSETCC(Op, DAG);
   case ISD::SELECT:
     return LowerSELECT(Op, DAG);
@@ -1041,6 +1068,39 @@ static SDValue lowerFPSetCC(SDValue LHS, SDValue RHS, ISD::CondCode CC,
   return DAG.getNode(BedrockISD::SET_CC, DL, MVT::i64, Target, Glue);
 }
 
+static SDValue lowerStrictFPSetCC(SDValue Chain, SDValue LHS, SDValue RHS,
+                                  ISD::CondCode CC, const SDLoc &DL,
+                                  SelectionDAG &DAG) {
+  unsigned TargetCC = getBedrockFPCondCode(CC);
+  if (TargetCC == BedrockFPOneCond ||
+      TargetCC == BedrockFPEqualOrUnorderedCond)
+    return DAG.getNode(
+        BedrockISD::STRICT_FP_SET_CC, DL,
+        DAG.getVTList(MVT::i64, MVT::Other), Chain, LHS, RHS,
+        DAG.getConstant(TargetCC, DL, MVT::i32));
+
+  bool TestZero = false;
+  if (auto *Constant = dyn_cast<ConstantFPSDNode>(RHS))
+    TestZero = Constant->getValueAPF().isZero();
+  unsigned CompareOpcode =
+      TestZero ? BedrockISD::STRICT_FTEST : BedrockISD::STRICT_FCMP;
+  SDValue Compare =
+      TestZero
+          ? DAG.getNode(CompareOpcode, DL,
+                        DAG.getVTList(MVT::Other, MVT::Glue), Chain, LHS)
+          : DAG.getNode(CompareOpcode, DL,
+                        DAG.getVTList(MVT::Other, MVT::Glue), Chain, LHS, RHS);
+
+  SDValue Result;
+  if (TargetCC == 0x0 || TargetCC == 0x1)
+    Result = DAG.getConstant(TargetCC == 0x0, DL, MVT::i64);
+  else
+    Result = DAG.getNode(BedrockISD::SET_CC, DL, MVT::i64,
+                         DAG.getConstant(TargetCC, DL, MVT::i32),
+                         Compare.getValue(1));
+  return DAG.getMergeValues({Result, Compare}, DL);
+}
+
 SDValue BedrockTargetLowering::LowerBRCOND(SDValue Op,
                                            SelectionDAG &DAG) const {
   SDValue Cond = Op.getOperand(1);
@@ -1100,6 +1160,13 @@ SDValue BedrockTargetLowering::LowerBR_CC(SDValue Op, SelectionDAG &DAG) const {
 }
 
 SDValue BedrockTargetLowering::LowerSETCC(SDValue Op, SelectionDAG &DAG) const {
+  if (Op.getOpcode() == ISD::STRICT_FSETCC) {
+    SDValue LHS = Op.getOperand(1);
+    SDValue RHS = Op.getOperand(2);
+    ISD::CondCode CC = getCondCodeOperand(Op.getOperand(3), "STRICT_FSETCC");
+    return lowerStrictFPSetCC(Op.getOperand(0), LHS, RHS, CC, SDLoc(Op), DAG);
+  }
+
   SDValue LHS = Op.getOperand(0);
   SDValue RHS = Op.getOperand(1);
   ISD::CondCode CC = getCondCodeOperand(Op.getOperand(2), "SETCC");

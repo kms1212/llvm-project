@@ -96,8 +96,18 @@ def BedrockRetFlag : SDNode<"BedrockISD::RET_FLAG", SDTNone,
 def BedrockCmp : SDNode<"BedrockISD::CMP", SDT_BedrockCmp, [SDNPOutGlue]>;
 def BedrockFCmp : SDNode<"BedrockISD::FCMP", SDT_BedrockFCmp,
                          [SDNPOutGlue]>;
+def BedrockStrictFCmp : SDNode<"BedrockISD::STRICT_FCMP", SDT_BedrockFCmp,
+                               [SDNPHasChain, SDNPOutGlue]>;
 def BedrockFTest : SDNode<"BedrockISD::FTEST", SDT_BedrockFTest,
                           [SDNPOutGlue]>;
+def BedrockStrictFTest : SDNode<"BedrockISD::STRICT_FTEST", SDT_BedrockFTest,
+                                [SDNPHasChain, SDNPOutGlue]>;
+def BedrockAnyFCmp : PatFrags<(ops node:$lhs, node:$rhs),
+                              [(BedrockStrictFCmp node:$lhs, node:$rhs),
+                               (BedrockFCmp node:$lhs, node:$rhs)]>;
+def BedrockAnyFTest : PatFrags<(ops node:$src),
+                               [(BedrockStrictFTest node:$src),
+                                (BedrockFTest node:$src)]>;
 def BedrockTest : SDNode<"BedrockISD::TEST", SDT_BedrockTest, [SDNPOutGlue]>;
 def BedrockBTest : SDNode<"BedrockISD::BTEST", SDT_BedrockBTest,
                           [SDNPOutGlue]>;
@@ -112,6 +122,13 @@ def BedrockFPSelectCC : SDNode<"BedrockISD::FP_SELECT_CC",
 def BedrockFPSelectTest : SDNode<"BedrockISD::FP_SELECT_TEST",
                                  SDT_BedrockFPSelectTest>;
 def BedrockFPSetCC : SDNode<"BedrockISD::FP_SET_CC", SDT_BedrockFPSetCC>;
+def BedrockStrictFPSetCC
+    : SDNode<"BedrockISD::STRICT_FP_SET_CC", SDT_BedrockFPSetCC,
+             [SDNPHasChain]>;
+def BedrockAnyFPSetCC
+    : PatFrags<(ops node:$lhs, node:$rhs, node:$cc),
+               [(BedrockStrictFPSetCC node:$lhs, node:$rhs, node:$cc),
+                (BedrockFPSetCC node:$lhs, node:$rhs, node:$cc)]>;
 def BedrockSMax : SDNode<"BedrockISD::SMAX", SDT_BedrockBinaryInt>;
 def BedrockSMin : SDNode<"BedrockISD::SMIN", SDT_BedrockBinaryInt>;
 def BedrockUMax : SDNode<"BedrockISD::UMAX", SDT_BedrockBinaryInt>;
@@ -396,15 +413,23 @@ def BEDROCK_TRACE : BedrockPseudo<(outs), (ins i32imm:$marker),
                                   [(int_bedrock_trace timm:$marker)]>;
 def BEDROCK_RDFSTATUS : BedrockPseudo<(outs GPR64:$dst), (ins),
                                       [(set i64:$dst,
-                                            (int_bedrock_read_fstatus))]>;
+                                            (int_bedrock_read_fstatus))]> {
+  let Uses = [FSTATUS];
+}
 def BEDROCK_WRFSTATUS : BedrockPseudo<(outs), (ins GPR64:$src),
                                       [(int_bedrock_write_fstatus
-                                            i64:$src)]>;
+                                            i64:$src)]> {
+  let Defs = [FSTATUS];
+}
 def BEDROCK_RDFFLAGS : BedrockPseudo<(outs GPR64:$dst), (ins),
                                      [(set i64:$dst,
-                                           (int_bedrock_read_fflags))]>;
+                                           (int_bedrock_read_fflags))]> {
+  let Uses = [FFLAGS];
+}
 def BEDROCK_WRFFLAGS : BedrockPseudo<(outs), (ins GPR64:$src),
-                                     [(int_bedrock_write_fflags i64:$src)]>;
+                                     [(int_bedrock_write_fflags i64:$src)]> {
+  let Defs = [FFLAGS];
+}
 }
 
 class BedrockClmulPseudo<Intrinsic intrinsic>
@@ -759,18 +784,21 @@ def BEDROCK_FMOVCR_D
     : BedrockPseudo<(outs FPR64:$rd), (ins i32imm:$constant_id),
                     [(set f64:$rd, (BedrockFMovCrD timm:$constant_id))]>;
 
-let isCompare = 1, hasSideEffects = 1, Defs = [FLAGS] in {
+let isCompare = 1, hasSideEffects = 1, mayRaiseFPException = 1,
+    Uses = [FSTATUS, FFLAGS], Defs = [FLAGS, FFLAGS] in {
 def FCMPSrr : BedrockPseudo<(outs), (ins FPR64:$lhs, FPR64:$rhs),
-                            [(BedrockFCmp f32:$lhs, f32:$rhs)]>;
+                            [(BedrockAnyFCmp f32:$lhs, f32:$rhs)]>;
 def FCMPDrr : BedrockPseudo<(outs), (ins FPR64:$lhs, FPR64:$rhs),
-                            [(BedrockFCmp f64:$lhs, f64:$rhs)]>;
+                            [(BedrockAnyFCmp f64:$lhs, f64:$rhs)]>;
 def FTESTSr : BedrockPseudo<(outs), (ins FPR64:$src),
-                            [(BedrockFTest f32:$src)]>;
+                            [(BedrockAnyFTest f32:$src)]>;
 def FTESTDr : BedrockPseudo<(outs), (ins FPR64:$src),
-                            [(BedrockFTest f64:$src)]>;
+                            [(BedrockAnyFTest f64:$src)]>;
 }
 
-let Constraints = "$rd = $fval", Defs = [FLAGS] in {
+let Constraints = "$rd = $fval", hasSideEffects = 1,
+    mayRaiseFPException = 1, Uses = [FSTATUS, FFLAGS],
+    Defs = [FLAGS, FFLAGS] in {
 def FP_SELECT_CC_S
     : BedrockPseudo<(outs FPR64:$rd),
                     (ins FPR64:$lhs, FPR64:$rhs, FPR64:$tval,
@@ -801,7 +829,9 @@ def FP_SELECT_CC_DS
                                              f32:$fval, imm:$cc))]>;
 }
 
-let Constraints = "$rd = $fval", Defs = [FLAGS] in {
+let Constraints = "$rd = $fval", hasSideEffects = 1,
+    mayRaiseFPException = 1, Uses = [FSTATUS, FFLAGS],
+    Defs = [FLAGS, FFLAGS] in {
 def FP_SELECT_TEST_SS
     : BedrockPseudo<(outs FPR64:$rd),
                     (ins FPR64:$src, FPR64:$tval, FPR64:$fval, i32imm:$cc),
@@ -828,40 +858,43 @@ def FP_SELECT_TEST_DD
                                                f64:$fval, imm:$cc))]>;
 }
 
-let usesCustomInserter = 1, hasSideEffects = 1 in {
+let usesCustomInserter = 1, hasSideEffects = 1, mayRaiseFPException = 1,
+    Uses = [FSTATUS, FFLAGS], Defs = [FLAGS, FFLAGS] in {
 def FP_SET_CC_S
     : BedrockPseudo<(outs GPR64:$rd),
                     (ins FPR64:$lhs, FPR64:$rhs, i32imm:$cc),
                     [(set i64:$rd,
-                          (BedrockFPSetCC f32:$lhs, f32:$rhs, imm:$cc))]>;
+                          (BedrockAnyFPSetCC f32:$lhs, f32:$rhs, imm:$cc))]>;
 def FP_SET_CC_D
     : BedrockPseudo<(outs GPR64:$rd),
                     (ins FPR64:$lhs, FPR64:$rhs, i32imm:$cc),
                     [(set i64:$rd,
-                          (BedrockFPSetCC f64:$lhs, f64:$rhs, imm:$cc))]>;
+                          (BedrockAnyFPSetCC f64:$lhs, f64:$rhs, imm:$cc))]>;
 }
 
-let Constraints = "$rd = $lhs" in {
+let Constraints = "$rd = $lhs", hasSideEffects = 1,
+    mayRaiseFPException = 1, Uses = [FSTATUS, FFLAGS],
+    Defs = [FFLAGS] in {
 def FADDSrr : BedrockPseudo<(outs FPR64:$rd), (ins FPR64:$lhs, FPR64:$rhs),
-                            [(set f32:$rd, (fadd f32:$lhs, f32:$rhs))]>;
+                            [(set f32:$rd, (any_fadd f32:$lhs, f32:$rhs))]>;
 def FADDDrr : BedrockPseudo<(outs FPR64:$rd), (ins FPR64:$lhs, FPR64:$rhs),
-                            [(set f64:$rd, (fadd f64:$lhs, f64:$rhs))]>;
+                            [(set f64:$rd, (any_fadd f64:$lhs, f64:$rhs))]>;
 def FSUBSrr : BedrockPseudo<(outs FPR64:$rd), (ins FPR64:$lhs, FPR64:$rhs),
-                            [(set f32:$rd, (fsub f32:$lhs, f32:$rhs))]>;
+                            [(set f32:$rd, (any_fsub f32:$lhs, f32:$rhs))]>;
 def FSUBDrr : BedrockPseudo<(outs FPR64:$rd), (ins FPR64:$lhs, FPR64:$rhs),
-                            [(set f64:$rd, (fsub f64:$lhs, f64:$rhs))]>;
+                            [(set f64:$rd, (any_fsub f64:$lhs, f64:$rhs))]>;
 def FMULSrr : BedrockPseudo<(outs FPR64:$rd), (ins FPR64:$lhs, FPR64:$rhs),
-                            [(set f32:$rd, (fmul f32:$lhs, f32:$rhs))]>;
+                            [(set f32:$rd, (any_fmul f32:$lhs, f32:$rhs))]>;
 def FMULDrr : BedrockPseudo<(outs FPR64:$rd), (ins FPR64:$lhs, FPR64:$rhs),
-                            [(set f64:$rd, (fmul f64:$lhs, f64:$rhs))]>;
+                            [(set f64:$rd, (any_fmul f64:$lhs, f64:$rhs))]>;
 def FDIVSrr : BedrockPseudo<(outs FPR64:$rd), (ins FPR64:$lhs, FPR64:$rhs),
-                            [(set f32:$rd, (fdiv f32:$lhs, f32:$rhs))]>;
+                            [(set f32:$rd, (any_fdiv f32:$lhs, f32:$rhs))]>;
 def FDIVDrr : BedrockPseudo<(outs FPR64:$rd), (ins FPR64:$lhs, FPR64:$rhs),
-                            [(set f64:$rd, (fdiv f64:$lhs, f64:$rhs))]>;
+                            [(set f64:$rd, (any_fdiv f64:$lhs, f64:$rhs))]>;
 def FMODSrr : BedrockPseudo<(outs FPR64:$rd), (ins FPR64:$lhs, FPR64:$rhs),
-                            [(set f32:$rd, (frem f32:$lhs, f32:$rhs))]>;
+                            [(set f32:$rd, (any_frem f32:$lhs, f32:$rhs))]>;
 def FMODDrr : BedrockPseudo<(outs FPR64:$rd), (ins FPR64:$lhs, FPR64:$rhs),
-                            [(set f64:$rd, (frem f64:$lhs, f64:$rhs))]>;
+                            [(set f64:$rd, (any_frem f64:$lhs, f64:$rhs))]>;
 def FMINSrr
     : BedrockPseudo<(outs FPR64:$rd), (ins FPR64:$lhs, FPR64:$rhs),
                     [(set f32:$rd,
@@ -895,37 +928,44 @@ def FCOPYSIGNDrrr
                     [(set f64:$rd,
                           (fcopysign f64:$magnitude, f64:$sign))]>;
 
+let hasSideEffects = 1, mayRaiseFPException = 1,
+    Uses = [FSTATUS, FFLAGS], Defs = [FFLAGS] in {
 def FCVTSQSrr : BedrockPseudo<(outs FPR64:$rd), (ins GPR64:$src),
-                              [(set f32:$rd, (sint_to_fp i64:$src))]>;
+                              [(set f32:$rd, (any_sint_to_fp i64:$src))]>;
 def FCVTSQDrr : BedrockPseudo<(outs FPR64:$rd), (ins GPR64:$src),
-                              [(set f64:$rd, (sint_to_fp i64:$src))]>;
+                              [(set f64:$rd, (any_sint_to_fp i64:$src))]>;
 def FCVTUQSrr : BedrockPseudo<(outs FPR64:$rd), (ins GPR64:$src),
-                              [(set f32:$rd, (uint_to_fp i64:$src))]>;
+                              [(set f32:$rd, (any_uint_to_fp i64:$src))]>;
 def FCVTUQDrr : BedrockPseudo<(outs FPR64:$rd), (ins GPR64:$src),
-                              [(set f64:$rd, (uint_to_fp i64:$src))]>;
+                              [(set f64:$rd, (any_uint_to_fp i64:$src))]>;
 
 def FCVTStoQrr : BedrockPseudo<(outs GPR64:$rd), (ins FPR64:$src),
-                               [(set i64:$rd, (fp_to_sint f32:$src))]>;
+                               [(set i64:$rd, (any_fp_to_sint f32:$src))]>;
 def FCVTDtoQrr : BedrockPseudo<(outs GPR64:$rd), (ins FPR64:$src),
-                               [(set i64:$rd, (fp_to_sint f64:$src))]>;
+                               [(set i64:$rd, (any_fp_to_sint f64:$src))]>;
 def FCVTUStoQrr : BedrockPseudo<(outs GPR64:$rd), (ins FPR64:$src),
-                                [(set i64:$rd, (fp_to_uint f32:$src))]>;
+                                [(set i64:$rd, (any_fp_to_uint f32:$src))]>;
 def FCVTUDtoQrr : BedrockPseudo<(outs GPR64:$rd), (ins FPR64:$src),
-                                [(set i64:$rd, (fp_to_uint f64:$src))]>;
+                                [(set i64:$rd, (any_fp_to_uint f64:$src))]>;
 
 def FCVTDtoSrr : BedrockPseudo<(outs FPR64:$rd), (ins FPR64:$src),
-                               [(set f32:$rd, (fpround f64:$src))]>;
+                               [(set f32:$rd, (any_fpround f64:$src))]>;
 def FCVTStoDrr : BedrockPseudo<(outs FPR64:$rd), (ins FPR64:$src),
-                               [(set f64:$rd, (fpextend f32:$src))]>;
+                               [(set f64:$rd, (any_fpextend f32:$src))]>;
+}
 
-def : Pat<(f64 (sint_to_fp i32:$src)), (FCVTSQDrr (EXTSQLrr GPR64:$src))>;
-def : Pat<(f64 (uint_to_fp i32:$src)), (FCVTUQDrr (EXTZQLrr GPR64:$src))>;
-def : Pat<(f32 (sint_to_fp i32:$src)), (FCVTSQSrr (EXTSQLrr GPR64:$src))>;
-def : Pat<(f32 (uint_to_fp i32:$src)), (FCVTUQSrr (EXTZQLrr GPR64:$src))>;
-def : Pat<(i32 (fp_to_sint f32:$src)), (FCVTStoQrr FPR64:$src)>;
-def : Pat<(i32 (fp_to_sint f64:$src)), (FCVTDtoQrr FPR64:$src)>;
-def : Pat<(i32 (fp_to_uint f32:$src)), (FCVTUStoQrr FPR64:$src)>;
-def : Pat<(i32 (fp_to_uint f64:$src)), (FCVTUDtoQrr FPR64:$src)>;
+def : Pat<(f64 (any_sint_to_fp i32:$src)),
+          (FCVTSQDrr (EXTSQLrr GPR64:$src))>;
+def : Pat<(f64 (any_uint_to_fp i32:$src)),
+          (FCVTUQDrr (EXTZQLrr GPR64:$src))>;
+def : Pat<(f32 (any_sint_to_fp i32:$src)),
+          (FCVTSQSrr (EXTSQLrr GPR64:$src))>;
+def : Pat<(f32 (any_uint_to_fp i32:$src)),
+          (FCVTUQSrr (EXTZQLrr GPR64:$src))>;
+def : Pat<(i32 (any_fp_to_sint f32:$src)), (FCVTStoQrr FPR64:$src)>;
+def : Pat<(i32 (any_fp_to_sint f64:$src)), (FCVTDtoQrr FPR64:$src)>;
+def : Pat<(i32 (any_fp_to_uint f32:$src)), (FCVTUStoQrr FPR64:$src)>;
+def : Pat<(i32 (any_fp_to_uint f64:$src)), (FCVTUDtoQrr FPR64:$src)>;
 
 def : Pat<(fldexp f32:$value, i32:$scale),
           (FSCALESrr FPR64:$value,
@@ -945,19 +985,30 @@ multiclass BedrockFpuUnaryPseudo<SDPatternOperator Op> {
                          [(set f64:$rd, (Op f64:$src))]>;
 }
 
+multiclass BedrockFpuStateUnaryPseudo<SDPatternOperator Op> {
+  let Uses = [FSTATUS, FFLAGS], Defs = [FFLAGS], hasSideEffects = 1,
+      mayRaiseFPException = 1 in {
+    def _S : BedrockPseudo<(outs FPR64:$rd), (ins FPR64:$src),
+                           [(set f32:$rd, (Op f32:$src))]>;
+    def _D : BedrockPseudo<(outs FPR64:$rd), (ins FPR64:$src),
+                           [(set f64:$rd, (Op f64:$src))]>;
+  }
+}
+
 defm BEDROCK_FABS : BedrockFpuUnaryPseudo<fabs>;
 defm BEDROCK_FNEG : BedrockFpuUnaryPseudo<fneg>;
-defm BEDROCK_FSQRT : BedrockFpuUnaryPseudo<fsqrt>;
-defm BEDROCK_FROUND : BedrockFpuUnaryPseudo<froundeven>;
-defm BEDROCK_FTRUNC : BedrockFpuUnaryPseudo<ftrunc>;
-defm BEDROCK_FCEIL : BedrockFpuUnaryPseudo<fceil>;
-defm BEDROCK_FFLOOR : BedrockFpuUnaryPseudo<ffloor>;
-defm BEDROCK_FINT : BedrockFpuUnaryPseudo<frint>;
-defm BEDROCK_FGETEXP : BedrockFpuUnaryPseudo<BedrockFGetExp>;
-defm BEDROCK_FGETMAN : BedrockFpuUnaryPseudo<BedrockFGetMan>;
+defm BEDROCK_FSQRT : BedrockFpuStateUnaryPseudo<any_fsqrt>;
+defm BEDROCK_FROUND : BedrockFpuStateUnaryPseudo<any_froundeven>;
+defm BEDROCK_FTRUNC : BedrockFpuStateUnaryPseudo<any_ftrunc>;
+defm BEDROCK_FCEIL : BedrockFpuStateUnaryPseudo<any_fceil>;
+defm BEDROCK_FFLOOR : BedrockFpuStateUnaryPseudo<any_ffloor>;
+defm BEDROCK_FINT : BedrockFpuStateUnaryPseudo<any_frint>;
+defm BEDROCK_FGETEXP : BedrockFpuStateUnaryPseudo<BedrockFGetExp>;
+defm BEDROCK_FGETMAN : BedrockFpuStateUnaryPseudo<BedrockFGetMan>;
 
 multiclass BedrockFusedPseudo {
-  let Constraints = "$rd = $acc", Size = 4 in {
+  let Constraints = "$rd = $acc", Size = 4, Uses = [FSTATUS, FFLAGS],
+      Defs = [FFLAGS], hasSideEffects = 1, mayRaiseFPException = 1 in {
     def _S : BedrockPseudo<(outs FPR64:$rd),
                            (ins FPR64:$lhs, FPR64:$rhs, FPR64:$acc)>;
     def _D : BedrockPseudo<(outs FPR64:$rd),
@@ -970,33 +1021,34 @@ defm BEDROCK_FMSUB : BedrockFusedPseudo;
 defm BEDROCK_FNMADD : BedrockFusedPseudo;
 defm BEDROCK_FNMSUB : BedrockFusedPseudo;
 
-def : Pat<(fma f32:$lhs, f32:$rhs, f32:$acc),
+def : Pat<(any_fma f32:$lhs, f32:$rhs, f32:$acc),
           (BEDROCK_FMADD_S FPR64:$lhs, FPR64:$rhs, FPR64:$acc)>;
-def : Pat<(fma f64:$lhs, f64:$rhs, f64:$acc),
+def : Pat<(any_fma f64:$lhs, f64:$rhs, f64:$acc),
           (BEDROCK_FMADD_D FPR64:$lhs, FPR64:$rhs, FPR64:$acc)>;
-def : Pat<(fma f32:$lhs, f32:$rhs, (fneg f32:$acc)),
+def : Pat<(any_fma f32:$lhs, f32:$rhs, (fneg f32:$acc)),
           (BEDROCK_FMSUB_S FPR64:$lhs, FPR64:$rhs, FPR64:$acc)>;
-def : Pat<(fma f64:$lhs, f64:$rhs, (fneg f64:$acc)),
+def : Pat<(any_fma f64:$lhs, f64:$rhs, (fneg f64:$acc)),
           (BEDROCK_FMSUB_D FPR64:$lhs, FPR64:$rhs, FPR64:$acc)>;
-def : Pat<(fma (fneg f32:$lhs), f32:$rhs, f32:$acc),
+def : Pat<(any_fma (fneg f32:$lhs), f32:$rhs, f32:$acc),
           (BEDROCK_FNMADD_S FPR64:$lhs, FPR64:$rhs, FPR64:$acc)>;
-def : Pat<(fma (fneg f64:$lhs), f64:$rhs, f64:$acc),
+def : Pat<(any_fma (fneg f64:$lhs), f64:$rhs, f64:$acc),
           (BEDROCK_FNMADD_D FPR64:$lhs, FPR64:$rhs, FPR64:$acc)>;
-def : Pat<(fma f32:$lhs, (fneg f32:$rhs), f32:$acc),
+def : Pat<(any_fma f32:$lhs, (fneg f32:$rhs), f32:$acc),
           (BEDROCK_FNMADD_S FPR64:$lhs, FPR64:$rhs, FPR64:$acc)>;
-def : Pat<(fma f64:$lhs, (fneg f64:$rhs), f64:$acc),
+def : Pat<(any_fma f64:$lhs, (fneg f64:$rhs), f64:$acc),
           (BEDROCK_FNMADD_D FPR64:$lhs, FPR64:$rhs, FPR64:$acc)>;
-def : Pat<(fma (fneg f32:$lhs), f32:$rhs, (fneg f32:$acc)),
+def : Pat<(any_fma (fneg f32:$lhs), f32:$rhs, (fneg f32:$acc)),
           (BEDROCK_FNMSUB_S FPR64:$lhs, FPR64:$rhs, FPR64:$acc)>;
-def : Pat<(fma (fneg f64:$lhs), f64:$rhs, (fneg f64:$acc)),
+def : Pat<(any_fma (fneg f64:$lhs), f64:$rhs, (fneg f64:$acc)),
           (BEDROCK_FNMSUB_D FPR64:$lhs, FPR64:$rhs, FPR64:$acc)>;
-def : Pat<(fma f32:$lhs, (fneg f32:$rhs), (fneg f32:$acc)),
+def : Pat<(any_fma f32:$lhs, (fneg f32:$rhs), (fneg f32:$acc)),
           (BEDROCK_FNMSUB_S FPR64:$lhs, FPR64:$rhs, FPR64:$acc)>;
-def : Pat<(fma f64:$lhs, (fneg f64:$rhs), (fneg f64:$acc)),
+def : Pat<(any_fma f64:$lhs, (fneg f64:$rhs), (fneg f64:$acc)),
           (BEDROCK_FNMSUB_D FPR64:$lhs, FPR64:$rhs, FPR64:$acc)>;
 
 multiclass BedrockApproxUnaryPseudo<Intrinsic Intr> {
-  let Size = 4, Uses = [FSTATUS], Defs = [FFLAGS], hasSideEffects = 1 in {
+  let Size = 4, Uses = [FSTATUS, FFLAGS], Defs = [FFLAGS],
+      hasSideEffects = 1, mayRaiseFPException = 1 in {
     def _S : BedrockPseudo<(outs FPR64:$dst), (ins FPR64:$src),
                            [(set f32:$dst, (Intr f32:$src))]>;
     def _D : BedrockPseudo<(outs FPR64:$dst), (ins FPR64:$src),
@@ -1067,7 +1119,8 @@ defm : BedrockApproxUnaryNodePat<BedrockFTENTOXA, BEDROCK_FTENTOXA_S,
 defm : BedrockApproxUnaryNodePat<BedrockFTWOTOXA, BEDROCK_FTWOTOXA_S,
                                  BEDROCK_FTWOTOXA_D>;
 
-let Size = 5, Uses = [FSTATUS], Defs = [FFLAGS], hasSideEffects = 1 in {
+let Size = 5, Uses = [FSTATUS, FFLAGS], Defs = [FFLAGS], hasSideEffects = 1,
+    mayRaiseFPException = 1 in {
   def BEDROCK_FSINCOSA_S
       : BedrockPseudo<(outs FPR64:$sin, FPR64:$cos), (ins FPR64:$src),
                       [(set f32:$sin, f32:$cos,
