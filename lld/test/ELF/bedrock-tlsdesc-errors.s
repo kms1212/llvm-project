@@ -14,6 +14,8 @@
 # RUN: not ld.lld -shared %t/non-tls.o -o /dev/null 2>&1 | FileCheck %s --check-prefix=TYPE
 # RUN: llvm-mc -triple=bedrock -filetype=obj %t/weak.s -o %t/weak.o
 # RUN: not ld.lld -shared %t/weak.o -o /dev/null 2>&1 | FileCheck %s --check-prefix=WEAK
+# RUN: llvm-mc -triple=bedrock -filetype=obj %t/static-undefined.s -o %t/static-undefined.o
+# RUN: not ld.lld --unresolved-symbols=ignore-all %t/static-undefined.o -e entry -o /dev/null 2>&1 | FileCheck %s --check-prefix=STATIC
 
 # ADDEND: TLSDESC GOTPCREL relocation addend must be 3
 # MISSING: TLSDESC GOTPCREL relocation is not followed by a call marker
@@ -22,6 +24,7 @@
 # CODE: TLSDESC relocations require the canonical LEA.Q/CALL [R0] sequence
 # TYPE: TLSDESC relocation requires an STT_TLS symbol
 # WEAK: TLSDESC relocation cannot leave a weak TLS symbol unresolved
+# STATIC: TLSDESC relocation cannot remain unresolved in an executable without a runtime loader
 
 #--- bad-addend.s
 .text
@@ -78,4 +81,15 @@
 .reloc ., R_BEDROCK_TLSDESC_CALL, tls
 .byte 0xc7, 0xc3, 0x70, 0x10
 .weak tls
+.type tls,@tls_object
+
+#--- static-undefined.s
+.text
+.globl entry
+.type entry,@function
+entry:
+.byte 0xd1, 0xb8, 0x06, 0, 0, 0, 0
+.reloc .-4, R_BEDROCK_TLSDESC_GOTPCREL32S, tls+3
+.reloc ., R_BEDROCK_TLSDESC_CALL, tls
+.byte 0xc7, 0xc3, 0x70, 0x10
 .type tls,@tls_object

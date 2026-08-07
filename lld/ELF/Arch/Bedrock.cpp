@@ -202,6 +202,11 @@ void Bedrock::scanSection(InputSectionBase &sec) {
     if (sym.isUndefWeak())
       report(rel.r_offset,
              "TLSDESC relocation cannot leave a weak TLS symbol unresolved");
+    if (!ctx.arg.shared && ctx.arg.dynamicLinker.empty() &&
+        (sym.isUndefined() || sym.isPreemptible))
+      report(rel.r_offset,
+             "TLSDESC relocation cannot remain unresolved in an executable "
+             "without a runtime loader");
   };
 
   for (const Elf_Rela &rel : relas) {
