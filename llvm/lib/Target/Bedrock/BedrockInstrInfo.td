@@ -658,6 +658,21 @@ def : Pat<(i32 (fp_to_sint f64:$src)), (FCVTDtoQrr FPR64:$src)>;
 def : Pat<(i32 (fp_to_uint f32:$src)), (FCVTUStoQrr FPR64:$src)>;
 def : Pat<(i32 (fp_to_uint f64:$src)), (FCVTUDtoQrr FPR64:$src)>;
 
+multiclass BedrockFpuUnaryPseudo<SDPatternOperator Op> {
+  def _S : BedrockPseudo<(outs FPR64:$rd), (ins FPR64:$src),
+                         [(set f32:$rd, (Op f32:$src))]>;
+  def _D : BedrockPseudo<(outs FPR64:$rd), (ins FPR64:$src),
+                         [(set f64:$rd, (Op f64:$src))]>;
+}
+
+defm BEDROCK_FABS : BedrockFpuUnaryPseudo<fabs>;
+defm BEDROCK_FNEG : BedrockFpuUnaryPseudo<fneg>;
+defm BEDROCK_FSQRT : BedrockFpuUnaryPseudo<fsqrt>;
+defm BEDROCK_FROUND : BedrockFpuUnaryPseudo<froundeven>;
+defm BEDROCK_FTRUNC : BedrockFpuUnaryPseudo<ftrunc>;
+defm BEDROCK_FCEIL : BedrockFpuUnaryPseudo<fceil>;
+defm BEDROCK_FFLOOR : BedrockFpuUnaryPseudo<ffloor>;
+
 multiclass BedrockFusedPseudo {
   let Constraints = "$rd = $acc", Size = 4 in {
     def _S : BedrockPseudo<(outs FPR64:$rd),

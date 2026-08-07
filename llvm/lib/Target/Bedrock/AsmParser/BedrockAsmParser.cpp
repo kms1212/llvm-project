@@ -1921,6 +1921,13 @@ bool tryEncodeMediumInstruction(OperandVector &Operands,
         {"fsub", "100101zssss000dddd"},
         {"fmul", "100101zssss001dddd"},
         {"fdiv", "100101zssss010dddd"},
+        {"fabs", "100101zssss011dddd"},
+        {"fneg", "100101zssss100dddd"},
+        {"fsqrt", "100101zssss101dddd"},
+        {"fround", "100001zdddd000ssss"},
+        {"ftrunc", "100011zdddd000ssss"},
+        {"fceil", "101001zdddd000ssss"},
+        {"ffloor", "101011zdddd000ssss"},
     };
     for (const FpuRRForm &Form : Forms) {
       unsigned Size;

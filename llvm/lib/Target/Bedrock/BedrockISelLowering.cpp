@@ -102,6 +102,13 @@ BedrockTargetLowering::BedrockTargetLowering(const TargetMachine &TM,
     setOperationAction(ISD::FMUL, VT, Legal);
     setOperationAction(ISD::FDIV, VT, Legal);
     setOperationAction(ISD::FMA, VT, Legal);
+    setOperationAction(ISD::FABS, VT, Legal);
+    setOperationAction(ISD::FNEG, VT, Legal);
+    setOperationAction(ISD::FSQRT, VT, Legal);
+    setOperationAction(ISD::FROUNDEVEN, VT, Legal);
+    setOperationAction(ISD::FTRUNC, VT, Legal);
+    setOperationAction(ISD::FCEIL, VT, Legal);
+    setOperationAction(ISD::FFLOOR, VT, Legal);
     for (unsigned Opcode :
          {ISD::FACOS, ISD::FASIN, ISD::FATAN, ISD::FCOS, ISD::FCOSH,
           ISD::FEXP, ISD::FEXP2, ISD::FEXP10, ISD::FLOG, ISD::FLOG2,

@@ -192,6 +192,8 @@ private:
   void emitFpuMove(const MachineInstr *MI);
   void emitFpuBinaryPseudo(const MachineInstr *MI, StringRef Mnemonic,
                            StringRef Pattern, bool IsDouble);
+  void emitFpuUnaryPseudo(const MachineInstr *MI, StringRef Mnemonic,
+                          StringRef Pattern, bool IsDouble);
   void emitFusedPseudo(const MachineInstr *MI, StringRef Mnemonic,
                        StringRef Pattern, bool IsDouble);
   void emitApproxUnaryPseudo(const MachineInstr *MI, StringRef Mnemonic,
@@ -5455,6 +5457,18 @@ BedrockAsmPrinter::getInstSizeForBranchLayout(const MachineInstr &MI) const {
   case Bedrock::FCVTDtoSrr:
   case Bedrock::FCVTStoDrr:
     return RepgHeaderSize + 4;
+#define FPU_UNARY_SIZE_CASES(NAME)                                          \
+  case Bedrock::BEDROCK_##NAME##_S:                                         \
+  case Bedrock::BEDROCK_##NAME##_D:
+    FPU_UNARY_SIZE_CASES(FABS)
+    FPU_UNARY_SIZE_CASES(FNEG)
+    FPU_UNARY_SIZE_CASES(FSQRT)
+    FPU_UNARY_SIZE_CASES(FROUND)
+    FPU_UNARY_SIZE_CASES(FTRUNC)
+    FPU_UNARY_SIZE_CASES(FCEIL)
+    FPU_UNARY_SIZE_CASES(FFLOOR)
+#undef FPU_UNARY_SIZE_CASES
+    return RepgHeaderSize + 3;
 #define FUSED_SIZE_CASES(NAME)                                               \
   case Bedrock::BEDROCK_##NAME##_S:                                         \
   case Bedrock::BEDROCK_##NAME##_D:
@@ -7316,6 +7330,32 @@ void BedrockAsmPrinter::emitFpuBinaryPseudo(const MachineInstr *MI,
   emitRaw(Bytes);
 }
 
+void BedrockAsmPrinter::emitFpuUnaryPseudo(const MachineInstr *MI,
+                                           StringRef Mnemonic,
+                                           StringRef Pattern,
+                                           bool IsDouble) {
+  Register DstReg = MI->getOperand(0).getReg();
+  Register SrcReg = MI->getOperand(1).getReg();
+  if (OutStreamer->hasRawTextSupport()) {
+    SmallString<64> Text;
+    raw_svector_ostream OS(Text);
+    OS << "\t" << Mnemonic << "." << (IsDouble ? 'D' : 'S') << "\t"
+       << BedrockInstPrinter::getRegisterName(SrcReg) << ", "
+       << BedrockInstPrinter::getRegisterName(DstReg);
+    OutStreamer->emitRawText(OS.str());
+    return;
+  }
+
+  uint32_t Payload =
+      applyPatternValues(Pattern, {{'z', IsDouble},
+                                   {'s', getFPRNo(SrcReg)},
+                                   {'d', getFPRNo(DstReg)}});
+  SmallVector<uint8_t, 4> Bytes;
+  if (!BedrockMC::encodeMedium(Payload, {}, Bytes))
+    report_fatal_error("failed to encode Bedrock floating-point unary op");
+  emitRaw(Bytes);
+}
+
 void BedrockAsmPrinter::emitFusedPseudo(const MachineInstr *MI,
                                         StringRef Mnemonic,
                                         StringRef Pattern, bool IsDouble) {
@@ -8802,6 +8842,21 @@ void BedrockAsmPrinter::emitInstruction(const MachineInstr *MI) {
     emitFpuBinaryPseudo(MI, "FDIV", "100101zssss010dddd",
                         /*IsDouble=*/true);
     return;
+#define EMIT_FPU_UNARY(NAME, PATTERN)                                       \
+  case Bedrock::BEDROCK_##NAME##_S:                                         \
+    emitFpuUnaryPseudo(MI, #NAME, PATTERN, /*IsDouble=*/false);             \
+    return;                                                                  \
+  case Bedrock::BEDROCK_##NAME##_D:                                         \
+    emitFpuUnaryPseudo(MI, #NAME, PATTERN, /*IsDouble=*/true);              \
+    return;
+    EMIT_FPU_UNARY(FABS, "100101zssss011dddd")
+    EMIT_FPU_UNARY(FNEG, "100101zssss100dddd")
+    EMIT_FPU_UNARY(FSQRT, "100101zssss101dddd")
+    EMIT_FPU_UNARY(FROUND, "100001zdddd000ssss")
+    EMIT_FPU_UNARY(FTRUNC, "100011zdddd000ssss")
+    EMIT_FPU_UNARY(FCEIL, "101001zdddd000ssss")
+    EMIT_FPU_UNARY(FFLOOR, "101011zdddd000ssss")
+#undef EMIT_FPU_UNARY
 #define EMIT_FUSED(NAME, PATTERN)                                            \
   case Bedrock::BEDROCK_##NAME##_S:                                          \
     emitFusedPseudo(MI, #NAME, PATTERN, /*IsDouble=*/false);                 \
