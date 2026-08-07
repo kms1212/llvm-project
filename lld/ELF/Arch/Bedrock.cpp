@@ -92,6 +92,8 @@ uint32_t Bedrock::calcEFlags() const {
       ErrAlways(ctx) << file << ": unrecognized e_flags: " << flags;
     if (hdr.e_type == ET_REL && hdr.e_entry != 0)
       ErrAlways(ctx) << file << ": ET_REL e_entry must be zero";
+    if (hdr.e_type == ET_DYN && hdr.e_entry != 0)
+      ErrAlways(ctx) << file << ": shared-object ET_DYN e_entry must be zero";
     if (hdr.e_ehsize != sizeof(object::ELF64LE::Ehdr))
       ErrAlways(ctx) << file << ": invalid e_ehsize: " << hdr.e_ehsize;
     if (hdr.e_phentsize != sizeof(object::ELF64LE::Phdr))

@@ -24,6 +24,9 @@
 # RUN: %python -c "with open(r'%t.phentsize.o', 'r+b') as f: f.seek(54); f.write(b'\x00\x00')"
 # RUN: not ld.lld %t.phentsize.o -o /dev/null 2>&1 | FileCheck %s --check-prefix=PHENTSIZE
 # RUN: llvm-mc -triple=bedrock -filetype=obj %s -o %t.good.o
+# RUN: ld.lld -shared %t.good.o -o %t.entry.so
+# RUN: llvm-objcopy --set-start=1 %t.entry.so %t.bad-entry.so
+# RUN: not ld.lld -shared %t.good.o %t.bad-entry.so -o /dev/null 2>&1 | FileCheck %s --check-prefix=DYNENTRY
 # RUN: ld.lld %t.good.o -e 0 -o %t.good
 # RUN: llvm-readelf -h -l %t.good | FileCheck %s --check-prefix=OUTPUT
 
@@ -35,6 +38,7 @@
 # ENTRY: error: {{.*}}.entry.o: ET_REL e_entry must be zero
 # EHSIZE: error: {{.*}}.ehsize.o: invalid e_ehsize: 0
 # PHENTSIZE: error: {{.*}}.phentsize.o: invalid e_phentsize: 0
+# DYNENTRY: error: {{.*}}.bad-entry.so: shared-object ET_DYN e_entry must be zero
 
 # OUTPUT: Class:                             ELF64
 # OUTPUT: Data:                              2's complement, little endian
