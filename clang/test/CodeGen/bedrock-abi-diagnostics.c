@@ -24,10 +24,36 @@ struct FieldPacked {
 };
 
 // CHECK: error: Bedrock C ABI does not permit packed or under-aligned aggregate type 'struct FieldPacked' across an external ABI boundary
+
+struct Empty {};
+
+// CHECK: error: Bedrock C ABI does not permit empty or zero-length aggregate type 'struct Empty' across an external ABI boundary
+
+struct ZeroLength {
+  unsigned char bytes[0];
+};
+
+// CHECK: error: Bedrock C ABI does not permit empty or zero-length aggregate type 'struct ZeroLength' across an external ABI boundary
+
+struct OverAligned {
+  long value;
+} __attribute__((aligned(32)));
+
+// CHECK: error: Bedrock C ABI does not permit over-aligned aggregate type 'struct OverAligned' across an external ABI boundary
+
+struct NarrowBitField {
+  unsigned char value : 3;
+};
+
+// CHECK: error: Bedrock C ABI does not permit aggregate type with a non-baseline bit-field base type 'struct NarrowBitField' across an external ABI boundary
 #ifndef TEST_CALL
 void exported_nonbaseline_aggregates(struct AttributePacked attribute,
                                      struct PragmaPacked pragma,
-                                     struct FieldPacked field) {}
+                                     struct FieldPacked field,
+                                     struct Empty empty,
+                                     struct ZeroLength zero_length,
+                                     struct OverAligned over_aligned,
+                                     struct NarrowBitField narrow_bit_field) {}
 #endif
 
 // Packed aggregates remain usable within one translation unit when they do
@@ -48,7 +74,7 @@ void call_external_boundary(void) {
 #endif
 
 struct ValidBoundaries {
-  unsigned char first : 3;
+  unsigned int first : 3;
   unsigned int : 0;
   long values[];
 };

@@ -60,6 +60,9 @@ public:
     return 0;
   }
 
+  void setTargetAttributes(const Decl *D, llvm::GlobalValue *GV,
+                           CodeGenModule &CGM) const override;
+
   void checkFunctionABI(CodeGenModule &CGM,
                         const FunctionDecl *Decl) const override;
   void checkFunctionCallABI(CodeGenModule &CGM, SourceLocation CallLoc,
@@ -70,30 +73,53 @@ public:
 
 } // namespace
 
-static bool hasNonBaselineAggregateLayout(
+enum class BedrockAggregateLayoutIssue {
+  None,
+  PackedOrUnderAligned,
+  OverAligned,
+  NonBaselineBitField,
+  EmptyOrZeroLength,
+};
+
+static BedrockAggregateLayoutIssue getNonBaselineAggregateLayoutIssue(
     ASTContext &Context, QualType Ty,
     llvm::SmallPtrSetImpl<const RecordDecl *> &Visited) {
   Ty = Ty.getCanonicalType();
-  if (const auto *ArrayTy = Context.getAsArrayType(Ty))
-    return hasNonBaselineAggregateLayout(Context, ArrayTy->getElementType(),
-                                         Visited);
+  if (const auto *ArrayTy = Context.getAsArrayType(Ty)) {
+    if (const auto *CAT = dyn_cast<ConstantArrayType>(ArrayTy);
+        CAT && CAT->getSize().isZero())
+      return BedrockAggregateLayoutIssue::EmptyOrZeroLength;
+    return getNonBaselineAggregateLayoutIssue(
+        Context, ArrayTy->getElementType(), Visited);
+  }
 
   const auto *RecordTy = Ty->getAs<RecordType>();
   if (!RecordTy)
-    return false;
+    return BedrockAggregateLayoutIssue::None;
   const RecordDecl *Record = RecordTy->getDecl()->getDefinition();
   if (!Record || !Visited.insert(Record).second)
-    return false;
+    return BedrockAggregateLayoutIssue::None;
 
   if (Record->hasAttr<PackedAttr>() || Record->hasAttr<MaxFieldAlignmentAttr>())
-    return true;
+    return BedrockAggregateLayoutIssue::PackedOrUnderAligned;
+  if (isEmptyRecord(Context, Ty, /*AllowArrays=*/true))
+    return BedrockAggregateLayoutIssue::EmptyOrZeroLength;
+  if (Context.getTypeAlign(Ty) > 128)
+    return BedrockAggregateLayoutIssue::OverAligned;
 
   const ASTRecordLayout &Layout = Context.getASTRecordLayout(Record);
   unsigned Index = 0;
   for (const FieldDecl *Field : Record->fields()) {
     QualType FieldTy = Field->getType();
     if (Field->hasAttr<PackedAttr>())
-      return true;
+      return BedrockAggregateLayoutIssue::PackedOrUnderAligned;
+
+    if (Field->isBitField()) {
+      QualType BaseTy = FieldTy.getCanonicalType().getUnqualifiedType();
+      if (!BaseTy->isBooleanType() && BaseTy != Context.IntTy &&
+          BaseTy != Context.UnsignedIntTy)
+        return BedrockAggregateLayoutIssue::NonBaselineBitField;
+    }
 
     if (!Field->isBitField()) {
       QualType AlignmentTy = FieldTy;
@@ -101,14 +127,16 @@ static bool hasNonBaselineAggregateLayout(
         AlignmentTy = ArrayTy->getElementType();
       unsigned NaturalAlign = Context.getTypeAlign(AlignmentTy);
       if (NaturalAlign && Layout.getFieldOffset(Index) % NaturalAlign != 0)
-        return true;
+        return BedrockAggregateLayoutIssue::PackedOrUnderAligned;
     }
 
-    if (hasNonBaselineAggregateLayout(Context, FieldTy, Visited))
-      return true;
+    BedrockAggregateLayoutIssue Nested = getNonBaselineAggregateLayoutIssue(
+        Context, FieldTy, Visited);
+    if (Nested != BedrockAggregateLayoutIssue::None)
+      return Nested;
     ++Index;
   }
-  return false;
+  return BedrockAggregateLayoutIssue::None;
 }
 
 static void diagnoseNonBaselineAggregateTypes(CodeGenModule &CGM,
@@ -120,14 +148,40 @@ static void diagnoseNonBaselineAggregateTypes(CodeGenModule &CGM,
         !Diagnosed.insert(Ty.getCanonicalType().getTypePtr()).second)
       continue;
     llvm::SmallPtrSet<const RecordDecl *, 4> Visited;
-    if (!hasNonBaselineAggregateLayout(CGM.getContext(), Ty, Visited))
+    BedrockAggregateLayoutIssue Issue = getNonBaselineAggregateLayoutIssue(
+        CGM.getContext(), Ty, Visited);
+    if (Issue == BedrockAggregateLayoutIssue::None)
       continue;
-    std::string Message = "Bedrock C ABI does not permit packed or "
-                          "under-aligned aggregate type '" +
-                          Ty.getAsString() +
+    StringRef Description;
+    switch (Issue) {
+    case BedrockAggregateLayoutIssue::None:
+      llvm_unreachable("non-baseline aggregate issue expected");
+    case BedrockAggregateLayoutIssue::PackedOrUnderAligned:
+      Description = "packed or under-aligned aggregate type";
+      break;
+    case BedrockAggregateLayoutIssue::OverAligned:
+      Description = "over-aligned aggregate type";
+      break;
+    case BedrockAggregateLayoutIssue::NonBaselineBitField:
+      Description = "aggregate type with a non-baseline bit-field base type";
+      break;
+    case BedrockAggregateLayoutIssue::EmptyOrZeroLength:
+      Description = "empty or zero-length aggregate type";
+      break;
+    }
+    std::string Message = "Bedrock C ABI does not permit " +
+                          Description.str() + " '" + Ty.getAsString() +
                           "' across an external ABI boundary";
     CGM.Error(Loc, Message);
   }
+}
+
+void BedrockTargetCodeGenInfo::setTargetAttributes(
+    const Decl *D, llvm::GlobalValue *GV, CodeGenModule &CGM) const {
+  const auto *VD = dyn_cast_or_null<VarDecl>(D);
+  if (!VD || !VD->isExternallyVisible())
+    return;
+  diagnoseNonBaselineAggregateTypes(CGM, VD->getLocation(), {VD->getType()});
 }
 
 void BedrockTargetCodeGenInfo::checkFunctionABI(
