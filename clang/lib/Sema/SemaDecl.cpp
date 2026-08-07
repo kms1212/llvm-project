@@ -8888,6 +8888,46 @@ static bool CheckC23ConstexprVarType(Sema &SemaRef, SourceLocation VarLoc,
   return false;
 }
 
+static CharUnits getBedrockAtomicObjectAlignment(ASTContext &Context,
+                                                 QualType T) {
+  if (T.isNull() || T->isDependentType())
+    return CharUnits::Zero();
+
+  T = Context.getBaseElementType(T);
+  if (const auto *AT = T->getAs<AtomicType>())
+    return Context.getTypeSizeInChars(AT->getValueType());
+
+  const RecordDecl *RD = T->getAsRecordDecl();
+  if (!RD || !RD->isCompleteDefinition())
+    return CharUnits::Zero();
+
+  CharUnits Required = CharUnits::Zero();
+  for (const FieldDecl *FD : RD->fields())
+    Required = std::max(
+        Required, getBedrockAtomicObjectAlignment(Context, FD->getType()));
+  return Required;
+}
+
+static bool CheckBedrockAtomicObjectAlignment(Sema &SemaRef,
+                                              const ValueDecl *VD) {
+  if (SemaRef.Context.getTargetInfo().getTriple().getArch() !=
+      llvm::Triple::bedrock)
+    return false;
+
+  CharUnits Required =
+      getBedrockAtomicObjectAlignment(SemaRef.Context, VD->getType());
+  if (Required.isZero())
+    return false;
+
+  CharUnits Actual = SemaRef.Context.getDeclAlign(VD);
+  if (Actual >= Required)
+    return false;
+
+  SemaRef.Diag(VD->getLocation(), diag::err_bedrock_unaligned_atomic_object)
+      << Required.getQuantity() << Actual.getQuantity();
+  return true;
+}
+
 void Sema::CheckVariableDeclarationType(VarDecl *NewVD) {
   // If the decl is already known invalid, don't check it.
   if (NewVD->isInvalidDecl())
@@ -8901,6 +8941,11 @@ void Sema::CheckVariableDeclarationType(VarDecl *NewVD) {
 
   if (NewVD->hasAttrs())
     CheckAlignasUnderalignment(NewVD);
+
+  if (CheckBedrockAtomicObjectAlignment(*this, NewVD)) {
+    NewVD->setInvalidDecl();
+    return;
+  }
 
   if (T->isObjCObjectType()) {
     Diag(NewVD->getLocation(), diag::err_statically_allocated_object)
@@ -20085,6 +20130,16 @@ void Sema::ActOnFields(Scope *S, SourceLocation RecLoc, Decl *EnclosingDecl,
         checkMSInheritanceAttrOnDefinition(cast<CXXRecordDecl>(Record),
                                            IA->getRange(), IA->getBestCase(),
                                            IA->getInheritanceModel());
+    }
+
+    if (!Record->isInvalidDecl() &&
+        Context.getTargetInfo().getTriple().getArch() ==
+            llvm::Triple::bedrock) {
+      for (FieldDecl *FD : Record->fields()) {
+        if (FD->isInvalidDecl())
+          continue;
+        CheckBedrockAtomicObjectAlignment(*this, FD);
+      }
     }
 
     // Check if the structure/union declaration is a type that can have zero

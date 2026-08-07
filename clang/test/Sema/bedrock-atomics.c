@@ -2,6 +2,13 @@
 
 typedef _Atomic(unsigned long) atomic_u64;
 
+atomic_u64 underaligned_global __attribute__((aligned(1))); // expected-error {{bedrock atomic object requires 8-byte alignment; declaration provides only 1-byte alignment}}
+
+typedef atomic_u64 underaligned_atomic_u64 __attribute__((aligned(1)));
+underaligned_atomic_u64 underaligned_typedef; // expected-error {{bedrock atomic object requires 8-byte alignment; declaration provides only 1-byte alignment}}
+
+atomic_u64 underaligned_array[2] __attribute__((aligned(1))); // expected-error {{bedrock atomic object requires 8-byte alignment; declaration provides only 1-byte alignment}}
+
 _Atomic(float) floating; // expected-error {{bedrock atomic object type 'float' is not an integer or ordinary pointer type}}
 
 struct EightBytes { unsigned long value; };
@@ -18,7 +25,16 @@ _Atomic(struct ThreeBytes) odd_size; // expected-error {{bedrock atomic object t
 
 struct __attribute__((packed)) Packed {
   char prefix;
+  atomic_u64 value; // expected-error {{bedrock atomic object requires 8-byte alignment; declaration provides only 1-byte alignment}}
+};
+
+struct AtomicInner {
   atomic_u64 value;
+};
+
+struct __attribute__((packed)) PackedNested {
+  char prefix;
+  struct AtomicInner inner; // expected-error {{bedrock atomic object requires 8-byte alignment; declaration provides only 1-byte alignment}}
 };
 
 unsigned long packed_load(struct Packed *p) {

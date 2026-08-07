@@ -7350,6 +7350,9 @@ def err_bedrock_atomic_size
 def err_bedrock_unaligned_atomic_access
     : Error<"bedrock atomic access requires %0-byte alignment; expression is "
             "only %1-byte aligned">;
+def err_bedrock_unaligned_atomic_object
+    : Error<"bedrock atomic object requires %0-byte alignment; declaration "
+            "provides only %1-byte alignment">;
 def warn_atomic_member_access : Warning<
   "accessing a member of an atomic structure or union is undefined behavior">,
   InGroup<DiagGroup<"atomic-access">>, DefaultError;
