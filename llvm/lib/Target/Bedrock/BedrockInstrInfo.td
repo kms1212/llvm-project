@@ -572,7 +572,11 @@ def BEDROCK_PTQUERY :
 def BEDROCK_SAVE :
     BedrockPseudo<(outs), (ins GPR64:$address),
                   [(int_bedrock_save_processor_state GPR64:$address)]> {
-  let Uses = [FLAGS];
+  let Uses = [R0, R1, R2, R3, R4, R5, R6, R7, R8, R9, R10, R11, R12, R13,
+              R14, R15, FLAGS, STATUS, GS0, GS1, GS2, GS3, GS4, GS5, F0, F1,
+              F2, F3, F4, F5, F6, F7, F8, F9, F10, F11, F12, F13, F14, F15,
+              FSTATUS, FFLAGS];
+  let mayStore = 1;
 }
 def BEDROCK_RESTORE :
     BedrockPseudo<(outs), (ins GPR64:$address),

@@ -110,6 +110,17 @@ define i64 @mmu(i64 %address) {
 ; CHECK: restore
 ; DIS: save
 ; DIS: restore
+; MIR: BEDROCK_SAVE
+; MIR-SAME: implicit $r0
+; MIR-SAME: implicit $r15
+; MIR-SAME: implicit $flags
+; MIR-SAME: implicit $status
+; MIR-SAME: implicit $gs0
+; MIR-SAME: implicit $gs5
+; MIR-SAME: implicit $f0
+; MIR-SAME: implicit $f15
+; MIR-SAME: implicit $fstatus
+; MIR-SAME: implicit $fflags
 ; MIR: BEDROCK_RESTORE
 ; MIR-SAME: implicit-def dead $r0
 ; MIR-SAME: implicit-def dead $r1
