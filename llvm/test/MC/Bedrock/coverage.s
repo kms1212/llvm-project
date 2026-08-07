@@ -64,7 +64,7 @@ rep r15, (mov.q r2, r3)
 
 repeq r9, (cmp.q r2, r3)
 ; CHECK-INST: repeq{{[	 ]+}}r9, (cmp.q{{[	 ]+}}r2, r3)
-; CHECK-ENCODING: encoding: [0xc2,0x40,0x29,0x87,0x23]
+; CHECK-ENCODING: encoding: [0xc2,0x42,0x09,0x87,0x23]
 
 cpuid r1
 ; CHECK-INST: cpuid	r1

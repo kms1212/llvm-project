@@ -118,7 +118,7 @@ const char *getMemoryOrderName(unsigned Order) {
 }
 
 bool isRepPayload(uint32_t Payload) {
-  return (Payload & 0x3ff00) == 0x24000 && ((Payload >> 4) & 0xf) != 0x1;
+  return (Payload & 0x3f0f0) == 0x24000 && ((Payload >> 8) & 0xf) != 0x1;
 }
 
 bool isRepgPayload(uint32_t Payload) {
@@ -857,6 +857,34 @@ bool decodeMediumEAUnary(uint32_t Payload, ArrayRef<uint8_t> Tail,
   return false;
 }
 
+bool decodeMediumFpuRR(uint32_t Payload, SmallString<128> &Text) {
+  struct Form {
+    StringRef Mnemonic;
+    StringRef Pattern;
+  };
+  static const Form Forms[] = {
+      {"fmov", "100100zssss110dddd"},
+      {"fadd", "100100zssss111dddd"},
+      {"fsub", "100101zssss000dddd"},
+      {"fmul", "100101zssss001dddd"},
+      {"fdiv", "100101zssss010dddd"},
+  };
+
+  for (const Form &F : Forms) {
+    if (!matchPattern(F.Pattern, Payload))
+      continue;
+    unsigned Size = extractPatternField(F.Pattern, Payload, 'z');
+    unsigned Src = extractPatternField(F.Pattern, Payload, 's');
+    unsigned Dst = extractPatternField(F.Pattern, Payload, 'd');
+    Text = formatv("{0}.{1}\tf{2}, f{3}", F.Mnemonic,
+                   Size ? 'd' : 's', Src, Dst)
+               .str();
+    return true;
+  }
+
+  return false;
+}
+
 bool decodeMediumBinary(uint32_t Payload, ArrayRef<uint8_t> Tail,
                         SmallString<128> &Text) {
   enum class BinaryDir { RnEA, EARn };
@@ -1038,6 +1066,8 @@ bool decodeMediumPayload(uint32_t Payload, ArrayRef<uint8_t> Tail,
   auto NeedTail = [&](unsigned Width) { return Tail.size() >= Width; };
 
   if (decodeMediumEAUnary(Payload, Tail, Text))
+    return true;
+  if (decodeMediumFpuRR(Payload, Text))
     return true;
   if (decodeMediumBinary(Payload, Tail, Text))
     return true;
@@ -2296,7 +2326,7 @@ bool BedrockMC::decodeRawInst(ArrayRef<uint8_t> Bytes, uint64_t &Size,
     if (BodyBytes.empty() || !decodeRawInst(BodyBytes, BodySize, BodyText))
       return false;
 
-    unsigned Cond = (MediumPayload >> 4) & 0xf;
+    unsigned Cond = (MediumPayload >> 8) & 0xf;
     unsigned Reg = MediumPayload & 0xf;
     const char *Name = getRepCondName(Cond);
     if (!Name)

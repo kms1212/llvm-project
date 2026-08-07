@@ -191,7 +191,8 @@ private:
   void emitFpuRaw(uint16_t Primary, uint16_t Ext, ArrayRef<uint8_t> Tail);
   void emitFpuMove(Register DstReg, Register SrcReg);
   void emitFpuMove(const MachineInstr *MI);
-  void emitFpuBinaryPseudo(const MachineInstr *MI, uint16_t BaseExt);
+  void emitFpuBinaryPseudo(const MachineInstr *MI, StringRef Mnemonic,
+                           StringRef Pattern, bool IsDouble);
   void emitFusedPseudo(const MachineInstr *MI, StringRef Mnemonic,
                        StringRef Pattern, bool IsDouble);
   void emitApproxUnaryPseudo(const MachineInstr *MI, StringRef Mnemonic,
@@ -5436,10 +5437,17 @@ BedrockAsmPrinter::getInstSizeForBranchLayout(const MachineInstr &MI) const {
     return RepgHeaderSize + 4 + getFrameTailSize(MI, 0) +
            getFrameTailSize(MI, 2);
   case Bedrock::FMOVDrr:
+    return RepgHeaderSize + 3;
+  case Bedrock::FADDSrr:
   case Bedrock::FADDDrr:
+  case Bedrock::FSUBSrr:
   case Bedrock::FSUBDrr:
+  case Bedrock::FMULSrr:
   case Bedrock::FMULDrr:
+  case Bedrock::FDIVSrr:
   case Bedrock::FDIVDrr:
+    return RepgHeaderSize +
+           (MI.getOperand(0).getReg() == MI.getOperand(1).getReg() ? 3 : 6);
   case Bedrock::FCVTSQDrr:
   case Bedrock::FCVTUQDrr:
     return RepgHeaderSize + 4;
@@ -7269,9 +7277,13 @@ void BedrockAsmPrinter::emitFpuMove(Register DstReg, Register SrcReg) {
     return;
   }
 
-  uint16_t Ext =
-      0x0400 | 0x0100 | (getFPRNo(DstReg) << 4) | getFPRNo(SrcReg);
-  emitFpuRaw(0x1f65, Ext, {});
+  uint32_t Payload = applyPatternValues(
+      "100100zssss110dddd",
+      {{'z', 1}, {'s', getFPRNo(SrcReg)}, {'d', getFPRNo(DstReg)}});
+  SmallVector<uint8_t, 4> Bytes;
+  if (!BedrockMC::encodeMedium(Payload, {}, Bytes))
+    report_fatal_error("failed to encode Bedrock floating-point move");
+  emitRaw(Bytes);
 }
 
 void BedrockAsmPrinter::emitFpuMove(const MachineInstr *MI) {
@@ -7279,7 +7291,9 @@ void BedrockAsmPrinter::emitFpuMove(const MachineInstr *MI) {
 }
 
 void BedrockAsmPrinter::emitFpuBinaryPseudo(const MachineInstr *MI,
-                                            uint16_t BaseExt) {
+                                            StringRef Mnemonic,
+                                            StringRef Pattern,
+                                            bool IsDouble) {
   Register DstReg = MI->getOperand(0).getReg();
   Register LHSReg = MI->getOperand(1).getReg();
   Register RHSReg = MI->getOperand(2).getReg();
@@ -7288,36 +7302,23 @@ void BedrockAsmPrinter::emitFpuBinaryPseudo(const MachineInstr *MI,
     emitFpuMove(DstReg, LHSReg);
 
   if (OutStreamer->hasRawTextSupport()) {
-    StringRef Mnemonic;
-    switch (BaseExt) {
-    case 0x0200:
-      Mnemonic = "FADD.D";
-      break;
-    case 0xc600:
-      Mnemonic = "FSUB.D";
-      break;
-    case 0x8a00:
-      Mnemonic = "FMUL.D";
-      break;
-    case 0x2000:
-      Mnemonic = "FDIV.D";
-      break;
-    default:
-      report_fatal_error("unknown Bedrock FPU binary opcode");
-    }
-
     SmallString<64> Text;
     raw_svector_ostream OS(Text);
-    OS << "\t" << Mnemonic << "\t"
+    OS << "\t" << Mnemonic << "." << (IsDouble ? 'D' : 'S') << "\t"
        << BedrockInstPrinter::getRegisterName(RHSReg) << ", "
        << BedrockInstPrinter::getRegisterName(DstReg);
     OutStreamer->emitRawText(OS.str());
     return;
   }
 
-  uint16_t Ext =
-      BaseExt | 0x0100 | (getFPRNo(DstReg) << 4) | getFPRNo(RHSReg);
-  emitFpuRaw(0x1f67, Ext, {});
+  uint32_t Payload =
+      applyPatternValues(Pattern, {{'z', IsDouble},
+                                   {'s', getFPRNo(RHSReg)},
+                                   {'d', getFPRNo(DstReg)}});
+  SmallVector<uint8_t, 4> Bytes;
+  if (!BedrockMC::encodeMedium(Payload, {}, Bytes))
+    report_fatal_error("failed to encode Bedrock floating-point arithmetic");
+  emitRaw(Bytes);
 }
 
 void BedrockAsmPrinter::emitFusedPseudo(const MachineInstr *MI,
@@ -8766,17 +8767,37 @@ void BedrockAsmPrinter::emitInstruction(const MachineInstr *MI) {
   case Bedrock::FMOVDrr:
     emitFpuMove(MI);
     return;
+  case Bedrock::FADDSrr:
+    emitFpuBinaryPseudo(MI, "FADD", "100100zssss111dddd",
+                        /*IsDouble=*/false);
+    return;
   case Bedrock::FADDDrr:
-    emitFpuBinaryPseudo(MI, 0x0200);
+    emitFpuBinaryPseudo(MI, "FADD", "100100zssss111dddd",
+                        /*IsDouble=*/true);
+    return;
+  case Bedrock::FSUBSrr:
+    emitFpuBinaryPseudo(MI, "FSUB", "100101zssss000dddd",
+                        /*IsDouble=*/false);
     return;
   case Bedrock::FSUBDrr:
-    emitFpuBinaryPseudo(MI, 0xc600);
+    emitFpuBinaryPseudo(MI, "FSUB", "100101zssss000dddd",
+                        /*IsDouble=*/true);
+    return;
+  case Bedrock::FMULSrr:
+    emitFpuBinaryPseudo(MI, "FMUL", "100101zssss001dddd",
+                        /*IsDouble=*/false);
     return;
   case Bedrock::FMULDrr:
-    emitFpuBinaryPseudo(MI, 0x8a00);
+    emitFpuBinaryPseudo(MI, "FMUL", "100101zssss001dddd",
+                        /*IsDouble=*/true);
+    return;
+  case Bedrock::FDIVSrr:
+    emitFpuBinaryPseudo(MI, "FDIV", "100101zssss010dddd",
+                        /*IsDouble=*/false);
     return;
   case Bedrock::FDIVDrr:
-    emitFpuBinaryPseudo(MI, 0x2000);
+    emitFpuBinaryPseudo(MI, "FDIV", "100101zssss010dddd",
+                        /*IsDouble=*/true);
     return;
 #define EMIT_FUSED(NAME, PATTERN)                                            \
   case Bedrock::BEDROCK_##NAME##_S:                                          \

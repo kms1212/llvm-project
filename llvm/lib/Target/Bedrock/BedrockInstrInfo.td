@@ -608,12 +608,20 @@ def : Pat<(i32 (trunc i64:$src)), (COPY_TO_REGCLASS $src, GPR64)>;
 def FMOVDrr : BedrockPseudo<(outs FPR64:$rd), (ins FPR64:$src)>;
 
 let Constraints = "$rd = $lhs" in {
+def FADDSrr : BedrockPseudo<(outs FPR64:$rd), (ins FPR64:$lhs, FPR64:$rhs),
+                            [(set f32:$rd, (fadd f32:$lhs, f32:$rhs))]>;
 def FADDDrr : BedrockPseudo<(outs FPR64:$rd), (ins FPR64:$lhs, FPR64:$rhs),
                             [(set f64:$rd, (fadd f64:$lhs, f64:$rhs))]>;
+def FSUBSrr : BedrockPseudo<(outs FPR64:$rd), (ins FPR64:$lhs, FPR64:$rhs),
+                            [(set f32:$rd, (fsub f32:$lhs, f32:$rhs))]>;
 def FSUBDrr : BedrockPseudo<(outs FPR64:$rd), (ins FPR64:$lhs, FPR64:$rhs),
                             [(set f64:$rd, (fsub f64:$lhs, f64:$rhs))]>;
+def FMULSrr : BedrockPseudo<(outs FPR64:$rd), (ins FPR64:$lhs, FPR64:$rhs),
+                            [(set f32:$rd, (fmul f32:$lhs, f32:$rhs))]>;
 def FMULDrr : BedrockPseudo<(outs FPR64:$rd), (ins FPR64:$lhs, FPR64:$rhs),
                             [(set f64:$rd, (fmul f64:$lhs, f64:$rhs))]>;
+def FDIVSrr : BedrockPseudo<(outs FPR64:$rd), (ins FPR64:$lhs, FPR64:$rhs),
+                            [(set f32:$rd, (fdiv f32:$lhs, f32:$rhs))]>;
 def FDIVDrr : BedrockPseudo<(outs FPR64:$rd), (ins FPR64:$lhs, FPR64:$rhs),
                             [(set f64:$rd, (fdiv f64:$lhs, f64:$rhs))]>;
 } // Constraints

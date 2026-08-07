@@ -1608,7 +1608,7 @@ bool prependRepeatInstruction(unsigned Cond, unsigned RegNo,
                               SmallVectorImpl<uint8_t> &Bytes,
                               SmallVectorImpl<RawFixup> &Fixups) {
   SmallVector<uint8_t, 4> RepBytes;
-  uint32_t Payload = 0x24000 | (Cond << 4) | RegNo;
+  uint32_t Payload = 0x24000 | (Cond << 8) | RegNo;
   if (!BedrockMC::encodeMedium(Payload, {}, RepBytes))
     return false;
 
@@ -1907,6 +1907,33 @@ bool tryEncodeMediumInstruction(OperandVector &Operands,
       uint32_t Payload =
           applyPattern(Form.Pattern, EA, SizeIndex, RegNo, RegField);
       return FinishMedium(Payload, Tail, LocalFixups);
+    }
+  }
+
+  if (Operands.size() == 3 && GetOp(1).isReg() && GetOp(2).isReg()) {
+    struct FpuRRForm {
+      StringRef Mnemonic;
+      StringRef Pattern;
+    };
+    static const FpuRRForm Forms[] = {
+        {"fmov", "100100zssss110dddd"},
+        {"fadd", "100100zssss111dddd"},
+        {"fsub", "100101zssss000dddd"},
+        {"fmul", "100101zssss001dddd"},
+        {"fdiv", "100101zssss010dddd"},
+    };
+    for (const FpuRRForm &Form : Forms) {
+      unsigned Size;
+      unsigned SrcReg;
+      unsigned DstReg;
+      if (getFpuSizeSuffix(Mnemonic, Form.Mnemonic, Size) &&
+          getFRegNo(GetOp(1).getReg(), SrcReg) &&
+          getFRegNo(GetOp(2).getReg(), DstReg)) {
+        PatternFieldValue Fields[] = {
+            {'z', Size}, {'s', SrcReg}, {'d', DstReg}};
+        return encodeMediumWithTail(applyPatternValues(Form.Pattern, Fields),
+                                    {}, Bytes);
+      }
     }
   }
 
