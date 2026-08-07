@@ -4733,6 +4733,11 @@ ExprResult Sema::BuildAtomicExpr(SourceRange CallRange, SourceRange ExprRange,
 
   if (Context.getTargetInfo().getTriple().getArch() ==
       llvm::Triple::bedrock) {
+    if (!ValType->isIntegralOrEnumerationType() && !ValType->isPointerType()) {
+      Diag(ExprRange.getBegin(), diag::err_bedrock_invalid_atomic_type)
+          << ValType << Ptr->getSourceRange();
+      return ExprError();
+    }
     uint64_t Width = Context.getTypeSize(ValType);
     if (Width > 64) {
       Diag(ExprRange.getBegin(), diag::err_bedrock_wide_atomic_type)

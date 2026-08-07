@@ -10138,6 +10138,10 @@ QualType Sema::BuildAtomicType(QualType T, SourceLocation Loc) {
 
     if (Context.getTargetInfo().getTriple().getArch() ==
         llvm::Triple::bedrock) {
+      if (!T->isIntegralOrEnumerationType() && !T->isPointerType()) {
+        Diag(Loc, diag::err_bedrock_invalid_atomic_type) << T;
+        return QualType();
+      }
       if (Context.getTypeSize(T) > 64) {
         Diag(Loc, diag::err_bedrock_wide_atomic_type) << T;
         return QualType();

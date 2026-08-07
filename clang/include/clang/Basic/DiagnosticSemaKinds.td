@@ -7341,6 +7341,9 @@ def err_atomic_specifier_bad_type
             "%1 %select{|||||||which is not trivially copyable||in C23}0">;
 def err_bedrock_wide_atomic_type
     : Error<"bedrock atomic object type %0 is wider than 64 bits">;
+def err_bedrock_invalid_atomic_type
+    : Error<"bedrock atomic object type %0 is not an integer or ordinary "
+            "pointer type">;
 def err_bedrock_atomic_size
     : Error<"bedrock atomic object type %0 has unsupported size %1 bytes; "
             "only 1, 2, 4, and 8-byte objects are supported">;
