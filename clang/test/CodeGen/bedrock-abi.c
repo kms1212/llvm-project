@@ -39,7 +39,7 @@ void pass_pair(struct Pair p) {
 }
 // CHECK-LABEL: declare void @take_pair(ptr noundef byval(%struct.Pair) align 16)
 
-// CHECK-LABEL: define{{.*}} void @ret_big(ptr dead_on_unwind noalias writable sret(%struct.Big) align 8 %agg.result,
+// CHECK-LABEL: define{{.*}} void @ret_big(ptr dead_on_unwind noalias writable sret(%struct.Big) align 16 %agg.result,
 struct Big ret_big(long a, long b, long c) {
   struct Big v = {a, b, c};
   return v;
@@ -73,7 +73,7 @@ unsigned long mixed_register_classes(unsigned long count, double scale,
 }
 
 // CHECK-LABEL: define{{.*}} void @sret_register_reservation(
-// CHECK-SAME: ptr dead_on_unwind noalias writable sret(%struct.Big) align 8 %agg.result,
+// CHECK-SAME: ptr dead_on_unwind noalias writable sret(%struct.Big) align 16 %agg.result,
 // CHECK-SAME: i64 noundef %tag,
 // CHECK-SAME: i128 noundef %wide,
 // CHECK-SAME: double noundef %factor)

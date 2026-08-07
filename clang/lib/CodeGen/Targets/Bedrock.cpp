@@ -289,8 +289,9 @@ ABIArgInfo BedrockABIInfo::classifyReturnType(QualType RetTy) const {
     if (getContext().getTypeSize(RetTy) <= 128)
       return ABIArgInfo::getDirect(getSmallAggregateCoerceType(RetTy));
 
-    return getNaturalAlignIndirect(RetTy, getDataLayout().getAllocaAddrSpace(),
-                                   /*ByVal=*/false);
+    return ABIArgInfo::getIndirect(
+        CharUnits::fromQuantity(MaxAggregateAlign),
+        getDataLayout().getAllocaAddrSpace(), /*ByVal=*/false);
   }
 
   if (const auto *ED = RetTy->getAsEnumDecl())
