@@ -97,11 +97,15 @@ def BedrockCmp : SDNode<"BedrockISD::CMP", SDT_BedrockCmp, [SDNPOutGlue]>;
 def BedrockFCmp : SDNode<"BedrockISD::FCMP", SDT_BedrockFCmp,
                          [SDNPOutGlue]>;
 def BedrockStrictFCmp : SDNode<"BedrockISD::STRICT_FCMP", SDT_BedrockFCmp,
-                               [SDNPHasChain, SDNPOutGlue]>;
+                               [SDNPHasChain, SDNPOutGlue]> {
+  let IsStrictFP = true;
+}
 def BedrockFTest : SDNode<"BedrockISD::FTEST", SDT_BedrockFTest,
                           [SDNPOutGlue]>;
 def BedrockStrictFTest : SDNode<"BedrockISD::STRICT_FTEST", SDT_BedrockFTest,
-                                [SDNPHasChain, SDNPOutGlue]>;
+                                [SDNPHasChain, SDNPOutGlue]> {
+  let IsStrictFP = true;
+}
 def BedrockAnyFCmp : PatFrags<(ops node:$lhs, node:$rhs),
                               [(BedrockStrictFCmp node:$lhs, node:$rhs),
                                (BedrockFCmp node:$lhs, node:$rhs)]>;
@@ -124,7 +128,9 @@ def BedrockFPSelectTest : SDNode<"BedrockISD::FP_SELECT_TEST",
 def BedrockFPSetCC : SDNode<"BedrockISD::FP_SET_CC", SDT_BedrockFPSetCC>;
 def BedrockStrictFPSetCC
     : SDNode<"BedrockISD::STRICT_FP_SET_CC", SDT_BedrockFPSetCC,
-             [SDNPHasChain]>;
+             [SDNPHasChain]> {
+  let IsStrictFP = true;
+}
 def BedrockAnyFPSetCC
     : PatFrags<(ops node:$lhs, node:$rhs, node:$cc),
                [(BedrockStrictFPSetCC node:$lhs, node:$rhs, node:$cc),
@@ -140,6 +146,15 @@ def BedrockFClrD : SDNode<"BedrockISD::FCLR_D", SDT_BedrockFClrD>;
 def BedrockFMovCrD : SDNode<"BedrockISD::FMOVCR_D", SDT_BedrockFMovCrD>;
 def BedrockFGetExp : SDNode<"BedrockISD::FGETEXP", SDTFPUnaryOp>;
 def BedrockFGetMan : SDNode<"BedrockISD::FGETMAN", SDTFPUnaryOp>;
+def BedrockFScale : SDNode<"BedrockISD::FSCALE", SDTFPBinOp>;
+def BedrockStrictFScale : SDNode<"BedrockISD::STRICT_FSCALE", SDTFPBinOp,
+                                 [SDNPHasChain]> {
+  let IsStrictFP = true;
+}
+def BedrockAnyFScale
+    : PatFrags<(ops node:$value, node:$scale),
+               [(BedrockStrictFScale node:$value, node:$scale),
+                (BedrockFScale node:$value, node:$scale)]>;
 def BedrockFACOSA : SDNode<"BedrockISD::FACOSA", SDTFPUnaryOp>;
 def BedrockFASINA : SDNode<"BedrockISD::FASINA", SDTFPUnaryOp>;
 def BedrockFATANA : SDNode<"BedrockISD::FATANA", SDTFPUnaryOp>;
@@ -922,9 +937,13 @@ def FMAXDrr
                     [(set f64:$rd,
                           (fmaximumnum f64:$lhs, f64:$rhs))]>;
 def FSCALESrr
-    : BedrockPseudo<(outs FPR64:$rd), (ins FPR64:$lhs, FPR64:$rhs)>;
+    : BedrockPseudo<(outs FPR64:$rd), (ins FPR64:$lhs, FPR64:$rhs),
+                    [(set f32:$rd,
+                          (BedrockAnyFScale f32:$lhs, f32:$rhs))]>;
 def FSCALEDrr
-    : BedrockPseudo<(outs FPR64:$rd), (ins FPR64:$lhs, FPR64:$rhs)>;
+    : BedrockPseudo<(outs FPR64:$rd), (ins FPR64:$lhs, FPR64:$rhs),
+                    [(set f64:$rd,
+                          (BedrockAnyFScale f64:$lhs, f64:$rhs))]>;
 } // Constraints
 
 def FCOPYSIGNSrrr
@@ -976,17 +995,6 @@ def : Pat<(i32 (any_fp_to_sint f32:$src)), (FCVTStoQrr FPR64:$src)>;
 def : Pat<(i32 (any_fp_to_sint f64:$src)), (FCVTDtoQrr FPR64:$src)>;
 def : Pat<(i32 (any_fp_to_uint f32:$src)), (FCVTUStoQrr FPR64:$src)>;
 def : Pat<(i32 (any_fp_to_uint f64:$src)), (FCVTUDtoQrr FPR64:$src)>;
-
-def : Pat<(fldexp f32:$value, i32:$scale),
-          (FSCALESrr FPR64:$value,
-                     (FCVTSQSrr (EXTSQLrr GPR64:$scale)))>;
-def : Pat<(fldexp f64:$value, i32:$scale),
-          (FSCALEDrr FPR64:$value,
-                     (FCVTSQDrr (EXTSQLrr GPR64:$scale)))>;
-def : Pat<(fldexp f32:$value, i64:$scale),
-          (FSCALESrr FPR64:$value, (FCVTSQSrr GPR64:$scale))>;
-def : Pat<(fldexp f64:$value, i64:$scale),
-          (FSCALEDrr FPR64:$value, (FCVTSQDrr GPR64:$scale))>;
 
 multiclass BedrockFpuUnaryPseudo<SDPatternOperator Op> {
   def _S : BedrockPseudo<(outs FPR64:$rd), (ins FPR64:$src),

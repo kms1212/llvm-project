@@ -140,7 +140,8 @@ BedrockTargetLowering::BedrockTargetLowering(const TargetMachine &TM,
           ISD::STRICT_FSQRT, ISD::STRICT_FROUNDEVEN, ISD::STRICT_FTRUNC,
           ISD::STRICT_FCEIL, ISD::STRICT_FFLOOR, ISD::STRICT_FRINT})
       setOperationAction(Opcode, VT, Legal);
-    setOperationAction(ISD::FLDEXP, VT, Legal);
+    setOperationAction(ISD::FLDEXP, VT, Custom);
+    setOperationAction(ISD::STRICT_FLDEXP, VT, Custom);
     setOperationAction(ISD::FFREXP, VT, Custom);
     setOperationAction(ISD::IS_FPCLASS, VT, Custom);
     setOperationAction(ISD::SETCC, VT, Custom);
@@ -601,6 +602,10 @@ const char *BedrockTargetLowering::getTargetNodeName(unsigned Opcode) const {
     return "BedrockISD::FGETEXP";
   case BedrockISD::FGETMAN:
     return "BedrockISD::FGETMAN";
+  case BedrockISD::FSCALE:
+    return "BedrockISD::FSCALE";
+  case BedrockISD::STRICT_FSCALE:
+    return "BedrockISD::STRICT_FSCALE";
   case BedrockISD::FACOSA:
     return "BedrockISD::FACOSA";
   case BedrockISD::FASINA:
@@ -803,6 +808,9 @@ SDValue BedrockTargetLowering::LowerOperation(SDValue Op,
     return LowerFSHR(Op, DAG);
   case ISD::FSHL:
     return LowerFSHL(Op, DAG);
+  case ISD::FLDEXP:
+  case ISD::STRICT_FLDEXP:
+    return LowerFLDEXP(Op, DAG);
   case ISD::FFREXP:
     return LowerFFREXP(Op, DAG);
   case ISD::SADDO:
@@ -890,6 +898,37 @@ SDValue BedrockTargetLowering::LowerFSHL(SDValue Op, SelectionDAG &DAG) const {
   return DAG.getNode(BedrockISD::EXTRACT, DL, VT, Op.getOperand(0),
                      Op.getOperand(1),
                      DAG.getTargetConstant(Offset, DL, MVT::i64));
+}
+
+SDValue BedrockTargetLowering::LowerFLDEXP(SDValue Op,
+                                           SelectionDAG &DAG) const {
+  bool IsStrict = Op.getOpcode() == ISD::STRICT_FLDEXP;
+  SDLoc DL(Op);
+  SDValue Value = Op.getOperand(IsStrict ? 1 : 0);
+  SDValue Exponent = Op.getOperand(IsStrict ? 2 : 1);
+  EVT VT = Value.getValueType();
+  EVT ExponentVT = Exponent.getValueType();
+
+  // FSCALE consumes a floating-point exponent and rounds it according to the
+  // current FSTATUS mode. Clamp exponents that already guarantee overflow or
+  // underflow so the integer-to-FP conversion is exact and cannot introduce
+  // an intermediate NX exception.
+  int64_t Bound = VT == MVT::f32 ? 512 : 4096;
+  SDValue Min = DAG.getSignedConstant(-Bound, DL, ExponentVT);
+  SDValue Max = DAG.getSignedConstant(Bound, DL, ExponentVT);
+  SDValue Clamped = DAG.getNode(ISD::SMAX, DL, ExponentVT, Exponent, Min);
+  Clamped = DAG.getNode(ISD::SMIN, DL, ExponentVT, Clamped, Max);
+
+  if (!IsStrict) {
+    SDValue Scale = DAG.getNode(ISD::SINT_TO_FP, DL, VT, Clamped);
+    return DAG.getNode(BedrockISD::FSCALE, DL, VT, Value, Scale);
+  }
+
+  SDVTList VTs = DAG.getVTList(VT, MVT::Other);
+  SDValue Scale = DAG.getNode(ISD::STRICT_SINT_TO_FP, DL, VTs,
+                              Op.getOperand(0), Clamped);
+  return DAG.getNode(BedrockISD::STRICT_FSCALE, DL, VTs, Scale.getValue(1),
+                     Value, Scale);
 }
 
 SDValue BedrockTargetLowering::LowerFFREXP(SDValue Op,

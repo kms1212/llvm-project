@@ -33,6 +33,10 @@ declare float @llvm.experimental.constrained.fptrunc.f32.f64(double, metadata,
                                                               metadata)
 declare double @llvm.experimental.constrained.fpext.f64.f32(float, metadata)
 declare float @llvm.experimental.constrained.roundeven.f32(float, metadata)
+declare float @llvm.experimental.constrained.ldexp.f32.i32(float, i32,
+                                                            metadata,
+                                                            metadata)
+declare double @llvm.ldexp.f64.i64(double, i64)
 declare i1 @llvm.experimental.constrained.fcmp.f32(float, float, metadata,
                                                     metadata)
 
@@ -153,6 +157,29 @@ define float @strict_round(float %value) strictfp {
   ret float %result
 }
 
+define double @ldexp_state(double %value, i64 %exponent) {
+; CHECK-LABEL: name: ldexp_state
+; CHECK: MAXSQ3ri {{.*}}, -4096
+; CHECK-NEXT: {{.*}}MINSQ3ri {{.*}}, 4096
+; CHECK: nofpexcept FCVTSQDrr {{.*}}, implicit-def dead $fflags, implicit $fstatus, implicit $fflags
+; CHECK: nofpexcept FSCALEDrr {{.*}}, implicit-def dead $fflags, implicit $fstatus, implicit $fflags
+  %result = call double @llvm.ldexp.f64.i64(double %value, i64 %exponent)
+  ret double %result
+}
+
+define float @strict_ldexp_state(float %value, i32 %exponent) strictfp {
+; CHECK-LABEL: name: strict_ldexp_state
+; CHECK-NOT: nofpexcept
+; CHECK: MAXSL3ri {{.*}}, -512
+; CHECK-NEXT: {{.*}}MINSL3ri {{.*}}, 512
+; CHECK: FCVTSQSrr {{.*}}, implicit-def dead $fflags, implicit $fstatus, implicit $fflags
+; CHECK: FSCALESrr {{.*}}, implicit-def dead $fflags, implicit $fstatus, implicit $fflags
+  %result = call float @llvm.experimental.constrained.ldexp.f32.i32(
+      float %value, i32 %exponent, metadata !"round.dynamic",
+      metadata !"fpexcept.strict")
+  ret float %result
+}
+
 define i64 @comparison(float %lhs, float %rhs) {
 ; CHECK-LABEL: name: comparison
 ; CHECK: FCMPSrr {{.*}}, implicit-def $flags, implicit-def dead $fflags, implicit $fstatus, implicit $fflags
@@ -163,6 +190,7 @@ define i64 @comparison(float %lhs, float %rhs) {
 
 define i64 @strict_comparison(float %lhs, float %rhs) strictfp {
 ; CHECK-LABEL: name: strict_comparison
+; CHECK-NOT: nofpexcept
 ; CHECK: FCMPSrr {{.*}}, implicit-def $flags, implicit-def dead $fflags, implicit $fstatus, implicit $fflags
 ; CHECK-NEXT: {{.*}}SETCC 4, implicit $flags
   %condition = call i1 @llvm.experimental.constrained.fcmp.f32(
@@ -173,6 +201,7 @@ define i64 @strict_comparison(float %lhs, float %rhs) strictfp {
 
 define i64 @strict_compound_comparison(float %lhs, float %rhs) strictfp {
 ; CHECK-LABEL: name: strict_compound_comparison
+; CHECK-NOT: nofpexcept
 ; CHECK: FCMPSrr {{.*}}, implicit-def $flags, implicit-def $fflags, implicit $fstatus, implicit $fflags
 ; CHECK-NEXT: {{.*}}SETCC 3, implicit $flags
 ; CHECK-NEXT: {{.*}}SETCC 9, implicit $flags

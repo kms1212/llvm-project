@@ -92,6 +92,7 @@ private:
   SDValue LowerIS_FPCLASS(SDValue Op, SelectionDAG &DAG) const;
   SDValue LowerFSHR(SDValue Op, SelectionDAG &DAG) const;
   SDValue LowerFSHL(SDValue Op, SelectionDAG &DAG) const;
+  SDValue LowerFLDEXP(SDValue Op, SelectionDAG &DAG) const;
   SDValue LowerFFREXP(SDValue Op, SelectionDAG &DAG) const;
   SDValue LowerOverflow(SDValue Op, SelectionDAG &DAG) const;
   SDValue LowerVASTART(SDValue Op, SelectionDAG &DAG) const;
