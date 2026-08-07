@@ -49,7 +49,12 @@ uint64_t sysreg(uint64_t value) {
 
 // CHECK-LABEL: define{{.*}} void @cache
 // CHECK: br i1
+// CHECK: call i64 @llvm.bedrock.cpuid(i64 8590000129)
+// CHECK: and i64 %{{.*}}, 65535
+// CHECK: sub{{( nsw)?}} i64 0, %{{.*}}
+// CHECK: and i64 %{{.*}}, %{{.*}}
 // CHECK: call void @llvm.bedrock.flush.dcache(ptr %{{.*}}, i64 1)
+// CHECK: add i64 %{{.*}}, %{{.*}}
 // CHECK: call void @llvm.bedrock.invalidate.dcache(ptr %{{.*}}, i64 1)
 // CHECK: call void @llvm.bedrock.invalidate.icache(ptr %{{.*}}, i64 1)
 // CHECK: call void @llvm.bedrock.writeback.dcache(ptr %{{.*}}, i64 1)

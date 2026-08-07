@@ -198,25 +198,38 @@ Value *CodeGenFunction::EmitBedrockBuiltinExpr(unsigned BuiltinID,
     if (const auto *CI = dyn_cast<ConstantInt>(Length); CI && CI->isZero())
       return EmitCall(Intrinsic::donothing);
 
-    BasicBlock *Preheader = Builder.GetInsertBlock();
+    BasicBlock *Setup = createBasicBlock("bedrock.cache.setup");
     BasicBlock *Loop = createBasicBlock("bedrock.cache.range");
     BasicBlock *Exit = createBasicBlock("bedrock.cache.done");
     Builder.CreateCondBr(Builder.CreateICmpNE(Length, Builder.getInt64(0)),
-                         Loop, Exit);
+                         Setup, Exit);
+
+    EmitBlock(Setup);
+    constexpr uint64_t CacheTopologyGranuleSelector =
+        (uint64_t{2} << 32) | (uint64_t{1} << 16) | 1;
+    Value *Granule = EmitCall(
+        Intrinsic::bedrock_cpuid,
+        {Builder.getInt64(CacheTopologyGranuleSelector)});
+    Granule = Builder.CreateAnd(Granule, Builder.getInt64(0xffff));
+    Value *BlockMask = Builder.CreateNeg(Granule);
+    Value *AddressValue =
+        Builder.CreatePtrToInt(Address, Builder.getInt64Ty());
+    Value *FirstBlock = Builder.CreateAnd(AddressValue, BlockMask);
+    Value *LastAddress = Builder.CreateSub(
+        Builder.CreateAdd(AddressValue, Length), Builder.getInt64(1));
+    Value *LastBlock = Builder.CreateAnd(LastAddress, BlockMask);
+    Builder.CreateBr(Loop);
 
     EmitBlock(Loop);
-    PHINode *CurrentAddress = Builder.CreatePHI(Address->getType(), 2);
-    PHINode *Remaining = Builder.CreatePHI(Builder.getInt64Ty(), 2);
-    CurrentAddress->addIncoming(Address, Preheader);
-    Remaining->addIncoming(Length, Preheader);
+    PHINode *CurrentBlock = Builder.CreatePHI(Builder.getInt64Ty(), 2);
+    CurrentBlock->addIncoming(FirstBlock, Setup);
+    Value *CurrentAddress = Builder.CreateIntToPtr(CurrentBlock,
+                                                   Address->getType());
     Value *CacheOp = EmitCall(ID, {CurrentAddress, Builder.getInt64(1)});
-    Value *NextAddress = Builder.CreateGEP(Builder.getInt8Ty(), CurrentAddress,
-                                           Builder.getInt64(1));
-    Value *NextRemaining = Builder.CreateSub(Remaining, Builder.getInt64(1));
-    Builder.CreateCondBr(
-        Builder.CreateICmpNE(NextRemaining, Builder.getInt64(0)), Loop, Exit);
-    CurrentAddress->addIncoming(NextAddress, Builder.GetInsertBlock());
-    Remaining->addIncoming(NextRemaining, Builder.GetInsertBlock());
+    Value *NextBlock = Builder.CreateAdd(CurrentBlock, Granule);
+    Builder.CreateCondBr(Builder.CreateICmpEQ(CurrentBlock, LastBlock), Exit,
+                         Loop);
+    CurrentBlock->addIncoming(NextBlock, Builder.GetInsertBlock());
 
     EmitBlock(Exit);
     return CacheOp;
