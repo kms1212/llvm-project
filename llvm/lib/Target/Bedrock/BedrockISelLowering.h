@@ -33,6 +33,9 @@ public:
   bool isJumpTableRelative() const override { return true; }
   bool ShouldShrinkFPConstant(EVT VT) const override { return false; }
   bool enableAggressiveFMAFusion(EVT VT) const override;
+  bool isCheapToSpeculateCtlz(Type *Ty) const override;
+  bool isCheapToSpeculateCttz(Type *Ty) const override;
+  bool isCtlzFast() const override { return true; }
   bool isFMAFasterThanFMulAndFAdd(const MachineFunction &MF,
                                   EVT VT) const override;
   bool isFMAFasterThanFMulAndFAdd(const Function &F,
@@ -84,6 +87,10 @@ private:
   SDValue LowerSELECT_CC(SDValue Op, SelectionDAG &DAG) const;
   SDValue LowerMinMax(SDValue Op, SelectionDAG &DAG) const;
   SDValue LowerSIGN_EXTEND_INREG(SDValue Op, SelectionDAG &DAG) const;
+  SDValue LowerIS_FPCLASS(SDValue Op, SelectionDAG &DAG) const;
+  SDValue LowerFSHR(SDValue Op, SelectionDAG &DAG) const;
+  SDValue LowerFSHL(SDValue Op, SelectionDAG &DAG) const;
+  SDValue LowerSignedOverflow(SDValue Op, SelectionDAG &DAG) const;
   SDValue LowerVASTART(SDValue Op, SelectionDAG &DAG) const;
   SDValue LowerDYNAMIC_STACKALLOC(SDValue Op, SelectionDAG &DAG) const;
   SDValue LowerGlobalTLSAddress(SDValue Op, SelectionDAG &DAG) const;

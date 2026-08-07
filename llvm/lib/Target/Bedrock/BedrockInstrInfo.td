@@ -36,6 +36,8 @@ def SDT_BedrockFCmp : SDTypeProfile<0, 2, [SDTCisSameAs<0, 1>,
                                           SDTCisFP<0>]>;
 def SDT_BedrockFTest : SDTypeProfile<0, 1, [SDTCisFP<0>]>;
 def SDT_BedrockTest : SDTypeProfile<0, 1, [SDTCisInt<0>]>;
+def SDT_BedrockBTest : SDTypeProfile<0, 2, [SDTCisInt<0>,
+                                                  SDTCisVT<1, i64>]>;
 def SDT_BedrockBrCC : SDTypeProfile<0, 2, [SDTCisVT<0, OtherVT>,
                                            SDTCisVT<1, i32>]>;
 def SDT_BedrockSetCC : SDTypeProfile<1, 1, [SDTCisVT<0, i64>,
@@ -68,6 +70,8 @@ def SDT_BedrockAddress : SDTypeProfile<1, 1, [SDTCisSameAs<0, 1>]>;
 def SDT_BedrockTLSDesc : SDTypeProfile<0, 1, [SDTCisPtrTy<0>]>;
 def SDT_BedrockFClrS : SDTypeProfile<1, 0, [SDTCisVT<0, f32>]>;
 def SDT_BedrockFClrD : SDTypeProfile<1, 0, [SDTCisVT<0, f64>]>;
+def SDT_BedrockFMovCrD : SDTypeProfile<1, 1, [SDTCisVT<0, f64>,
+                                               SDTCisVT<1, i32>]>;
 
 def BedrockCall : SDNode<"BedrockISD::CALL", SDT_BedrockCall,
                          [SDNPHasChain, SDNPOptInGlue, SDNPOutGlue,
@@ -92,6 +96,8 @@ def BedrockFCmp : SDNode<"BedrockISD::FCMP", SDT_BedrockFCmp,
 def BedrockFTest : SDNode<"BedrockISD::FTEST", SDT_BedrockFTest,
                           [SDNPOutGlue]>;
 def BedrockTest : SDNode<"BedrockISD::TEST", SDT_BedrockTest, [SDNPOutGlue]>;
+def BedrockBTest : SDNode<"BedrockISD::BTEST", SDT_BedrockBTest,
+                          [SDNPOutGlue]>;
 def BedrockBrCC : SDNode<"BedrockISD::BR_CC", SDT_BedrockBrCC,
                          [SDNPHasChain, SDNPInGlue]>;
 def BedrockSetCC : SDNode<"BedrockISD::SET_CC", SDT_BedrockSetCC,
@@ -111,6 +117,10 @@ def BedrockSMaxZero : SDNode<"BedrockISD::SMAX_ZERO", SDT_BedrockUnaryInt>;
 def BedrockSMinZero : SDNode<"BedrockISD::SMIN_ZERO", SDT_BedrockUnaryInt>;
 def BedrockFClrS : SDNode<"BedrockISD::FCLR_S", SDT_BedrockFClrS>;
 def BedrockFClrD : SDNode<"BedrockISD::FCLR_D", SDT_BedrockFClrD>;
+def BedrockFMovCrD : SDNode<"BedrockISD::FMOVCR_D", SDT_BedrockFMovCrD>;
+def BedrockParity : SDNode<"ISD::PARITY", SDTIntUnaryOp>;
+def BedrockExtract : SDNode<"BedrockISD::EXTRACT", SDTIntShiftDOp>;
+def BedrockMulHSU : SDNode<"BedrockISD::MULHSU", SDT_BedrockBinaryInt>;
 def BedrockCallSeqStart : SDNode<"ISD::CALLSEQ_START",
                                  SDT_BedrockCallSeqStart,
                                  [SDNPHasChain, SDNPOutGlue]>;
@@ -562,6 +572,53 @@ def TESTQrr : BedrockRRNoOut<0x0f, "test.q">;
 }
 def : Pat<(BedrockTest i32:$src), (TESTLrr GPR64:$src, GPR64:$src)>;
 def : Pat<(BedrockTest i64:$src), (TESTQrr GPR64:$src, GPR64:$src)>;
+let isCompare = 1, hasSideEffects = 1 in {
+def BTESTLri : BedrockPseudo<(outs), (ins GPR64:$src, i64imm:$bit),
+                             [(BedrockBTest i32:$src,
+                                            (i64 timm:$bit))]>;
+def BTESTQri : BedrockPseudo<(outs), (ins GPR64:$src, i64imm:$bit),
+                             [(BedrockBTest i64:$src,
+                                            (i64 timm:$bit))]>;
+}
+
+let Constraints = "$rd = $lhs", Defs = [FLAGS], hasSideEffects = 1 in {
+def ADDCL3rr : BedrockPseudo<(outs GPR64:$rd),
+                             (ins GPR64:$lhs, GPR64:$rhs),
+                             [(set i32:$rd,
+                                   (addc i32:$lhs, i32:$rhs))]>;
+def ADDCQ3rr : BedrockPseudo<(outs GPR64:$rd),
+                             (ins GPR64:$lhs, GPR64:$rhs),
+                             [(set i64:$rd,
+                                   (addc i64:$lhs, i64:$rhs))]>;
+def SUBCL3rr : BedrockPseudo<(outs GPR64:$rd),
+                             (ins GPR64:$lhs, GPR64:$rhs),
+                             [(set i32:$rd,
+                                   (subc i32:$lhs, i32:$rhs))]>;
+def SUBCQ3rr : BedrockPseudo<(outs GPR64:$rd),
+                             (ins GPR64:$lhs, GPR64:$rhs),
+                             [(set i64:$rd,
+                                   (subc i64:$lhs, i64:$rhs))]>;
+}
+
+let Constraints = "$rd = $lhs", Uses = [FLAGS], Defs = [FLAGS],
+    hasSideEffects = 1 in {
+def ADCL3rr : BedrockPseudo<(outs GPR64:$rd),
+                            (ins GPR64:$lhs, GPR64:$rhs),
+                            [(set i32:$rd,
+                                  (adde i32:$lhs, i32:$rhs))]>;
+def ADCQ3rr : BedrockPseudo<(outs GPR64:$rd),
+                            (ins GPR64:$lhs, GPR64:$rhs),
+                            [(set i64:$rd,
+                                  (adde i64:$lhs, i64:$rhs))]>;
+def SBBL3rr : BedrockPseudo<(outs GPR64:$rd),
+                            (ins GPR64:$lhs, GPR64:$rhs),
+                            [(set i32:$rd,
+                                  (sube i32:$lhs, i32:$rhs))]>;
+def SBBQ3rr : BedrockPseudo<(outs GPR64:$rd),
+                            (ins GPR64:$lhs, GPR64:$rhs),
+                            [(set i64:$rd,
+                                  (sube i64:$lhs, i64:$rhs))]>;
+}
 def XCHGLrr : BedrockRR<0x10, "xchg.l">;
 def XCHGQrr : BedrockRR<0x11, "xchg.q">;
 def SHRLrr : BedrockRR<0x12, "shr.l">;
@@ -643,6 +700,9 @@ def BEDROCK_FCLR_S
 def BEDROCK_FCLR_D
     : BedrockPseudo<(outs FPR64:$rd), (ins),
                     [(set f64:$rd, (BedrockFClrD))]>;
+def BEDROCK_FMOVCR_D
+    : BedrockPseudo<(outs FPR64:$rd), (ins i32imm:$constant_id),
+                    [(set f64:$rd, (BedrockFMovCrD timm:$constant_id))]>;
 
 let isCompare = 1, hasSideEffects = 1 in {
 def FCMPSrr : BedrockPseudo<(outs), (ins FPR64:$lhs, FPR64:$rhs),
@@ -763,6 +823,10 @@ def FMAXDrr
     : BedrockPseudo<(outs FPR64:$rd), (ins FPR64:$lhs, FPR64:$rhs),
                     [(set f64:$rd,
                           (fmaximumnum f64:$lhs, f64:$rhs))]>;
+def FSCALESrr
+    : BedrockPseudo<(outs FPR64:$rd), (ins FPR64:$lhs, FPR64:$rhs)>;
+def FSCALEDrr
+    : BedrockPseudo<(outs FPR64:$rd), (ins FPR64:$lhs, FPR64:$rhs)>;
 } // Constraints
 
 def FCOPYSIGNSrrr
@@ -807,6 +871,17 @@ def : Pat<(i32 (fp_to_sint f32:$src)), (FCVTStoQrr FPR64:$src)>;
 def : Pat<(i32 (fp_to_sint f64:$src)), (FCVTDtoQrr FPR64:$src)>;
 def : Pat<(i32 (fp_to_uint f32:$src)), (FCVTUStoQrr FPR64:$src)>;
 def : Pat<(i32 (fp_to_uint f64:$src)), (FCVTUDtoQrr FPR64:$src)>;
+
+def : Pat<(fldexp f32:$value, i32:$scale),
+          (FSCALESrr FPR64:$value,
+                     (FCVTSQSrr (EXTSQLrr GPR64:$scale)))>;
+def : Pat<(fldexp f64:$value, i32:$scale),
+          (FSCALEDrr FPR64:$value,
+                     (FCVTSQDrr (EXTSQLrr GPR64:$scale)))>;
+def : Pat<(fldexp f32:$value, i64:$scale),
+          (FSCALESrr FPR64:$value, (FCVTSQSrr GPR64:$scale))>;
+def : Pat<(fldexp f64:$value, i64:$scale),
+          (FSCALEDrr FPR64:$value, (FCVTSQDrr GPR64:$scale))>;
 
 multiclass BedrockFpuUnaryPseudo<SDPatternOperator Op> {
   def _S : BedrockPseudo<(outs FPR64:$rd), (ins FPR64:$src),
@@ -915,6 +990,10 @@ def ABSL3r : BedrockPseudo<(outs GPR64:$rd), (ins GPR64:$src)>;
 def ABSQ3r : BedrockPseudo<(outs GPR64:$rd), (ins GPR64:$src)>;
 def NOTL3r : BedrockPseudo<(outs GPR64:$rd), (ins GPR64:$src)>;
 def NOTQ3r : BedrockPseudo<(outs GPR64:$rd), (ins GPR64:$src)>;
+def BSWAPL3r : BedrockPseudo<(outs GPR64:$rd), (ins GPR64:$src),
+                             [(set i32:$rd, (bswap i32:$src))]>;
+def BSWAPQ3r : BedrockPseudo<(outs GPR64:$rd), (ins GPR64:$src),
+                             [(set i64:$rd, (bswap i64:$src))]>;
 def SMAX_ZERO_L : BedrockPseudo<(outs GPR64:$rd), (ins GPR64:$src),
                                 [(set i32:$rd, (BedrockSMaxZero i32:$src))]>;
 def SMAX_ZERO_Q : BedrockPseudo<(outs GPR64:$rd), (ins GPR64:$src),
@@ -925,12 +1004,125 @@ def SMIN_ZERO_Q : BedrockPseudo<(outs GPR64:$rd), (ins GPR64:$src),
                                 [(set i64:$rd, (BedrockSMinZero i64:$src))]>;
 }
 
+def CLZLrr : BedrockPseudo<(outs GPR64:$rd), (ins GPR64:$src),
+                           [(set i32:$rd, (ctlz i32:$src))]>;
+def CLZQrr : BedrockPseudo<(outs GPR64:$rd), (ins GPR64:$src),
+                           [(set i64:$rd, (ctlz i64:$src))]>;
+def CTZLrr : BedrockPseudo<(outs GPR64:$rd), (ins GPR64:$src),
+                           [(set i32:$rd, (cttz i32:$src))]>;
+def CTZQrr : BedrockPseudo<(outs GPR64:$rd), (ins GPR64:$src),
+                           [(set i64:$rd, (cttz i64:$src))]>;
+def POPCNTLrr : BedrockPseudo<(outs GPR64:$rd), (ins GPR64:$src),
+                              [(set i32:$rd, (ctpop i32:$src))]>;
+def POPCNTQrr : BedrockPseudo<(outs GPR64:$rd), (ins GPR64:$src),
+                              [(set i64:$rd, (ctpop i64:$src))]>;
+def PARITYLrr : BedrockPseudo<(outs GPR64:$rd), (ins GPR64:$src),
+                              [(set i32:$rd, (BedrockParity i32:$src))]>;
+def PARITYQrr : BedrockPseudo<(outs GPR64:$rd), (ins GPR64:$src),
+                              [(set i64:$rd, (BedrockParity i64:$src))]>;
+def CLSLrr : BedrockPseudo<(outs GPR64:$rd), (ins GPR64:$src)>;
+def CLSQrr : BedrockPseudo<(outs GPR64:$rd), (ins GPR64:$src)>;
+def CTSLrr : BedrockPseudo<(outs GPR64:$rd), (ins GPR64:$src)>;
+def CTSQrr : BedrockPseudo<(outs GPR64:$rd), (ins GPR64:$src)>;
+
+def : Pat<(i32 (ctlz_zero_undef i32:$src)), (CLZLrr GPR64:$src)>;
+def : Pat<(i64 (ctlz_zero_undef i64:$src)), (CLZQrr GPR64:$src)>;
+def : Pat<(i32 (cttz_zero_undef i32:$src)), (CTZLrr GPR64:$src)>;
+def : Pat<(i64 (cttz_zero_undef i64:$src)), (CTZQrr GPR64:$src)>;
+def : Pat<(i32 (ctlz (not i32:$src))), (CLSLrr GPR64:$src)>;
+def : Pat<(i64 (ctlz (not i64:$src))), (CLSQrr GPR64:$src)>;
+def : Pat<(i32 (cttz (not i32:$src))), (CTSLrr GPR64:$src)>;
+def : Pat<(i64 (cttz (not i64:$src))), (CTSQrr GPR64:$src)>;
+def : Pat<(i32 (ctlz_zero_undef (not i32:$src))), (CLSLrr GPR64:$src)>;
+def : Pat<(i64 (ctlz_zero_undef (not i64:$src))), (CLSQrr GPR64:$src)>;
+def : Pat<(i32 (cttz_zero_undef (not i32:$src))), (CTSLrr GPR64:$src)>;
+def : Pat<(i64 (cttz_zero_undef (not i64:$src))), (CTSQrr GPR64:$src)>;
+
+let Constraints = "$rd = $lhs" in {
+def CLMULL3rr : BedrockPseudo<(outs GPR64:$rd),
+                              (ins GPR64:$lhs, GPR64:$rhs),
+                              [(set i32:$rd,
+                                    (clmul i32:$lhs, i32:$rhs))]>;
+def CLMULQ3rr : BedrockPseudo<(outs GPR64:$rd),
+                              (ins GPR64:$lhs, GPR64:$rhs),
+                              [(set i64:$rd,
+                                    (clmul i64:$lhs, i64:$rhs))]>;
+def CLMULHQ3rr : BedrockPseudo<(outs GPR64:$rd),
+                               (ins GPR64:$lhs, GPR64:$rhs),
+                               [(set i64:$rd,
+                                     (clmulh i64:$lhs, i64:$rhs))]>;
+def MULHSUQ3rr : BedrockPseudo<(outs GPR64:$rd),
+                               (ins GPR64:$lhs, GPR64:$rhs),
+                               [(set i64:$rd,
+                                     (BedrockMulHSU i64:$lhs,
+                                                     i64:$rhs))]>;
+def MULHUQ3rr : BedrockPseudo<(outs GPR64:$rd),
+                              (ins GPR64:$lhs, GPR64:$rhs),
+                              [(set i64:$rd, (mulhu i64:$lhs, i64:$rhs))]>;
+def MULHSQ3rr : BedrockPseudo<(outs GPR64:$rd),
+                              (ins GPR64:$lhs, GPR64:$rhs),
+                              [(set i64:$rd, (mulhs i64:$lhs, i64:$rhs))]>;
+}
+
+let Constraints = "$quotient = $dividend,@earlyclobber $remainder" in {
+def DIVMODULrr
+    : BedrockPseudo<(outs GPR64:$quotient, GPR64:$remainder),
+                    (ins GPR64:$dividend, GPR64:$divisor),
+                    [(set i32:$quotient, i32:$remainder,
+                          (udivrem i32:$dividend, i32:$divisor))]>;
+def DIVMODUQrr
+    : BedrockPseudo<(outs GPR64:$quotient, GPR64:$remainder),
+                    (ins GPR64:$dividend, GPR64:$divisor),
+                    [(set i64:$quotient, i64:$remainder,
+                          (udivrem i64:$dividend, i64:$divisor))]>;
+def DIVMODSLrr
+    : BedrockPseudo<(outs GPR64:$quotient, GPR64:$remainder),
+                    (ins GPR64:$dividend, GPR64:$divisor),
+                    [(set i32:$quotient, i32:$remainder,
+                          (sdivrem i32:$dividend, i32:$divisor))]>;
+def DIVMODSQrr
+    : BedrockPseudo<(outs GPR64:$quotient, GPR64:$remainder),
+                    (ins GPR64:$dividend, GPR64:$divisor),
+                    [(set i64:$quotient, i64:$remainder,
+                          (sdivrem i64:$dividend, i64:$divisor))]>;
+}
+
+let Constraints = "$rd = $low" in {
+def EXTRACTLrrri
+    : BedrockPseudo<(outs GPR64:$rd),
+                    (ins GPR64:$high, GPR64:$low, i64imm:$offset),
+                    [(set i32:$rd,
+                          (BedrockExtract i32:$high, i32:$low,
+                                          (i64 timm:$offset)))]>;
+def EXTRACTQrrri
+    : BedrockPseudo<(outs GPR64:$rd),
+                    (ins GPR64:$high, GPR64:$low, i64imm:$offset),
+                    [(set i64:$rd,
+                          (BedrockExtract i64:$high, i64:$low,
+                                          (i64 timm:$offset)))]>;
+}
+
+let Constraints = "$rd = $src" in
+def BSETL3ri : BedrockPseudo<(outs GPR64:$rd),
+                             (ins GPR64:$src, i64imm:$imm)>;
 let Constraints = "$rd = $src" in
 def BSETQ3ri : BedrockPseudo<(outs GPR64:$rd),
                              (ins GPR64:$src, i64imm:$imm)>;
 let Constraints = "$rd = $src" in
 def BSET2Q3ri : BedrockPseudo<(outs GPR64:$rd),
                               (ins GPR64:$src, i64imm:$imm0, i64imm:$imm1)>;
+let Constraints = "$rd = $src" in
+def BCLRL3ri : BedrockPseudo<(outs GPR64:$rd),
+                             (ins GPR64:$src, i64imm:$imm)>;
+let Constraints = "$rd = $src" in
+def BCLRQ3ri : BedrockPseudo<(outs GPR64:$rd),
+                             (ins GPR64:$src, i64imm:$imm)>;
+let Constraints = "$rd = $src" in
+def BCHGL3ri : BedrockPseudo<(outs GPR64:$rd),
+                             (ins GPR64:$src, i64imm:$imm)>;
+let Constraints = "$rd = $src" in
+def BCHGQ3ri : BedrockPseudo<(outs GPR64:$rd),
+                             (ins GPR64:$src, i64imm:$imm)>;
 
 let Constraints = "$rd = $lhs" in {
 let isCommutable = 1 in {

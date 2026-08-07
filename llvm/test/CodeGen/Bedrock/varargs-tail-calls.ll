@@ -127,11 +127,11 @@ define i64 @caller_frame_address_rejects_tail() {
 
 define i128 @compiler_rt_i128_cc(i64 %lhs64, i64 %rhs64) {
 ; CHECK-LABEL: compiler_rt_i128_cc:
-; CHECK: call __multi3
+; CHECK: call __divti3
 ; CHECK: ret
   %lhs = sext i64 %lhs64 to i128
   %rhs = sext i64 %rhs64 to i128
-  %result = mul i128 %lhs, %rhs
+  %result = sdiv i128 %lhs, %rhs
   ret i128 %result
 }
 
@@ -151,5 +151,5 @@ define i128 @compiler_rt_i128_cc(i64 %lhs64, i64 %rhs64) {
 ; MIR-NEXT: $r1 = COPY
 ; MIR-NEXT: $r2 = COPY
 ; MIR-NEXT: $r3 = COPY
-; MIR: CALL &__multi3
+; MIR: CALL &__divti3
 ; MIR-SAME: implicit $r0, implicit $r1, implicit $r2, implicit $r3

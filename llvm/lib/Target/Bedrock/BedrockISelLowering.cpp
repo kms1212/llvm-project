@@ -54,14 +54,22 @@ BedrockTargetLowering::BedrockTargetLowering(const TargetMachine &TM,
     setOperationAction(ISD::UMAX, VT, Custom);
     setOperationAction(ISD::UMIN, VT, Custom);
     setOperationAction(ISD::SIGN_EXTEND_INREG, VT, Custom);
-    // compiler-rt's integer helpers expose these operations after inlining.
-    // Bedrock has no dedicated instructions, so let SelectionDAG synthesize
-    // them from the legal integer operations instead of selecting an
-    // unsupported target opcode.
-    setOperationAction(ISD::CTLZ, VT, Expand);
-    setOperationAction(ISD::CTTZ, VT, Expand);
-    setOperationAction(ISD::CTPOP, VT, Expand);
-    setOperationAction(ISD::BSWAP, VT, Expand);
+    setOperationAction(ISD::CTLZ, VT, Legal);
+    setOperationAction(ISD::CTLZ_ZERO_UNDEF, VT, Legal);
+    setOperationAction(ISD::CTTZ, VT, Legal);
+    setOperationAction(ISD::CTTZ_ZERO_UNDEF, VT, Legal);
+    setOperationAction(ISD::CTPOP, VT, Legal);
+    setOperationAction(ISD::PARITY, VT, Legal);
+    setOperationAction(ISD::BSWAP, VT, Legal);
+    setOperationAction(ISD::FSHL, VT, Custom);
+    setOperationAction(ISD::FSHR, VT, Custom);
+    setOperationAction(ISD::ADDC, VT, Legal);
+    setOperationAction(ISD::ADDE, VT, Legal);
+    setOperationAction(ISD::SUBC, VT, Legal);
+    setOperationAction(ISD::SUBE, VT, Legal);
+    setOperationAction(ISD::CLMUL, VT, Legal);
+    setOperationAction(ISD::SADDO, VT, Custom);
+    setOperationAction(ISD::SSUBO, VT, Custom);
 
     setLoadExtAction(ISD::EXTLOAD, VT, MVT::i1, Promote);
     setLoadExtAction(ISD::SEXTLOAD, VT, MVT::i1, Promote);
@@ -77,8 +85,14 @@ BedrockTargetLowering::BedrockTargetLowering(const TargetMachine &TM,
   setOperationAction(ISD::MULHS, MVT::i32, Expand);
   setOperationAction(ISD::UMUL_LOHI, MVT::i32, Expand);
   setOperationAction(ISD::SMUL_LOHI, MVT::i32, Expand);
-  setOperationAction(ISD::MULHU, MVT::i64, Expand);
-  setOperationAction(ISD::MULHS, MVT::i64, Expand);
+  setOperationAction(ISD::MULHU, MVT::i64, Legal);
+  setOperationAction(ISD::MULHS, MVT::i64, Legal);
+  setOperationAction(ISD::CLMULH, MVT::i64, Legal);
+  setOperationAction(ISD::UDIVREM, MVT::i32, Legal);
+  setOperationAction(ISD::UDIVREM, MVT::i64, Legal);
+  setOperationAction(ISD::SDIVREM, MVT::i32, Legal);
+  setOperationAction(ISD::SDIVREM, MVT::i64, Legal);
+  setTargetDAGCombine({ISD::ADD, ISD::UDIV, ISD::UREM, ISD::SDIV, ISD::SREM});
   setOperationAction(ISD::UMUL_LOHI, MVT::i64, Expand);
   setOperationAction(ISD::SMUL_LOHI, MVT::i64, Expand);
   setOperationAction(ISD::SHL_PARTS, MVT::i64, Expand);
@@ -115,6 +129,8 @@ BedrockTargetLowering::BedrockTargetLowering(const TargetMachine &TM,
     setOperationAction(ISD::FCEIL, VT, Legal);
     setOperationAction(ISD::FFLOOR, VT, Legal);
     setOperationAction(ISD::FRINT, VT, Legal);
+    setOperationAction(ISD::FLDEXP, VT, Legal);
+    setOperationAction(ISD::IS_FPCLASS, VT, Custom);
     setOperationAction(ISD::SETCC, VT, Custom);
     setOperationAction(ISD::SELECT, VT, Custom);
     setOperationAction(ISD::SELECT_CC, VT, Custom);
@@ -155,6 +171,14 @@ bool BedrockTargetLowering::enableAggressiveFMAFusion(EVT VT) const {
   return VT == MVT::f32 || VT == MVT::f64;
 }
 
+bool BedrockTargetLowering::isCheapToSpeculateCtlz(Type *Ty) const {
+  return Ty->isIntegerTy(32) || Ty->isIntegerTy(64);
+}
+
+bool BedrockTargetLowering::isCheapToSpeculateCttz(Type *Ty) const {
+  return Ty->isIntegerTy(32) || Ty->isIntegerTy(64);
+}
+
 bool BedrockTargetLowering::isFMAFasterThanFMulAndFAdd(
     const MachineFunction &MF, EVT VT) const {
   return isFMAFasterThanFMulAndFAdd(
@@ -174,23 +198,201 @@ static bool isFPTRANSAConstantInPrimaryRange(SDValue Op) {
   return std::abs(Constant->getValueAPF().convertToDouble()) <= PiOverFour;
 }
 
-SDValue BedrockTargetLowering::PerformDAGCombine(
-    SDNode *N, DAGCombinerInfo &DCI) const {
+static int getFMOVCRConstantID(const APFloat &Value) {
+  uint64_t Bits = Value.bitcastToAPInt().getZExtValue();
+  switch (Bits) {
+  case 0x0000000000000000ULL:
+    return 0x0000;
+  case 0x8000000000000000ULL:
+    return 0x0001;
+  case 0x3ff0000000000000ULL:
+    return 0x0002;
+  case 0xbff0000000000000ULL:
+    return 0x0003;
+  case 0x3fe0000000000000ULL:
+    return 0x0004;
+  case 0xbfe0000000000000ULL:
+    return 0x0005;
+  case 0x4000000000000000ULL:
+    return 0x0006;
+  case 0xc000000000000000ULL:
+    return 0x0007;
+  case 0x4024000000000000ULL:
+    return 0x0008;
+  case 0xc024000000000000ULL:
+    return 0x0009;
+  case 0x400921fb54442d18ULL:
+    return 0x0010;
+  case 0x3ff921fb54442d18ULL:
+    return 0x0011;
+  case 0x3fe921fb54442d18ULL:
+    return 0x0012;
+  case 0x401921fb54442d18ULL:
+    return 0x0013;
+  case 0x3fd45f306dc9c883ULL:
+    return 0x0014;
+  case 0x3fe45f306dc9c883ULL:
+    return 0x0015;
+  case 0x3ff6a09e667f3bcdULL:
+    return 0x0016;
+  case 0x3fe6a09e667f3bccULL:
+    return 0x0017;
+  case 0x4005bf0a8b145769ULL:
+    return 0x0020;
+  case 0x3ff71547652b82feULL:
+    return 0x0021;
+  case 0x3fdbcb7b1526e50eULL:
+    return 0x0022;
+  case 0x3fe62e42fefa39efULL:
+    return 0x0023;
+  case 0x40026bb1bbb55516ULL:
+    return 0x0024;
+  case 0x400a934f0979a371ULL:
+    return 0x0025;
+  case 0x3fd34413509f79ffULL:
+    return 0x0026;
+  case 0x7ff0000000000000ULL:
+    return 0x0100;
+  case 0xfff0000000000000ULL:
+    return 0x0101;
+  case 0x7ff8000000000000ULL:
+    return 0x0102;
+  case 0xfff8000000000000ULL:
+    return 0x0103;
+  case 0x7ff0000000000001ULL:
+    return 0x0104;
+  case 0xfff0000000000001ULL:
+    return 0x0105;
+  case 0x7fefffffffffffffULL:
+    return 0x0110;
+  case 0xffefffffffffffffULL:
+    return 0x0111;
+  case 0x0010000000000000ULL:
+    return 0x0112;
+  case 0x8010000000000000ULL:
+    return 0x0113;
+  case 0x0000000000000001ULL:
+    return 0x0114;
+  case 0x8000000000000001ULL:
+    return 0x0115;
+  case 0x3cb0000000000000ULL:
+    return 0x0116;
+  case 0x000fffffffffffffULL:
+    return 0x0117;
+  case 0x800fffffffffffffULL:
+    return 0x0118;
+  default:
+    return -1;
+  }
+}
+
+SDValue BedrockTargetLowering::PerformDAGCombine(SDNode *N,
+                                                 DAGCombinerInfo &DCI) const {
   SelectionDAG &DAG = DCI.DAG;
   SDLoc DL(N);
+  switch (N->getOpcode()) {
+  case ISD::ADD: {
+    if (N->getValueType(0) != MVT::i64)
+      return {};
+
+    auto matchMixedHighMultiply = [&](SDValue High, SDValue Correction,
+                                      SDValue &Signed,
+                                      SDValue &Unsigned) -> bool {
+      if (High.getOpcode() != ISD::MULHU || Correction.getOpcode() != ISD::MUL)
+        return false;
+
+      auto matchSignMask = [](SDValue Mask, SDValue Value) {
+        if (Mask.getOpcode() != ISD::SRA || Mask.getOperand(0) != Value)
+          return false;
+        auto *Shift = dyn_cast<ConstantSDNode>(Mask.getOperand(1));
+        return Shift && Shift->getZExtValue() == 63;
+      };
+
+      SDValue HighLHS = High.getOperand(0);
+      SDValue HighRHS = High.getOperand(1);
+      SDValue CorrLHS = Correction.getOperand(0);
+      SDValue CorrRHS = Correction.getOperand(1);
+      if (matchSignMask(CorrLHS, HighLHS) && CorrRHS == HighRHS) {
+        Signed = HighLHS;
+        Unsigned = HighRHS;
+        return true;
+      }
+      if (matchSignMask(CorrRHS, HighLHS) && CorrLHS == HighRHS) {
+        Signed = HighLHS;
+        Unsigned = HighRHS;
+        return true;
+      }
+      if (matchSignMask(CorrLHS, HighRHS) && CorrRHS == HighLHS) {
+        Signed = HighRHS;
+        Unsigned = HighLHS;
+        return true;
+      }
+      if (matchSignMask(CorrRHS, HighRHS) && CorrLHS == HighLHS) {
+        Signed = HighRHS;
+        Unsigned = HighLHS;
+        return true;
+      }
+      return false;
+    };
+
+    SDValue Signed;
+    SDValue Unsigned;
+    if (matchMixedHighMultiply(N->getOperand(0), N->getOperand(1), Signed,
+                               Unsigned) ||
+        matchMixedHighMultiply(N->getOperand(1), N->getOperand(0), Signed,
+                               Unsigned))
+      return DAG.getNode(BedrockISD::MULHSU, DL, MVT::i64, Signed, Unsigned);
+    return {};
+  }
+  case ISD::UDIV:
+  case ISD::UREM:
+  case ISD::SDIV:
+  case ISD::SREM: {
+    unsigned Opcode = N->getOpcode();
+    bool IsSigned = Opcode == ISD::SDIV || Opcode == ISD::SREM;
+    bool IsDivision = Opcode == ISD::UDIV || Opcode == ISD::SDIV;
+    unsigned OtherOpcode = IsSigned ? (IsDivision ? ISD::SREM : ISD::SDIV)
+                                    : (IsDivision ? ISD::UREM : ISD::UDIV);
+    unsigned DivRemOpcode = IsSigned ? ISD::SDIVREM : ISD::UDIVREM;
+    SDValue Dividend = N->getOperand(0);
+    SDValue Divisor = N->getOperand(1);
+    for (SDNode *User : Dividend->users()) {
+      if (User == N || User->getOpcode() != OtherOpcode || User->use_empty() ||
+          User->getOperand(0) != Dividend || User->getOperand(1) != Divisor)
+        continue;
+      EVT VT = N->getValueType(0);
+      SDValue Pair = DAG.getNode(DivRemOpcode, DL, DAG.getVTList(VT, VT),
+                                 Dividend, Divisor);
+      DCI.CombineTo(User, IsDivision ? Pair.getValue(1) : Pair);
+      return IsDivision ? Pair : Pair.getValue(1);
+    }
+    return {};
+  }
+  default:
+    break;
+  }
+
   if (N->getOpcode() == ISD::ConstantFP) {
     auto *Constant = cast<ConstantFPSDNode>(N);
     EVT VT = N->getValueType(0);
-    if (Constant->getValueAPF().isPosZero()) {
+    if (Constant->getValueAPF().isZero()) {
       for (SDUse &Use : N->uses())
         if (Use.getUser()->getOpcode() == ISD::SETCC ||
             Use.getUser()->getOpcode() == ISD::BR_CC ||
             Use.getUser()->getOpcode() == ISD::SELECT_CC)
           return {};
-      if (VT == MVT::f32)
-        return DAG.getNode(BedrockISD::FCLR_S, DL, VT);
-      if (VT == MVT::f64)
-        return DAG.getNode(BedrockISD::FCLR_D, DL, VT);
+      if (Constant->getValueAPF().isPosZero()) {
+        if (VT == MVT::f32)
+          return DAG.getNode(BedrockISD::FCLR_S, DL, VT);
+        if (VT == MVT::f64)
+          return DAG.getNode(BedrockISD::FCLR_D, DL, VT);
+      }
+    }
+    if (VT == MVT::f64) {
+      int ConstantID = getFMOVCRConstantID(Constant->getValueAPF());
+      if (ConstantID >= 0)
+        return DAG.getNode(BedrockISD::FMOVCR_D, DL, VT,
+                           DAG.getTargetConstant(ConstantID, DL, MVT::i32));
     }
     return {};
   }
@@ -334,6 +536,8 @@ const char *BedrockTargetLowering::getTargetNodeName(unsigned Opcode) const {
     return "BedrockISD::FTEST";
   case BedrockISD::TEST:
     return "BedrockISD::TEST";
+  case BedrockISD::BTEST:
+    return "BedrockISD::BTEST";
   case BedrockISD::BR_CC:
     return "BedrockISD::BR_CC";
   case BedrockISD::SET_CC:
@@ -362,6 +566,12 @@ const char *BedrockTargetLowering::getTargetNodeName(unsigned Opcode) const {
     return "BedrockISD::FCLR_S";
   case BedrockISD::FCLR_D:
     return "BedrockISD::FCLR_D";
+  case BedrockISD::FMOVCR_D:
+    return "BedrockISD::FMOVCR_D";
+  case BedrockISD::EXTRACT:
+    return "BedrockISD::EXTRACT";
+  case BedrockISD::MULHSU:
+    return "BedrockISD::MULHSU";
   default:
     return nullptr;
   }
@@ -510,6 +720,15 @@ SDValue BedrockTargetLowering::LowerOperation(SDValue Op,
     return LowerMinMax(Op, DAG);
   case ISD::SIGN_EXTEND_INREG:
     return LowerSIGN_EXTEND_INREG(Op, DAG);
+  case ISD::IS_FPCLASS:
+    return LowerIS_FPCLASS(Op, DAG);
+  case ISD::FSHR:
+    return LowerFSHR(Op, DAG);
+  case ISD::FSHL:
+    return LowerFSHL(Op, DAG);
+  case ISD::SADDO:
+  case ISD::SSUBO:
+    return LowerSignedOverflow(Op, DAG);
   case ISD::VASTART:
     return LowerVASTART(Op, DAG);
   case ISD::DYNAMIC_STACKALLOC:
@@ -519,6 +738,96 @@ SDValue BedrockTargetLowering::LowerOperation(SDValue Op,
   default:
     llvm_unreachable("unhandled Bedrock lowering operation");
   }
+}
+
+SDValue BedrockTargetLowering::LowerSignedOverflow(SDValue Op,
+                                                   SelectionDAG &DAG) const {
+  SDLoc DL(Op);
+  EVT VT = Op->getValueType(0);
+  unsigned Opcode = Op.getOpcode() == ISD::SADDO ? ISD::ADDC : ISD::SUBC;
+  SDValue Arithmetic = DAG.getNode(Opcode, DL, DAG.getVTList(VT, MVT::Glue),
+                                   Op.getOperand(0), Op.getOperand(1));
+  SDValue Overflow = DAG.getNode(BedrockISD::SET_CC, DL, MVT::i64,
+                                 DAG.getConstant(/*VS=*/0x8, DL, MVT::i32),
+                                 Arithmetic.getValue(1));
+  assert(Op->getValueType(1) == MVT::i64 &&
+         "expected promoted Bedrock overflow result");
+  return DAG.getMergeValues({Arithmetic, Overflow}, DL);
+}
+
+SDValue BedrockTargetLowering::LowerFSHR(SDValue Op, SelectionDAG &DAG) const {
+  auto *Amount = dyn_cast<ConstantSDNode>(Op.getOperand(2));
+  if (!Amount)
+    return expandFunnelShift(Op.getNode(), DAG);
+
+  SDLoc DL(Op);
+  EVT VT = Op.getValueType();
+  uint64_t Offset = Amount->getZExtValue() % VT.getSizeInBits();
+  return DAG.getNode(BedrockISD::EXTRACT, DL, VT, Op.getOperand(0),
+                     Op.getOperand(1),
+                     DAG.getTargetConstant(Offset, DL, MVT::i64));
+}
+
+SDValue BedrockTargetLowering::LowerFSHL(SDValue Op, SelectionDAG &DAG) const {
+  auto *Amount = dyn_cast<ConstantSDNode>(Op.getOperand(2));
+  if (!Amount)
+    return expandFunnelShift(Op.getNode(), DAG);
+
+  SDLoc DL(Op);
+  EVT VT = Op.getValueType();
+  uint64_t Width = VT.getSizeInBits();
+  uint64_t Shift = Amount->getZExtValue() % Width;
+  uint64_t Offset = Shift == 0 ? Width : Width - Shift;
+  return DAG.getNode(BedrockISD::EXTRACT, DL, VT, Op.getOperand(0),
+                     Op.getOperand(1),
+                     DAG.getTargetConstant(Offset, DL, MVT::i64));
+}
+
+static unsigned getBedrockFClassMask(unsigned Test) {
+  unsigned Mask = 0;
+  if (Test & fcNegInf)
+    Mask |= 1u << 0;
+  if (Test & fcNegNormal)
+    Mask |= 1u << 1;
+  if (Test & fcNegSubnormal)
+    Mask |= 1u << 2;
+  if (Test & fcNegZero)
+    Mask |= 1u << 3;
+  if (Test & fcPosZero)
+    Mask |= 1u << 4;
+  if (Test & fcPosSubnormal)
+    Mask |= 1u << 5;
+  if (Test & fcPosNormal)
+    Mask |= 1u << 6;
+  if (Test & fcPosInf)
+    Mask |= 1u << 7;
+  if (Test & fcSNan)
+    Mask |= 1u << 8;
+  if (Test & fcQNan)
+    Mask |= 1u << 9;
+  return Mask;
+}
+
+SDValue BedrockTargetLowering::LowerIS_FPCLASS(SDValue Op,
+                                               SelectionDAG &DAG) const {
+  SDLoc DL(Op);
+  SDValue Value = Op.getOperand(0);
+  auto *Test = cast<ConstantSDNode>(Op.getOperand(1));
+  Intrinsic::ID IID = Value.getValueType() == MVT::f32
+                          ? Intrinsic::bedrock_fclass_f32
+                          : Intrinsic::bedrock_fclass_f64;
+  SDValue ID = DAG.getConstant(IID, DL, MVT::i32);
+  SDValue Class =
+      DAG.getNode(ISD::INTRINSIC_WO_CHAIN, DL, MVT::i64, {ID, Value});
+  SDValue Masked =
+      DAG.getNode(ISD::AND, DL, MVT::i64, Class,
+                  DAG.getConstant(getBedrockFClassMask(Test->getZExtValue()),
+                                  DL, MVT::i64));
+  SDValue Result = DAG.getSetCC(DL, MVT::i64, Masked,
+                                DAG.getConstant(0, DL, MVT::i64), ISD::SETNE);
+  if (Op.getValueType() == MVT::i64)
+    return Result;
+  return DAG.getNode(ISD::TRUNCATE, DL, Op.getValueType(), Result);
 }
 
 SDValue
@@ -551,6 +860,29 @@ static SDValue emitCompare(SDValue LHS, SDValue RHS, const SDLoc &DL,
   if (isNullConstant(RHS))
     return DAG.getNode(BedrockISD::TEST, DL, MVT::Glue, LHS);
   return DAG.getNode(BedrockISD::CMP, DL, MVT::Glue, LHS, RHS);
+}
+
+static SDValue emitSingleBitCompare(SDValue LHS, SDValue RHS, ISD::CondCode CC,
+                                    const SDLoc &DL, SelectionDAG &DAG) {
+  if (CC != ISD::SETEQ && CC != ISD::SETNE)
+    return {};
+  if (isNullConstant(LHS))
+    std::swap(LHS, RHS);
+  if (!isNullConstant(RHS) || LHS.getOpcode() != ISD::AND)
+    return {};
+
+  SDValue Value = LHS.getOperand(0);
+  auto *Mask = dyn_cast<ConstantSDNode>(LHS.getOperand(1));
+  if (!Mask) {
+    Value = LHS.getOperand(1);
+    Mask = dyn_cast<ConstantSDNode>(LHS.getOperand(0));
+  }
+  if (!Mask || !Mask->getAPIntValue().isPowerOf2())
+    return {};
+
+  unsigned Bit = Mask->getAPIntValue().countr_zero();
+  return DAG.getNode(BedrockISD::BTEST, DL, MVT::Glue, Value,
+                     DAG.getTargetConstant(Bit, DL, MVT::i64));
 }
 
 static SDValue lowerFPSetCC(SDValue LHS, SDValue RHS, ISD::CondCode CC,
@@ -619,7 +951,9 @@ SDValue BedrockTargetLowering::LowerBR_CC(SDValue Op, SelectionDAG &DAG) const {
   }
 
   SDValue TargetCC = DAG.getConstant(getBedrockCondCode(CC), DL, MVT::i32);
-  SDValue Glue = emitCompare(LHS, RHS, DL, DAG);
+  SDValue Glue = emitSingleBitCompare(LHS, RHS, CC, DL, DAG);
+  if (!Glue)
+    Glue = emitCompare(LHS, RHS, DL, DAG);
   return DAG.getNode(BedrockISD::BR_CC, DL, Op.getValueType(), Chain, Dest,
                      TargetCC, Glue);
 }
@@ -634,7 +968,9 @@ SDValue BedrockTargetLowering::LowerSETCC(SDValue Op, SelectionDAG &DAG) const {
     return lowerFPSetCC(LHS, RHS, CC, DL, DAG);
 
   SDValue TargetCC = DAG.getConstant(getBedrockCondCode(CC), DL, MVT::i32);
-  SDValue Glue = emitCompare(LHS, RHS, DL, DAG);
+  SDValue Glue = emitSingleBitCompare(LHS, RHS, CC, DL, DAG);
+  if (!Glue)
+    Glue = emitCompare(LHS, RHS, DL, DAG);
   return DAG.getNode(BedrockISD::SET_CC, DL, Op.getValueType(), TargetCC, Glue);
 }
 

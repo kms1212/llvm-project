@@ -306,24 +306,40 @@ static bool isShiftOrRotateOpcode(unsigned Opcode) {
   }
 }
 
-static bool selectBSetImmediate(SelectionDAG *DAG, SDNode *N, SDLoc DL,
-                                MVT VT, SDValue Value,
-                                const ConstantSDNode *CN) {
-  if (N->getOpcode() != ISD::OR || VT != MVT::i64)
-    return false;
-
+static bool selectBitModifyImmediate(SelectionDAG *DAG, SDNode *N, SDLoc DL,
+                                     MVT VT, SDValue Value,
+                                     const ConstantSDNode *CN) {
   const APInt &Imm = CN->getAPIntValue();
-  if (Imm.isPowerOf2()) {
-    unsigned Bit = Imm.countr_zero();
+  APInt BitMask = N->getOpcode() == ISD::AND ? ~Imm : Imm;
+  if (BitMask.isPowerOf2() &&
+      (N->getOpcode() == ISD::OR || N->getOpcode() == ISD::AND ||
+       N->getOpcode() == ISD::XOR)) {
+    unsigned Bit = BitMask.countr_zero();
     if (!isUInt<6>(Bit))
       return false;
 
+    bool Is64 = VT == MVT::i64;
+    unsigned Pseudo;
+    switch (N->getOpcode()) {
+    case ISD::OR:
+      Pseudo = Is64 ? Bedrock::BSETQ3ri : Bedrock::BSETL3ri;
+      break;
+    case ISD::AND:
+      Pseudo = Is64 ? Bedrock::BCLRQ3ri : Bedrock::BCLRL3ri;
+      break;
+    case ISD::XOR:
+      Pseudo = Is64 ? Bedrock::BCHGQ3ri : Bedrock::BCHGL3ri;
+      break;
+    default:
+      llvm_unreachable("unexpected Bedrock bit modification opcode");
+    }
     SDValue Ops[] = {Value, DAG->getTargetConstant(Bit, DL, MVT::i64)};
-    DAG->SelectNodeTo(N, Bedrock::BSETQ3ri, VT, Ops);
+    DAG->SelectNodeTo(N, Pseudo, VT, Ops);
     return true;
   }
 
-  if (Imm.popcount() != 2 || isInt<32>(CN->getSExtValue()))
+  if (N->getOpcode() != ISD::OR || VT != MVT::i64 || Imm.popcount() != 2 ||
+      isInt<32>(CN->getSExtValue()))
     return false;
 
   APInt Remaining = Imm;
@@ -346,7 +362,7 @@ static bool selectBinaryImmediate(SelectionDAG *DAG, SDNode *N, SDLoc DL,
   SDValue RHS = N->getOperand(1);
 
   if (auto *CN = dyn_cast<ConstantSDNode>(RHS)) {
-    if (selectBSetImmediate(DAG, N, DL, VT, LHS, CN))
+    if (selectBitModifyImmediate(DAG, N, DL, VT, LHS, CN))
       return true;
 
     int64_t Imm = CN->getSExtValue();
@@ -362,7 +378,7 @@ static bool selectBinaryImmediate(SelectionDAG *DAG, SDNode *N, SDLoc DL,
     return false;
 
   if (auto *CN = dyn_cast<ConstantSDNode>(LHS)) {
-    if (selectBSetImmediate(DAG, N, DL, VT, RHS, CN))
+    if (selectBitModifyImmediate(DAG, N, DL, VT, RHS, CN))
       return true;
 
     int64_t Imm = CN->getSExtValue();

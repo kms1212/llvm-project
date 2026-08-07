@@ -224,6 +224,57 @@ def check_retired_profiles(llvm_root: Path, isa_root: Path) -> str:
     return "retired profiles: C far pointers and far ELF ABI absent"
 
 
+def check_fmovcr_constants(llvm_root: Path, isa_root: Path) -> str:
+    values = load_yaml(isa_root / "isa/defs/extensions/fpu/operands.yaml")[
+        "operand_types"
+    ]["fconst_id"]["values"]
+    expected = {
+        int(entry["value_bits"], 0): int(entry["value"], 0) for entry in values
+    }
+    lowering = (
+        llvm_root / "llvm/lib/Target/Bedrock/BedrockISelLowering.cpp"
+    ).read_text(encoding="utf-8")
+    function = re.search(
+        r"static int getFMOVCRConstantID\(.*?\n\}", lowering, re.DOTALL
+    )
+    require(function is not None, "LLVM has no FMOVCR constant mapping")
+    actual = {
+        int(bits, 0): int(constant_id, 0)
+        for bits, constant_id in re.findall(
+            r"case\s+(0x[0-9a-fA-F]+)ULL:\s*return\s+(0x[0-9a-fA-F]+);",
+            function.group(0),
+        )
+    }
+    require(
+        actual == expected,
+        "LLVM and specification FMOVCR constant maps differ",
+    )
+    return f"FMOVCR constants: {len(expected)} binary64 mappings"
+
+
+def check_elf_relocations(llvm_root: Path, isa_root: Path) -> str:
+    entries = load_yaml(isa_root / "isa/abi/abi_tables.yaml")["elf_abi"][
+        "relocations"
+    ]
+    expected = {entry["name"]: int(entry["id"]) for entry in entries}
+    definitions = (
+        llvm_root / "llvm/include/llvm/BinaryFormat/ELFRelocs/Bedrock.def"
+    ).read_text(encoding="utf-8")
+    actual = {
+        name: int(relocation_id)
+        for name, relocation_id in re.findall(
+            r"^ELF_RELOC\((R_BEDROCK_[A-Z0-9_]+),\s*(\d+)\)$",
+            definitions,
+            re.MULTILINE,
+        )
+    }
+    require(
+        actual == expected,
+        "LLVM and specification ELF relocation maps differ",
+    )
+    return f"ELF relocations: {len(expected)} assignments"
+
+
 def load_spec_forms(isa_root: Path) -> tuple[dict[str, str], dict[str, dict]]:
     by_bits: dict[str, str] = {}
     by_reference: dict[str, dict] = {}
@@ -244,7 +295,7 @@ def load_spec_forms(isa_root: Path) -> tuple[dict[str, str], dict[str, dict]]:
 
 def source_patterns(path: Path) -> set[str]:
     text = path.read_text(encoding="utf-8")
-    candidates = re.findall(r'''["']([01][01A-Za-z]{7,})["']''', text)
+    candidates = re.findall(r'''["']([01][01A-Za-z]{6,})["']''', text)
     return {
         candidate
         for candidate in candidates
@@ -484,6 +535,8 @@ def main() -> int:
             check_register_map,
             check_builtins,
             check_retired_profiles,
+            check_fmovcr_constants,
+            check_elf_relocations,
             check_mc_forms,
             check_plt,
         )

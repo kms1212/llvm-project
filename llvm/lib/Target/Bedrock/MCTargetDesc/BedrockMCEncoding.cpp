@@ -117,12 +117,17 @@ const char *getMemoryOrderName(unsigned Order) {
   }
 }
 
+bool matchPattern(StringRef Pattern, uint32_t Payload);
+unsigned extractPatternField(StringRef Pattern, uint32_t Payload, char Field);
+
 bool isRepPayload(uint32_t Payload) {
-  return (Payload & 0x3f0f0) == 0x24000 && ((Payload >> 8) & 0xf) != 0x1;
+  constexpr StringLiteral Pattern = "100100cccc0000rrrr";
+  return matchPattern(Pattern, Payload) &&
+         extractPatternField(Pattern, Payload, 'c') != 0x1;
 }
 
 bool isRepgPayload(uint32_t Payload) {
-  return (Payload & 0x3fff0) == 0x2680;
+  return matchPattern("00001001101000rrrr", Payload);
 }
 
 const char *getSRegName(unsigned Reg) {
@@ -286,37 +291,39 @@ void appendExt0Index(SmallVectorImpl<char> &Text, unsigned Mode, unsigned Reg) {
 
 bool decodeExtraShortPayload(uint8_t Payload, SmallString<128> &Text) {
   struct FixedForm {
-    uint8_t Payload;
+    StringRef Pattern;
     StringRef Mnemonic;
   };
 
   static const FixedForm FixedForms[] = {
-      {0x00, "illegal"}, {0x01, "nop"},    {0x02, "ret"},
-      {0x03, "lret"},    {0x04, "eret"},   {0x05, "syscall"},
-      {0x06, "sysret"},  {0x07, "bkpt"},   {0x08, "wait"},
-      {0x09, "yield"},   {0x0a, "rfence"}, {0x0b, "wfence"},
-      {0x0c, "afence"},  {0x0e, "add.q\t8, sp"},
-      {0x0f, "sub.q\t8, sp"},
+      {"0000000", "illegal"},      {"0000001", "nop"},
+      {"0000010", "ret"},          {"0000011", "lret"},
+      {"0000100", "eret"},         {"0000101", "syscall"},
+      {"0000110", "sysret"},       {"0000111", "bkpt"},
+      {"0001000", "wait"},         {"0001001", "yield"},
+      {"0001010", "rfence"},       {"0001011", "wfence"},
+      {"0001100", "afence"},       {"0001101", "push\tcs"},
+      {"0001110", "add.q\t8, sp"}, {"0001111", "sub.q\t8, sp"},
   };
 
   for (const FixedForm &Form : FixedForms) {
-    if (Payload == Form.Payload) {
+    if (matchPattern(Form.Pattern, Payload)) {
       Text = Form.Mnemonic;
       return true;
     }
   }
 
-  if (Payload == 0x0d) {
-    Text = "push\tcs";
+  constexpr StringLiteral PushPPattern = "0010iii";
+  if (matchPattern(PushPPattern, Payload)) {
+    Text =
+        formatv("pushp\t{0}", extractPatternField(PushPPattern, Payload, 'i'))
+            .str();
     return true;
   }
-
-  if ((Payload & 0x78) == 0x10) {
-    Text = formatv("pushp\t{0}", Payload & 0x7).str();
-    return true;
-  }
-  if ((Payload & 0x78) == 0x18) {
-    Text = formatv("popp\t{0}", Payload & 0x7).str();
+  constexpr StringLiteral PopPPattern = "0011iii";
+  if (matchPattern(PopPPattern, Payload)) {
+    Text = formatv("popp\t{0}", extractPatternField(PopPPattern, Payload, 'i'))
+               .str();
     return true;
   }
   constexpr StringLiteral FPushPPattern = "1110iii";
@@ -334,85 +341,103 @@ bool decodeExtraShortPayload(uint8_t Payload, SmallString<128> &Text) {
     return true;
   }
 
-  unsigned Reg = Payload & 0xf;
-  switch (Payload >> 4) {
-  case 0x2:
-    Text = formatv("push\tr{0}", Reg).str();
+  struct RegForm {
+    StringRef Pattern;
+    StringRef Format;
+  };
+  static const RegForm RegForms[] = {
+      {"010rrrr", "push\tr{0}"},      {"011rrrr", "pop\tr{0}"},
+      {"100rrrr", "mov.q\tr{0}, sp"}, {"101rrrr", "mov.q\tsp, r{0}"},
+      {"110rrrr", "clr.q\tr{0}"},
+  };
+  for (const RegForm &Form : RegForms) {
+    if (!matchPattern(Form.Pattern, Payload))
+      continue;
+    Text = formatv(Form.Format.data(),
+                   extractPatternField(Form.Pattern, Payload, 'r'))
+               .str();
     return true;
-  case 0x3:
-    Text = formatv("pop\tr{0}", Reg).str();
-    return true;
-  case 0x4:
-    Text = formatv("mov.q\tr{0}, sp", Reg).str();
-    return true;
-  case 0x5:
-    Text = formatv("mov.q\tsp, r{0}", Reg).str();
-    return true;
-  case 0x6:
-    Text = formatv("clr.q\tr{0}", Reg).str();
-    return true;
-  default:
-    return false;
   }
+  return false;
 }
 
 bool decodeShortPayload(uint16_t Payload, SmallString<128> &Text) {
   struct FixedForm {
-    uint16_t Payload;
+    StringRef Pattern;
     StringRef Mnemonic;
   };
 
   static const FixedForm FixedForms[] = {
-      {0x2049, "halt"},
-      {0x204e, "reset"},
+      {"10000001001001", "halt"},
+      {"10000001001110", "reset"},
   };
 
   for (const FixedForm &Form : FixedForms) {
-    if (Payload == Form.Payload) {
+    if (matchPattern(Form.Pattern, Payload)) {
       Text = Form.Mnemonic;
       return true;
     }
   }
 
-  if ((Payload & 0x3ff8) == 0x2280 ||
-      (Payload & 0x3ff8) == 0x2288) {
-    const char *SReg = getSRegName(Payload & 0x7);
+  struct SRegForm {
+    StringRef Pattern;
+    StringRef Mnemonic;
+  };
+  static const SRegForm SRegForms[] = {
+      {"10001010000sss", "push"},
+      {"10001010001sss", "pop"},
+  };
+  for (const SRegForm &Form : SRegForms) {
+    if (!matchPattern(Form.Pattern, Payload))
+      continue;
+    const char *SReg =
+        getSRegName(extractPatternField(Form.Pattern, Payload, 's'));
     if (!SReg)
       return false;
-    Text = formatv("{0}\t{1}", (Payload & 0x8) ? "pop" : "push", SReg).str();
+    Text = formatv("{0}\t{1}", Form.Mnemonic, SReg).str();
     return true;
   }
 
-  static const char *RRForms[] = {
-      "mov.l",   "mov.q",   "add.l",   "add.q",   "sub.l", "sub.q", "cmp.l",
-      "cmp.q",   "and.l",   "and.q",   "or.l",    "or.q",  "xor.l", "xor.q",
-      "test.l",  "test.q",  "xchg.l",  "xchg.q",  "shr.l", "shr.q", "shl.l",
-      "shl.q",   "ror.l",   "ror.q",   "rol.l",   "rol.q", "sar.l", "sar.q",
-      "extzl.b", "extzl.w", "extsl.b", "extsl.w",
+  struct RRForm {
+    StringRef Pattern;
+    StringRef Base;
+    StringRef Suffixes;
   };
-
-  unsigned Op6 = Payload >> 8;
-  if (Op6 < std::size(RRForms)) {
-    Text = formatv("{0}\tr{1}, r{2}", RRForms[Op6], (Payload >> 4) & 0xf,
-                   Payload & 0xf)
+  static const RRForm RRForms[] = {
+      {"00000zssssdddd", "mov", "lq"},   {"00001zssssdddd", "add", "lq"},
+      {"00010zssssdddd", "sub", "lq"},   {"00011zssssdddd", "cmp", "lq"},
+      {"00100zssssdddd", "and", "lq"},   {"00101zssssdddd", "or", "lq"},
+      {"00110zssssdddd", "xor", "lq"},   {"00111zssssdddd", "test", "lq"},
+      {"01000zssssdddd", "xchg", "lq"},  {"01001zssssdddd", "shr", "lq"},
+      {"01010zssssdddd", "shl", "lq"},   {"01011zssssdddd", "ror", "lq"},
+      {"01100zssssdddd", "rol", "lq"},   {"01101zssssdddd", "sar", "lq"},
+      {"01110zssssdddd", "extzl", "bw"}, {"01111zssssdddd", "extsl", "bw"},
+      {"101000ssssdddd", "extzq", "l"},  {"101001ssssdddd", "extsq", "l"},
+  };
+  for (const RRForm &Form : RRForms) {
+    if (!matchPattern(Form.Pattern, Payload))
+      continue;
+    unsigned Size = Form.Pattern.contains('z')
+                        ? extractPatternField(Form.Pattern, Payload, 'z')
+                        : 0;
+    char Suffix = Form.Suffixes[Size];
+    Text = formatv("{0}.{1}\tr{2}, r{3}", Form.Base, Suffix,
+                   extractPatternField(Form.Pattern, Payload, 's'),
+                   extractPatternField(Form.Pattern, Payload, 'd'))
                .str();
     return true;
   }
-  if (Op6 == 0x28 || Op6 == 0x29) {
-    Text = formatv("{0}\tr{1}, r{2}", Op6 == 0x28 ? "extzq.l" : "extsq.l",
-                   (Payload >> 4) & 0xf, Payload & 0xf)
+
+  constexpr StringLiteral SetPattern = "100001rrrr0000";
+  if (matchPattern(SetPattern, Payload)) {
+    Text = formatv("set\tr{0}", extractPatternField(SetPattern, Payload, 'r'))
                .str();
     return true;
   }
-
-  unsigned LowReg = Payload & 0xf;
-  if ((Payload & 0x3f00) == 0x2100) {
-    unsigned Reg = (Payload >> 4) & 0xf;
-    unsigned Cond = Payload & 0xf;
-    if (Cond == 0) {
-      Text = formatv("set\tr{0}", Reg).str();
-      return true;
-    }
+  constexpr StringLiteral SetCCPattern = "100001rrrrcccc";
+  if (matchPattern(SetCCPattern, Payload)) {
+    unsigned Reg = extractPatternField(SetCCPattern, Payload, 'r');
+    unsigned Cond = extractPatternField(SetCCPattern, Payload, 'c');
     const char *CondName = getCondName(Cond);
     if (!CondName)
       return false;
@@ -421,41 +446,57 @@ bool decodeShortPayload(uint16_t Payload, SmallString<128> &Text) {
   }
 
   struct UnaryForm {
-    uint16_t Prefix;
+    StringRef Pattern;
     StringRef Mnemonic;
+    StringRef Suffixes;
   };
   static const UnaryForm UnaryForms[] = {
-      {0x220, "inc.l"},     {0x230, "inc.q"},     {0x221, "dec.l"},
-      {0x231, "dec.q"},     {0x222, "neg.l"},     {0x232, "neg.q"},
-      {0x223, "clr.l"},     {0x224, "abs.l"},
-      {0x234, "abs.q"},     {0x225, "not.l"},     {0x235, "not.q"},
-      {0x229, "revbyte.w"}, {0x22a, "revbyte.l"}, {0x22b, "revbyte.q"},
+      {"10001z0000rrrr", "inc", "lq"},    {"10001z0001rrrr", "dec", "lq"},
+      {"10001z0010rrrr", "neg", "lq"},    {"1000100011rrrr", "clr", "l"},
+      {"10001z0100rrrr", "abs", "lq"},    {"10001z0101rrrr", "not", "lq"},
+      {"1000101001rrrr", "revbyte", "w"}, {"1000101010rrrr", "revbyte", "l"},
+      {"1000101011rrrr", "revbyte", "q"},
   };
   for (const UnaryForm &Form : UnaryForms) {
-    if ((Payload >> 4) == Form.Prefix) {
-      Text = formatv("{0}\tr{1}", Form.Mnemonic, LowReg).str();
-      return true;
-    }
+    if (!matchPattern(Form.Pattern, Payload))
+      continue;
+    unsigned Size = Form.Pattern.contains('z')
+                        ? extractPatternField(Form.Pattern, Payload, 'z')
+                        : 0;
+    Text = formatv("{0}.{1}\tr{2}", Form.Mnemonic, Form.Suffixes[Size],
+                   extractPatternField(Form.Pattern, Payload, 'r'))
+               .str();
+    return true;
   }
 
-  int64_t Imm8 = signExtend(Payload & 0xff, 8);
-  if (Op6 == 0x2f) {
-    Text = formatv("add.q\t{0}, sp", Payload & 0xff).str();
+  constexpr StringLiteral AddSPPattern = "101111iiiiiiii";
+  if (matchPattern(AddSPPattern, Payload)) {
+    Text = formatv("add.q\t{0}, sp",
+                   extractPatternField(AddSPPattern, Payload, 'i'))
+               .str();
     return true;
   }
-  if (Op6 == 0x30) {
-    Text = formatv("jmp\t{0}", Imm8).str();
+  constexpr StringLiteral JmpPattern = "110000iiiiiiii";
+  if (matchPattern(JmpPattern, Payload)) {
+    int64_t Imm = signExtend(extractPatternField(JmpPattern, Payload, 'i'), 8);
+    Text = formatv("jmp\t{0}", Imm).str();
     return true;
   }
-  if (Op6 == 0x31) {
-    Text = formatv("sub.q\t{0}, sp", Payload & 0xff).str();
+  constexpr StringLiteral SubSPPattern = "110001iiiiiiii";
+  if (matchPattern(SubSPPattern, Payload)) {
+    Text = formatv("sub.q\t{0}, sp",
+                   extractPatternField(SubSPPattern, Payload, 'i'))
+               .str();
     return true;
   }
-  if (Op6 >= 0x32 && Op6 <= 0x3f) {
-    const char *Cond = getCondName(Op6 & 0xf);
+  constexpr StringLiteral JCCPattern = "11cccciiiiiiii";
+  if (matchPattern(JCCPattern, Payload)) {
+    unsigned CondValue = extractPatternField(JCCPattern, Payload, 'c');
+    const char *Cond = getCondName(CondValue);
     if (!Cond)
       return false;
-    Text = formatv("j{0}\t{1}", Cond, Imm8).str();
+    int64_t Imm = signExtend(extractPatternField(JCCPattern, Payload, 'i'), 8);
+    Text = formatv("j{0}\t{1}", Cond, Imm).str();
     return true;
   }
 
@@ -1107,12 +1148,16 @@ bool decodeMediumPayload(uint32_t Payload, ArrayRef<uint8_t> Tail,
   if (decodeMediumRRExt(Payload, Tail, Text))
     return true;
 
-  if ((Payload & 0x3fff0) == 0x2d80) {
-    Text = formatv("setf\t{0}", Payload & 0xf).str();
+  constexpr StringLiteral SetFPattern = "00001011011000mmmm";
+  if (matchPattern(SetFPattern, Payload)) {
+    Text = formatv("setf\t{0}", extractPatternField(SetFPattern, Payload, 'm'))
+               .str();
     return true;
   }
-  if ((Payload & 0x3fff0) == 0x2580) {
-    Text = formatv("clrf\t{0}", Payload & 0xf).str();
+  constexpr StringLiteral ClrFPattern = "00001001011000mmmm";
+  if (matchPattern(ClrFPattern, Payload)) {
+    Text = formatv("clrf\t{0}", extractPatternField(ClrFPattern, Payload, 'm'))
+               .str();
     return true;
   }
 
@@ -1132,14 +1177,16 @@ bool decodeMediumPayload(uint32_t Payload, ArrayRef<uint8_t> Tail,
     return true;
   }
 
-  if (Payload == 0x2600) {
+  constexpr StringLiteral Jmp16Pattern = "000010011000000000";
+  if (matchPattern(Jmp16Pattern, Payload)) {
     if (!NeedTail(2))
       return false;
     Text = "jmp\t";
     appendSignedImm(Text, Tail, 2);
     return true;
   }
-  if (Payload == 0x6600) {
+  constexpr StringLiteral Jmp32Pattern = "000110011000000000";
+  if (matchPattern(Jmp32Pattern, Payload)) {
     if (!NeedTail(4))
       return false;
     Text = "jmp\t";
@@ -1147,16 +1194,20 @@ bool decodeMediumPayload(uint32_t Payload, ArrayRef<uint8_t> Tail,
     return true;
   }
 
-  if ((Payload & 0x3fff0) == 0x2600) {
-    const char *Cond = getCondName(Payload & 0xf);
+  constexpr StringLiteral JCC16Pattern = "00001001100000cccc";
+  if (matchPattern(JCC16Pattern, Payload)) {
+    const char *Cond =
+        getCondName(extractPatternField(JCC16Pattern, Payload, 'c'));
     if (!Cond || !NeedTail(2))
       return false;
     Text = formatv("j{0}\t", Cond).str();
     appendSignedImm(Text, Tail, 2);
     return true;
   }
-  if ((Payload & 0x3fff0) == 0x6600) {
-    const char *Cond = getCondName(Payload & 0xf);
+  constexpr StringLiteral JCC32Pattern = "00011001100000cccc";
+  if (matchPattern(JCC32Pattern, Payload)) {
+    const char *Cond =
+        getCondName(extractPatternField(JCC32Pattern, Payload, 'c'));
     if (!Cond || !NeedTail(4))
       return false;
     Text = formatv("j{0}\t", Cond).str();
@@ -1164,14 +1215,16 @@ bool decodeMediumPayload(uint32_t Payload, ArrayRef<uint8_t> Tail,
     return true;
   }
 
-  if (Payload == 0xa600) {
+  constexpr StringLiteral Call16Pattern = "001010011000000000";
+  if (matchPattern(Call16Pattern, Payload)) {
     if (!NeedTail(2))
       return false;
     Text = "call\t";
     appendSignedImm(Text, Tail, 2);
     return true;
   }
-  if (Payload == 0xe600) {
+  constexpr StringLiteral Call32Pattern = "001110011000000000";
+  if (matchPattern(Call32Pattern, Payload)) {
     if (!NeedTail(4))
       return false;
     Text = "call\t";
@@ -1179,16 +1232,20 @@ bool decodeMediumPayload(uint32_t Payload, ArrayRef<uint8_t> Tail,
     return true;
   }
 
-  if ((Payload & 0x3fff0) == 0xa600) {
-    const char *Cond = getCondName(Payload & 0xf);
+  constexpr StringLiteral CallCC16Pattern = "00101001100000cccc";
+  if (matchPattern(CallCC16Pattern, Payload)) {
+    const char *Cond =
+        getCondName(extractPatternField(CallCC16Pattern, Payload, 'c'));
     if (!Cond || !NeedTail(2))
       return false;
     Text = formatv("call{0}\t", Cond).str();
     appendSignedImm(Text, Tail, 2);
     return true;
   }
-  if ((Payload & 0x3fff0) == 0xe600) {
-    const char *Cond = getCondName(Payload & 0xf);
+  constexpr StringLiteral CallCC32Pattern = "00111001100000cccc";
+  if (matchPattern(CallCC32Pattern, Payload)) {
+    const char *Cond =
+        getCondName(extractPatternField(CallCC32Pattern, Payload, 'c'));
     if (!Cond || !NeedTail(4))
       return false;
     Text = formatv("call{0}\t", Cond).str();
@@ -1196,55 +1253,52 @@ bool decodeMediumPayload(uint32_t Payload, ArrayRef<uint8_t> Tail,
     return true;
   }
 
-  switch (Payload) {
-  case 0x2780:
-    if (!NeedTail(2))
+  struct TailForm {
+    StringRef Pattern;
+    StringRef Mnemonic;
+    unsigned Width;
+    bool IsSigned;
+    bool AppendSP;
+  };
+  static const TailForm TailForms[] = {
+      {"000010011110000000", "add.q", 2, true, true},
+      {"000010011110000001", "add.q", 4, true, true},
+      {"000010011110000010", "sub.q", 2, true, true},
+      {"000010011110000011", "sub.q", 4, true, true},
+      {"000010011110000100", "trace", 2, false, false},
+  };
+  for (const TailForm &Form : TailForms) {
+    if (!matchPattern(Form.Pattern, Payload))
+      continue;
+    if (!NeedTail(Form.Width))
       return false;
-    Text = "add.q\t";
-    appendSignedImm(Text, Tail, 2);
-    Text += ", sp";
+    Text = Form.Mnemonic;
+    Text += "\t";
+    if (Form.IsSigned)
+      appendSignedImm(Text, Tail, Form.Width);
+    else
+      appendUnsignedImm(Text, Tail, Form.Width);
+    if (Form.AppendSP)
+      Text += ", sp";
     return true;
-  case 0x2781:
-    if (!NeedTail(4))
-      return false;
-    Text = "add.q\t";
-    appendSignedImm(Text, Tail, 4);
-    Text += ", sp";
-    return true;
-  case 0x2782:
-    if (!NeedTail(2))
-      return false;
-    Text = "sub.q\t";
-    appendSignedImm(Text, Tail, 2);
-    Text += ", sp";
-    return true;
-  case 0x2783:
-    if (!NeedTail(4))
-      return false;
-    Text = "sub.q\t";
-    appendSignedImm(Text, Tail, 4);
-    Text += ", sp";
-    return true;
-  case 0x2784:
-    if (!NeedTail(2))
-      return false;
-    Text = "trace\t";
-    appendUnsignedImm(Text, Tail, 2);
-    return true;
-  default:
-    break;
   }
 
-  if ((Payload & 0x3fff0) == 0x2680) {
+  constexpr StringLiteral RepgPattern = "00001001101000rrrr";
+  if (matchPattern(RepgPattern, Payload)) {
     if (!NeedTail(2))
       return false;
-    Text = formatv("repg\tr{0}, ", Payload & 0xf).str();
+    Text =
+        formatv("repg\tr{0}, ", extractPatternField(RepgPattern, Payload, 'r'))
+            .str();
     appendUnsignedImm(Text, Tail, 2);
     return true;
   }
 
-  if ((Payload & 0x3fff0) == 0x2700) {
-    Text = formatv("cpuid\tr{0}", Payload & 0xf).str();
+  constexpr StringLiteral CpuidPattern = "00001001110000rrrr";
+  if (matchPattern(CpuidPattern, Payload)) {
+    Text =
+        formatv("cpuid\tr{0}", extractPatternField(CpuidPattern, Payload, 'r'))
+            .str();
     return true;
   }
 
@@ -2138,13 +2192,13 @@ bool decodeLongPayload(uint32_t Payload, ArrayRef<uint8_t> Tail,
     return true;
   }
 
-  if (Payload == 0x3ef4600) {
+  if (matchPattern("11111011110100011000000000", Payload)) {
     if (Tail.size() < 2)
       return false;
     Text = formatv("invasid\t{0}", readLE(Tail, 0, 2)).str();
     return true;
   }
-  if (Payload == 0x3ef4601) {
+  if (matchPattern("11111011110100011000000001", Payload)) {
     Text = "invtlb";
     return true;
   }

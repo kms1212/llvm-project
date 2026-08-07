@@ -1,5 +1,8 @@
 ; REQUIRES: bedrock-registered-target
 ; RUN: llc -mtriple=bedrock -verify-machineinstrs < %s | FileCheck %s
+; RUN: llc -mtriple=bedrock -verify-machineinstrs -filetype=obj < %s \
+; RUN:   -o %t.o
+; RUN: llvm-objdump -d --triple=bedrock %t.o | FileCheck %s --check-prefix=OBJ
 
 define i32 @add_imm(i32 %a) {
 ; CHECK-LABEL: add_imm:
@@ -48,6 +51,89 @@ define i64 @or_single_bit_i64(i64 %a) {
 ; CHECK: ret
   %r = or i64 %a, 4294967296
   ret i64 %r
+}
+
+define i32 @or_single_bit_i32(i32 %a) {
+; CHECK-LABEL: or_single_bit_i32:
+; CHECK-NOT: or.l
+; CHECK: bset 31, r0
+; CHECK: ret
+; OBJ-LABEL: <or_single_bit_i32>:
+; OBJ: c7 ee 6f 80{{.*}}bset{{[ \t]+}}31, r0
+  %r = or i32 %a, -2147483648
+  ret i32 %r
+}
+
+define i64 @and_clear_single_bit_i64(i64 %a) {
+; CHECK-LABEL: and_clear_single_bit_i64:
+; CHECK-NOT: and.q
+; CHECK: bclr 40, r0
+; CHECK: ret
+; OBJ-LABEL: <and_clear_single_bit_i64>:
+; OBJ: c7 ee b4 00{{.*}}bclr{{[ \t]+}}40, r0
+  %r = and i64 %a, -1099511627777
+  ret i64 %r
+}
+
+define i32 @and_clear_single_bit_i32(i32 %a) {
+; CHECK-LABEL: and_clear_single_bit_i32:
+; CHECK-NOT: and.l
+; CHECK: bclr 31, r0
+; CHECK: ret
+; OBJ-LABEL: <and_clear_single_bit_i32>:
+; OBJ: c7 ee af 80{{.*}}bclr{{[ \t]+}}31, r0
+  %r = and i32 %a, 2147483647
+  ret i32 %r
+}
+
+define i64 @xor_single_bit_i64(i64 %a) {
+; CHECK-LABEL: xor_single_bit_i64:
+; CHECK-NOT: xor.q
+; CHECK: bchg 40, r0
+; CHECK: ret
+; OBJ-LABEL: <xor_single_bit_i64>:
+; OBJ: c7 ee f4 00{{.*}}bchg{{[ \t]+}}40, r0
+  %r = xor i64 %a, 1099511627776
+  ret i64 %r
+}
+
+define i32 @xor_single_bit_i32(i32 %a) {
+; CHECK-LABEL: xor_single_bit_i32:
+; CHECK-NOT: xor.l
+; CHECK: bchg 31, r0
+; CHECK: ret
+; OBJ-LABEL: <xor_single_bit_i32>:
+; OBJ: c7 ee ef 80{{.*}}bchg{{[ \t]+}}31, r0
+  %r = xor i32 %a, -2147483648
+  ret i32 %r
+}
+
+define i1 @test_single_bit_i64(i64 %a) {
+; CHECK-LABEL: test_single_bit_i64:
+; CHECK-NOT: and.q
+; CHECK: btest 40, r0
+; CHECK-NEXT: seteq r0
+; CHECK: ret
+; OBJ-LABEL: <test_single_bit_i64>:
+; OBJ: c7 ee 34 00{{.*}}btest{{[ \t]+}}40, r0
+; OBJ-NEXT: {{.*}}seteq{{[ \t]+}}r0
+  %masked = and i64 %a, 1099511627776
+  %result = icmp eq i64 %masked, 0
+  ret i1 %result
+}
+
+define i1 @test_single_bit_i32(i32 %a) {
+; CHECK-LABEL: test_single_bit_i32:
+; CHECK-NOT: and.l
+; CHECK: btest 31, r0
+; CHECK-NEXT: setne r0
+; CHECK: ret
+; OBJ-LABEL: <test_single_bit_i32>:
+; OBJ: c7 ee 2f 80{{.*}}btest{{[ \t]+}}31, r0
+; OBJ-NEXT: {{.*}}setne{{[ \t]+}}r0
+  %masked = and i32 %a, -2147483648
+  %result = icmp ne i32 %masked, 0
+  ret i1 %result
 }
 
 define i64 @or_two_large_bits_i64(i64 %a) {

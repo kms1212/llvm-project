@@ -14,6 +14,12 @@ declare float @llvm.maximumnum.f32(float, float)
 declare double @llvm.maximumnum.f64(double, double)
 declare float @llvm.rint.f32(float)
 declare double @llvm.rint.f64(double)
+declare float @llvm.ldexp.f32.i32(float, i32)
+declare double @llvm.ldexp.f64.i32(double, i32)
+declare float @llvm.ldexp.f32.i64(float, i64)
+declare double @llvm.ldexp.f64.i64(double, i64)
+declare i1 @llvm.is.fpclass.f32(float, i32 immarg)
+declare i1 @llvm.is.fpclass.f64(double, i32 immarg)
 
 define float @frem_s(float %lhs, float %rhs) {
 ; CHECK-LABEL: frem_s:
@@ -105,6 +111,41 @@ define double @rint_d(double %value) {
   ret double %result
 }
 
+define float @ldexp_s_i32(float %value, i32 %scale) {
+; CHECK-LABEL: ldexp_s_i32:
+; CHECK: FCVT.S{{[ \t]+}}r0, [[SCALE:f[0-9]+]]
+; CHECK: FSCALE.S{{[ \t]+}}[[SCALE]], f0
+; OBJ-LABEL: <ldexp_s_i32>:
+; OBJ: c7 d7 28 21{{.*}}fcvt.s{{[ \t]+}}r0, [[OBJ_SCALE:f[0-9]+]]
+; OBJ: c7 d6 28 01{{.*}}fscale.s{{[ \t]+}}[[OBJ_SCALE]], f0
+  %result = call float @llvm.ldexp.f32.i32(float %value, i32 %scale)
+  ret float %result
+}
+
+define double @ldexp_d_i32(double %value, i32 %scale) {
+; CHECK-LABEL: ldexp_d_i32:
+; CHECK: FCVT.D{{[ \t]+}}r0, [[SCALE:f[0-9]+]]
+; CHECK: FSCALE.D{{[ \t]+}}[[SCALE]], f0
+  %result = call double @llvm.ldexp.f64.i32(double %value, i32 %scale)
+  ret double %result
+}
+
+define float @ldexp_s_i64(float %value, i64 %scale) {
+; CHECK-LABEL: ldexp_s_i64:
+; CHECK: FCVT.S{{[ \t]+}}r0, [[SCALE:f[0-9]+]]
+; CHECK: FSCALE.S{{[ \t]+}}[[SCALE]], f0
+  %result = call float @llvm.ldexp.f32.i64(float %value, i64 %scale)
+  ret float %result
+}
+
+define double @ldexp_d_i64(double %value, i64 %scale) {
+; CHECK-LABEL: ldexp_d_i64:
+; CHECK: FCVT.D{{[ \t]+}}r0, [[SCALE:f[0-9]+]]
+; CHECK: FSCALE.D{{[ \t]+}}[[SCALE]], f0
+  %result = call double @llvm.ldexp.f64.i64(double %value, i64 %scale)
+  ret double %result
+}
+
 define float @positive_zero_s() {
 ; CHECK-LABEL: positive_zero_s:
 ; CHECK: FCLR{{[ \t]+}}f0
@@ -119,6 +160,48 @@ define double @positive_zero_d() {
 ; OBJ-LABEL: <positive_zero_d>:
 ; OBJ: c2 40 80{{.*}}fclr{{[ \t]+}}f0
   ret double 0.0
+}
+
+define double @negative_zero_d() {
+; CHECK-LABEL: negative_zero_d:
+; CHECK: FMOVCR.D{{[ \t]+}}1, f0
+; OBJ-LABEL: <negative_zero_d>:
+; OBJ: cf d6 b1 00 01 00{{.*}}fmovcr.d{{[ \t]+}}1, f0
+  ret double -0.0
+}
+
+define double @positive_one_d() {
+; CHECK-LABEL: positive_one_d:
+; CHECK: FMOVCR.D{{[ \t]+}}2, f0
+; OBJ-LABEL: <positive_one_d>:
+; OBJ: cf d6 b1 00 02 00{{.*}}fmovcr.d{{[ \t]+}}2, f0
+  ret double 1.0
+}
+
+define double @pi_d() {
+; CHECK-LABEL: pi_d:
+; CHECK: FMOVCR.D{{[ \t]+}}16, f0
+; OBJ-LABEL: <pi_d>:
+; OBJ: cf d6 b1 00 10 00{{.*}}fmovcr.d{{[ \t]+}}16, f0
+  ret double 0x400921FB54442D18
+}
+
+define i1 @is_nan_s(float %value) {
+; CHECK-LABEL: is_nan_s:
+; CHECK: fclass.s{{[ \t]+}}f0, [[CLASS:r[0-9]+]]
+; CHECK-NOT: fcmp
+; OBJ-LABEL: <is_nan_s>:
+; OBJ: c7 d7 00 20{{.*}}fclass.s{{[ \t]+}}f0,
+  %result = call i1 @llvm.is.fpclass.f32(float %value, i32 3)
+  ret i1 %result
+}
+
+define i1 @is_finite_d(double %value) {
+; CHECK-LABEL: is_finite_d:
+; CHECK: fclass.d{{[ \t]+}}f0, [[CLASS:r[0-9]+]]
+; CHECK-NOT: fcmp
+  %result = call i1 @llvm.is.fpclass.f64(double %value, i32 504)
+  ret i1 %result
 }
 
 define float @negative_zero_s() {

@@ -1225,52 +1225,50 @@ bool tryEncodeShortInstruction(OperandVector &Operands,
 
   struct FixedForm {
     StringRef Mnemonic;
-    uint8_t Payload;
+    StringRef Pattern;
   };
   static const FixedForm ExtraShortForms[] = {
-      {"illegal", 0x00}, {"nop", 0x01},    {"ret", 0x02},
-      {"lret", 0x03},    {"eret", 0x04},   {"syscall", 0x05},
-      {"sysret", 0x06},  {"bkpt", 0x07},   {"wait", 0x08},
-      {"yield", 0x09},   {"rfence", 0x0a}, {"wfence", 0x0b},
-      {"afence", 0x0c},
+      {"illegal", "0000000"}, {"nop", "0000001"},    {"ret", "0000010"},
+      {"lret", "0000011"},    {"eret", "0000100"},   {"syscall", "0000101"},
+      {"sysret", "0000110"},  {"bkpt", "0000111"},   {"wait", "0001000"},
+      {"yield", "0001001"},   {"rfence", "0001010"}, {"wfence", "0001011"},
+      {"afence", "0001100"},
   };
 
   if (Operands.size() == 1) {
     for (const FixedForm &Form : ExtraShortForms) {
       if (Mnemonic == Form.Mnemonic) {
-        encodeExtraShortPayload(Form.Payload, Bytes);
+        encodeExtraShortPayload(applyPatternValues(Form.Pattern, {}), Bytes);
         return true;
       }
     }
 
     if (Mnemonic == "halt") {
-      encodeShortPayload(0x2049, Bytes);
+      encodeShortPayload(applyPatternValues("10000001001001", {}), Bytes);
       return true;
     }
     if (Mnemonic == "reset") {
-      encodeShortPayload(0x204e, Bytes);
+      encodeShortPayload(applyPatternValues("10000001001110", {}), Bytes);
       return true;
     }
   }
 
   if (Operands.size() == 3 && GetOp(1).isReg() && GetOp(2).isReg()) {
     struct RRForm {
-      StringRef Mnemonic;
-      uint8_t Opcode;
+      StringRef Base;
+      StringRef Pattern;
+      StringRef Suffixes;
     };
     static const RRForm RRForms[] = {
-        {"mov.l", 0x00},   {"mov.q", 0x01},   {"add.l", 0x02},
-        {"add.q", 0x03},   {"sub.l", 0x04},   {"sub.q", 0x05},
-        {"cmp.l", 0x06},   {"cmp.q", 0x07},   {"and.l", 0x08},
-        {"and.q", 0x09},   {"or.l", 0x0a},    {"or.q", 0x0b},
-        {"xor.l", 0x0c},   {"xor.q", 0x0d},   {"test.l", 0x0e},
-        {"test.q", 0x0f},  {"xchg.l", 0x10},  {"xchg.q", 0x11},
-        {"shr.l", 0x12},   {"shr.q", 0x13},   {"shl.l", 0x14},
-        {"shl.q", 0x15},   {"ror.l", 0x16},   {"ror.q", 0x17},
-        {"rol.l", 0x18},   {"rol.q", 0x19},   {"sar.l", 0x1a},
-        {"sar.q", 0x1b},   {"extzl.b", 0x1c}, {"extzl.w", 0x1d},
-        {"extsl.b", 0x1e}, {"extsl.w", 0x1f}, {"extzq.l", 0x28},
-        {"extsq.l", 0x29},
+        {"mov", "00000zssssdddd", "lq"},   {"add", "00001zssssdddd", "lq"},
+        {"sub", "00010zssssdddd", "lq"},   {"cmp", "00011zssssdddd", "lq"},
+        {"and", "00100zssssdddd", "lq"},   {"or", "00101zssssdddd", "lq"},
+        {"xor", "00110zssssdddd", "lq"},   {"test", "00111zssssdddd", "lq"},
+        {"xchg", "01000zssssdddd", "lq"},  {"shr", "01001zssssdddd", "lq"},
+        {"shl", "01010zssssdddd", "lq"},   {"ror", "01011zssssdddd", "lq"},
+        {"rol", "01100zssssdddd", "lq"},   {"sar", "01101zssssdddd", "lq"},
+        {"extzl", "01110zssssdddd", "bw"}, {"extsl", "01111zssssdddd", "bw"},
+        {"extzq", "101000ssssdddd", "l"},  {"extsq", "101001ssssdddd", "l"},
     };
     unsigned SrcReg;
     unsigned DstReg;
@@ -1278,10 +1276,14 @@ bool tryEncodeShortInstruction(OperandVector &Operands,
         !getRegNo(GetOp(2).getReg(), DstReg))
       return false;
     for (const RRForm &Form : RRForms) {
-      if (Mnemonic == Form.Mnemonic) {
-        encodeShortPayload((Form.Opcode << 8) | (SrcReg << 4) | DstReg, Bytes);
-        return true;
-      }
+      unsigned Size;
+      if (!getSizeSuffix(Mnemonic, Form.Base, Size) ||
+          Form.Suffixes.find("bwlq"[Size]) == StringRef::npos)
+        continue;
+      PatternFieldValue Fields[] = {
+          {'z', Size & 1}, {'s', SrcReg}, {'d', DstReg}};
+      encodeShortPayload(applyPatternValues(Form.Pattern, Fields), Bytes);
+      return true;
     }
   }
 
@@ -1289,27 +1291,30 @@ bool tryEncodeShortInstruction(OperandVector &Operands,
     unsigned RegNo;
     if (GetOp(1).isReg() && isToken(GetOp(2), "sp") &&
         getRegNo(GetOp(1).getReg(), RegNo)) {
-      encodeExtraShortPayload(0x40 | RegNo, Bytes);
+      encodeExtraShortPayload(applyPatternValues("100rrrr", {{'r', RegNo}}),
+                              Bytes);
       return true;
     }
     if (isToken(GetOp(1), "sp") && GetOp(2).isReg() &&
         getRegNo(GetOp(2).getReg(), RegNo)) {
-      encodeExtraShortPayload(0x50 | RegNo, Bytes);
+      encodeExtraShortPayload(applyPatternValues("101rrrr", {{'r', RegNo}}),
+                              Bytes);
       return true;
     }
   }
 
   if (Operands.size() == 2 && GetOp(1).isReg()) {
     if (Mnemonic == "push" && isCS(GetOp(1))) {
-      encodeExtraShortPayload(0x0d, Bytes);
+      encodeExtraShortPayload(applyPatternValues("0001101", {}), Bytes);
       return true;
     }
 
     unsigned SRegNo;
     if ((Mnemonic == "push" || Mnemonic == "pop") &&
         getSRegNo(GetOp(1), SRegNo)) {
-      encodeShortPayload((Mnemonic == "push" ? 0x2280 : 0x2288) | SRegNo,
-                         Bytes);
+      StringRef Pattern =
+          Mnemonic == "push" ? "10001010000sss" : "10001010001sss";
+      encodeShortPayload(applyPatternValues(Pattern, {{'s', SRegNo}}), Bytes);
       return true;
     }
 
@@ -1318,57 +1323,68 @@ bool tryEncodeShortInstruction(OperandVector &Operands,
       return false;
 
     if (Mnemonic == "push") {
-      encodeExtraShortPayload(0x20 | RegNo, Bytes);
+      encodeExtraShortPayload(applyPatternValues("010rrrr", {{'r', RegNo}}),
+                              Bytes);
       return true;
     }
     if (Mnemonic == "pop") {
-      encodeExtraShortPayload(0x30 | RegNo, Bytes);
+      encodeExtraShortPayload(applyPatternValues("011rrrr", {{'r', RegNo}}),
+                              Bytes);
       return true;
     }
     if (Mnemonic == "set") {
-      encodeShortPayload(0x2100 | (RegNo << 4), Bytes);
+      encodeShortPayload(applyPatternValues("100001rrrr0000", {{'r', RegNo}}),
+                         Bytes);
       return true;
     }
     unsigned Cond;
     if (getConditionSuffix(Mnemonic, "set", Cond)) {
-      encodeShortPayload(0x2100 | (RegNo << 4) | Cond, Bytes);
+      encodeShortPayload(
+          applyPatternValues("100001rrrrcccc", {{'r', RegNo}, {'c', Cond}}),
+          Bytes);
       return true;
     }
 
     struct UnaryForm {
-      StringRef Mnemonic;
-      uint16_t Prefix;
+      StringRef Base;
+      StringRef Pattern;
+      StringRef Suffixes;
     };
     static const UnaryForm UnaryForms[] = {
-        {"inc.l", 0x220},     {"inc.q", 0x230},     {"dec.l", 0x221},
-        {"dec.q", 0x231},     {"neg.l", 0x222},     {"neg.q", 0x232},
-        {"clr.l", 0x223},     {"abs.l", 0x224},
-        {"abs.q", 0x234},     {"not.l", 0x225},     {"not.q", 0x235},
-        {"revbyte.w", 0x229}, {"revbyte.l", 0x22a}, {"revbyte.q", 0x22b},
+        {"inc", "10001z0000rrrr", "lq"},    {"dec", "10001z0001rrrr", "lq"},
+        {"neg", "10001z0010rrrr", "lq"},    {"clr", "1000100011rrrr", "l"},
+        {"abs", "10001z0100rrrr", "lq"},    {"not", "10001z0101rrrr", "lq"},
+        {"revbyte", "1000101001rrrr", "w"}, {"revbyte", "1000101010rrrr", "l"},
+        {"revbyte", "1000101011rrrr", "q"},
     };
     if (Mnemonic == "clr.q") {
-      encodeExtraShortPayload(0x60 | RegNo, Bytes);
+      encodeExtraShortPayload(applyPatternValues("110rrrr", {{'r', RegNo}}),
+                              Bytes);
       return true;
     }
     for (const UnaryForm &Form : UnaryForms) {
-      if (Mnemonic == Form.Mnemonic) {
-        encodeShortPayload((Form.Prefix << 4) | RegNo, Bytes);
-        return true;
-      }
+      unsigned Size;
+      if (!getSizeSuffix(Mnemonic, Form.Base, Size) ||
+          Form.Suffixes.find("bwlq"[Size]) == StringRef::npos)
+        continue;
+      PatternFieldValue Fields[] = {{'z', Size & 1}, {'r', RegNo}};
+      encodeShortPayload(applyPatternValues(Form.Pattern, Fields), Bytes);
+      return true;
     }
   }
 
   if (Operands.size() == 2) {
     if (Mnemonic == "push" && isCS(GetOp(1))) {
-      encodeExtraShortPayload(0x0d, Bytes);
+      encodeExtraShortPayload(applyPatternValues("0001101", {}), Bytes);
       return true;
     }
 
     unsigned SRegNo;
     if ((Mnemonic == "push" || Mnemonic == "pop") &&
         getSRegNo(GetOp(1), SRegNo)) {
-      encodeShortPayload((Mnemonic == "push" ? 0x2280 : 0x2288) | SRegNo,
-                         Bytes);
+      StringRef Pattern =
+          Mnemonic == "push" ? "10001010000sss" : "10001010001sss";
+      encodeShortPayload(applyPatternValues(Pattern, {{'s', SRegNo}}), Bytes);
       return true;
     }
   }
@@ -1378,19 +1394,25 @@ bool tryEncodeShortInstruction(OperandVector &Operands,
     if (!getConstantImm(GetOp(1), Imm))
       return false;
     if (Mnemonic == "add.q" && Imm == 8) {
-      encodeExtraShortPayload(0x0e, Bytes);
+      encodeExtraShortPayload(applyPatternValues("0001110", {}), Bytes);
       return true;
     }
     if (Mnemonic == "sub.q" && Imm == 8) {
-      encodeExtraShortPayload(0x0f, Bytes);
+      encodeExtraShortPayload(applyPatternValues("0001111", {}), Bytes);
       return true;
     }
     if (Mnemonic == "add.q" && isUIntN(8, Imm)) {
-      encodeShortPayload(0x2f00 | static_cast<uint8_t>(Imm), Bytes);
+      encodeShortPayload(
+          applyPatternValues("101111iiiiiiii",
+                             {{'i', static_cast<unsigned>(Imm)}}),
+          Bytes);
       return true;
     }
     if (Mnemonic == "sub.q" && isUIntN(8, Imm)) {
-      encodeShortPayload(0x3100 | static_cast<uint8_t>(Imm), Bytes);
+      encodeShortPayload(
+          applyPatternValues("110001iiiiiiii",
+                             {{'i', static_cast<unsigned>(Imm)}}),
+          Bytes);
       return true;
     }
   }
@@ -1400,11 +1422,15 @@ bool tryEncodeShortInstruction(OperandVector &Operands,
     if (!getConstantImm(GetOp(1), Imm))
       return false;
     if (Mnemonic == "pushp" && isUIntN(3, Imm)) {
-      encodeExtraShortPayload(0x10 | static_cast<uint8_t>(Imm), Bytes);
+      encodeExtraShortPayload(
+          applyPatternValues("0010iii", {{'i', static_cast<unsigned>(Imm)}}),
+          Bytes);
       return true;
     }
     if (Mnemonic == "popp" && isUIntN(3, Imm)) {
-      encodeExtraShortPayload(0x18 | static_cast<uint8_t>(Imm), Bytes);
+      encodeExtraShortPayload(
+          applyPatternValues("0011iii", {{'i', static_cast<unsigned>(Imm)}}),
+          Bytes);
       return true;
     }
     if (Mnemonic == "fpushp" && isUIntN(3, Imm)) {
@@ -1421,13 +1447,19 @@ bool tryEncodeShortInstruction(OperandVector &Operands,
     if (!isIntN(8, Imm))
       return false;
     if (Mnemonic == "jmp") {
-      encodeShortPayload(0x3000 | static_cast<uint8_t>(Imm), Bytes);
+      encodeShortPayload(
+          applyPatternValues("110000iiiiiiii",
+                             {{'i', static_cast<unsigned>(Imm) & 0xff}}),
+          Bytes);
       return true;
     }
     unsigned Cond;
     if (getConditionSuffix(Mnemonic, "j", Cond)) {
-      encodeShortPayload(0x3000 | (Cond << 8) | static_cast<uint8_t>(Imm),
-                         Bytes);
+      encodeShortPayload(
+          applyPatternValues(
+              "11cccciiiiiiii",
+              {{'c', Cond}, {'i', static_cast<unsigned>(Imm) & 0xff}}),
+          Bytes);
       return true;
     }
   }
@@ -1611,7 +1643,9 @@ bool encodeRepgOperands(OperandVector &Operands, SmallVectorImpl<uint8_t> &Bytes
   appendLE(Tail, BodyBytes.size(), 2);
 
   SmallVector<uint8_t, 8> HeaderBytes;
-  if (!BedrockMC::encodeMedium(0x2680 | RegNo, Tail, HeaderBytes))
+  if (!BedrockMC::encodeMedium(
+          applyPatternValues("00001001101000rrrr", {{'r', RegNo}}), Tail,
+          HeaderBytes))
     return false;
 
   for (RawFixup &Fixup : BodyFixups) {
@@ -1628,7 +1662,8 @@ bool prependRepeatInstruction(unsigned Cond, unsigned RegNo,
                               SmallVectorImpl<uint8_t> &Bytes,
                               SmallVectorImpl<RawFixup> &Fixups) {
   SmallVector<uint8_t, 4> RepBytes;
-  uint32_t Payload = 0x24000 | (Cond << 8) | RegNo;
+  uint32_t Payload =
+      applyPatternValues("100100cccc0000rrrr", {{'c', Cond}, {'r', RegNo}});
   if (!BedrockMC::encodeMedium(Payload, {}, RepBytes))
     return false;
 
@@ -1685,14 +1720,14 @@ bool tryEncodeSymbolicInstruction(OperandVector &Operands,
     uint32_t Payload = 0;
     bool IsCall = false;
     if (Mnemonic == "jmp") {
-      Payload = 0x6600;
+      Payload = applyPatternValues("000110011000000000", {});
     } else if (getConditionSuffix(Mnemonic, "j", Cond)) {
-      Payload = 0x6600 | Cond;
+      Payload = applyPatternValues("00011001100000cccc", {{'c', Cond}});
     } else if (Mnemonic == "call") {
-      Payload = 0xe600;
+      Payload = applyPatternValues("001110011000000000", {});
       IsCall = true;
     } else if (getConditionSuffix(Mnemonic, "call", Cond)) {
-      Payload = 0xe600 | Cond;
+      Payload = applyPatternValues("00111001100000cccc", {{'c', Cond}});
       IsCall = true;
     } else {
       return false;
@@ -3000,12 +3035,14 @@ bool tryEncodeMediumInstruction(OperandVector &Operands,
       SmallVector<uint8_t, 2> Tail;
       SmallVector<RawFixup, 1> LocalFixups;
       if (encodeUnsignedTail(GetOp(1), 2, Tail, &LocalFixups))
-        return FinishLong(0x3ef4600, Tail, LocalFixups);
+        return FinishLong(applyPatternValues("11111011110100011000000000", {}),
+                          Tail, LocalFixups);
     }
   }
 
   if (Operands.size() == 1 && Mnemonic == "invtlb")
-    return encodeLongWithTail(0x3ef4601, {}, Bytes);
+    return encodeLongWithTail(
+        applyPatternValues("11111011110100011000000001", {}), {}, Bytes);
 
   if (Operands.size() == 3 && GetOp(1).isReg() && GetOp(2).isReg()) {
     struct LongQRRForm {
@@ -3415,35 +3452,47 @@ bool tryEncodeMediumInstruction(OperandVector &Operands,
     int64_t Mask;
     if ((Mnemonic == "setf" || Mnemonic == "clrf") &&
         getConstantImm(GetOp(1), Mask) && isUIntN(4, Mask)) {
-      uint32_t Payload = (Mnemonic == "setf" ? 0x2d80 : 0x2580) |
-                         static_cast<uint32_t>(Mask);
+      StringRef Pattern =
+          Mnemonic == "setf" ? "00001011011000mmmm" : "00001001011000mmmm";
+      uint32_t Payload =
+          applyPatternValues(Pattern, {{'m', static_cast<unsigned>(Mask)}});
       return encodeMediumWithTail(Payload, {}, Bytes);
     }
 
     unsigned Cond = 0;
     if (Mnemonic == "jmp")
-      return encodeMediumSigned16Or32(0x2600, 0x6600, GetOp(1), Bytes);
+      return encodeMediumSigned16Or32(
+          applyPatternValues("000010011000000000", {}),
+          applyPatternValues("000110011000000000", {}), GetOp(1), Bytes);
     if (getConditionSuffix(Mnemonic, "j", Cond))
-      return encodeMediumSigned16Or32(0x2600 | Cond, 0x6600 | Cond, GetOp(1),
-                                      Bytes);
+      return encodeMediumSigned16Or32(
+          applyPatternValues("00001001100000cccc", {{'c', Cond}}),
+          applyPatternValues("00011001100000cccc", {{'c', Cond}}), GetOp(1),
+          Bytes);
     if (Mnemonic == "call")
-      return encodeMediumSigned16Or32(0xa600, 0xe600, GetOp(1), Bytes);
+      return encodeMediumSigned16Or32(
+          applyPatternValues("001010011000000000", {}),
+          applyPatternValues("001110011000000000", {}), GetOp(1), Bytes);
     if (getConditionSuffix(Mnemonic, "call", Cond))
-      return encodeMediumSigned16Or32(0xa600 | Cond, 0xe600 | Cond, GetOp(1),
-                                      Bytes);
+      return encodeMediumSigned16Or32(
+          applyPatternValues("00101001100000cccc", {{'c', Cond}}),
+          applyPatternValues("00111001100000cccc", {{'c', Cond}}), GetOp(1),
+          Bytes);
 
     if (Mnemonic == "trace") {
       SmallVector<uint8_t, 2> Tail;
       SmallVector<RawFixup, 1> LocalFixups;
       if (encodeUnsignedTail(GetOp(1), 2, Tail, &LocalFixups))
-        return FinishMedium(0x2784, Tail, LocalFixups);
+        return FinishMedium(applyPatternValues("000010011110000100", {}), Tail,
+                            LocalFixups);
     }
   }
 
   if (Operands.size() == 2 && GetOp(1).isReg()) {
     unsigned RegNo;
     if (Mnemonic == "cpuid" && getRegNo(GetOp(1).getReg(), RegNo))
-      return encodeMediumWithTail(0x2700 | RegNo, {}, Bytes);
+      return encodeMediumWithTail(
+          applyPatternValues("00001001110000rrrr", {{'r', RegNo}}), {}, Bytes);
   }
 
   if (Operands.size() == 1) {
@@ -3463,26 +3512,34 @@ bool tryEncodeMediumInstruction(OperandVector &Operands,
         if (!isUIntN(16, BodyBytes) || BodyBytes == 0)
           return false;
         appendLE(Tail, BodyBytes, 2);
-        return FinishMedium(0x2680 | RegNo, Tail, LocalFixups);
+        return FinishMedium(
+            applyPatternValues("00001001101000rrrr", {{'r', RegNo}}), Tail,
+            LocalFixups);
       }
       if (encodeUnsignedTail(GetOp(2), 2, Tail, &LocalFixups))
-        return FinishMedium(0x2680 | RegNo, Tail, LocalFixups);
+        return FinishMedium(
+            applyPatternValues("00001001101000rrrr", {{'r', RegNo}}), Tail,
+            LocalFixups);
     }
   }
 
   if (Operands.size() == 3 && GetOp(1).isImm() && isToken(GetOp(2), "sp")) {
     if (Mnemonic == "add.q") {
       SmallVector<RawFixup, 1> LocalFixups;
-      if (!encodeMediumSigned16Or32(0x2780, 0x2781, GetOp(1), Bytes,
-                                    &LocalFixups))
+      if (!encodeMediumSigned16Or32(
+              applyPatternValues("000010011110000000", {}),
+              applyPatternValues("000010011110000001", {}), GetOp(1), Bytes,
+              &LocalFixups))
         return false;
       appendFixups(Fixups, LocalFixups);
       return true;
     }
     if (Mnemonic == "sub.q") {
       SmallVector<RawFixup, 1> LocalFixups;
-      if (!encodeMediumSigned16Or32(0x2782, 0x2783, GetOp(1), Bytes,
-                                    &LocalFixups))
+      if (!encodeMediumSigned16Or32(
+              applyPatternValues("000010011110000010", {}),
+              applyPatternValues("000010011110000011", {}), GetOp(1), Bytes,
+              &LocalFixups))
         return false;
       appendFixups(Fixups, LocalFixups);
       return true;

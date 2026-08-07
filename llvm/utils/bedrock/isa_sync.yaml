@@ -35,8 +35,8 @@ fptransa_c_api:
 # round-trip set is an intentional inventory change.
 mc_form_inventory:
   round_trip:
-    count: 340
-    sha256: 27049a8e4c84f1ecc724a1d204347331e6e529da866fe32903b64ad47bbe4565
+    count: 422
+    sha256: 8caee38153931eb93a0861972f1c924a121612e08309e27fe31407e28b418d78
   decoder_only:
     count: 0
     sha256: e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855
@@ -44,9 +44,9 @@ mc_form_inventory:
     count: 0
     sha256: e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855
 
-# Fixed-width forms use numeric payloads in the MC implementation instead of
-# symbolic bit patterns. These probes derive bytes from the specification and
-# compare them with the assembly/disassembly golden.
+# These compact-form probes derive bytes from the specification and compare
+# them with the assembly/disassembly golden in addition to the complete
+# symbolic assembler/decoder form inventory above.
 fixed_encoding_probes:
   - form: isa/defs/instructions/ERET/encodings.yaml#extrashort.eret
     assembly: eret
