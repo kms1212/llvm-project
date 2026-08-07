@@ -821,6 +821,13 @@ uint64_t InputSectionBase::getRelocTargetVA(Ctx &ctx, const Relocation &r,
     return 0;
   case RE_ARM_SBREL:
     return r.sym->getVA(ctx, a) - getARMStaticBase(*r.sym);
+  case RE_BEDROCK_SECTION_REL:
+    if (OutputSection *os = r.sym->getOutputSection())
+      return r.sym->getVA(ctx, a) - os->addr;
+    Err(ctx) << "section-relative relocation against symbol without a "
+                "defining section: "
+             << r.sym;
+    return 0;
   case R_GOT:
   case RE_AARCH64_AUTH_GOT:
   case R_RELAX_TLS_GD_TO_IE_ABS:

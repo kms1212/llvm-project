@@ -94,6 +94,7 @@ enum RelExpr {
   // Even though RelExpr is intended to be a target-neutral representation
   // of a relocation type, there are some relocations whose semantics are
   // unique to a target. Such relocation are marked with RE_<TARGET_NAME>.
+  RE_BEDROCK_SECTION_REL,
   RE_AARCH64_GOT_PAGE_PC,
   RE_AARCH64_AUTH_GOT_PAGE_PC,
   RE_AARCH64_GOT_PAGE,

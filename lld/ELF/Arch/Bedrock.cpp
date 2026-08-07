@@ -87,6 +87,9 @@ RelExpr Bedrock::getRelExpr(RelType type, const Symbol &s,
   case R_BEDROCK_CALL16S:
   case R_BEDROCK_CALL32S:
     return R_PC;
+  case R_BEDROCK_SECTION_REL32:
+  case R_BEDROCK_SECTION_REL64:
+    return RE_BEDROCK_SECTION_REL;
   case R_BEDROCK_PLT16S:
   case R_BEDROCK_PLT32S:
     return R_PLT_PC;
@@ -248,6 +251,13 @@ void Bedrock::relocate(uint8_t *loc, const Relocation &rel,
   case R_BEDROCK_PLT32S:
     checkInt(ctx, loc, adjusted, 32, rel);
     write32le(loc, adjusted);
+    break;
+  case R_BEDROCK_SECTION_REL32:
+    checkUInt(ctx, loc, val, 32, rel);
+    write32le(loc, val);
+    break;
+  case R_BEDROCK_SECTION_REL64:
+    write64le(loc, val);
     break;
   case R_BEDROCK_TLSDESC_CALL:
     break;
