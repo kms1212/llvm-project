@@ -153,13 +153,15 @@ Value *CodeGenFunction::EmitBedrockBuiltinExpr(unsigned BuiltinID,
   case Bedrock::BI__builtin_bedrock_fsincosa_f32:
   case Bedrock::BI__builtin_bedrock_fsincosa_f64: {
     Value *Arg = EmitScalarExpr(E->getArg(0));
+    Value *SinResult = EmitScalarExpr(E->getArg(1));
+    Value *CosResult = EmitScalarExpr(E->getArg(2));
     CallInst *Pair = Builder.CreateCall(
         CGM.getIntrinsic(Intrinsic::bedrock_fsincosa, {Arg->getType()}),
         {Arg});
     Builder.CreateDefaultAlignedStore(Builder.CreateExtractValue(Pair, 0),
-                                      EmitScalarExpr(E->getArg(1)));
+                                      SinResult);
     return Builder.CreateDefaultAlignedStore(Builder.CreateExtractValue(Pair, 1),
-                                             EmitScalarExpr(E->getArg(2)));
+                                             CosResult);
   }
 
   case Bedrock::BI__builtin_bedrock_write_status:
@@ -251,24 +253,30 @@ Value *CodeGenFunction::EmitBedrockBuiltinExpr(unsigned BuiltinID,
   case Bedrock::BI__builtin_bedrock_virtual_to_physical:
   case Bedrock::BI__builtin_bedrock_page_table_query: {
     CallInst *Query;
-    unsigned ValuePointerArg;
     if (BuiltinID == Bedrock::BI__builtin_bedrock_virtual_to_physical) {
-      Query = cast<CallInst>(
-          EmitCall(Intrinsic::bedrock_virtual_to_physical, {EmitI64(0)}));
-      ValuePointerArg = 1;
+      Value *Address = EmitI64(0);
+      Value *ValuePointer = EmitScalarExpr(E->getArg(1));
+      Value *FlagsPointer = EmitScalarExpr(E->getArg(2));
+      Query = cast<CallInst>(EmitCall(Intrinsic::bedrock_virtual_to_physical,
+                                      {Address}));
+      Value *ValueResult = Builder.CreateExtractValue(Query, 0);
+      Value *FlagsResult = Builder.CreateExtractValue(Query, 1);
+      Builder.CreateDefaultAlignedStore(ValueResult, ValuePointer);
+      return Builder.CreateDefaultAlignedStore(
+          Builder.CreateTrunc(FlagsResult, Builder.getInt16Ty()), FlagsPointer);
     } else {
-      Query =
-          cast<CallInst>(EmitCall(Intrinsic::bedrock_page_table_query,
-                                  {EmitScalarExpr(E->getArg(0)), EmitI64(1)}));
-      ValuePointerArg = 2;
+      Value *Level = EmitScalarExpr(E->getArg(0));
+      Value *Address = EmitI64(1);
+      Value *ValuePointer = EmitScalarExpr(E->getArg(2));
+      Value *FlagsPointer = EmitScalarExpr(E->getArg(3));
+      Query = cast<CallInst>(
+          EmitCall(Intrinsic::bedrock_page_table_query, {Level, Address}));
+      Value *ValueResult = Builder.CreateExtractValue(Query, 0);
+      Value *FlagsResult = Builder.CreateExtractValue(Query, 1);
+      Builder.CreateDefaultAlignedStore(ValueResult, ValuePointer);
+      return Builder.CreateDefaultAlignedStore(
+          Builder.CreateTrunc(FlagsResult, Builder.getInt16Ty()), FlagsPointer);
     }
-    Value *ValueResult = Builder.CreateExtractValue(Query, 0);
-    Value *FlagsResult = Builder.CreateExtractValue(Query, 1);
-    Builder.CreateDefaultAlignedStore(
-        ValueResult, EmitScalarExpr(E->getArg(ValuePointerArg)));
-    return Builder.CreateDefaultAlignedStore(
-        Builder.CreateTrunc(FlagsResult, Builder.getInt16Ty()),
-        EmitScalarExpr(E->getArg(ValuePointerArg + 1)));
   }
 
   case Bedrock::BI__builtin_bedrock_save_processor_state:

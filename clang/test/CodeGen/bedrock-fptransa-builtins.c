@@ -103,6 +103,20 @@ void approx_sincos_f64(double value, double *sin_result, double *cos_result) {
   __bedrock_fsincosa_f64(value, sin_result, cos_result);
 }
 
+extern float *get_f32_output(void);
+
+// All argument expressions must be evaluated before the architectural
+// operation begins.
+// CHECK-LABEL: define{{.*}} void @ordered_sincos_arguments
+// CHECK: [[SIN_PTR:%.*]] = {{.*}}call ptr @get_f32_output()
+// CHECK: [[COS_PTR:%.*]] = {{.*}}call ptr @get_f32_output()
+// CHECK: call { float, float } @llvm.bedrock.fsincosa.f32
+// CHECK: store float {{.*}}, ptr [[SIN_PTR]]
+// CHECK: store float {{.*}}, ptr [[COS_PTR]]
+void ordered_sincos_arguments(float value) {
+  __builtin_bedrock_fsincosa_f32(value, get_f32_output(), get_f32_output());
+}
+
 // CHECK-LABEL: define{{.*}} void @unused_results_are_side_effecting
 // CHECK-COUNT-2: call float @llvm.bedrock.fsina.f32
 // CHECK: call { float, float } @llvm.bedrock.fsincosa.f32

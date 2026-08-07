@@ -93,6 +93,27 @@ __bedrock_query_result_t mmu(uint64_t address) {
   return first;
 }
 
+extern uint64_t *get_query_value_output(void);
+extern uint16_t *get_query_flags_output(void);
+
+// CHECK-LABEL: define{{.*}} void @ordered_query_arguments
+// CHECK: [[VTOP_VALUE:%.*]] = {{.*}}call ptr @get_query_value_output()
+// CHECK: [[VTOP_FLAGS:%.*]] = {{.*}}call ptr @get_query_flags_output()
+// CHECK: call { i64, i64 } @llvm.bedrock.virtual.to.physical(i64
+// CHECK: store i64 {{.*}}, ptr [[VTOP_VALUE]]
+// CHECK: store i16 {{.*}}, ptr [[VTOP_FLAGS]]
+// CHECK: [[PTQ_VALUE:%.*]] = {{.*}}call ptr @get_query_value_output()
+// CHECK: [[PTQ_FLAGS:%.*]] = {{.*}}call ptr @get_query_flags_output()
+// CHECK: call { i64, i64 } @llvm.bedrock.page.table.query(i32 2, i64
+// CHECK: store i64 {{.*}}, ptr [[PTQ_VALUE]]
+// CHECK: store i16 {{.*}}, ptr [[PTQ_FLAGS]]
+void ordered_query_arguments(uint64_t address) {
+  __builtin_bedrock_virtual_to_physical(
+      address, get_query_value_output(), get_query_flags_output());
+  __builtin_bedrock_page_table_query(
+      2, address, get_query_value_output(), get_query_flags_output());
+}
+
 // CHECK-LABEL: define{{.*}} void @state
 // CHECK: call void @llvm.bedrock.save.processor.state(ptr
 // CHECK: call void @llvm.bedrock.restore.processor.state(ptr
