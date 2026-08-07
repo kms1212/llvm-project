@@ -405,7 +405,9 @@ def BEDROCK_CPUID : BedrockPseudo<(outs GPR64:$dst), (ins GPR64:$src),
 }
 def BEDROCK_RDSTATUS : BedrockPseudo<(outs GPR64:$dst), (ins),
                                      [(set i64:$dst,
-                                           (int_bedrock_read_status))]>;
+                                           (int_bedrock_read_status))]> {
+  let Uses = [STATUS];
+}
 def BEDROCK_RDPMC : BedrockPseudo<(outs GPR64:$dst), (ins i32imm:$selector),
                                   [(set i64:$dst,
                                         (int_bedrock_rdpmc timm:$selector))]>;
@@ -525,7 +527,9 @@ def : Pat<(int_bedrock_address_fence), (AFENCE)>;
 
 let hasSideEffects = 1 in {
 def BEDROCK_WRSTATUS : BedrockPseudo<(outs), (ins GPR64:$src),
-                                     [(int_bedrock_write_status i64:$src)]>;
+                                     [(int_bedrock_write_status i64:$src)]> {
+  let Defs = [STATUS];
+}
 def BEDROCK_RDCR : BedrockPseudo<(outs GPR64:$dst), (ins i32imm:$selector),
                                  [(set i64:$dst,
                                        (int_bedrock_read_control_register
@@ -537,14 +541,20 @@ def BEDROCK_WRCR : BedrockPseudo<(outs),
 def BEDROCK_RDSEG : BedrockPseudo<(outs GPR64:$dst), (ins i32imm:$selector),
                                   [(set i64:$dst,
                                         (int_bedrock_read_segment_register
-                                             timm:$selector))]>;
+                                             timm:$selector))]> {
+  let hasPostISelHook = 1;
+}
 def BEDROCK_RDSEG_CS : BedrockPseudo<(outs GPR64:$dst), (ins),
                                      [(set i64:$dst,
-                                           (int_bedrock_read_code_segment))]>;
+                                           (int_bedrock_read_code_segment))]> {
+  let Uses = [CS];
+}
 def BEDROCK_WRSEG : BedrockPseudo<(outs),
                                   (ins GPR64:$src, i32imm:$selector),
                                   [(int_bedrock_write_segment_register
-                                       timm:$selector, i64:$src)]>;
+                                       timm:$selector, i64:$src)]> {
+  let hasPostISelHook = 1;
+}
 
 class BedrockCacheRangePseudo<Intrinsic intrinsic>
     : BedrockPseudo<(outs), (ins GPR64:$address, GPR64:$length),

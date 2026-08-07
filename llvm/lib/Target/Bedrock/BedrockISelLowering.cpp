@@ -1410,6 +1410,48 @@ SDValue BedrockTargetLowering::LowerSELECT_CC(SDValue Op,
   return lowerSelectFromZeroOrOne(Cond, TrueValue, FalseValue, DL, DAG);
 }
 
+static Register getSegmentRegister(unsigned Selector) {
+  switch (Selector) {
+  case 0:
+    return Bedrock::DS;
+  case 1:
+    return Bedrock::SS;
+  case 2:
+    return Bedrock::GS0;
+  case 3:
+    return Bedrock::GS1;
+  case 4:
+    return Bedrock::GS2;
+  case 5:
+    return Bedrock::GS3;
+  case 6:
+    return Bedrock::GS4;
+  case 7:
+    return Bedrock::GS5;
+  default:
+    llvm_unreachable("invalid Bedrock segment-register selector");
+  }
+}
+
+void BedrockTargetLowering::AdjustInstrPostInstrSelection(
+    MachineInstr &MI, SDNode *) const {
+  bool IsDef;
+  switch (MI.getOpcode()) {
+  case Bedrock::BEDROCK_RDSEG:
+    IsDef = false;
+    break;
+  case Bedrock::BEDROCK_WRSEG:
+    IsDef = true;
+    break;
+  default:
+    llvm_unreachable("unexpected Bedrock post-isel instruction");
+  }
+
+  assert(MI.getOperand(1).isImm() && "segment selector must be immediate");
+  Register Segment = getSegmentRegister(MI.getOperand(1).getImm());
+  MI.addOperand(MachineOperand::CreateReg(Segment, IsDef, /*IsImp=*/true));
+}
+
 MachineBasicBlock *BedrockTargetLowering::EmitInstrWithCustomInserter(
     MachineInstr &MI, MachineBasicBlock *MBB) const {
   if (MI.getOpcode() == Bedrock::FP_SET_CC_S ||

@@ -40,6 +40,8 @@ public:
                                   EVT VT) const override;
   bool isFMAFasterThanFMulAndFAdd(const Function &F,
                                   Type *Ty) const override;
+  void AdjustInstrPostInstrSelection(MachineInstr &MI,
+                                     SDNode *Node) const override;
   MachineBasicBlock *
   EmitInstrWithCustomInserter(MachineInstr &MI,
                               MachineBasicBlock *MBB) const override;
