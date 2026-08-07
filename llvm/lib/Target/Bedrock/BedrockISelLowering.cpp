@@ -1060,14 +1060,15 @@ BedrockTargetLowering::LowerDYNAMIC_STACKALLOC(SDValue Op,
   SDValue Chain = Op.getOperand(0);
   SDValue Size = Op.getOperand(1);
   uint64_t Alignment = Op.getConstantOperandVal(2);
+  if (Alignment < 16)
+    Alignment = 16;
 
   SDValue SP = DAG.getCopyFromReg(Chain, DL, Bedrock::SP, MVT::i64);
   Chain = SP.getValue(1);
   SDValue Result = DAG.getNode(ISD::SUB, DL, MVT::i64, SP, Size);
-  if (Alignment > 16)
-    Result =
-        DAG.getNode(ISD::AND, DL, MVT::i64, Result,
-                    DAG.getSignedConstant(-int64_t(Alignment), DL, MVT::i64));
+  Result =
+      DAG.getNode(ISD::AND, DL, MVT::i64, Result,
+                  DAG.getSignedConstant(-int64_t(Alignment), DL, MVT::i64));
   Chain = DAG.getCopyToReg(Chain, DL, Bedrock::SP, Result);
   return DAG.getMergeValues({Result, Chain}, DL);
 }

@@ -7,6 +7,34 @@ target triple = "bedrock"
 declare i64 @callee(i64)
 declare void @use(ptr)
 
+; A dynamic allocation with the ABI's maximum baseline object alignment must
+; realign after subtracting the runtime size. The generic expansion only
+; rounds that size to the eight-byte internal stack quantum.
+define void @dynamic_aligned_alloca(i64 %size) {
+; CHECK-LABEL: dynamic_aligned_alloca:
+; CHECK: sub.q [[SIZE:r[0-9]+]], [[PTR:r[0-9]+]]
+; CHECK-NEXT: and.q -16, [[PTR]]
+; CHECK-NEXT: mov.q [[PTR]], sp
+  %slot = alloca i8, i64 %size, align 16
+  call void @use(ptr %slot)
+  ret void
+}
+
+; Even a dynamically sized object that only requests eight-byte alignment must
+; leave the body SP 16-byte aligned so the fixed near-call phase adjustment
+; still establishes SP mod 16 = 8 immediately before CALL.
+define void @dynamic_call_alignment(i64 %size) {
+; CHECK-LABEL: dynamic_call_alignment:
+; CHECK: sub.q [[SIZE:r[0-9]+]], [[PTR:r[0-9]+]]
+; CHECK-NEXT: and.q -16, [[PTR]]
+; CHECK-NEXT: mov.q [[PTR]], sp
+; CHECK: sub.q 8, sp
+; CHECK-NEXT: call use
+  %slot = alloca i8, i64 %size, align 8
+  call void @use(ptr %slot)
+  ret void
+}
+
 ; Function bodies keep SP 16-byte aligned.  A single eight-byte save therefore
 ; uses the adjacent padding register through the compact pair form.
 define void @leaf_clobber_r8() {
