@@ -74,7 +74,6 @@ private:
   DenseSet<const MachineInstr *> CmpTestJumpBranches;
   DenseSet<const MachineInstr *> CmpTestJumpCompareInstrs;
   DenseSet<const MachineInstr *> CmpTestJump8Branches;
-  DenseSet<const MachineInstr *> RedundantFlagTests;
   DenseMap<const MachineInstr *, std::pair<Register, unsigned>> BitTestAnds;
   DenseSet<const MachineInstr *> BitTestSuppressedInstrs;
   DenseSet<const MachineInstr *> ZeroCopyClears;
@@ -3282,13 +3281,7 @@ static bool canScanAcrossForPostIncAdd(const MachineInstr &MI,
 }
 
 static bool mayReadFlags(const MachineInstr &MI) {
-  switch (MI.getOpcode()) {
-  case Bedrock::BRCC:
-  case Bedrock::SETCC:
-    return true;
-  default:
-    return false;
-  }
+  return usesReg(MI, Bedrock::FLAGS);
 }
 
 static MachineBasicBlock::const_iterator
@@ -3318,30 +3311,7 @@ prevNonDebug(MachineBasicBlock::const_iterator I,
 }
 
 static bool writesFlagsForPostIncScan(const MachineInstr &MI) {
-  if (MI.getDesc().isCompare())
-    return true;
-
-  switch (MI.getOpcode()) {
-  case Bedrock::CMPLmr:
-  case Bedrock::CMPQmr:
-  case Bedrock::CMPLmxr:
-  case Bedrock::CMPQmxr:
-  case Bedrock::CMPLmor:
-  case Bedrock::CMPQmor:
-  case Bedrock::CMPLmfir:
-  case Bedrock::CMPQmfir:
-  case Bedrock::CMPLrm:
-  case Bedrock::CMPQrm:
-  case Bedrock::CMPLrmx:
-  case Bedrock::CMPQrmx:
-  case Bedrock::CMPLrmo:
-  case Bedrock::CMPQrmo:
-  case Bedrock::CMPLrmfi:
-  case Bedrock::CMPQrmfi:
-    return true;
-  default:
-    return false;
-  }
+  return definesReg(MI, Bedrock::FLAGS);
 }
 
 static bool canRemovePostIncAddFrom(MachineBasicBlock &MBB,
@@ -4268,81 +4238,6 @@ static bool isRepgBodyCandidate(const MachineInstr &MI, Register CounterReg,
   return AllowCounterDefs || !definesReg(MI, CounterReg);
 }
 
-static bool isRedundantIncDecTest(const MachineInstr &UnaryMI,
-                                  const MachineInstr &TestMI,
-                                  const MachineInstr &BranchMI) {
-  if (BranchMI.getOpcode() != Bedrock::BRCC)
-    return false;
-
-  unsigned Cond = BranchMI.getOperand(1).getImm();
-  if (Cond != 0x2 && Cond != 0x3)
-    return false;
-
-  bool IsLong;
-  switch (UnaryMI.getOpcode()) {
-  case Bedrock::INCL3r:
-  case Bedrock::DECL3r:
-    IsLong = true;
-    break;
-  case Bedrock::INCQ3r:
-  case Bedrock::DECQ3r:
-    IsLong = false;
-    break;
-  default:
-    return false;
-  }
-
-  if (TestMI.getOpcode() != (IsLong ? Bedrock::TESTLrr : Bedrock::TESTQrr))
-    return false;
-
-  Register Reg = UnaryMI.getOperand(0).getReg();
-  return UnaryMI.getOperand(1).getReg() == Reg &&
-         TestMI.getOperand(0).getReg() == Reg &&
-         TestMI.getOperand(1).getReg() == Reg;
-}
-
-static bool isRedundantLogicTest(const MachineInstr &LogicMI,
-                                 const MachineInstr &TestMI,
-                                 const MachineInstr &BranchMI) {
-  if (BranchMI.getOpcode() != Bedrock::BRCC)
-    return false;
-
-  unsigned Cond = BranchMI.getOperand(1).getImm();
-  if (Cond != 0x2 && Cond != 0x3)
-    return false;
-
-  bool IsLong;
-  switch (LogicMI.getOpcode()) {
-  case Bedrock::ANDL3rr:
-  case Bedrock::ORL3rr:
-  case Bedrock::XORL3rr:
-  case Bedrock::ANDL3ri:
-  case Bedrock::ORL3ri:
-  case Bedrock::XORL3ri:
-    IsLong = true;
-    break;
-  case Bedrock::ANDQ3rr:
-  case Bedrock::ORQ3rr:
-  case Bedrock::XORQ3rr:
-  case Bedrock::ANDQ3ri:
-  case Bedrock::ORQ3ri:
-  case Bedrock::XORQ3ri:
-    IsLong = false;
-    break;
-  default:
-    return false;
-  }
-
-  if (!LogicMI.getOperand(0).isReg() ||
-      TestMI.getOpcode() != (IsLong ? Bedrock::TESTLrr : Bedrock::TESTQrr))
-    return false;
-
-  Register Reg = LogicMI.getOperand(0).getReg();
-  return TestMI.getOperand(0).isReg() && TestMI.getOperand(1).isReg() &&
-         TestMI.getOperand(0).getReg() == Reg &&
-         TestMI.getOperand(1).getReg() == Reg;
-}
-
 static bool getSingleBitMaskIndex(const MachineInstr &AndMI, bool IsLong,
                                   unsigned &Bit) {
   if (!AndMI.getOperand(2).isImm())
@@ -4753,7 +4648,6 @@ void BedrockAsmPrinter::collectCmpTestJumpBranches(const MachineFunction &MF) {
   CmpTestJumpCompareInstrs.clear();
   CmpTestJump8Branches.clear();
   CmpTestJumpDisplacements.clear();
-  RedundantFlagTests.clear();
   BitTestAnds.clear();
   BitTestSuppressedInstrs.clear();
   ZeroCopyClears.clear();
@@ -4852,16 +4746,6 @@ void BedrockAsmPrinter::collectCmpTestJumpBranches(const MachineFunction &MF) {
           BitTestAnds[&*PrevI] = {BitTestReg, Bit};
           BitTestSuppressedInstrs.insert(CopyMI);
           BitTestSuppressedInstrs.insert(&*I);
-          continue;
-        }
-        if (!PrevI->isDebugInstr() &&
-            isRedundantIncDecTest(*PrevI, *I, *BranchI)) {
-          RedundantFlagTests.insert(&*I);
-          continue;
-        }
-        if (!PrevI->isDebugInstr() &&
-            isRedundantLogicTest(*PrevI, *I, *BranchI)) {
-          RedundantFlagTests.insert(&*I);
           continue;
         }
       }
@@ -5137,8 +5021,6 @@ BedrockAsmPrinter::getInstSizeForBranchLayout(const MachineInstr &MI) const {
     return 0;
   unsigned RepgHeaderSize = RepgStarts.contains(&MI) ? 5 : 0;
   if (CmpTestJumpCompareInstrs.contains(&MI))
-    return RepgHeaderSize;
-  if (RedundantFlagTests.contains(&MI))
     return RepgHeaderSize;
   if (BitTestSuppressedInstrs.contains(&MI))
     return RepgHeaderSize;
@@ -8911,8 +8793,6 @@ void BedrockAsmPrinter::emitInstruction(const MachineInstr *MI) {
   if (IJCounterInstrs.contains(MI) || IJCompareInstrs.contains(MI))
     return;
   if (CmpTestJumpCompareInstrs.contains(MI))
-    return;
-  if (RedundantFlagTests.contains(MI))
     return;
   if (BitTestSuppressedInstrs.contains(MI))
     return;

@@ -647,8 +647,8 @@ tracksRegLiveness: true
 body:             |
   bb.0:
     ; CHECK-LABEL: name: self_and_flags_live
-    ; CHECK: $r1 = ANDQ3rr $r1, $r1
-    ; CHECK-NEXT: BRCC %bb.1, 2
+    ; CHECK-NOT: ANDQ3rr
+    ; CHECK: BRCC %bb.1, 2
     successors: %bb.1
     liveins: $r1
 

@@ -475,98 +475,11 @@ bool BedrockPreEmitPeephole::usesReg(const MachineInstr &MI, Register Reg) {
 }
 
 bool BedrockPreEmitPeephole::mayReadFlags(const MachineInstr &MI) {
-  switch (MI.getOpcode()) {
-  case Bedrock::BRCC:
-  case Bedrock::SETCC:
-    return true;
-  default:
-    return false;
-  }
+  return readsReg(MI, Bedrock::FLAGS);
 }
 
 bool BedrockPreEmitPeephole::writesFlags(const MachineInstr &MI) {
-  if (MI.getDesc().isCompare())
-    return true;
-
-  switch (MI.getOpcode()) {
-  case Bedrock::TESTLrr:
-  case Bedrock::TESTQrr:
-  case Bedrock::INCL3r:
-  case Bedrock::INCQ3r:
-  case Bedrock::DECL3r:
-  case Bedrock::DECQ3r:
-  case Bedrock::NEGL3r:
-  case Bedrock::NEGQ3r:
-  case Bedrock::ABSL3r:
-  case Bedrock::ABSQ3r:
-  case Bedrock::NOTL3r:
-  case Bedrock::NOTQ3r:
-  case Bedrock::ADDL3rr:
-  case Bedrock::ADDQ3rr:
-  case Bedrock::SUBL3rr:
-  case Bedrock::SUBQ3rr:
-  case Bedrock::ANDL3rr:
-  case Bedrock::ANDQ3rr:
-  case Bedrock::ORL3rr:
-  case Bedrock::ORQ3rr:
-  case Bedrock::XORL3rr:
-  case Bedrock::XORQ3rr:
-  case Bedrock::SHLL3rr:
-  case Bedrock::SHLQ3rr:
-  case Bedrock::SHLL3ri:
-  case Bedrock::SHLQ3ri:
-  case Bedrock::SHRL3rr:
-  case Bedrock::SHRQ3rr:
-  case Bedrock::SHRL3ri:
-  case Bedrock::SHRQ3ri:
-  case Bedrock::SARL3rr:
-  case Bedrock::SARQ3rr:
-  case Bedrock::SARL3ri:
-  case Bedrock::SARQ3ri:
-  case Bedrock::ROLL3rr:
-  case Bedrock::ROLQ3rr:
-  case Bedrock::ROLL3ri:
-  case Bedrock::ROLQ3ri:
-  case Bedrock::RORL3rr:
-  case Bedrock::RORQ3rr:
-  case Bedrock::RORL3ri:
-  case Bedrock::RORQ3ri:
-  case Bedrock::MINUL3rr:
-  case Bedrock::MINUQ3rr:
-  case Bedrock::MINSL3rr:
-  case Bedrock::MINSQ3rr:
-  case Bedrock::MAXUL3rr:
-  case Bedrock::MAXUQ3rr:
-  case Bedrock::MAXSL3rr:
-  case Bedrock::MAXSQ3rr:
-  case Bedrock::MULL3rr:
-  case Bedrock::MULQ3rr:
-  case Bedrock::MULL3ri:
-  case Bedrock::MULQ3ri:
-  case Bedrock::DIVUL3rr:
-  case Bedrock::DIVUQ3rr:
-  case Bedrock::DIVSL3rr:
-  case Bedrock::DIVSQ3rr:
-  case Bedrock::DIVSL3ri:
-  case Bedrock::DIVSQ3ri:
-  case Bedrock::MODUL3rr:
-  case Bedrock::MODUQ3rr:
-  case Bedrock::MODSL3rr:
-  case Bedrock::MODSQ3rr:
-  case Bedrock::ADDL3ri:
-  case Bedrock::ADDQ3ri:
-  case Bedrock::SUBL3ri:
-  case Bedrock::SUBQ3ri:
-  case Bedrock::ANDL3ri:
-  case Bedrock::ANDQ3ri:
-  case Bedrock::ORL3ri:
-  case Bedrock::ORQ3ri:
-  case Bedrock::XORL3ri:
-  case Bedrock::XORQ3ri:
-    return true;
-  default:
-    return false;
-  }
+  return definesReg(MI, Bedrock::FLAGS);
 }
 
 bool BedrockPreEmitPeephole::flagsAreDeadAfter(MachineBasicBlock::iterator I,
@@ -3958,9 +3871,6 @@ bool BedrockPreEmitPeephole::foldRedundantSelfLogic(
   Register Reg = MI.getOperand(0).getReg();
   if (MI.getOperand(1).getReg() != Reg || MI.getOperand(2).getReg() != Reg)
     return false;
-  if (!flagsAreDeadAfter(I, MBB))
-    return false;
-
   LLVM_DEBUG(dbgs() << "Bedrock pre-emit peephole: folding redundant self "
                        "logic: ";
              MI.dump());

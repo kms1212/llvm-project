@@ -571,7 +571,9 @@ def BEDROCK_PTQUERY :
 
 def BEDROCK_SAVE :
     BedrockPseudo<(outs), (ins GPR64:$address),
-                  [(int_bedrock_save_processor_state GPR64:$address)]>;
+                  [(int_bedrock_save_processor_state GPR64:$address)]> {
+  let Uses = [FLAGS];
+}
 def BEDROCK_RESTORE :
     BedrockPseudo<(outs), (ins GPR64:$address),
                   [(int_bedrock_restore_processor_state GPR64:$address)]> {

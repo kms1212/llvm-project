@@ -45,8 +45,7 @@ body:             |
     liveins: $r1
     ; CHECK-LABEL: drop_dec_test_eq:
     ; CHECK: dec.q r1
-    ; CHECK-NEXT: jeq
-    ; CHECK-NOT: test.q r1, r1
+    ; CHECK-NEXT: testjeq.q r1, r1,
     $r1 = DECQ3r killed $r1
     TESTQrr $r1, $r1, implicit-def $flags
     BRCC %bb.1, 2, implicit $flags
@@ -62,8 +61,7 @@ body:             |
     liveins: $r1
     ; CHECK-LABEL: drop_and_test_eq:
     ; CHECK: and.q 1, r1
-    ; CHECK-NEXT: jeq
-    ; CHECK-NOT: test.q r1, r1
+    ; CHECK-NEXT: testjeq.q r1, r1,
     $r1 = ANDQ3ri killed $r1, 1
     TESTQrr $r1, $r1, implicit-def $flags
     BRCC %bb.1, 2, implicit $flags
@@ -164,8 +162,8 @@ body:             |
     liveins: $r1
     ; CHECK-LABEL: drop_dec_test_eq_minsize:
     ; CHECK: dec.q r1
+    ; CHECK-NEXT: test.q r1, r1
     ; CHECK-NEXT: jeq
-    ; CHECK-NOT: test.q r1, r1
     $r1 = DECQ3r killed $r1
     TESTQrr $r1, $r1, implicit-def $flags
     BRCC %bb.1, 2, implicit $flags
