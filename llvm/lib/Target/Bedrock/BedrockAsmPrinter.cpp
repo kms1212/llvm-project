@@ -44,6 +44,7 @@ enum class MemAddrKind { Reg, RegIndex, RegOffset, Abs, Frame };
 struct RepgStartInfo {
   Register CounterReg;
   uint16_t BodyBytes = 0;
+  bool IsCheckedFast = false;
 };
 
 struct RawExprFixup {
@@ -118,14 +119,16 @@ private:
                                    const MachineInstr *EndMI,
                                    const MachineInstr *SkipMI,
                                    Register CounterReg, bool AllowCounterDefs,
-                                   uint16_t &BodyBytes) const;
+                                   uint16_t &BodyBytes,
+                                   bool &IsCheckedFast) const;
 
   void emitMCInst(const MCInst &Inst);
   void emitRaw(ArrayRef<uint8_t> Bytes);
   void emitRawExpr(ArrayRef<uint8_t> Bytes, ArrayRef<RawExprFixup> Fixups);
   void emitRawExpr(ArrayRef<uint8_t> Bytes, unsigned FixupOffset,
                    MCFixupKind Kind, const MCExpr *Expr);
-  void emitRepgHeader(Register CounterReg, uint16_t BodyBytes);
+  void emitRepgHeader(Register CounterReg, uint16_t BodyBytes,
+                      bool IsCheckedFast);
   void emitRepMemset(const MachineInstr *MI);
   void emitRR(unsigned Opcode, Register DstReg, Register SrcReg);
   void emitConst(const MachineInstr *MI, bool Is64);
@@ -4183,9 +4186,29 @@ static bool getCounterSourceDef(const MachineBasicBlock &MBB,
   return CounterDef != nullptr;
 }
 
+static bool hasPositiveConstantCounter(const MachineBasicBlock &MBB,
+                                       Register CounterReg) {
+  bool Found = false;
+  for (const MachineInstr &MI : MBB) {
+    if (MI.isDebugInstr())
+      continue;
+    if (MI.isCall() || MI.getOpcode() == TargetOpcode::INLINEASM ||
+        MI.getOpcode() == TargetOpcode::INLINEASM_BR)
+      return false;
+    if (!hasRegOperand(MI, CounterReg))
+      continue;
+    if (Found || MI.getOpcode() != Bedrock::CONST64 ||
+        MI.getNumExplicitOperands() < 2 || !MI.getOperand(0).isReg() ||
+        !MI.getOperand(1).isImm() || MI.getOperand(0).getReg() != CounterReg ||
+        MI.getOperand(1).getImm() <= 0)
+      return false;
+    Found = true;
+  }
+  return Found;
+}
+
 static bool isCounterSelfTest(const MachineInstr &MI, Register Reg) {
-  if (MI.getOpcode() != Bedrock::TESTLrr &&
-      MI.getOpcode() != Bedrock::TESTQrr)
+  if (MI.getOpcode() != Bedrock::TESTLrr && MI.getOpcode() != Bedrock::TESTQrr)
     return false;
   return MI.getNumExplicitOperands() >= 2 && MI.getOperand(0).isReg() &&
          MI.getOperand(1).isReg() && MI.getOperand(0).getReg() == Reg &&
@@ -4241,6 +4264,23 @@ static bool isRepgBodyCandidate(const MachineInstr &MI, Register CounterReg,
     return false;
 
   return AllowCounterDefs || !definesReg(MI, CounterReg);
+}
+
+static bool isRepgfBodyCandidate(const MachineInstr &MI, Register CounterReg) {
+  if (definesReg(MI, CounterReg))
+    return false;
+
+  StringRef OpcodeName =
+      MI.getMF()->getSubtarget().getInstrInfo()->getName(MI.getOpcode());
+  static constexpr StringLiteral CandidatePrefixes[] = {
+      "ADD",    "AND",     "BSWAP", "CLR",  "CLS",  "CLZ",    "CMP",
+      "CONST",  "CTS",     "CTZ",   "DEC",  "EXTS", "EXTZ",   "INC",
+      "LEA",    "LOAD",    "MOV",   "NEG",  "NOT",  "OR",     "PARITY",
+      "POPCNT", "REVBYTE", "ROL",   "ROR",  "SAR",  "SEGLEA", "SHL",
+      "SHR",    "STORE",   "SUB",   "TEST", "XOR"};
+  return any_of(CandidatePrefixes, [OpcodeName](StringRef Prefix) {
+    return OpcodeName.starts_with(Prefix);
+  });
 }
 
 static bool getSingleBitMaskIndex(const MachineInstr &AndMI, bool IsLong,
@@ -4767,11 +4807,12 @@ void BedrockAsmPrinter::collectCmpTestJumpBranches(const MachineFunction &MF) {
 bool BedrockAsmPrinter::computeRepeatGroupBodyBytes(
     const MachineBasicBlock &MBB, const MachineInstr *StartMI,
     const MachineInstr *EndMI, const MachineInstr *SkipMI, Register CounterReg,
-    bool AllowCounterDefs, uint16_t &BodyBytes) const {
+    bool AllowCounterDefs, uint16_t &BodyBytes, bool &IsCheckedFast) const {
   uint64_t Size = 0;
   bool InRange = false;
   bool SawBody = false;
   bool SeenSkippedDec = false;
+  IsCheckedFast = !AllowCounterDefs;
 
   for (const MachineInstr &MI : MBB) {
     if (&MI == StartMI)
@@ -4791,6 +4832,7 @@ bool BedrockAsmPrinter::computeRepeatGroupBodyBytes(
       return false;
     if (!isRepgBodyCandidate(MI, CounterReg, AllowCounterDefs))
       return false;
+    IsCheckedFast &= isRepgfBodyCandidate(MI, CounterReg);
 
     Size += getInstSizeForBranchLayout(MI);
     SawBody = true;
@@ -4870,12 +4912,13 @@ bool BedrockAsmPrinter::tryCollectHeaderRepeatGroup(
     return false;
 
   uint16_t BodyBytes = 0;
+  bool IsCheckedFast = false;
   if (!computeRepeatGroupBodyBytes(*BodyMBB, &*BodyStartI, &*BodyBrI, DecMI,
                                    CounterReg, ScratchMarker != nullptr,
-                                   BodyBytes))
+                                   BodyBytes, IsCheckedFast))
     return false;
 
-  RepgStarts[&*BodyStartI] = {CounterReg, BodyBytes};
+  RepgStarts[&*BodyStartI] = {CounterReg, BodyBytes, IsCheckedFast};
   RepgSuppressedInstrs.insert(&*HeaderTestI);
   RepgSuppressedInstrs.insert(&*HeaderBrI);
   RepgSuppressedInstrs.insert(DecMI);
@@ -4922,27 +4965,29 @@ bool BedrockAsmPrinter::tryCollectGuardedSelfRepeatGroup(
     return false;
   }
 
-  Register SourceReg;
-  if (!getCounterSourceDef(*PreheaderMBB, CounterReg, SourceReg)) {
-    LLVM_DEBUG(dbgs() << "Bedrock REPG: reject self loop bad counter source "
-                      << BodyMBB.getName() << '\n');
-    return false;
-  }
-
-  MachineBasicBlock *GuardMBB = nullptr;
-  for (MachineBasicBlock *PredMBB : PreheaderMBB->predecessors()) {
-    if (GuardMBB) {
-      LLVM_DEBUG(dbgs() << "Bedrock REPG: reject self loop multiple guards "
+  if (!hasPositiveConstantCounter(*PreheaderMBB, CounterReg)) {
+    Register SourceReg;
+    if (!getCounterSourceDef(*PreheaderMBB, CounterReg, SourceReg)) {
+      LLVM_DEBUG(dbgs() << "Bedrock REPG: reject self loop bad counter source "
                         << BodyMBB.getName() << '\n');
       return false;
     }
-    GuardMBB = PredMBB;
-  }
-  if (!GuardMBB ||
-      !isPositiveCounterGuard(*GuardMBB, *PreheaderMBB, BodyMBB, SourceReg)) {
-    LLVM_DEBUG(dbgs() << "Bedrock REPG: reject self loop bad guard "
-                      << BodyMBB.getName() << '\n');
-    return false;
+
+    MachineBasicBlock *GuardMBB = nullptr;
+    for (MachineBasicBlock *PredMBB : PreheaderMBB->predecessors()) {
+      if (GuardMBB) {
+        LLVM_DEBUG(dbgs() << "Bedrock REPG: reject self loop multiple guards "
+                          << BodyMBB.getName() << '\n');
+        return false;
+      }
+      GuardMBB = PredMBB;
+    }
+    if (!GuardMBB ||
+        !isPositiveCounterGuard(*GuardMBB, *PreheaderMBB, BodyMBB, SourceReg)) {
+      LLVM_DEBUG(dbgs() << "Bedrock REPG: reject self loop bad guard "
+                        << BodyMBB.getName() << '\n');
+      return false;
+    }
   }
 
   auto BodyStartI = firstNonDebug(BodyMBB);
@@ -4965,9 +5010,10 @@ bool BedrockAsmPrinter::tryCollectGuardedSelfRepeatGroup(
   }
 
   uint16_t BodyBytes = 0;
+  bool IsCheckedFast = false;
   if (!computeRepeatGroupBodyBytes(BodyMBB, &*BodyStartI, DecMI, nullptr,
                                    CounterReg, ScratchMarker != nullptr,
-                                   BodyBytes)) {
+                                   BodyBytes, IsCheckedFast)) {
     LLVM_DEBUG(dbgs() << "Bedrock REPG: reject self loop invalid body "
                       << BodyMBB.getName() << '\n');
     return false;
@@ -4976,7 +5022,7 @@ bool BedrockAsmPrinter::tryCollectGuardedSelfRepeatGroup(
   LLVM_DEBUG(dbgs() << "Bedrock REPG: collect guarded self loop "
                     << BodyMBB.getName() << " body-bytes=" << BodyBytes
                     << '\n');
-  RepgStarts[&*BodyStartI] = {CounterReg, BodyBytes};
+  RepgStarts[&*BodyStartI] = {CounterReg, BodyBytes, IsCheckedFast};
   RepgSuppressedInstrs.insert(DecMI);
   RepgSuppressedInstrs.insert(TestMI);
   RepgSuppressedInstrs.insert(BranchMI);
@@ -6090,12 +6136,13 @@ void BedrockAsmPrinter::emitRawExpr(ArrayRef<uint8_t> Bytes,
   emitRawExpr(Bytes, ArrayRef<RawExprFixup>{{FixupOffset, Kind, Expr}});
 }
 
-void BedrockAsmPrinter::emitRepgHeader(Register CounterReg, uint16_t BodyBytes) {
+void BedrockAsmPrinter::emitRepgHeader(Register CounterReg, uint16_t BodyBytes,
+                                       bool IsCheckedFast) {
   if (OutStreamer->hasRawTextSupport()) {
     SmallString<64> Text;
     raw_svector_ostream OS(Text);
-    OS << "\trepg\t" << BedrockInstPrinter::getRegisterName(CounterReg)
-       << ", {";
+    OS << (IsCheckedFast ? "\trepgf\t" : "\trepg\t")
+       << BedrockInstPrinter::getRegisterName(CounterReg) << ", {";
     OutStreamer->emitRawText(OS.str());
     return;
   }
@@ -6113,12 +6160,12 @@ void BedrockAsmPrinter::emitRepMemset(const MachineInstr *MI) {
   Register ValueReg = MI->getOperand(3).getReg();
   Register CountReg = MI->getOperand(4).getReg();
 
-  emitRepgHeader(CountReg, /*BodyBytes=*/4);
+  emitRepgHeader(CountReg, /*BodyBytes=*/4, /*IsCheckedFast=*/true);
   if (OutStreamer->hasRawTextSupport()) {
     SmallString<80> Text;
     raw_svector_ostream OS(Text);
-    OS << "\tmov.b\t" << BedrockInstPrinter::getRegisterName(ValueReg)
-       << ", [" << BedrockInstPrinter::getRegisterName(DstReg) << "++]";
+    OS << "\tmov.b\t" << BedrockInstPrinter::getRegisterName(ValueReg) << ", ["
+       << BedrockInstPrinter::getRegisterName(DstReg) << "++]";
     OutStreamer->emitRawText(OS.str());
     OutStreamer->emitRawText("\t}");
     return;
@@ -7087,11 +7134,37 @@ static char getSizeSuffix(unsigned Size) {
   return Suffixes[Size];
 }
 
+struct SymbolMemoryAddressInfo {
+  uint8_t EA;
+  MCFixupKind FixupKind;
+  bool IsPCRelative;
+};
+
+static SymbolMemoryAddressInfo
+getSymbolMemoryAddressInfo(const MachineOperand &Addr) {
+  switch (Addr.getTargetFlags()) {
+  case BedrockII::MO_ABS32:
+    return {0x6a, FK_Data_4, false};
+  case BedrockII::MO_PCREL32:
+    return {0x66, MCFixupKind(Bedrock::fixup_bedrock_pcrel32), true};
+  default:
+    report_fatal_error("unsupported Bedrock direct symbolic memory address");
+  }
+}
+
+static void printSymbolMemoryAddress(raw_ostream &OS, const MCAsmInfo *MAI,
+                                     const MCExpr &Expr, bool IsPCRelative) {
+  if (IsPCRelative)
+    OS << "pc + ";
+  MAI->printExpr(OS, Expr);
+}
+
 void BedrockAsmPrinter::emitAbsLoad(const MachineInstr *MI, unsigned Size,
                                     bool IsExt, bool IsSigned) {
   Register DstReg = MI->getOperand(0).getReg();
   const MachineOperand &Addr = MI->getOperand(1);
   const MCExpr *Expr = lowerSymbolOperand(Addr);
+  SymbolMemoryAddressInfo AddrInfo = getSymbolMemoryAddressInfo(Addr);
 
   if (OutStreamer->hasRawTextSupport()) {
     SmallString<96> Text;
@@ -7101,7 +7174,7 @@ void BedrockAsmPrinter::emitAbsLoad(const MachineInstr *MI, unsigned Size,
          << "\t[";
     else
       OS << "\tmov." << getSizeSuffix(Size) << "\t[";
-    MAI->printExpr(OS, *Expr);
+    printSymbolMemoryAddress(OS, MAI, *Expr, AddrInfo.IsPCRelative);
     OS << "], " << BedrockInstPrinter::getRegisterName(DstReg);
     OutStreamer->emitRawText(OS.str());
     return;
@@ -7109,24 +7182,26 @@ void BedrockAsmPrinter::emitAbsLoad(const MachineInstr *MI, unsigned Size,
 
   SmallVector<uint8_t, 4> Tail(4, 0);
   SmallVector<uint8_t, 8> Bytes;
-  uint32_t Payload = IsExt ? getExtLoadPayload(Size, IsSigned, 0x6a, DstReg)
-                           : getMovPayload(/*IsLoad=*/true, Size, 0x6a, DstReg);
+  uint32_t Payload =
+      IsExt ? getExtLoadPayload(Size, IsSigned, AddrInfo.EA, DstReg)
+            : getMovPayload(/*IsLoad=*/true, Size, AddrInfo.EA, DstReg);
   if (!BedrockMC::encodeMedium(Payload, Tail, Bytes))
     report_fatal_error("failed to encode Bedrock absolute load");
-  emitRawExpr(Bytes, 3, FK_Data_4, Expr);
+  emitRawExpr(Bytes, 3, AddrInfo.FixupKind, Expr);
 }
 
 void BedrockAsmPrinter::emitAbsStore(const MachineInstr *MI, unsigned Size) {
   Register SrcReg = MI->getOperand(0).getReg();
   const MachineOperand &Addr = MI->getOperand(1);
   const MCExpr *Expr = lowerSymbolOperand(Addr);
+  SymbolMemoryAddressInfo AddrInfo = getSymbolMemoryAddressInfo(Addr);
 
   if (OutStreamer->hasRawTextSupport()) {
     SmallString<96> Text;
     raw_svector_ostream OS(Text);
     OS << "\tmov." << getSizeSuffix(Size) << "\t"
        << BedrockInstPrinter::getRegisterName(SrcReg) << ", [";
-    MAI->printExpr(OS, *Expr);
+    printSymbolMemoryAddress(OS, MAI, *Expr, AddrInfo.IsPCRelative);
     OS << "]";
     OutStreamer->emitRawText(OS.str());
     return;
@@ -7135,9 +7210,10 @@ void BedrockAsmPrinter::emitAbsStore(const MachineInstr *MI, unsigned Size) {
   SmallVector<uint8_t, 4> Tail(4, 0);
   SmallVector<uint8_t, 8> Bytes;
   if (!BedrockMC::encodeMedium(
-          getMovPayload(/*IsLoad=*/false, Size, 0x6a, SrcReg), Tail, Bytes))
+          getMovPayload(/*IsLoad=*/false, Size, AddrInfo.EA, SrcReg), Tail,
+          Bytes))
     report_fatal_error("failed to encode Bedrock absolute store");
-  emitRawExpr(Bytes, 3, FK_Data_4, Expr);
+  emitRawExpr(Bytes, 3, AddrInfo.FixupKind, Expr);
 }
 
 void BedrockAsmPrinter::emitLoad(const MachineInstr *MI, unsigned Size,
@@ -7467,21 +7543,22 @@ void BedrockAsmPrinter::emitImmStoreOffset(const MachineInstr *MI,
   SmallVector<uint8_t, 24> Bytes;
   if (!BedrockMC::encodeLong(getImmStorePayload(Size, SrcEA, DstEA), Tail,
                              Bytes))
-    report_fatal_error("failed to encode Bedrock immediate offset store pseudo");
+    report_fatal_error(
+        "failed to encode Bedrock immediate offset store pseudo");
   emitRaw(Bytes);
 }
 
-void BedrockAsmPrinter::emitImmStoreAbs(const MachineInstr *MI,
-                                        unsigned Size) {
+void BedrockAsmPrinter::emitImmStoreAbs(const MachineInstr *MI, unsigned Size) {
   int64_t Imm = MI->getOperand(0).getImm();
   const MachineOperand &Addr = MI->getOperand(1);
   const MCExpr *Expr = lowerSymbolOperand(Addr);
+  SymbolMemoryAddressInfo AddrInfo = getSymbolMemoryAddressInfo(Addr);
 
   if (OutStreamer->hasRawTextSupport()) {
     SmallString<96> Text;
     raw_svector_ostream OS(Text);
     OS << "\tmov." << getSizeSuffix(Size) << "\t" << Imm << ", [";
-    MAI->printExpr(OS, *Expr);
+    printSymbolMemoryAddress(OS, MAI, *Expr, AddrInfo.IsPCRelative);
     OS << "]";
     OutStreamer->emitRawText(OS.str());
     return;
@@ -7495,10 +7572,10 @@ void BedrockAsmPrinter::emitImmStoreAbs(const MachineInstr *MI,
   appendLE(Tail, 0, 4);
 
   SmallVector<uint8_t, 24> Bytes;
-  if (!BedrockMC::encodeLong(getImmStorePayload(Size, SrcEA, 0x6a), Tail,
+  if (!BedrockMC::encodeLong(getImmStorePayload(Size, SrcEA, AddrInfo.EA), Tail,
                              Bytes))
     report_fatal_error("failed to encode Bedrock immediate absolute store");
-  emitRawExpr(Bytes, 4 + getSignedAutoSize(Imm), FK_Data_4, Expr);
+  emitRawExpr(Bytes, 4 + getSignedAutoSize(Imm), AddrInfo.FixupKind, Expr);
 }
 
 void BedrockAsmPrinter::emitFpuMove(Register DstReg, Register SrcReg) {
@@ -7934,17 +8011,17 @@ void BedrockAsmPrinter::emitFpuConvert(const MachineInstr *MI,
   emitRaw(Bytes);
 }
 
-void BedrockAsmPrinter::emitFpuAbsLoad(const MachineInstr *MI,
-                                       bool IsDouble) {
+void BedrockAsmPrinter::emitFpuAbsLoad(const MachineInstr *MI, bool IsDouble) {
   Register DstReg = MI->getOperand(0).getReg();
   const MachineOperand &Addr = MI->getOperand(1);
   const MCExpr *Expr = lowerSymbolOperand(Addr);
+  SymbolMemoryAddressInfo AddrInfo = getSymbolMemoryAddressInfo(Addr);
 
   if (OutStreamer->hasRawTextSupport()) {
     SmallString<96> Text;
     raw_svector_ostream OS(Text);
     OS << "\tFMOV." << (IsDouble ? 'D' : 'S') << "\t[";
-    MAI->printExpr(OS, *Expr);
+    printSymbolMemoryAddress(OS, MAI, *Expr, AddrInfo.IsPCRelative);
     OS << "], " << BedrockInstPrinter::getRegisterName(DstReg);
     OutStreamer->emitRawText(OS.str());
     return;
@@ -7954,25 +8031,24 @@ void BedrockAsmPrinter::emitFpuAbsLoad(const MachineInstr *MI,
   SmallVector<uint8_t, 8> Bytes;
   uint32_t Payload = applyPatternValues(
       "1111010101z0000ddddeeeeeee",
-      {{'z', IsDouble}, {'d', getFPRNo(DstReg)}, {'e', 0x6a}});
+      {{'z', IsDouble}, {'d', getFPRNo(DstReg)}, {'e', AddrInfo.EA}});
   if (!BedrockMC::encodeLong(Payload, Tail, Bytes))
     report_fatal_error("failed to encode Bedrock absolute FPU load");
-  emitRawExpr(Bytes, 4, FK_Data_4, Expr);
+  emitRawExpr(Bytes, 4, AddrInfo.FixupKind, Expr);
 }
 
-void BedrockAsmPrinter::emitFpuAbsStore(const MachineInstr *MI,
-                                        bool IsDouble) {
+void BedrockAsmPrinter::emitFpuAbsStore(const MachineInstr *MI, bool IsDouble) {
   Register SrcReg = MI->getOperand(0).getReg();
   const MachineOperand &Addr = MI->getOperand(1);
   const MCExpr *Expr = lowerSymbolOperand(Addr);
+  SymbolMemoryAddressInfo AddrInfo = getSymbolMemoryAddressInfo(Addr);
 
   if (OutStreamer->hasRawTextSupport()) {
     SmallString<96> Text;
     raw_svector_ostream OS(Text);
     OS << "\tFMOV." << (IsDouble ? 'D' : 'S') << "\t"
-       << BedrockInstPrinter::getRegisterName(SrcReg)
-       << ", [";
-    MAI->printExpr(OS, *Expr);
+       << BedrockInstPrinter::getRegisterName(SrcReg) << ", [";
+    printSymbolMemoryAddress(OS, MAI, *Expr, AddrInfo.IsPCRelative);
     OS << "]";
     OutStreamer->emitRawText(OS.str());
     return;
@@ -7982,10 +8058,10 @@ void BedrockAsmPrinter::emitFpuAbsStore(const MachineInstr *MI,
   SmallVector<uint8_t, 8> Bytes;
   uint32_t Payload = applyPatternValues(
       "1111011000z0000sssseeeeeee",
-      {{'z', IsDouble}, {'s', getFPRNo(SrcReg)}, {'e', 0x6a}});
+      {{'z', IsDouble}, {'s', getFPRNo(SrcReg)}, {'e', AddrInfo.EA}});
   if (!BedrockMC::encodeLong(Payload, Tail, Bytes))
     report_fatal_error("failed to encode Bedrock absolute FPU store");
-  emitRawExpr(Bytes, 4, FK_Data_4, Expr);
+  emitRawExpr(Bytes, 4, AddrInfo.FixupKind, Expr);
 }
 
 void BedrockAsmPrinter::emitFpuLoad(const MachineInstr *MI, bool IsFrame,
@@ -8814,7 +8890,8 @@ void BedrockAsmPrinter::emitSystemIntrinsic(const MachineInstr *MI) {
 
 void BedrockAsmPrinter::emitInstruction(const MachineInstr *MI) {
   if (auto It = RepgStarts.find(MI); It != RepgStarts.end())
-    emitRepgHeader(It->second.CounterReg, It->second.BodyBytes);
+    emitRepgHeader(It->second.CounterReg, It->second.BodyBytes,
+                   It->second.IsCheckedFast);
   if (RepgSuppressedInstrs.contains(MI)) {
     if (RepgEndMarkers.contains(MI) && OutStreamer->hasRawTextSupport())
       OutStreamer->emitRawText("\t}");

@@ -32,13 +32,14 @@ public:
   void scanSection(InputSectionBase &sec) override;
   void relocate(uint8_t *loc, const Relocation &rel,
                 uint64_t val) const override;
+  bool relaxOnce(int pass) const override;
+  void finalizeRelax(int passes) const override;
   void writeGotPltHeader(uint8_t *buf) const override;
   void writeGotPlt(uint8_t *buf, const Symbol &) const override;
   void writeIgotPlt(uint8_t *buf, const Symbol &) const override;
   void writePlt(uint8_t *buf, const Symbol &sym,
                 uint64_t pltEntryAddr) const override;
-  int64_t getImplicitAddend(const uint8_t *buf,
-                            RelType type) const override;
+  int64_t getImplicitAddend(const uint8_t *buf, RelType type) const override;
 };
 } // namespace
 
@@ -315,6 +316,154 @@ void Bedrock::scanSection(InputSectionBase &sec) {
   }
 
   TargetInfo::scanSection(sec);
+}
+
+static RelType getRelaxedCallType(RelType type) {
+  switch (type) {
+  case R_BEDROCK_CALL32S:
+    return R_BEDROCK_CALL16S;
+  case R_BEDROCK_PLT32S:
+    return R_BEDROCK_PLT16S;
+  default:
+    return R_BEDROCK_NONE;
+  }
+}
+
+static bool hasCanonicalCall32(const InputSection &sec, const Relocation &rel) {
+  ArrayRef<uint8_t> content = sec.content();
+  return rel.offset >= 3 && rel.offset + 4 <= content.size() &&
+         content[rel.offset - 3] == 0xd0 && content[rel.offset - 2] == 0xe6;
+}
+
+static bool relaxBedrockSection(Ctx &ctx, int pass, InputSection &sec) {
+  MutableArrayRef<Relocation> relocs = sec.relocs();
+  RelaxAux &aux = *sec.relaxAux;
+  ArrayRef<SymbolAnchor> anchors = ArrayRef(aux.anchors);
+  uint64_t delta = 0;
+  bool changed = false;
+
+  std::fill_n(aux.relocTypes.get(), relocs.size(), R_BEDROCK_NONE);
+  for (auto [index, rel] : llvm::enumerate(relocs)) {
+    uint32_t &currentDelta = aux.relocDeltas[index];
+    uint32_t previousRemove = currentDelta - delta;
+    uint32_t remove = 0;
+    RelType relaxedType = getRelaxedCallType(rel.type);
+    if (relaxedType != R_BEDROCK_NONE && hasCanonicalCall32(sec, rel)) {
+      if (pass >= 4) {
+        remove = previousRemove;
+      } else {
+        uint64_t fieldVA = sec.getVA() + rel.offset - delta;
+        int64_t displacement =
+            static_cast<int64_t>(sec.getRelocTargetVA(ctx, rel, fieldVA)) - 2;
+        if (isInt<16>(displacement))
+          remove = 2;
+      }
+      if (remove)
+        aux.relocTypes[index] = relaxedType;
+    }
+
+    for (; !anchors.empty() && anchors.front().offset <= rel.offset;
+         anchors = anchors.drop_front()) {
+      const SymbolAnchor &anchor = anchors.front();
+      if (anchor.end)
+        anchor.d->size = anchor.offset - delta - anchor.d->value;
+      else
+        anchor.d->value = anchor.offset - delta;
+    }
+
+    delta += remove;
+    if (currentDelta != delta) {
+      currentDelta = delta;
+      changed = true;
+    }
+  }
+
+  for (const SymbolAnchor &anchor : anchors) {
+    if (anchor.end)
+      anchor.d->size = anchor.offset - delta - anchor.d->value;
+    else
+      anchor.d->value = anchor.offset - delta;
+  }
+  if (!isUInt<32>(delta))
+    Err(ctx) << "section size decrease is too large: " << delta;
+  sec.bytesDropped = delta;
+  return changed;
+}
+
+bool Bedrock::relaxOnce(int pass) const {
+  if (!ctx.arg.relax)
+    return false;
+  if (pass == 0)
+    initSymbolAnchors(ctx);
+
+  SmallVector<InputSection *, 0> storage;
+  bool changed = false;
+  for (OutputSection *osec : ctx.outputSections) {
+    if (!(osec->flags & SHF_EXECINSTR))
+      continue;
+    for (InputSection *sec : getInputSections(*osec, storage))
+      if (sec->relaxAux && sec->relaxAux->relocDeltas)
+        changed |= relaxBedrockSection(ctx, pass, *sec);
+  }
+  return changed;
+}
+
+void Bedrock::finalizeRelax(int passes) const {
+  if (!ctx.arg.relax)
+    return;
+
+  SmallVector<InputSection *, 0> storage;
+  for (OutputSection *osec : ctx.outputSections) {
+    if (!(osec->flags & SHF_EXECINSTR))
+      continue;
+    for (InputSection *sec : getInputSections(*osec, storage)) {
+      if (!sec->relaxAux || !sec->relaxAux->relocDeltas)
+        continue;
+
+      RelaxAux &aux = *sec->relaxAux;
+      MutableArrayRef<Relocation> relocs = sec->relocs();
+      ArrayRef<uint8_t> old = sec->content();
+      size_t newSize = old.size() - aux.relocDeltas[relocs.size() - 1];
+      uint8_t *newContent = ctx.bAlloc.Allocate<uint8_t>(newSize);
+      uint8_t *out = newContent;
+      uint64_t oldOffset = 0;
+      uint32_t delta = 0;
+
+      for (auto [index, rel] : llvm::enumerate(relocs)) {
+        uint32_t remove = aux.relocDeltas[index] - delta;
+        RelType newType = aux.relocTypes[index];
+        if (remove == 2 &&
+            (newType == R_BEDROCK_CALL16S || newType == R_BEDROCK_PLT16S)) {
+          uint64_t instructionOffset = rel.offset - 3;
+          uint64_t copySize = instructionOffset - oldOffset;
+          memcpy(out, old.data() + oldOffset, copySize);
+          out += copySize;
+
+          out[0] = 0xc8;
+          out[1] = 0xa6;
+          out[2] = old[rel.offset - 1];
+          out[3] = 0;
+          out[4] = 0;
+          out += 5;
+          oldOffset = rel.offset + 4;
+        }
+        delta = aux.relocDeltas[index];
+      }
+      memcpy(out, old.data() + oldOffset, old.size() - oldOffset);
+
+      delta = 0;
+      for (auto [index, rel] : llvm::enumerate(relocs)) {
+        rel.offset -= delta;
+        if (aux.relocTypes[index] != R_BEDROCK_NONE)
+          rel.type = aux.relocTypes[index];
+        delta = aux.relocDeltas[index];
+      }
+
+      sec->content_ = newContent;
+      sec->size = newSize;
+      sec->bytesDropped = 0;
+    }
+  }
 }
 
 static int64_t getNextIPRelativeBias(RelType type) {

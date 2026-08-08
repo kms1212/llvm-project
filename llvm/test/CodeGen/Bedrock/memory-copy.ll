@@ -64,7 +64,7 @@ done:
 
 define i32 @copy_countdown(ptr %dst, ptr %src, i32 %n) {
 ; CHECK-LABEL: copy_countdown:
-; CHECK: repg {{r[0-9]+}}, {
+; CHECK: repgf {{r[0-9]+}}, {
 ; CHECK-NEXT: mov.q [r1++], [r0++]
 ; CHECK-NEXT: }
 ; CHECK-NOT: djt

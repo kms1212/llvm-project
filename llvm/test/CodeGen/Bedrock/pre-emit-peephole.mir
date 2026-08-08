@@ -278,6 +278,10 @@
   define i64 @zero_return_callee_saved_phi() {
     ret i64 0
   }
+
+  define void @remove_fallthrough_branch() {
+    ret void
+  }
 ...
 ---
 name:            redundant_frame_store
@@ -1666,4 +1670,20 @@ body:             |
     $r8 = LOADQfi 8, 0
     ADJSP_UP 16
     RET implicit $r0
+...
+---
+name:            remove_fallthrough_branch
+tracksRegLiveness: true
+body:             |
+  ; CHECK-LABEL: name: remove_fallthrough_branch
+  ; CHECK: bb.0:
+  ; CHECK-NOT: BR
+  ; CHECK: bb.1:
+  bb.0:
+    successors: %bb.1
+
+    BR %bb.1
+
+  bb.1:
+    RET
 ...

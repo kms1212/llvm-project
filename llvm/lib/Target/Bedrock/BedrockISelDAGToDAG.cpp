@@ -522,6 +522,9 @@ static bool selectScaledIndexLEA(SelectionDAG *DAG, SDNode *N, SDLoc DL) {
   return true;
 }
 
+static unsigned getSymbolAddressFlag(const SelectionDAG &DAG,
+                                     const GlobalValue *GV);
+
 static bool selectSymbolAddress(SelectionDAG *DAG, SDValue Addr, SDLoc DL,
                                 SDValue &Target) {
   if (Addr.getOpcode() == ISD::ADD) {
@@ -540,7 +543,9 @@ static bool selectSymbolAddress(SelectionDAG *DAG, SDValue Addr, SDLoc DL,
     if (Base) {
       if (auto *GA = dyn_cast<GlobalAddressSDNode>(Base)) {
         Target = DAG->getTargetGlobalAddress(GA->getGlobal(), DL, MVT::i64,
-                                             GA->getOffset() + Offset);
+                                             GA->getOffset() + Offset,
+                                             getSymbolAddressFlag(
+                                                 *DAG, GA->getGlobal()));
         return true;
       }
     }
@@ -548,7 +553,9 @@ static bool selectSymbolAddress(SelectionDAG *DAG, SDValue Addr, SDLoc DL,
 
   if (auto *GA = dyn_cast<GlobalAddressSDNode>(Addr)) {
     Target = DAG->getTargetGlobalAddress(GA->getGlobal(), DL, MVT::i64,
-                                         GA->getOffset());
+                                         GA->getOffset(),
+                                         getSymbolAddressFlag(
+                                             *DAG, GA->getGlobal()));
     return true;
   }
   if (auto *ES = dyn_cast<ExternalSymbolSDNode>(Addr)) {
@@ -620,11 +627,12 @@ static unsigned getLocalAddressFlag(const SelectionDAG &DAG,
   return BedrockII::MO_ABS32;
 }
 
-static bool useAbsolute32Memory(const SelectionDAG &DAG) {
-  if (DAG.getTarget().isPositionIndependent())
+static bool isDirectSymbolMemoryAddress(SDValue Target) {
+  auto *GA = dyn_cast<GlobalAddressSDNode>(Target);
+  if (!GA)
     return false;
-  CodeModel::Model CM = DAG.getTarget().getCodeModel();
-  return CM == CodeModel::Tiny;
+  unsigned Flag = GA->getTargetFlags();
+  return Flag == BedrockII::MO_ABS32 || Flag == BedrockII::MO_PCREL32;
 }
 
 static bool selectMaterializedSymbolAddress(SelectionDAG *DAG, SDNode *N,
@@ -1016,8 +1024,8 @@ void BedrockDAGToDAGISel::Select(SDNode *N) {
     }
 
     SDValue Target;
-    if (useAbsolute32Memory(*CurDAG) &&
-        selectSymbolAddress(CurDAG, LD->getBasePtr(), DL, Target)) {
+    if (selectSymbolAddress(CurDAG, LD->getBasePtr(), DL, Target) &&
+        isDirectSymbolMemoryAddress(Target)) {
       SDValue Ops[] = {Target, LD->getChain()};
       selectMemoryNode(CurDAG, N, getLoadAbsOpcode(LD), Ops,
                        LD->getMemOperand());
@@ -1077,8 +1085,8 @@ void BedrockDAGToDAGISel::Select(SDNode *N) {
     }
 
     SDValue Target;
-    if (useAbsolute32Memory(*CurDAG) &&
-        selectSymbolAddress(CurDAG, ST->getBasePtr(), DL, Target)) {
+    if (selectSymbolAddress(CurDAG, ST->getBasePtr(), DL, Target) &&
+        isDirectSymbolMemoryAddress(Target)) {
       if (HasStoreImm) {
         SDValue Ops[] = {
             CurDAG->getTargetConstant(StoreImm, DL, MVT::i64),

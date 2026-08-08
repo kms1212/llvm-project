@@ -166,6 +166,8 @@ BedrockTargetMachine::BedrockTargetMachine(const Target &T, const Triple &TT,
       TLOF(std::make_unique<TargetLoweringObjectFileELF>()),
       Subtarget(TT, CPU, FS, *this, Options, getCodeModel(), OL) {
   initAsmInfo();
+  setMachineOutliner(true);
+  setSupportsDefaultOutlining(true);
 }
 
 TargetTransformInfo

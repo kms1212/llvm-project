@@ -32,7 +32,7 @@ exit:
 
 define void @nonvolatile_countdown(ptr %dst, i32 %n, i8 %value) {
 ; CHECK-LABEL: nonvolatile_countdown:
-; CHECK: repg
+; CHECK: repgf
 ; CHECK: mov.b
 ; CHECK: }
 ; CHECK-NOT: djt
@@ -52,6 +52,35 @@ loop:
   %next.ptr = getelementptr i8, ptr %ptr, i64 1
   %next.iv = add nsw i64 %iv, -1
   %done = icmp eq i64 %next.iv, 0
+  br i1 %done, label %exit, label %loop
+
+exit:
+  ret void
+}
+
+define void @fixed_count_copy(ptr %dst, ptr %src) minsize optsize {
+; CHECK-LABEL: fixed_count_copy:
+; CHECK: lea.q 16, [[COUNT:r[0-7]]]
+; CHECK: repgf [[COUNT]], {
+; CHECK: mov.q
+; CHECK: lea.q
+; CHECK: }
+; CHECK-NOT: cmp.q 128
+; CHECK-NOT: jne
+; CHECK: ret
+; OBJ-LABEL: <fixed_count_copy>:
+; OBJ: repg
+entry:
+  br label %loop
+
+loop:
+  %offset = phi i64 [ 0, %entry ], [ %next, %loop ]
+  %src.addr = getelementptr i8, ptr %src, i64 %offset
+  %dst.addr = getelementptr i8, ptr %dst, i64 %offset
+  %value = load i64, ptr %src.addr, align 8
+  store i64 %value, ptr %dst.addr, align 8
+  %next = add nuw nsw i64 %offset, 8
+  %done = icmp eq i64 %next, 128
   br i1 %done, label %exit, label %loop
 
 exit:

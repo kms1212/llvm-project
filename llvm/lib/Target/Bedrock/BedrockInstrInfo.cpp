@@ -10,6 +10,8 @@
 #include "BedrockSubtarget.h"
 #include "MCTargetDesc/BedrockMCTargetDesc.h"
 #include "llvm/CodeGen/MachineInstrBuilder.h"
+#include "llvm/CodeGen/MachineOutliner.h"
+#include "llvm/IR/Module.h"
 #include "llvm/Support/ErrorHandling.h"
 
 using namespace llvm;
@@ -300,12 +302,9 @@ unsigned BedrockInstrInfo::removeBranch(MachineBasicBlock &MBB,
   return Count;
 }
 
-unsigned BedrockInstrInfo::insertBranch(MachineBasicBlock &MBB,
-                                        MachineBasicBlock *TBB,
-                                        MachineBasicBlock *FBB,
-                                        ArrayRef<MachineOperand> Cond,
-                                        const DebugLoc &DL,
-                                        int *BytesAdded) const {
+unsigned BedrockInstrInfo::insertBranch(
+    MachineBasicBlock &MBB, MachineBasicBlock *TBB, MachineBasicBlock *FBB,
+    ArrayRef<MachineOperand> Cond, const DebugLoc &DL, int *BytesAdded) const {
   assert(TBB && "insertBranch must not be told to insert a fallthrough");
 
   unsigned Count = 0;
@@ -335,4 +334,116 @@ bool BedrockInstrInfo::reverseBranchCondition(
 
   Cond[0].setImm(getOppositeCondition(Cond[0].getImm()));
   return false;
+}
+
+bool BedrockInstrInfo::isFunctionSafeToOutlineFrom(
+    MachineFunction &MF, bool OutlineFromLinkOnceODRs) const {
+  const Function &F = MF.getFunction();
+  if ((!OutlineFromLinkOnceODRs && F.hasLinkOnceODRLinkage()) ||
+      F.hasSection() || F.hasFnAttribute(Attribute::Naked))
+    return false;
+  return true;
+}
+
+bool BedrockInstrInfo::shouldOutlineFromFunctionByDefault(
+    MachineFunction &MF) const {
+  return MF.getFunction().hasMinSize();
+}
+
+namespace {
+enum BedrockOutlinerConstructionID {
+  BedrockOutlinerDefault,
+  BedrockOutlinerTailCall
+};
+
+static unsigned getOutlinerSizeLowerBound(const MachineInstr &MI) {
+  if (MI.isMetaInstruction())
+    return 0;
+  unsigned Size = MI.getDesc().getSize();
+  return Size ? Size : 2;
+}
+
+static bool isOutlinerStackInstruction(const MachineInstr &MI) {
+  switch (MI.getOpcode()) {
+  case Bedrock::ADJSP_DOWN:
+  case Bedrock::ADJSP_UP:
+  case Bedrock::PUSHr:
+  case Bedrock::PUSHPi:
+  case Bedrock::POPr:
+  case Bedrock::POPPi:
+    return true;
+  default: {
+    const TargetRegisterInfo *TRI =
+        MI.getMF()->getSubtarget().getRegisterInfo();
+    return MI.readsRegister(Bedrock::SP, TRI) ||
+           MI.modifiesRegister(Bedrock::SP, TRI);
+  }
+  }
+}
+} // namespace
+
+std::optional<std::unique_ptr<outliner::OutlinedFunction>>
+BedrockInstrInfo::getOutliningCandidateInfo(
+    const MachineModuleInfo &MMI,
+    std::vector<outliner::Candidate> &RepeatedSequenceLocs,
+    unsigned MinRepeats) const {
+  if (RepeatedSequenceLocs.size() < MinRepeats)
+    return std::nullopt;
+
+  outliner::Candidate &Candidate = RepeatedSequenceLocs.front();
+  unsigned ConstructionID = BedrockOutlinerDefault;
+  unsigned CallOverhead = 7;
+  // Account for both the one-byte return and worst-case function alignment.
+  unsigned FrameOverhead = 2;
+  if (Candidate.back().isReturn()) {
+    ConstructionID = BedrockOutlinerTailCall;
+    FrameOverhead = 1;
+  }
+
+  for (outliner::Candidate &C : RepeatedSequenceLocs)
+    C.setCallInfo(ConstructionID, CallOverhead);
+
+  unsigned SequenceSize = 0;
+  for (const MachineInstr &MI : Candidate)
+    SequenceSize += getOutlinerSizeLowerBound(MI);
+
+  return std::make_unique<outliner::OutlinedFunction>(
+      RepeatedSequenceLocs, SequenceSize, FrameOverhead, ConstructionID);
+}
+
+outliner::InstrType
+BedrockInstrInfo::getOutliningTypeImpl(const MachineModuleInfo &MMI,
+                                       MachineBasicBlock::iterator &MBBI,
+                                       unsigned Flags) const {
+  const MachineInstr &MI = *MBBI;
+  if (MI.isCFIInstruction() || isOutlinerStackInstruction(MI) ||
+      MI.getOpcode() == Bedrock::REPG_SCRATCH ||
+      MI.getOpcode() == Bedrock::CONST32 ||
+      MI.getOpcode() == Bedrock::CONST64 || MI.getOpcode() == Bedrock::CLRQr)
+    return outliner::InstrType::Illegal;
+
+  for (const MachineOperand &MO : MI.operands()) {
+    if (MO.isMCSymbol())
+      return outliner::InstrType::Illegal;
+  }
+  return outliner::InstrType::Legal;
+}
+
+void BedrockInstrInfo::buildOutlinedFrame(
+    MachineBasicBlock &MBB, MachineFunction &MF,
+    const outliner::OutlinedFunction &OF) const {
+  if (OF.FrameConstructionID == BedrockOutlinerTailCall)
+    return;
+  BuildMI(MBB, MBB.end(), DebugLoc(), get(Bedrock::RET));
+}
+
+MachineBasicBlock::iterator BedrockInstrInfo::insertOutlinedCall(
+    Module &M, MachineBasicBlock &MBB, MachineBasicBlock::iterator &It,
+    MachineFunction &MF, outliner::Candidate &C) const {
+  unsigned Opcode = C.CallConstructionID == BedrockOutlinerTailCall
+                        ? Bedrock::TAILCALL
+                        : Bedrock::CALL;
+  It = MBB.insert(It, BuildMI(MF, DebugLoc(), get(Opcode))
+                          .addGlobalAddress(M.getNamedValue(MF.getName())));
+  return It;
 }

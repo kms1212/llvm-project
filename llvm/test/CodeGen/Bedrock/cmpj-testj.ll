@@ -85,7 +85,7 @@ define i32 @zero_result_precheck(ptr %p, i32 %n) {
 ; O1-NEXT: jle
 ; O1: clr.q [[ACC:r[0-9]+]]
 ; O1-NOT: cmp.l
-; O1: repg {{r[0-9]+}}, {
+; O1: repgf {{r[0-9]+}}, {
 ; O1-NEXT: add.l [r0++], [[ACC]]
 ; O1-NEXT: }
 ; O1-NOT: djt
