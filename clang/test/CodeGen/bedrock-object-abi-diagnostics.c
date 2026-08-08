@@ -5,6 +5,8 @@
 // RUN: not %clang_cc1 -triple bedrock -std=c11 -DTEST_BIT_FIELD -emit-llvm -o /dev/null %s 2>&1 | FileCheck %s --check-prefix=BIT-FIELD
 // RUN: not %clang_cc1 -triple bedrock -std=c11 -DTEST_ENUM -emit-llvm -o /dev/null %s 2>&1 | FileCheck %s --check-prefix=ENUM
 // RUN: not %clang_cc1 -triple bedrock -std=c11 -DTEST_ATOMIC_ENUM -emit-llvm -o /dev/null %s 2>&1 | FileCheck %s --check-prefix=ATOMIC-ENUM
+// RUN: not %clang_cc1 -triple bedrock -std=c11 -DTEST_BITINT -emit-llvm -o /dev/null %s 2>&1 | FileCheck %s --check-prefix=BITINT
+// RUN: not %clang_cc1 -triple bedrock -std=c11 -DTEST_VECTOR -emit-llvm -o /dev/null %s 2>&1 | FileCheck %s --check-prefix=VECTOR
 
 struct AttributePacked {
   char tag;
@@ -53,6 +55,22 @@ enum WideEnum external_wide_enum;
 _Atomic(enum WideEnum) external_atomic_wide_enum;
 #endif
 
+typedef unsigned LongVector __attribute__((vector_size(32)));
+
+struct VectorArray {
+  LongVector members[2];
+};
+
+#ifdef TEST_BITINT
+// BITINT: error: Bedrock C ABI does not permit bit-precise integer type without an extension ABI '_BitInt(33)' across an external ABI boundary
+_BitInt(33) external_bit_int;
+#endif
+
+#ifdef TEST_VECTOR
+// VECTOR: error: Bedrock C ABI does not permit vector type without an extension ABI 'struct VectorArray' across an external ABI boundary
+struct VectorArray external_vector_array;
+#endif
+
 // Non-baseline aggregates remain available to internal compiler extensions.
 static struct AttributePacked internal_packed;
 static struct Empty internal_empty;
@@ -60,6 +78,8 @@ static struct ZeroLength internal_zero_length;
 static struct NarrowBitField internal_narrow_bit_field;
 static enum WideEnum internal_wide_enum;
 static _Atomic(enum WideEnum) internal_atomic_wide_enum;
+static _BitInt(33) internal_bit_int;
+static LongVector internal_vector;
 
 void use_internal_objects(void) {
   (void)internal_packed;
@@ -68,4 +88,6 @@ void use_internal_objects(void) {
   (void)internal_narrow_bit_field;
   (void)internal_wide_enum;
   (void)internal_atomic_wide_enum;
+  (void)internal_bit_int;
+  (void)internal_vector;
 }

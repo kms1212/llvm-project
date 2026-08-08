@@ -166,6 +166,42 @@ static bool containsNonBaselineEnum(
   });
 }
 
+enum class BedrockNonBaselineTypeKind {
+  None,
+  BitInt,
+  Vector,
+};
+
+static BedrockNonBaselineTypeKind getNonBaselineExtendedType(
+    ASTContext &Context, QualType Ty,
+    llvm::SmallPtrSetImpl<const RecordDecl *> &Visited) {
+  Ty = Ty.getCanonicalType().getUnqualifiedType();
+  if (Ty->isBitIntType())
+    return BedrockNonBaselineTypeKind::BitInt;
+  if (Ty->isVectorType())
+    return BedrockNonBaselineTypeKind::Vector;
+  if (const auto *ArrayTy = Context.getAsArrayType(Ty))
+    return getNonBaselineExtendedType(Context, ArrayTy->getElementType(),
+                                      Visited);
+  if (const auto *AtomicTy = Ty->getAs<AtomicType>())
+    return getNonBaselineExtendedType(Context, AtomicTy->getValueType(),
+                                      Visited);
+
+  const auto *RecordTy = Ty->getAs<RecordType>();
+  if (!RecordTy)
+    return BedrockNonBaselineTypeKind::None;
+  const RecordDecl *Record = RecordTy->getDecl()->getDefinition();
+  if (!Record || !Visited.insert(Record).second)
+    return BedrockNonBaselineTypeKind::None;
+  for (const FieldDecl *Field : Record->fields()) {
+    BedrockNonBaselineTypeKind Kind = getNonBaselineExtendedType(
+        Context, Field->getType(), Visited);
+    if (Kind != BedrockNonBaselineTypeKind::None)
+      return Kind;
+  }
+  return BedrockNonBaselineTypeKind::None;
+}
+
 static void diagnoseNonBaselineTypes(CodeGenModule &CGM, SourceLocation Loc,
                                      ArrayRef<QualType> Types) {
   llvm::SmallPtrSet<const Type *, 4> Diagnosed;
@@ -182,6 +218,21 @@ static void diagnoseNonBaselineTypes(CodeGenModule &CGM, SourceLocation Loc,
       CGM.Error(Loc, "Bedrock C ABI does not permit " + Description + " '" +
                          Ty.getAsString() +
                          "' across an external ABI boundary");
+      continue;
+    }
+
+    llvm::SmallPtrSet<const RecordDecl *, 4> ExtensionVisited;
+    BedrockNonBaselineTypeKind ExtensionKind = getNonBaselineExtendedType(
+        CGM.getContext(), Ty, ExtensionVisited);
+    if (ExtensionKind != BedrockNonBaselineTypeKind::None) {
+      StringRef Description =
+          ExtensionKind == BedrockNonBaselineTypeKind::BitInt
+              ? "bit-precise integer type without an extension ABI"
+              : "vector type without an extension ABI";
+      std::string Message = "Bedrock C ABI does not permit " +
+                            Description.str() + " '" + Ty.getAsString() +
+                            "' across an external ABI boundary";
+      CGM.Error(Loc, Message);
       continue;
     }
 
