@@ -121,6 +121,9 @@ BedrockTargetLowering::BedrockTargetLowering(const TargetMachine &TM,
   setOperationAction(ISD::GET_FPMODE, MVT::i32, Custom);
   setOperationAction(ISD::SET_FPMODE, MVT::i32, Custom);
   setOperationAction(ISD::RESET_FPMODE, MVT::Other, Custom);
+  setOperationAction(ISD::GET_FPENV, MVT::i32, Custom);
+  setOperationAction(ISD::SET_FPENV, MVT::i32, Custom);
+  setOperationAction(ISD::RESET_FPENV, MVT::Other, Custom);
   for (MVT VT : {MVT::f32, MVT::f64}) {
     setOperationAction(ISD::BR_CC, VT, Custom);
     setOperationAction(ISD::ConstantFP, VT, Expand);
@@ -850,6 +853,12 @@ SDValue BedrockTargetLowering::LowerOperation(SDValue Op,
     return LowerSET_FPMODE(Op, DAG);
   case ISD::RESET_FPMODE:
     return LowerRESET_FPMODE(Op, DAG);
+  case ISD::GET_FPENV:
+    return LowerGET_FPENV(Op, DAG);
+  case ISD::SET_FPENV:
+    return LowerSET_FPENV(Op, DAG);
+  case ISD::RESET_FPENV:
+    return LowerRESET_FPENV(Op, DAG);
   case ISD::SADDO:
   case ISD::SSUBO:
   case ISD::UADDO:
@@ -1159,6 +1168,68 @@ SDValue BedrockTargetLowering::LowerRESET_FPMODE(SDValue Op,
       {Op.getOperand(0),
        DAG.getTargetConstant(Intrinsic::bedrock_write_fstatus, DL, MVT::i64),
        DAG.getConstant(0, DL, MVT::i64)});
+}
+
+SDValue BedrockTargetLowering::LowerGET_FPENV(SDValue Op,
+                                              SelectionDAG &DAG) const {
+  SDLoc DL(Op);
+  SDValue Status = DAG.getNode(
+      ISD::INTRINSIC_W_CHAIN, DL, DAG.getVTList(MVT::i64, MVT::Other),
+      {Op.getOperand(0),
+       DAG.getTargetConstant(Intrinsic::bedrock_read_fstatus, DL, MVT::i64)});
+  SDValue Flags = DAG.getNode(
+      ISD::INTRINSIC_W_CHAIN, DL, DAG.getVTList(MVT::i64, MVT::Other),
+      {Status.getValue(1),
+       DAG.getTargetConstant(Intrinsic::bedrock_read_fflags, DL, MVT::i64)});
+
+  // The opaque environment representation stores FFLAGS in bits 15..0 and
+  // FSTATUS in bits 31..16.
+  SDValue PackedStatus = DAG.getNode(
+      ISD::SHL, DL, MVT::i64, Status, DAG.getConstant(16, DL, MVT::i64));
+  SDValue Environment =
+      DAG.getNode(ISD::OR, DL, MVT::i64, PackedStatus, Flags);
+  Environment = DAG.getNode(ISD::TRUNCATE, DL, MVT::i32, Environment);
+  return DAG.getMergeValues({Environment, Flags.getValue(1)}, DL);
+}
+
+SDValue BedrockTargetLowering::LowerSET_FPENV(SDValue Op,
+                                              SelectionDAG &DAG) const {
+  SDLoc DL(Op);
+  SDValue Environment = DAG.getZExtOrTrunc(Op.getOperand(1), DL, MVT::i64);
+  SDValue Flags = DAG.getNode(ISD::AND, DL, MVT::i64, Environment,
+                              DAG.getConstant(0x1f, DL, MVT::i64));
+  SDValue Status = DAG.getNode(
+      ISD::SRL, DL, MVT::i64, Environment,
+      DAG.getConstant(16, DL, MVT::i64));
+  Status = DAG.getNode(ISD::AND, DL, MVT::i64, Status,
+                       DAG.getConstant(0x3ff, DL, MVT::i64));
+
+  SDValue Chain = DAG.getNode(
+      ISD::INTRINSIC_VOID, DL, MVT::Other,
+      {Op.getOperand(0),
+       DAG.getTargetConstant(Intrinsic::bedrock_write_fflags, DL, MVT::i64),
+       Flags});
+  return DAG.getNode(
+      ISD::INTRINSIC_VOID, DL, MVT::Other,
+      {Chain,
+       DAG.getTargetConstant(Intrinsic::bedrock_write_fstatus, DL, MVT::i64),
+       Status});
+}
+
+SDValue BedrockTargetLowering::LowerRESET_FPENV(SDValue Op,
+                                                SelectionDAG &DAG) const {
+  SDLoc DL(Op);
+  SDValue Zero = DAG.getConstant(0, DL, MVT::i64);
+  SDValue Chain = DAG.getNode(
+      ISD::INTRINSIC_VOID, DL, MVT::Other,
+      {Op.getOperand(0),
+       DAG.getTargetConstant(Intrinsic::bedrock_write_fflags, DL, MVT::i64),
+       Zero});
+  return DAG.getNode(
+      ISD::INTRINSIC_VOID, DL, MVT::Other,
+      {Chain,
+       DAG.getTargetConstant(Intrinsic::bedrock_write_fstatus, DL, MVT::i64),
+       Zero});
 }
 
 static unsigned getBedrockFClassMask(unsigned Test) {
