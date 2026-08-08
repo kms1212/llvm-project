@@ -96,6 +96,7 @@ private:
   SDValue LowerFSHL(SDValue Op, SelectionDAG &DAG) const;
   SDValue LowerFLDEXP(SDValue Op, SelectionDAG &DAG) const;
   SDValue LowerFFREXP(SDValue Op, SelectionDAG &DAG) const;
+  SDValue LowerGET_ROUNDING(SDValue Op, SelectionDAG &DAG) const;
   SDValue LowerOverflow(SDValue Op, SelectionDAG &DAG) const;
   SDValue LowerVASTART(SDValue Op, SelectionDAG &DAG) const;
   SDValue LowerDYNAMIC_STACKALLOC(SDValue Op, SelectionDAG &DAG) const;

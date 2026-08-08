@@ -21,3 +21,15 @@ double strict_multiply(double lhs, double rhs) {
 // ASM: ret
   return lhs * rhs;
 }
+
+int current_rounding(void) {
+// IR-LABEL: define{{.*}} i32 @current_rounding()
+// IR: call i32 @llvm.get.rounding()
+// ASM-LABEL: current_rounding:
+// ASM: rdfstatus
+// ASM: shr.q{{[ \t]+}}5,
+// ASM: and.q{{[ \t]+}}3,
+// ASM: bchg{{[ \t]+}}0,
+// ASM: ret
+  return __builtin_flt_rounds();
+}

@@ -116,6 +116,7 @@ BedrockTargetLowering::BedrockTargetLowering(const TargetMachine &TM,
   setOperationAction(ISD::TRAP, MVT::Other, Legal);
   setOperationAction(ISD::DEBUGTRAP, MVT::Other, Legal);
   setOperationAction(ISD::READCYCLECOUNTER, MVT::i64, Legal);
+  setOperationAction(ISD::GET_ROUNDING, MVT::i32, Custom);
   for (MVT VT : {MVT::f32, MVT::f64}) {
     setOperationAction(ISD::BR_CC, VT, Custom);
     setOperationAction(ISD::ConstantFP, VT, Expand);
@@ -835,6 +836,8 @@ SDValue BedrockTargetLowering::LowerOperation(SDValue Op,
     return LowerFLDEXP(Op, DAG);
   case ISD::FFREXP:
     return LowerFFREXP(Op, DAG);
+  case ISD::GET_ROUNDING:
+    return LowerGET_ROUNDING(Op, DAG);
   case ISD::SADDO:
   case ISD::SSUBO:
   case ISD::UADDO:
@@ -963,7 +966,7 @@ SDValue BedrockTargetLowering::LowerFLDEXP(SDValue Op,
 }
 
 SDValue BedrockTargetLowering::LowerFFREXP(SDValue Op,
-                                           SelectionDAG &DAG) const {
+                                            SelectionDAG &DAG) const {
   SDLoc DL(Op);
   SDValue Value = Op.getOperand(0);
   EVT VT = Value.getValueType();
@@ -1055,6 +1058,29 @@ SDValue BedrockTargetLowering::LowerFFREXP(SDValue Op,
                                  FiniteExponent, Zero);
   Exponent = DAG.getSExtOrTrunc(Exponent, DL, ResultExpVT);
   return DAG.getMergeValues({Mantissa, Exponent}, DL);
+}
+
+SDValue BedrockTargetLowering::LowerGET_ROUNDING(SDValue Op,
+                                                 SelectionDAG &DAG) const {
+  SDLoc DL(Op);
+  SDValue Chain = Op.getOperand(0);
+  SDValue Status = DAG.getNode(
+      ISD::INTRINSIC_W_CHAIN, DL, DAG.getVTList(MVT::i64, MVT::Other),
+      {Chain, DAG.getTargetConstant(Intrinsic::bedrock_read_fstatus, DL,
+                                    MVT::i64)});
+  Chain = Status.getValue(1);
+
+  // FSTATUS.RM in bits 6..5 uses nearest, zero, negative, positive. LLVM's
+  // FLT_ROUNDS convention uses zero, nearest, positive, negative. Swapping
+  // the low bit maps all four encodings.
+  SDValue Mode = DAG.getNode(ISD::SRL, DL, MVT::i64, Status,
+                             DAG.getConstant(5, DL, MVT::i64));
+  Mode = DAG.getNode(ISD::AND, DL, MVT::i64, Mode,
+                     DAG.getConstant(3, DL, MVT::i64));
+  Mode = DAG.getNode(ISD::XOR, DL, MVT::i64, Mode,
+                     DAG.getConstant(1, DL, MVT::i64));
+  Mode = DAG.getNode(ISD::TRUNCATE, DL, MVT::i32, Mode);
+  return DAG.getMergeValues({Mode, Chain}, DL);
 }
 
 static unsigned getBedrockFClassMask(unsigned Test) {
