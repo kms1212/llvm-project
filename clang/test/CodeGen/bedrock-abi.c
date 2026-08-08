@@ -16,6 +16,11 @@ struct Big {
   long c;
 };
 
+typedef union __attribute__((transparent_union)) TransparentUnion {
+  long integer;
+  void *pointer;
+} TransparentUnion;
+
 typedef unsigned __int128 uint128_t;
 
 // CHECK-LABEL: define{{.*}} i32 @narrow(
@@ -53,6 +58,13 @@ void pass_big(struct Big b) {
   take_big(b);
 }
 // CHECK-LABEL: declare void @take_big(ptr noundef byval(%struct.Big) align 16)
+
+// A transparent union keeps its source conversion extension, but the Bedrock
+// ABI still classifies every union as an INDIRECT argument.
+// CHECK-LABEL: define{{.*}} i64 @pass_transparent_union(ptr noundef byval(%union.TransparentUnion) align 16 %value)
+long pass_transparent_union(TransparentUnion value) {
+  return value.integer;
+}
 
 // CHECK-LABEL: define{{.*}} i32 @var_int(ptr noundef %list)
 // CHECK: getelementptr inbounds i8, ptr %{{.*}}, i64 16

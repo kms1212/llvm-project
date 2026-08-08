@@ -320,8 +320,6 @@ llvm::Type *BedrockABIInfo::getSmallAggregateCoerceType(QualType Ty) const {
 }
 
 ABIArgInfo BedrockABIInfo::classifyArgumentType(QualType Ty) const {
-  Ty = useFirstFieldIfTransparentUnion(Ty);
-
   // Complex scalars use two consecutive floating-point registers. Keeping
   // the ABI form direct lets Clang expose the real and imaginary components
   // independently to the backend rather than treating the value as an
