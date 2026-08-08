@@ -118,6 +118,9 @@ BedrockTargetLowering::BedrockTargetLowering(const TargetMachine &TM,
   setOperationAction(ISD::READCYCLECOUNTER, MVT::i64, Legal);
   setOperationAction(ISD::GET_ROUNDING, MVT::i32, Custom);
   setOperationAction(ISD::SET_ROUNDING, MVT::Other, Custom);
+  setOperationAction(ISD::GET_FPMODE, MVT::i32, Custom);
+  setOperationAction(ISD::SET_FPMODE, MVT::i32, Custom);
+  setOperationAction(ISD::RESET_FPMODE, MVT::Other, Custom);
   for (MVT VT : {MVT::f32, MVT::f64}) {
     setOperationAction(ISD::BR_CC, VT, Custom);
     setOperationAction(ISD::ConstantFP, VT, Expand);
@@ -841,6 +844,12 @@ SDValue BedrockTargetLowering::LowerOperation(SDValue Op,
     return LowerGET_ROUNDING(Op, DAG);
   case ISD::SET_ROUNDING:
     return LowerSET_ROUNDING(Op, DAG);
+  case ISD::GET_FPMODE:
+    return LowerGET_FPMODE(Op, DAG);
+  case ISD::SET_FPMODE:
+    return LowerSET_FPMODE(Op, DAG);
+  case ISD::RESET_FPMODE:
+    return LowerRESET_FPMODE(Op, DAG);
   case ISD::SADDO:
   case ISD::SSUBO:
   case ISD::UADDO:
@@ -1114,6 +1123,42 @@ SDValue BedrockTargetLowering::LowerSET_ROUNDING(SDValue Op,
       {Chain, DAG.getTargetConstant(Intrinsic::bedrock_write_fstatus, DL,
                                     MVT::i64),
        Status});
+}
+
+SDValue BedrockTargetLowering::LowerGET_FPMODE(SDValue Op,
+                                               SelectionDAG &DAG) const {
+  SDLoc DL(Op);
+  SDValue Status = DAG.getNode(
+      ISD::INTRINSIC_W_CHAIN, DL, DAG.getVTList(MVT::i64, MVT::Other),
+      {Op.getOperand(0),
+       DAG.getTargetConstant(Intrinsic::bedrock_read_fstatus, DL, MVT::i64)});
+  SDValue Mode = DAG.getNode(ISD::TRUNCATE, DL, MVT::i32, Status);
+  return DAG.getMergeValues({Mode, Status.getValue(1)}, DL);
+}
+
+SDValue BedrockTargetLowering::LowerSET_FPMODE(SDValue Op,
+                                               SelectionDAG &DAG) const {
+  SDLoc DL(Op);
+  SDValue Mode = DAG.getZExtOrTrunc(Op.getOperand(1), DL, MVT::i64);
+  // FSTATUS[9:0] are the complete architectural control modes; reserved bits
+  // must be zero on WRFSTATUS.
+  Mode = DAG.getNode(ISD::AND, DL, MVT::i64, Mode,
+                     DAG.getConstant(0x3ff, DL, MVT::i64));
+  return DAG.getNode(
+      ISD::INTRINSIC_VOID, DL, MVT::Other,
+      {Op.getOperand(0),
+       DAG.getTargetConstant(Intrinsic::bedrock_write_fstatus, DL, MVT::i64),
+       Mode});
+}
+
+SDValue BedrockTargetLowering::LowerRESET_FPMODE(SDValue Op,
+                                                 SelectionDAG &DAG) const {
+  SDLoc DL(Op);
+  return DAG.getNode(
+      ISD::INTRINSIC_VOID, DL, MVT::Other,
+      {Op.getOperand(0),
+       DAG.getTargetConstant(Intrinsic::bedrock_write_fstatus, DL, MVT::i64),
+       DAG.getConstant(0, DL, MVT::i64)});
 }
 
 static unsigned getBedrockFClassMask(unsigned Test) {
