@@ -46,6 +46,7 @@ public:
     LongDoubleFormat = &llvm::APFloat::IEEEdouble();
     HasFloat128 = false;
     HasIbm128 = false;
+    HasStrictFP = true;
     MaxAtomicPromoteWidth = MaxAtomicInlineWidth = 64;
   }
 
