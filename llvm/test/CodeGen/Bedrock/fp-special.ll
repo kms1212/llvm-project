@@ -151,13 +151,17 @@ define double @ldexp_d_i64(double %value, i64 %scale) {
 define { float, i32 } @frexp_s_i32(float %value) {
 ; CHECK-LABEL: frexp_s_i32:
 ; CHECK-NOT: call{{.*}}frexp
+; CHECK-NOT: FSCALE
 ; CHECK: fclass.s{{[ \t]+}}f0,
-; CHECK: FGETMAN.S
+; CHECK-NOT: FSCALE
 ; CHECK: FGETEXP.S
+; CHECK-NOT: FSCALE
+; CHECK: FGETMAN.S
+; CHECK-NOT: FSCALE
 ; OBJ-LABEL: <frexp_s_i32>:
 ; OBJ: fclass.s
-; OBJ: fgetman.s
 ; OBJ: fgetexp.s
+; OBJ: fgetman.s
   %result = call { float, i32 } @llvm.frexp.f32.i32(float %value)
   ret { float, i32 } %result
 }
@@ -165,13 +169,17 @@ define { float, i32 } @frexp_s_i32(float %value) {
 define { double, i64 } @frexp_d_i64(double %value) {
 ; CHECK-LABEL: frexp_d_i64:
 ; CHECK-NOT: call{{.*}}frexp
+; CHECK-NOT: FSCALE
 ; CHECK: fclass.d{{[ \t]+}}f0,
-; CHECK: FGETMAN.D
+; CHECK-NOT: FSCALE
 ; CHECK: FGETEXP.D
+; CHECK-NOT: FSCALE
+; CHECK: FGETMAN.D
+; CHECK-NOT: FSCALE
 ; OBJ-LABEL: <frexp_d_i64>:
 ; OBJ: fclass.d
-; OBJ: fgetman.d
 ; OBJ: fgetexp.d
+; OBJ: fgetman.d
   %result = call { double, i64 } @llvm.frexp.f64.i64(double %value)
   ret { double, i64 } %result
 }

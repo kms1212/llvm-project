@@ -981,42 +981,78 @@ SDValue BedrockTargetLowering::LowerFFREXP(SDValue Op,
     return DAG.getSetCC(DL, MVT::i64, Masked, Zero, ISD::SETNE);
   };
 
-  // FGETMAN preserves subnormal encodings instead of normalizing them. Scale
-  // subnormals into the normal range first, then compensate the exponent.
-  // Non-finite values are replaced before the FPU operations so that frexp
-  // does not acquire exceptions from speculative FGETEXP/FGETMAN execution.
+  // FGETMAN preserves subnormal encodings instead of normalizing them. Do not
+  // normalize with FSCALE: that instruction applies FSTATUS.DAZ and would
+  // turn a subnormal input into signed zero. Decompose subnormal raw bits
+  // below, independently of every floating-point environment control.
   SDValue IsSubnormal = TestClassMask((1u << 2) | (1u << 5));
+  SDValue IsNormal = TestClassMask((1u << 1) | (1u << 6));
   SDValue IsFiniteNonzero =
       TestClassMask((1u << 1) | (1u << 2) | (1u << 5) | (1u << 6));
   unsigned FClrOpcode =
       VT == MVT::f32 ? BedrockISD::FCLR_S : BedrockISD::FCLR_D;
   SDValue SafeZero = DAG.getNode(FClrOpcode, DL, VT);
-  SDValue SafeValue = DAG.getNode(ISD::SELECT, DL, VT, IsFiniteNonzero, Value,
+  SDValue SafeValue = DAG.getNode(ISD::SELECT, DL, VT, IsNormal, Value,
                                   SafeZero);
 
-  int64_t SubnormalScale = VT == MVT::f32 ? 24 : 54;
-  SDValue Scale = DAG.getNode(
-      ISD::SELECT, DL, MVT::i64, IsSubnormal,
-      DAG.getConstant(SubnormalScale, DL, MVT::i64), Zero);
-  SDValue Normalized =
-      DAG.getNode(ISD::FLDEXP, DL, VT, SafeValue, Scale);
+  SDValue NormalMantissa =
+      DAG.getNode(BedrockISD::FGETMAN, DL, VT, SafeValue);
+  NormalMantissa = DAG.getNode(ISD::FMUL, DL, VT, NormalMantissa,
+                               DAG.getConstantFP(0.5, DL, VT));
 
-  SDValue Mantissa =
-      DAG.getNode(BedrockISD::FGETMAN, DL, VT, Normalized);
-  Mantissa = DAG.getNode(ISD::FMUL, DL, VT, Mantissa,
-                         DAG.getConstantFP(0.5, DL, VT));
+  SDValue NormalExponentFP =
+      DAG.getNode(BedrockISD::FGETEXP, DL, VT, SafeValue);
+  SDValue NormalExponent =
+      DAG.getNode(ISD::FP_TO_SINT, DL, MVT::i64, NormalExponentFP);
+  NormalExponent = DAG.getNode(ISD::ADD, DL, MVT::i64, NormalExponent,
+                               DAG.getConstant(1, DL, MVT::i64));
 
-  SDValue ExponentFP =
-      DAG.getNode(BedrockISD::FGETEXP, DL, VT, Normalized);
-  SDValue Exponent = DAG.getNode(ISD::FP_TO_SINT, DL, MVT::i64, ExponentFP);
-  Exponent = DAG.getNode(ISD::ADD, DL, MVT::i64, Exponent,
-                         DAG.getConstant(1, DL, MVT::i64));
-  Exponent = DAG.getNode(ISD::SUB, DL, MVT::i64, Exponent, Scale);
+  EVT BitsVT = VT == MVT::f32 ? MVT::i32 : MVT::i64;
+  unsigned TotalBits = VT == MVT::f32 ? 32 : 64;
+  unsigned FractionBits = VT == MVT::f32 ? 23 : 52;
+  uint64_t FractionMask = (uint64_t(1) << FractionBits) - 1;
+  uint64_t SignMask = uint64_t(1) << (TotalBits - 1);
+  uint64_t HalfExponentBits =
+      uint64_t(VT == MVT::f32 ? 126 : 1022) << FractionBits;
 
-  Mantissa = DAG.getNode(ISD::SELECT, DL, VT, IsFiniteNonzero, Mantissa,
-                         Value);
-  Exponent = DAG.getNode(ISD::SELECT, DL, MVT::i64, IsFiniteNonzero,
-                         Exponent, Zero);
+  SDValue Bits = DAG.getNode(ISD::BITCAST, DL, BitsVT, Value);
+  SDValue Fraction = DAG.getNode(
+      ISD::AND, DL, BitsVT, Bits,
+      DAG.getConstant(FractionMask, DL, BitsVT));
+  SDValue LeadingZeros = DAG.getNode(ISD::CTLZ, DL, BitsVT, Fraction);
+  SDValue Shift = DAG.getNode(
+      ISD::SUB, DL, BitsVT, LeadingZeros,
+      DAG.getConstant(TotalBits - FractionBits - 1, DL, BitsVT));
+  SDValue ShiftedFraction =
+      DAG.getNode(ISD::SHL, DL, BitsVT, Fraction, Shift);
+  ShiftedFraction = DAG.getNode(
+      ISD::AND, DL, BitsVT, ShiftedFraction,
+      DAG.getConstant(FractionMask, DL, BitsVT));
+  SDValue MantissaBits = DAG.getNode(
+      ISD::OR, DL, BitsVT, ShiftedFraction,
+      DAG.getConstant(HalfExponentBits, DL, BitsVT));
+  SDValue Sign = DAG.getNode(ISD::AND, DL, BitsVT, Bits,
+                             DAG.getConstant(SignMask, DL, BitsVT));
+  MantissaBits = DAG.getNode(ISD::OR, DL, BitsVT, MantissaBits, Sign);
+  SDValue SubnormalMantissa =
+      DAG.getNode(ISD::BITCAST, DL, VT, MantissaBits);
+
+  SDValue SubnormalExponent = DAG.getNode(
+      ISD::SUB, DL, BitsVT,
+      DAG.getSignedConstant(VT == MVT::f32 ? -125 : -1021, DL, BitsVT),
+      Shift);
+  SubnormalExponent =
+      DAG.getSExtOrTrunc(SubnormalExponent, DL, MVT::i64);
+
+  SDValue FiniteMantissa = DAG.getNode(ISD::SELECT, DL, VT, IsSubnormal,
+                                       SubnormalMantissa, NormalMantissa);
+  SDValue FiniteExponent = DAG.getNode(ISD::SELECT, DL, MVT::i64, IsSubnormal,
+                                       SubnormalExponent, NormalExponent);
+
+  SDValue Mantissa = DAG.getNode(ISD::SELECT, DL, VT, IsFiniteNonzero,
+                                 FiniteMantissa, Value);
+  SDValue Exponent = DAG.getNode(ISD::SELECT, DL, MVT::i64, IsFiniteNonzero,
+                                 FiniteExponent, Zero);
   Exponent = DAG.getSExtOrTrunc(Exponent, DL, ResultExpVT);
   return DAG.getMergeValues({Mantissa, Exponent}, DL);
 }
