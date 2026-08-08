@@ -29,7 +29,9 @@ public:
 
 protected:
   bool needsRelocateWithSymbol(const MCValue &, unsigned Type) const override {
-    return Type == ELF::R_BEDROCK_CALL16S || Type == ELF::R_BEDROCK_CALL32S;
+    return Type == ELF::R_BEDROCK_BRDISP16S ||
+           Type == ELF::R_BEDROCK_BRDISP32S ||
+           Type == ELF::R_BEDROCK_CALL16S || Type == ELF::R_BEDROCK_CALL32S;
   }
 
   unsigned getRelocType(const MCFixup &Fixup, const MCValue &Target,
@@ -61,6 +63,10 @@ protected:
       return ELF::R_BEDROCK_CALL16S;
     case Bedrock::fixup_bedrock_call32:
       return ELF::R_BEDROCK_CALL32S;
+    case Bedrock::fixup_bedrock_brdisp16_local:
+      return ELF::R_BEDROCK_BRDISP16S;
+    case Bedrock::fixup_bedrock_call16_local:
+      return ELF::R_BEDROCK_CALL16S;
     case Bedrock::fixup_bedrock_pcrel64:
       return ELF::R_BEDROCK_PCREL64;
     case Bedrock::fixup_bedrock_gotpcrel32:

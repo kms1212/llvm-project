@@ -103,6 +103,7 @@ private:
   DenseMap<const MachineInstr *, int64_t> DJDisplacements;
   MCOperand lowerOperand(const MachineOperand &MO) const;
   const MCExpr *lowerSymbolOperand(const MachineOperand &MO) const;
+  bool usesLocalTransferFixup(const MachineOperand &MO) const;
 
   void computeShortBranches(const MachineFunction &MF);
   void computeBlockOffsets(const MachineFunction &MF,
@@ -6040,6 +6041,15 @@ bool BedrockAsmPrinter::runOnMachineFunction(MachineFunction &MF) {
   return AsmPrinter::runOnMachineFunction(MF) || Changed;
 }
 
+bool BedrockAsmPrinter::usesLocalTransferFixup(
+    const MachineOperand &MO) const {
+  if (!MO.isGlobal() || !TM.getTargetTriple().isOSBinFormatELF() ||
+      TM.getRelocationModel() != Reloc::Static)
+    return false;
+  const auto *F = dyn_cast<Function>(MO.getGlobal());
+  return F && F->isDSOLocal() && F->canBenefitFromLocalAlias();
+}
+
 const MCExpr *
 BedrockAsmPrinter::lowerSymbolOperand(const MachineOperand &MO) const {
   const MCSymbol *Symbol = nullptr;
@@ -8450,11 +8460,14 @@ void BedrockAsmPrinter::emitCall(const MachineInstr *MI) {
     return;
   }
 
-  MCFixupKind Kind = Target.getTargetFlags() == BedrockII::MO_PLT32
-                         ? MCFixupKind(Bedrock::fixup_bedrock_plt32)
-                         : MCFixupKind(Bedrock::fixup_bedrock_call16);
-  emitRawExpr(Bytes, 3, Kind,
-              lowerSymbolOperand(Target));
+  MCFixupKind Kind;
+  if (Target.getTargetFlags() == BedrockII::MO_PLT32)
+    Kind = MCFixupKind(Bedrock::fixup_bedrock_plt32);
+  else if (usesLocalTransferFixup(Target))
+    Kind = MCFixupKind(Bedrock::fixup_bedrock_call16_local);
+  else
+    Kind = MCFixupKind(Bedrock::fixup_bedrock_call16);
+  emitRawExpr(Bytes, 3, Kind, lowerSymbolOperand(Target));
 }
 
 void BedrockAsmPrinter::emitTailCall(const MachineInstr *MI) {
@@ -8475,19 +8488,26 @@ void BedrockAsmPrinter::emitTailCall(const MachineInstr *MI) {
   if (Target.isImm())
     appendLE(Tail, static_cast<uint64_t>(Target.getImm()), 4);
   else
-    Tail.append(4, 0);
-  if (!BedrockMC::encodeMedium(0x6600, Tail, Bytes))
+    Tail.append(Target.getTargetFlags() == BedrockII::MO_PLT32 ? 4 : 2, 0);
+  uint32_t Payload = !Target.isImm() &&
+                             Target.getTargetFlags() != BedrockII::MO_PLT32
+                         ? 0x2600
+                         : 0x6600;
+  if (!BedrockMC::encodeMedium(Payload, Tail, Bytes))
     report_fatal_error("failed to encode Bedrock tail call");
   if (Target.isImm()) {
     emitRaw(Bytes);
     return;
   }
 
-  MCFixupKind Kind = Target.getTargetFlags() == BedrockII::MO_PLT32
-                         ? MCFixupKind(Bedrock::fixup_bedrock_plt32)
-                         : MCFixupKind(Bedrock::fixup_bedrock_brdisp32);
-  emitRawExpr(Bytes, 3, Kind,
-              lowerSymbolOperand(Target));
+  MCFixupKind Kind;
+  if (Target.getTargetFlags() == BedrockII::MO_PLT32)
+    Kind = MCFixupKind(Bedrock::fixup_bedrock_plt32);
+  else if (usesLocalTransferFixup(Target))
+    Kind = MCFixupKind(Bedrock::fixup_bedrock_brdisp16_local);
+  else
+    Kind = MCFixupKind(Bedrock::fixup_bedrock_brdisp16);
+  emitRawExpr(Bytes, 3, Kind, lowerSymbolOperand(Target));
 }
 
 void BedrockAsmPrinter::emitTLSDescCall(const MachineInstr *MI) {

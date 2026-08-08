@@ -23,6 +23,8 @@ enum Fixups {
   fixup_bedrock_brdisp32,
   fixup_bedrock_call16,
   fixup_bedrock_call32,
+  fixup_bedrock_brdisp16_local,
+  fixup_bedrock_call16_local,
   fixup_bedrock_pcrel64,
   fixup_bedrock_gotpcrel32,
   fixup_bedrock_gotpcrel64,

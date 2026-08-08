@@ -19,6 +19,16 @@
 # RELAX-NEXT: {{.*}}R_BEDROCK_CALL16S{{.*}}adjusted_local_target
 # RELAX-NEXT: {{.*}}c8 a6 00 {{[0-9a-f][0-9a-f]}} {{[0-9a-f][0-9a-f]}} {{.*}}call
 # RELAX-NEXT: {{.*}}R_BEDROCK_CALL16S{{.*}}target
+# RELAX: {{.*}}c8 26 00 {{[0-9a-f][0-9a-f]}} {{[0-9a-f][0-9a-f]}} {{.*}}jmp
+# RELAX-NEXT: {{.*}}R_BEDROCK_BRDISP16S{{.*}}target
+# RELAX-NEXT: {{.*}}c8 26 02 {{[0-9a-f][0-9a-f]}} {{[0-9a-f][0-9a-f]}} {{.*}}jeq
+# RELAX-NEXT: {{.*}}R_BEDROCK_BRDISP16S{{.*}}target
+# RELAX-NEXT: {{.*}}c8 26 00 01 00 {{.*}}jmp
+# RELAX-NEXT: {{.*}}R_BEDROCK_BRDISP16S{{.*}}local_jump_target
+# RELAX: {{.*}}c8 26 00 05 00 {{.*}}jmp
+# RELAX-NEXT: {{.*}}R_BEDROCK_BRDISP16S{{.*}}adjusted_local_jump_target
+# RELAX-NEXT: {{.*}}c8 26 00 {{[0-9a-f][0-9a-f]}} {{[0-9a-f][0-9a-f]}} {{.*}}jmp
+# RELAX-NEXT: {{.*}}R_BEDROCK_BRDISP16S{{.*}}target
 
 # NORELAX-LABEL: <_start>:
 # NORELAX-NEXT: {{.*}}d0 e6 00 {{[0-9a-f ]+}}{{.*}}call
@@ -31,6 +41,16 @@
 # NORELAX-NEXT: {{.*}}R_BEDROCK_CALL16S{{.*}}adjusted_local_target
 # NORELAX-NEXT: {{.*}}d0 e6 00 {{[0-9a-f ]+}}{{.*}}call
 # NORELAX-NEXT: {{.*}}R_BEDROCK_CALL32S{{.*}}target
+# NORELAX: {{.*}}d0 66 00 {{[0-9a-f ]+}}{{.*}}jmp
+# NORELAX-NEXT: {{.*}}R_BEDROCK_BRDISP32S{{.*}}target
+# NORELAX-NEXT: {{.*}}d0 66 02 {{[0-9a-f ]+}}{{.*}}jeq
+# NORELAX-NEXT: {{.*}}R_BEDROCK_BRDISP32S{{.*}}target
+# NORELAX-NEXT: {{.*}}c8 26 00 01 00 {{.*}}jmp
+# NORELAX-NEXT: {{.*}}R_BEDROCK_BRDISP16S{{.*}}local_jump_target
+# NORELAX: {{.*}}c8 26 00 07 00 {{.*}}jmp
+# NORELAX-NEXT: {{.*}}R_BEDROCK_BRDISP16S{{.*}}adjusted_local_jump_target
+# NORELAX-NEXT: {{.*}}d0 66 00 {{[0-9a-f ]+}}{{.*}}jmp
+# NORELAX-NEXT: {{.*}}R_BEDROCK_BRDISP32S{{.*}}target
 
 # FAR-LABEL: <_start>:
 # FAR-NEXT: {{.*}}d0 e6 00 {{[0-9a-f ]+}}{{.*}}call
@@ -43,6 +63,16 @@
 # FAR-NEXT: {{.*}}R_BEDROCK_CALL16S{{.*}}adjusted_local_target
 # FAR-NEXT: {{.*}}d0 e6 00 {{[0-9a-f ]+}}{{.*}}call
 # FAR-NEXT: {{.*}}R_BEDROCK_CALL32S{{.*}}target
+# FAR: {{.*}}d0 66 00 {{[0-9a-f ]+}}{{.*}}jmp
+# FAR-NEXT: {{.*}}R_BEDROCK_BRDISP32S{{.*}}target
+# FAR-NEXT: {{.*}}d0 66 02 {{[0-9a-f ]+}}{{.*}}jeq
+# FAR-NEXT: {{.*}}R_BEDROCK_BRDISP32S{{.*}}target
+# FAR-NEXT: {{.*}}c8 26 00 01 00 {{.*}}jmp
+# FAR-NEXT: {{.*}}R_BEDROCK_BRDISP16S{{.*}}local_jump_target
+# FAR: {{.*}}c8 26 00 07 00 {{.*}}jmp
+# FAR-NEXT: {{.*}}R_BEDROCK_BRDISP16S{{.*}}adjusted_local_jump_target
+# FAR-NEXT: {{.*}}d0 66 00 {{[0-9a-f ]+}}{{.*}}jmp
+# FAR-NEXT: {{.*}}R_BEDROCK_BRDISP32S{{.*}}target
 
 #--- input.s
 .section .text.entry,"ax",@progbits
@@ -60,6 +90,19 @@ local_target:
   call adjusted_local_target
   call target
 adjusted_local_target:
+  ret
+
+  jmp target
+  jeq target
+  jmp local_jump_target
+  nop
+
+local_jump_target:
+  ret
+
+  jmp adjusted_local_jump_target
+  jmp target
+adjusted_local_jump_target:
   ret
 
 .section .text.target,"ax",@progbits

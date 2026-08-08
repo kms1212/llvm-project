@@ -318,8 +318,10 @@ void Bedrock::scanSection(InputSectionBase &sec) {
   TargetInfo::scanSection(sec);
 }
 
-static RelType getRelaxedCallType(RelType type) {
+static RelType getRelaxedTransferType(RelType type) {
   switch (type) {
+  case R_BEDROCK_BRDISP32S:
+    return R_BEDROCK_BRDISP16S;
   case R_BEDROCK_CALL32S:
     return R_BEDROCK_CALL16S;
   case R_BEDROCK_PLT32S:
@@ -329,10 +331,15 @@ static RelType getRelaxedCallType(RelType type) {
   }
 }
 
-static bool hasCanonicalCall32(const InputSection &sec, const Relocation &rel) {
+static bool hasCanonicalTransfer32(const InputSection &sec,
+                                   const Relocation &rel) {
   ArrayRef<uint8_t> content = sec.content();
-  return rel.offset >= 3 && rel.offset + 4 <= content.size() &&
-         content[rel.offset - 3] == 0xd0 && content[rel.offset - 2] == 0xe6;
+  if (rel.offset < 3 || rel.offset + 4 > content.size() ||
+      content[rel.offset - 3] != 0xd0)
+    return false;
+  uint8_t ExpectedOpcode =
+      rel.type == R_BEDROCK_BRDISP32S ? 0x66 : 0xe6;
+  return content[rel.offset - 2] == ExpectedOpcode;
 }
 
 static bool relaxBedrockSection(Ctx &ctx, int pass, InputSection &sec) {
@@ -347,8 +354,9 @@ static bool relaxBedrockSection(Ctx &ctx, int pass, InputSection &sec) {
     uint32_t &currentDelta = aux.relocDeltas[index];
     uint32_t previousRemove = currentDelta - delta;
     uint32_t remove = 0;
-    RelType relaxedType = getRelaxedCallType(rel.type);
-    if (relaxedType != R_BEDROCK_NONE && hasCanonicalCall32(sec, rel)) {
+    RelType relaxedType = getRelaxedTransferType(rel.type);
+    if (relaxedType != R_BEDROCK_NONE &&
+        hasCanonicalTransfer32(sec, rel)) {
       if (pass >= 4) {
         remove = previousRemove;
       } else {
@@ -433,14 +441,15 @@ void Bedrock::finalizeRelax(int passes) const {
         uint32_t remove = aux.relocDeltas[index] - delta;
         RelType newType = aux.relocTypes[index];
         if (remove == 2 &&
-            (newType == R_BEDROCK_CALL16S || newType == R_BEDROCK_PLT16S)) {
+            (newType == R_BEDROCK_BRDISP16S ||
+             newType == R_BEDROCK_CALL16S || newType == R_BEDROCK_PLT16S)) {
           uint64_t instructionOffset = rel.offset - 3;
           uint64_t copySize = instructionOffset - oldOffset;
           memcpy(out, old.data() + oldOffset, copySize);
           out += copySize;
 
           out[0] = 0xc8;
-          out[1] = 0xa6;
+          out[1] = newType == R_BEDROCK_BRDISP16S ? 0x26 : 0xa6;
           out[2] = old[rel.offset - 1];
           out[3] = 0;
           out[4] = 0;

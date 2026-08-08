@@ -26,17 +26,32 @@ bool isNextIPRelativeFixup(MCFixupKind Kind) {
   return Kind == Bedrock::fixup_bedrock_brdisp16 ||
          Kind == Bedrock::fixup_bedrock_brdisp32 ||
          Kind == Bedrock::fixup_bedrock_call16 ||
-         Kind == Bedrock::fixup_bedrock_call32;
+         Kind == Bedrock::fixup_bedrock_call32 ||
+         Kind == Bedrock::fixup_bedrock_brdisp16_local ||
+         Kind == Bedrock::fixup_bedrock_call16_local;
 }
 
-bool isRelaxableCall(unsigned Opcode, ArrayRef<MCOperand> Operands) {
-  return Opcode == Bedrock::RAW_EXPR && Operands.size() == 9 &&
-         Operands[0].isImm() && Operands[0].getImm() == 1 &&
-         Operands[1].isImm() && Operands[1].getImm() == 3 &&
-         Operands[2].isImm() &&
-         Operands[2].getImm() == Bedrock::fixup_bedrock_call16 &&
-         Operands[4].isImm() && Operands[4].getImm() == 0xc8 &&
-         Operands[5].isImm() && Operands[5].getImm() == 0xa6;
+bool isLocalTransferFixup(MCFixupKind Kind) {
+  return Kind == Bedrock::fixup_bedrock_brdisp16_local ||
+         Kind == Bedrock::fixup_bedrock_call16_local;
+}
+
+bool isRelaxableTransfer(unsigned Opcode, ArrayRef<MCOperand> Operands) {
+  if (Opcode != Bedrock::RAW_EXPR || Operands.size() != 9 ||
+      !Operands[0].isImm() || Operands[0].getImm() != 1 ||
+      !Operands[1].isImm() || Operands[1].getImm() != 3 ||
+      !Operands[2].isImm() || !Operands[4].isImm() ||
+      Operands[4].getImm() != 0xc8 || !Operands[5].isImm())
+    return false;
+
+  unsigned Kind = Operands[2].getImm();
+  int64_t OpcodeByte = Operands[5].getImm();
+  return ((Kind == Bedrock::fixup_bedrock_call16 ||
+           Kind == Bedrock::fixup_bedrock_call16_local) &&
+          OpcodeByte == 0xa6) ||
+         ((Kind == Bedrock::fixup_bedrock_brdisp16 ||
+           Kind == Bedrock::fixup_bedrock_brdisp16_local) &&
+          OpcodeByte == 0x26);
 }
 
 class BedrockAsmBackend : public MCAsmBackend {
@@ -65,6 +80,8 @@ public:
         {"fixup_bedrock_brdisp32", 0, 32, 0},
         {"fixup_bedrock_call16", 0, 16, 0},
         {"fixup_bedrock_call32", 0, 32, 0},
+        {"fixup_bedrock_brdisp16_local", 0, 16, 0},
+        {"fixup_bedrock_call16_local", 0, 16, 0},
         {"fixup_bedrock_pcrel64", 0, 64, 0},
         {"fixup_bedrock_gotpcrel32", 0, 32, 0},
         {"fixup_bedrock_gotpcrel64", 0, 64, 0},
@@ -89,11 +106,14 @@ public:
   void applyFixup(const MCFragment &F, const MCFixup &Fixup,
                   const MCValue &Target, uint8_t *Data, uint64_t Value,
                   bool IsResolved) override {
-    // Preserve symbolic calls so the linker can select the instruction width
-    // and rewrite the final displacement after relaxing surrounding calls.
+    // Preserve symbolic control transfers so the linker can select the
+    // instruction width and rewrite the final displacement after relaxation.
     if (IsResolved &&
-        (Fixup.getKind() == Bedrock::fixup_bedrock_call16 ||
-         Fixup.getKind() == Bedrock::fixup_bedrock_call32) &&
+        (Fixup.getKind() == Bedrock::fixup_bedrock_brdisp16 ||
+         Fixup.getKind() == Bedrock::fixup_bedrock_brdisp32 ||
+         Fixup.getKind() == Bedrock::fixup_bedrock_call16 ||
+         Fixup.getKind() == Bedrock::fixup_bedrock_call32 ||
+         isLocalTransferFixup(Fixup.getKind())) &&
         Target.getAddSym())
       IsResolved = false;
     maybeAddReloc(F, Fixup, Target, Value, IsResolved);
@@ -115,31 +135,59 @@ public:
 
   bool mayNeedRelaxation(unsigned Opcode, ArrayRef<MCOperand> Operands,
                          const MCSubtargetInfo &STI) const override {
-    return isRelaxableCall(Opcode, Operands);
+    return isRelaxableTransfer(Opcode, Operands);
   }
 
   bool fixupNeedsRelaxation(const MCFixup &Fixup,
                             uint64_t Value) const override {
-    assert(Fixup.getKind() == Bedrock::fixup_bedrock_call16 &&
+    assert((Fixup.getKind() == Bedrock::fixup_bedrock_brdisp16 ||
+            Fixup.getKind() == Bedrock::fixup_bedrock_call16 ||
+            isLocalTransferFixup(Fixup.getKind())) &&
            "unexpected relaxable Bedrock fixup");
     return !isInt<16>(static_cast<int64_t>(Value) - 2);
   }
 
+  bool fixupNeedsRelaxationAdvanced(const MCFragment &F,
+                                    const MCFixup &Fixup,
+                                    const MCValue &Target, uint64_t Value,
+                                    bool Resolved) const override {
+    if (isLocalTransferFixup(Fixup.getKind())) {
+      const MCSymbol *Symbol = Target.getAddSym();
+      if (Symbol && !Target.getSubSym() && Symbol->isInSection() &&
+          &Symbol->getSection() == F.getParent()) {
+        int64_t Displacement =
+            static_cast<int64_t>(Asm->getSymbolOffset(*Symbol)) -
+            static_cast<int64_t>(Asm->getFragmentOffset(F) +
+                                 Fixup.getOffset()) -
+            2 + Target.getConstant();
+        return !isInt<16>(Displacement);
+      }
+    }
+    if (!Resolved)
+      return true;
+    return fixupNeedsRelaxation(Fixup, Value);
+  }
+
   void relaxInstruction(MCInst &Inst,
                         const MCSubtargetInfo &STI) const override {
-    assert(isRelaxableCall(Inst.getOpcode(), Inst.getOperands()) &&
+    assert(isRelaxableTransfer(Inst.getOpcode(), Inst.getOperands()) &&
            "unexpected relaxable Bedrock instruction");
 
     const MCExpr *Expr = Inst.getOperand(3).getExpr();
+    unsigned Kind = Inst.getOperand(2).getImm();
+    bool IsCall = Kind == Bedrock::fixup_bedrock_call16 ||
+                  Kind == Bedrock::fixup_bedrock_call16_local;
     unsigned Cond = Inst.getOperand(6).getImm();
     Inst.clear();
     Inst.setOpcode(Bedrock::RAW_EXPR);
     Inst.addOperand(MCOperand::createImm(1));
     Inst.addOperand(MCOperand::createImm(3));
-    Inst.addOperand(MCOperand::createImm(Bedrock::fixup_bedrock_call32));
+    Inst.addOperand(MCOperand::createImm(
+        IsCall ? Bedrock::fixup_bedrock_call32
+               : Bedrock::fixup_bedrock_brdisp32));
     Inst.addOperand(MCOperand::createExpr(Expr));
     Inst.addOperand(MCOperand::createImm(0xd0));
-    Inst.addOperand(MCOperand::createImm(0xe6));
+    Inst.addOperand(MCOperand::createImm(IsCall ? 0xe6 : 0x66));
     Inst.addOperand(MCOperand::createImm(Cond));
     for (unsigned I = 0; I != 4; ++I)
       Inst.addOperand(MCOperand::createImm(0));

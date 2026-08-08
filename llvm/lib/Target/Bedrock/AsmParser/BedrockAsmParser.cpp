@@ -1720,9 +1720,9 @@ bool tryEncodeSymbolicInstruction(OperandVector &Operands,
     uint32_t Payload = 0;
     bool IsCall = false;
     if (Mnemonic == "jmp") {
-      Payload = applyPatternValues("000110011000000000", {});
+      Payload = applyPatternValues("000010011000000000", {});
     } else if (getConditionSuffix(Mnemonic, "j", Cond)) {
-      Payload = applyPatternValues("00011001100000cccc", {{'c', Cond}});
+      Payload = applyPatternValues("00001001100000cccc", {{'c', Cond}});
     } else if (Mnemonic == "call") {
       Payload = applyPatternValues("001010011000000000", {});
       IsCall = true;
@@ -1733,13 +1733,13 @@ bool tryEncodeSymbolicInstruction(OperandVector &Operands,
       return false;
     }
 
-    SmallVector<uint8_t, 4> Tail(IsCall ? 2 : 4, 0);
+    SmallVector<uint8_t, 4> Tail(2, 0);
     if (!encodeMediumWithTail(Payload, Tail, Bytes))
       return false;
 
     const unsigned FixupOffset = 3;
     MCFixupKind Kind = IsCall ? MCFixupKind(Bedrock::fixup_bedrock_call16)
-                              : MCFixupKind(Bedrock::fixup_bedrock_brdisp32);
+                              : MCFixupKind(Bedrock::fixup_bedrock_brdisp16);
     Fixups.push_back({FixupOffset, Kind, getImmExpr(GetOp(1))});
     return true;
   }
