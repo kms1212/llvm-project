@@ -146,8 +146,14 @@ bool BedrockRegisterInfo::eliminateFrameIndex(MachineBasicBlock::iterator II,
       report_fatal_error("unsupported Bedrock frame-pointer reference");
     }
     MI.setDesc(MF.getSubtarget().getInstrInfo()->get(RegisterBaseOpcode));
-    Register FrameBase =
-        MFI.getMaxAlign() > Align(16) ? Bedrock::R14 : Bedrock::R15;
+    // R14 names the dynamically aligned local-frame base, while R15 retains
+    // the unaligned body SP established before realignment.  Incoming fixed
+    // objects remain relative to the entry SP and therefore must use R15;
+    // their distance from R14 depends on the caller's incoming alignment.
+    Register FrameBase = MFI.getMaxAlign() > Align(16) &&
+                                 !MFI.isFixedObjectIndex(FrameIndex)
+                             ? Bedrock::R14
+                             : Bedrock::R15;
     MI.getOperand(FIOperandNum).ChangeToRegister(FrameBase, false);
     MI.getOperand(FIOperandNum + 1).ChangeToImmediate(Offset);
     return false;

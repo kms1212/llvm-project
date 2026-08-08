@@ -62,6 +62,26 @@ define i64 @realigned_base_reserved(i64 %a, i64 %b, i64 %c, i64 %d,
   ret i64 %s5
 }
 
+; Incoming stack arguments remain relative to the entry SP. R15 preserves the
+; pre-realignment body SP, while R14 may be rounded down by as much as 48 bytes
+; and is only a stable base for aligned local objects.
+define i64 @realigned_stack_argument(i64 %a0, i64 %a1, i64 %a2, i64 %a3,
+                                     i64 %a4, i64 %a5, i64 %a6, i64 %a7,
+                                     i64 %a8) {
+; CHECK-LABEL: realigned_stack_argument:
+; CHECK: mov.q sp, r15
+; CHECK: mov.q sp, r14
+; CHECK-NEXT: and.q -64, r14
+; CHECK-NEXT: mov.q r14, sp
+; CHECK: mov.q [r15 + 80], [[ARG:r[0-9]+]]
+; CHECK-NEXT: mov.q [[ARG]], [r14]
+; CHECK: lea.q [r14], r0
+  %slot = alloca i64, align 64
+  store i64 %a8, ptr %slot, align 64
+  call void @use(ptr %slot)
+  ret i64 %a8
+}
+
 ; Function bodies keep SP 16-byte aligned.  A single eight-byte save therefore
 ; uses the adjacent padding register through the compact pair form.
 define void @leaf_clobber_r8() {
