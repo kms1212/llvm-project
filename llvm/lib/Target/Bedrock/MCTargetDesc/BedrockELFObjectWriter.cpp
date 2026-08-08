@@ -29,7 +29,7 @@ public:
 
 protected:
   bool needsRelocateWithSymbol(const MCValue &, unsigned Type) const override {
-    return Type == ELF::R_BEDROCK_CALL32S;
+    return Type == ELF::R_BEDROCK_CALL16S || Type == ELF::R_BEDROCK_CALL32S;
   }
 
   unsigned getRelocType(const MCFixup &Fixup, const MCValue &Target,

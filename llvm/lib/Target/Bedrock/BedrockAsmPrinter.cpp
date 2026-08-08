@@ -8438,8 +8438,12 @@ void BedrockAsmPrinter::emitCall(const MachineInstr *MI) {
   if (Target.isImm())
     appendLE(Tail, static_cast<uint64_t>(Target.getImm()), 4);
   else
-    Tail.append(4, 0);
-  if (!BedrockMC::encodeMedium(0xe600, Tail, Bytes))
+    Tail.append(Target.getTargetFlags() == BedrockII::MO_PLT32 ? 4 : 2, 0);
+  uint32_t Payload = !Target.isImm() &&
+                             Target.getTargetFlags() != BedrockII::MO_PLT32
+                         ? 0xa600
+                         : 0xe600;
+  if (!BedrockMC::encodeMedium(Payload, Tail, Bytes))
     report_fatal_error("failed to encode Bedrock call");
   if (Target.isImm()) {
     emitRaw(Bytes);
@@ -8448,7 +8452,7 @@ void BedrockAsmPrinter::emitCall(const MachineInstr *MI) {
 
   MCFixupKind Kind = Target.getTargetFlags() == BedrockII::MO_PLT32
                          ? MCFixupKind(Bedrock::fixup_bedrock_plt32)
-                         : MCFixupKind(Bedrock::fixup_bedrock_call32);
+                         : MCFixupKind(Bedrock::fixup_bedrock_call16);
   emitRawExpr(Bytes, 3, Kind,
               lowerSymbolOperand(Target));
 }

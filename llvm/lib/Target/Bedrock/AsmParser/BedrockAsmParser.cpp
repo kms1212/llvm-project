@@ -1724,21 +1724,21 @@ bool tryEncodeSymbolicInstruction(OperandVector &Operands,
     } else if (getConditionSuffix(Mnemonic, "j", Cond)) {
       Payload = applyPatternValues("00011001100000cccc", {{'c', Cond}});
     } else if (Mnemonic == "call") {
-      Payload = applyPatternValues("001110011000000000", {});
+      Payload = applyPatternValues("001010011000000000", {});
       IsCall = true;
     } else if (getConditionSuffix(Mnemonic, "call", Cond)) {
-      Payload = applyPatternValues("00111001100000cccc", {{'c', Cond}});
+      Payload = applyPatternValues("00101001100000cccc", {{'c', Cond}});
       IsCall = true;
     } else {
       return false;
     }
 
-    SmallVector<uint8_t, 4> Tail(4, 0);
+    SmallVector<uint8_t, 4> Tail(IsCall ? 2 : 4, 0);
     if (!encodeMediumWithTail(Payload, Tail, Bytes))
       return false;
 
     const unsigned FixupOffset = 3;
-    MCFixupKind Kind = IsCall ? MCFixupKind(Bedrock::fixup_bedrock_call32)
+    MCFixupKind Kind = IsCall ? MCFixupKind(Bedrock::fixup_bedrock_call16)
                               : MCFixupKind(Bedrock::fixup_bedrock_brdisp32);
     Fixups.push_back({FixupOffset, Kind, getImmExpr(GetOp(1))});
     return true;

@@ -14,8 +14,8 @@ jmp local_target
 
 call local_target
 ; ASM: call	0
-; ASM-SAME: encoding: [0xd0,0xe6,0x00,A,A,A,A]
-; ASM: fixup A - offset: 3, value: local_target, kind: fixup_bedrock_call32
+; ASM-SAME: encoding: [0xc8,0xa6,0x00,A,A]
+; ASM: fixup A - offset: 3, value: local_target, kind: fixup_bedrock_call16
 
 jeq ext_target
 ; ASM: jeq	0
@@ -24,8 +24,8 @@ jeq ext_target
 
 callne ext_target
 ; ASM: callne	0
-; ASM-SAME: encoding: [0xd0,0xe6,0x03,A,A,A,A]
-; ASM: fixup A - offset: 3, value: ext_target, kind: fixup_bedrock_call32
+; ASM-SAME: encoding: [0xc8,0xa6,0x03,A,A]
+; ASM: fixup A - offset: 3, value: ext_target, kind: fixup_bedrock_call16
 
 mov.q [ext_data], r1
 ; ASM: mov.q	[0], r1
@@ -66,21 +66,21 @@ mov.q [pc + local_target], r0
 ; HEADER: Size of section headers:           64 (bytes)
 
 ; RELOC: Relocation section '.rela.text'
-; RELOC-DAG: 000000000000000a  {{[0-9a-f]+}}00000015 R_BEDROCK_CALL32S {{.*}} local_target + 0
-; RELOC-DAG: 0000000000000011  {{[0-9a-f]+}}00000013 R_BEDROCK_BRDISP32S {{.*}} ext_target + 0
-; RELOC-DAG: 0000000000000018  {{[0-9a-f]+}}00000015 R_BEDROCK_CALL32S {{.*}} ext_target + 0
-; RELOC-DAG: 000000000000001f  {{[0-9a-f]+}}00000003 R_BEDROCK_ABS32S {{.*}} ext_data + 0
-; RELOC-DAG: 0000000000000026  {{[0-9a-f]+}}0000000f R_BEDROCK_PCREL32S {{.*}} ext_target + 3
-; RELOC-DAG: 000000000000002d  {{[0-9a-f]+}}00000007 R_BEDROCK_IMM32S {{.*}} ext_data + 0
-; RELOC-DAG: 0000000000000035  {{[0-9a-f]+}}0000000b R_BEDROCK_DISP32S {{.*}} ext_data + 0
+; RELOC-DAG: 000000000000000a  {{[0-9a-f]+}}00000014 R_BEDROCK_CALL16S {{.*}} local_target + 0
+; RELOC-DAG: 000000000000000f  {{[0-9a-f]+}}00000013 R_BEDROCK_BRDISP32S {{.*}} ext_target + 0
+; RELOC-DAG: 0000000000000016  {{[0-9a-f]+}}00000015 R_BEDROCK_CALL32S {{.*}} ext_target + 0
+; RELOC-DAG: 000000000000001d  {{[0-9a-f]+}}00000003 R_BEDROCK_ABS32S {{.*}} ext_data + 0
+; RELOC-DAG: 0000000000000024  {{[0-9a-f]+}}0000000f R_BEDROCK_PCREL32S {{.*}} ext_target + 3
+; RELOC-DAG: 000000000000002b  {{[0-9a-f]+}}00000007 R_BEDROCK_IMM32S {{.*}} ext_data + 0
+; RELOC-DAG: 0000000000000033  {{[0-9a-f]+}}0000000b R_BEDROCK_DISP32S {{.*}} ext_data + 0
 
-; DISASM: 0: d0 66 00 32 00 00 00 jmp	50
-; DISASM: 7: d0 e6 00 00 00 00 00 call	0
-; DISASM: e: d0 66 02 00 00 00 00 jeq	0
-; DISASM: 15: d0 e6 03 00 00 00 00 callne	0
-; DISASM: 1c: d0 38 ea 00 00 00 00 mov.q	[0], r1
-; DISASM: 23: d0 39 66 00 00 00 00 mov.q	[pc + 0], r2
-; DISASM: 2a: d1 b9 8e 00 00 00 00 lea.q	0, r3
-; DISASM: 31: d4 3a f2 04 00 00 00 00      mov.q	[ds:r4 + 0], r5
-; DISASM: 39: 02           	ret
-; DISASM: 3a: d0 38 66 ff ff ff ff mov.q	[pc - 1], r0
+; DISASM: 0: d0 66 00 30 00 00 00 jmp	48
+; DISASM: 7: c8 a6 00 00 00 call	0
+; DISASM: c: d0 66 02 00 00 00 00 jeq	0
+; DISASM: 13: d0 e6 03 00 00 00 00 callne	0
+; DISASM: 1a: d0 38 ea 00 00 00 00 mov.q	[0], r1
+; DISASM: 21: d0 39 66 00 00 00 00 mov.q	[pc + 0], r2
+; DISASM: 28: d1 b9 8e 00 00 00 00 lea.q	0, r3
+; DISASM: 2f: d4 3a f2 04 00 00 00 00      mov.q	[ds:r4 + 0], r5
+; DISASM: 37: 02           	ret
+; DISASM: 38: d0 38 66 ff ff ff ff mov.q	[pc - 1], r0

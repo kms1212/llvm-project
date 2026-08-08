@@ -29,6 +29,16 @@ bool isNextIPRelativeFixup(MCFixupKind Kind) {
          Kind == Bedrock::fixup_bedrock_call32;
 }
 
+bool isRelaxableCall(unsigned Opcode, ArrayRef<MCOperand> Operands) {
+  return Opcode == Bedrock::RAW_EXPR && Operands.size() == 9 &&
+         Operands[0].isImm() && Operands[0].getImm() == 1 &&
+         Operands[1].isImm() && Operands[1].getImm() == 3 &&
+         Operands[2].isImm() &&
+         Operands[2].getImm() == Bedrock::fixup_bedrock_call16 &&
+         Operands[4].isImm() && Operands[4].getImm() == 0xc8 &&
+         Operands[5].isImm() && Operands[5].getImm() == 0xa6;
+}
+
 class BedrockAsmBackend : public MCAsmBackend {
 public:
   BedrockAsmBackend() : MCAsmBackend(llvm::endianness::little) {}
@@ -79,9 +89,11 @@ public:
   void applyFixup(const MCFragment &F, const MCFixup &Fixup,
                   const MCValue &Target, uint8_t *Data, uint64_t Value,
                   bool IsResolved) override {
-    // Preserve symbolic long calls so the linker can select the short form
-    // after final layout.
-    if (IsResolved && Fixup.getKind() == Bedrock::fixup_bedrock_call32 &&
+    // Preserve symbolic calls so the linker can select the instruction width
+    // and rewrite the final displacement after relaxing surrounding calls.
+    if (IsResolved &&
+        (Fixup.getKind() == Bedrock::fixup_bedrock_call16 ||
+         Fixup.getKind() == Bedrock::fixup_bedrock_call32) &&
         Target.getAddSym())
       IsResolved = false;
     maybeAddReloc(F, Fixup, Target, Value, IsResolved);
@@ -99,6 +111,38 @@ public:
     unsigned NumBytes = alignTo(Info.TargetSize + Info.TargetOffset, 8) / 8;
     for (unsigned I = 0; I != NumBytes; ++I)
       Data[I] |= uint8_t((Value >> (I * 8)) & 0xff);
+  }
+
+  bool mayNeedRelaxation(unsigned Opcode, ArrayRef<MCOperand> Operands,
+                         const MCSubtargetInfo &STI) const override {
+    return isRelaxableCall(Opcode, Operands);
+  }
+
+  bool fixupNeedsRelaxation(const MCFixup &Fixup,
+                            uint64_t Value) const override {
+    assert(Fixup.getKind() == Bedrock::fixup_bedrock_call16 &&
+           "unexpected relaxable Bedrock fixup");
+    return !isInt<16>(static_cast<int64_t>(Value) - 2);
+  }
+
+  void relaxInstruction(MCInst &Inst,
+                        const MCSubtargetInfo &STI) const override {
+    assert(isRelaxableCall(Inst.getOpcode(), Inst.getOperands()) &&
+           "unexpected relaxable Bedrock instruction");
+
+    const MCExpr *Expr = Inst.getOperand(3).getExpr();
+    unsigned Cond = Inst.getOperand(6).getImm();
+    Inst.clear();
+    Inst.setOpcode(Bedrock::RAW_EXPR);
+    Inst.addOperand(MCOperand::createImm(1));
+    Inst.addOperand(MCOperand::createImm(3));
+    Inst.addOperand(MCOperand::createImm(Bedrock::fixup_bedrock_call32));
+    Inst.addOperand(MCOperand::createExpr(Expr));
+    Inst.addOperand(MCOperand::createImm(0xd0));
+    Inst.addOperand(MCOperand::createImm(0xe6));
+    Inst.addOperand(MCOperand::createImm(Cond));
+    for (unsigned I = 0; I != 4; ++I)
+      Inst.addOperand(MCOperand::createImm(0));
   }
 
   std::unique_ptr<MCObjectTargetWriter>
