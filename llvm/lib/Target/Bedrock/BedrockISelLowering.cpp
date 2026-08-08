@@ -178,6 +178,11 @@ BedrockTargetLowering::BedrockTargetLowering(const TargetMachine &TM,
   setOperationAction(ISD::FP_EXTEND, MVT::f64, Legal);
   setOperationAction(ISD::STRICT_FP_ROUND, MVT::f32, Legal);
   setOperationAction(ISD::STRICT_FP_EXTEND, MVT::f64, Legal);
+  // The ISA deliberately has no register-direct transfer between the GPR and
+  // FPR files. Legalize raw-bit casts through a stack slot so valid C type
+  // punning does not reach instruction selection as an impossible copy.
+  for (MVT VT : {MVT::i32, MVT::i64, MVT::f32, MVT::f64})
+    setOperationAction(ISD::BITCAST, VT, Expand);
   setTargetDAGCombine(ISD::ConstantFP);
   if (Subtarget.hasFPTRANSA())
     setTargetDAGCombine(
