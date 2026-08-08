@@ -71,6 +71,17 @@ define void @thread_fences() {
   ret void
 }
 
+define void @signal_fence() {
+; ASM-LABEL: signal_fence:
+; ASM-NOT: afence
+; ASM: ret
+; OBJ-LABEL: <signal_fence>:
+; OBJ-NOT: afence
+; OBJ: ret
+  fence syncscope("singlethread") seq_cst
+  ret void
+}
+
 define i8 @fetch_add_b(ptr %p, i8 %v) {
 ; ASM-LABEL: fetch_add_b:
 ; ASM: fetchadd.b/relaxed

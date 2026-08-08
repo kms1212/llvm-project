@@ -190,6 +190,7 @@ BedrockTargetLowering::BedrockTargetLowering(const TargetMachine &TM,
   setOperationAction(ISD::VASTART, MVT::Other, Custom);
   setOperationAction(ISD::DYNAMIC_STACKALLOC, MVT::i64, Custom);
   setOperationAction(ISD::GlobalTLSAddress, MVT::i64, Custom);
+  setOperationAction(ISD::ATOMIC_FENCE, MVT::Other, Custom);
   setMaxAtomicSizeInBitsSupported(64);
   setMinimumJumpTableEntries(16);
   setMinFunctionAlignment(Align(16));
@@ -840,6 +841,15 @@ SDValue BedrockTargetLowering::LowerOperation(SDValue Op,
     return LowerDYNAMIC_STACKALLOC(Op, DAG);
   case ISD::GlobalTLSAddress:
     return LowerGlobalTLSAddress(Op, DAG);
+  case ISD::ATOMIC_FENCE:
+    // A C atomic_signal_fence synchronizes only with signal handlers in the
+    // current thread. Preserve compiler ordering without issuing a hardware
+    // AFENCE, which is reserved for cross-thread fences.
+    if (static_cast<SyncScope::ID>(Op.getConstantOperandVal(2)) ==
+        SyncScope::SingleThread)
+      return DAG.getNode(ISD::MEMBARRIER, SDLoc(Op), MVT::Other,
+                         Op.getOperand(0));
+    return Op;
   default:
     llvm_unreachable("unhandled Bedrock lowering operation");
   }
