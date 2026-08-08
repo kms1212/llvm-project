@@ -28,6 +28,10 @@ public:
   bool usesGnuIFuncOSABI() const override { return false; }
 
 protected:
+  bool needsRelocateWithSymbol(const MCValue &, unsigned Type) const override {
+    return Type == ELF::R_BEDROCK_CALL32S;
+  }
+
   unsigned getRelocType(const MCFixup &Fixup, const MCValue &Target,
                         bool IsPCRel) const override {
     switch (Fixup.getKind()) {

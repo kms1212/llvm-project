@@ -13,29 +13,37 @@
 # RELAX-NEXT: {{.*}}R_BEDROCK_CALL16S{{.*}}target
 # RELAX-NEXT: {{.*}}c8 a6 02 {{[0-9a-f][0-9a-f]}} {{[0-9a-f][0-9a-f]}} {{.*}}calleq
 # RELAX-NEXT: {{.*}}R_BEDROCK_CALL16S{{.*}}target
+# RELAX-NEXT: {{.*}}c8 a6 00 01 00 {{.*}}call
+# RELAX-NEXT: {{.*}}R_BEDROCK_CALL16S{{.*}}local_target
 
 # NORELAX-LABEL: <_start>:
 # NORELAX-NEXT: {{.*}}d0 e6 00 {{[0-9a-f ]+}}{{.*}}call
 # NORELAX-NEXT: {{.*}}R_BEDROCK_CALL32S{{.*}}target
 # NORELAX-NEXT: {{.*}}d0 e6 02 {{[0-9a-f ]+}}{{.*}}calleq
 # NORELAX-NEXT: {{.*}}R_BEDROCK_CALL32S{{.*}}target
+# NORELAX-NEXT: {{.*}}d0 e6 00 01 00 00 00 {{.*}}call
+# NORELAX-NEXT: {{.*}}R_BEDROCK_CALL32S{{.*}}local_target
 
 # FAR-LABEL: <_start>:
 # FAR-NEXT: {{.*}}d0 e6 00 {{[0-9a-f ]+}}{{.*}}call
 # FAR-NEXT: {{.*}}R_BEDROCK_CALL32S{{.*}}target
 # FAR-NEXT: {{.*}}d0 e6 02 {{[0-9a-f ]+}}{{.*}}calleq
 # FAR-NEXT: {{.*}}R_BEDROCK_CALL32S{{.*}}target
+# FAR-NEXT: {{.*}}c8 a6 00 01 00 {{.*}}call
+# FAR-NEXT: {{.*}}R_BEDROCK_CALL16S{{.*}}local_target
 
 #--- input.s
 .section .text.entry,"ax",@progbits
 .p2align 0
 .globl _start
 _start:
-  .byte 0xd0, 0xe6, 0x00, 0, 0, 0, 0
-  .reloc _start+3, R_BEDROCK_CALL32S, target
-  .byte 0xd0, 0xe6, 0x02, 0, 0, 0, 0
-  .reloc _start+10, R_BEDROCK_CALL32S, target
+  call target
+  calleq target
+  call local_target
   nop
+
+local_target:
+  ret
 
 .section .text.target,"ax",@progbits
 .p2align 0

@@ -14,6 +14,7 @@
 #include "llvm/MC/MCAssembler.h"
 #include "llvm/MC/MCObjectWriter.h"
 #include "llvm/MC/MCSubtargetInfo.h"
+#include "llvm/MC/MCValue.h"
 #include "llvm/Support/Alignment.h"
 #include "llvm/Support/Endian.h"
 
@@ -78,6 +79,11 @@ public:
   void applyFixup(const MCFragment &F, const MCFixup &Fixup,
                   const MCValue &Target, uint8_t *Data, uint64_t Value,
                   bool IsResolved) override {
+    // Preserve symbolic long calls so the linker can select the short form
+    // after final layout.
+    if (IsResolved && Fixup.getKind() == Bedrock::fixup_bedrock_call32 &&
+        Target.getAddSym())
+      IsResolved = false;
     maybeAddReloc(F, Fixup, Target, Value, IsResolved);
     if (IsResolved && isNextIPRelativeFixup(Fixup.getKind())) {
       MCFixupKindInfo Info = getFixupKindInfo(Fixup.getKind());

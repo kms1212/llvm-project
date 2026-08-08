@@ -66,6 +66,7 @@ mov.q [pc + local_target], r0
 ; HEADER: Size of section headers:           64 (bytes)
 
 ; RELOC: Relocation section '.rela.text'
+; RELOC-DAG: 000000000000000a  {{[0-9a-f]+}}00000015 R_BEDROCK_CALL32S {{.*}} local_target + 0
 ; RELOC-DAG: 0000000000000011  {{[0-9a-f]+}}00000013 R_BEDROCK_BRDISP32S {{.*}} ext_target + 0
 ; RELOC-DAG: 0000000000000018  {{[0-9a-f]+}}00000015 R_BEDROCK_CALL32S {{.*}} ext_target + 0
 ; RELOC-DAG: 000000000000001f  {{[0-9a-f]+}}00000003 R_BEDROCK_ABS32S {{.*}} ext_data + 0
@@ -74,7 +75,7 @@ mov.q [pc + local_target], r0
 ; RELOC-DAG: 0000000000000035  {{[0-9a-f]+}}0000000b R_BEDROCK_DISP32S {{.*}} ext_data + 0
 
 ; DISASM: 0: d0 66 00 32 00 00 00 jmp	50
-; DISASM: 7: d0 e6 00 2b 00 00 00 call	43
+; DISASM: 7: d0 e6 00 00 00 00 00 call	0
 ; DISASM: e: d0 66 02 00 00 00 00 jeq	0
 ; DISASM: 15: d0 e6 03 00 00 00 00 callne	0
 ; DISASM: 1c: d0 38 ea 00 00 00 00 mov.q	[0], r1
