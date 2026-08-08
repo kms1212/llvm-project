@@ -16,7 +16,9 @@ namespace llvm {
 class BedrockMachineFunctionInfo final : public MachineFunctionInfo {
   Register SRetReturnReg;
   int VarArgsFrameIndex = 0;
+  int FStatusFrameIndex = 0;
   bool HasVarArgsFrameIndex = false;
+  bool HasFStatusFrameIndex = false;
 
 public:
   BedrockMachineFunctionInfo(const Function &F,
@@ -37,6 +39,13 @@ public:
   void setVarArgsFrameIndex(int Index) {
     VarArgsFrameIndex = Index;
     HasVarArgsFrameIndex = true;
+  }
+
+  int getFStatusFrameIndex() const { return FStatusFrameIndex; }
+  bool hasFStatusFrameIndex() const { return HasFStatusFrameIndex; }
+  void setFStatusFrameIndex(int Index) {
+    FStatusFrameIndex = Index;
+    HasFStatusFrameIndex = true;
   }
 };
 

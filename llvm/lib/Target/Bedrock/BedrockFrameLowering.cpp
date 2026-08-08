@@ -7,6 +7,7 @@
 //===----------------------------------------------------------------------===//
 
 #include "BedrockFrameLowering.h"
+#include "BedrockMachineFunctionInfo.h"
 #include "MCTargetDesc/BedrockMCTargetDesc.h"
 #include "llvm/ADT/STLExtras.h"
 #include "llvm/CodeGen/MachineFrameInfo.h"
@@ -139,6 +140,7 @@ void BedrockFrameLowering::emitPrologue(MachineFunction &MF,
   assert(StackSize >= FPPairStackSize &&
          "floating-point save area exceeds the Bedrock frame");
   const uint64_t RegularStackSize = StackSize - FPPairStackSize;
+  const auto *BFI = MF.getInfo<BedrockMachineFunctionInfo>();
 
   uint64_t PushedFPBytes = 0;
   for (unsigned PairIndex = 0; PairIndex != 4; ++PairIndex) {
@@ -186,6 +188,17 @@ void BedrockFrameLowering::emitPrologue(MachineFunction &MF,
         nullptr, TRI.getDwarfRegNum(Info.getReg(), true), Offset));
   }
 
+  if (BFI->hasFStatusFrameIndex()) {
+    // The dedicated FSTATUS spill follows the ordinary GPR spills. R15 has
+    // been forced into the callee-save list and is therefore available as a
+    // temporary once its incoming value has reached the stack.
+    std::advance(MBBI, 2);
+    int64_t Offset =
+        MFI.getObjectOffset(BFI->getFStatusFrameIndex()) - EntryFrameSize;
+    emitCFI(MCCFIInstruction::createOffset(
+        nullptr, TRI.getDwarfRegNum(Bedrock::FSTATUS, true), Offset));
+  }
+
   if (hasFP(MF)) {
     BuildMI(MBB, MBBI, DL, TII.get(Bedrock::MOVQsr), Bedrock::R15)
         .setMIFlag(MachineInstr::FrameSetup);
@@ -223,14 +236,16 @@ void BedrockFrameLowering::emitEpilogue(MachineFunction &MF,
   assert(StackSize >= FPPairStackSize &&
          "floating-point save area exceeds the Bedrock frame");
   const uint64_t RegularStackSize = StackSize - FPPairStackSize;
+  const auto *BFI = MF.getInfo<BedrockMachineFunctionInfo>();
 
   if (hasFP(MF)) {
     MachineBasicBlock::iterator RestoreI = MBBI;
     const auto &CSI = MFI.getCalleeSavedInfo();
-    size_t RestoreCount =
-        llvm::count_if(CSI, [](const CalleeSavedInfo &Info) {
-          return !isCalleeSavedFPR(Info.getReg());
-        });
+    size_t RestoreCount = llvm::count_if(CSI, [](const CalleeSavedInfo &Info) {
+      return !isCalleeSavedFPR(Info.getReg());
+    });
+    if (BFI->hasFStatusFrameIndex())
+      RestoreCount += needsDwarfCFI(MF) ? 3 : 2;
     for (size_t I = 0; I != RestoreCount && RestoreI != MBB.begin(); ++I)
       --RestoreI;
     BuildMI(MBB, RestoreI, DL, TII.get(Bedrock::MOVQrs))
@@ -291,6 +306,17 @@ void BedrockFrameLowering::determineCalleeSaves(MachineFunction &MF,
                                                 BitVector &SavedRegs,
                                                 RegScavenger *RS) const {
   TargetFrameLowering::determineCalleeSaves(MF, SavedRegs, RS);
+  auto *BFI = MF.getInfo<BedrockMachineFunctionInfo>();
+  if (MF.getRegInfo().isPhysRegModified(Bedrock::FSTATUS) &&
+      !BFI->hasFStatusFrameIndex()) {
+    int FrameIndex = MF.getFrameInfo().CreateStackObject(8, Align(8), true);
+    BFI->setFStatusFrameIndex(FrameIndex);
+  }
+  if (BFI->hasFStatusFrameIndex()) {
+    // FSTATUS can only move through a GPR. Preserve R15 first, then use it as
+    // a post-RA scratch register for the dedicated status spill and reload.
+    SavedRegs.set(Bedrock::R15);
+  }
   if (hasFP(MF))
     SavedRegs.set(Bedrock::R15);
   if (needsStackRealignment(MF))
@@ -349,6 +375,17 @@ bool BedrockFrameLowering::spillCalleeSavedRegisters(
   for (const CalleeSavedInfo &Info : CSI)
     if (!isCalleeSavedFPR(Info.getReg()))
       spillCalleeSavedRegister(MBB, MI, Info, TII, TRI);
+  const auto *BFI = MBB.getParent()->getInfo<BedrockMachineFunctionInfo>();
+  if (BFI->hasFStatusFrameIndex()) {
+    DebugLoc DL = MI != MBB.end() ? MI->getDebugLoc() : DebugLoc();
+    BuildMI(MBB, MI, DL, TII->get(Bedrock::BEDROCK_RDFSTATUS), Bedrock::R15)
+        .setMIFlag(MachineInstr::FrameSetup);
+    BuildMI(MBB, MI, DL, TII->get(Bedrock::STOREQfi))
+        .addReg(Bedrock::R15, RegState::Kill)
+        .addFrameIndex(BFI->getFStatusFrameIndex())
+        .addImm(0)
+        .setMIFlag(MachineInstr::FrameSetup);
+  }
   return true;
 }
 
@@ -357,6 +394,25 @@ bool BedrockFrameLowering::restoreCalleeSavedRegisters(
     MutableArrayRef<CalleeSavedInfo> CSI,
     const TargetRegisterInfo *TRI) const {
   const TargetInstrInfo *TII = MBB.getParent()->getSubtarget().getInstrInfo();
+  const auto *BFI = MBB.getParent()->getInfo<BedrockMachineFunctionInfo>();
+  if (BFI->hasFStatusFrameIndex()) {
+    DebugLoc DL = MI != MBB.end() ? MI->getDebugLoc() : DebugLoc();
+    BuildMI(MBB, MI, DL, TII->get(Bedrock::LOADQfi), Bedrock::R15)
+        .addFrameIndex(BFI->getFStatusFrameIndex())
+        .addImm(0)
+        .setMIFlag(MachineInstr::FrameDestroy);
+    BuildMI(MBB, MI, DL, TII->get(Bedrock::BEDROCK_WRFSTATUS))
+        .addReg(Bedrock::R15, RegState::Kill)
+        .setMIFlag(MachineInstr::FrameDestroy);
+    if (needsDwarfCFI(*MBB.getParent())) {
+      unsigned CFIIndex =
+          MBB.getParent()->addFrameInst(MCCFIInstruction::createRestore(
+              nullptr, TRI->getDwarfRegNum(Bedrock::FSTATUS, true)));
+      BuildMI(MBB, MI, DL, TII->get(TargetOpcode::CFI_INSTRUCTION))
+          .addCFIIndex(CFIIndex)
+          .setMIFlag(MachineInstr::FrameDestroy);
+    }
+  }
   for (const CalleeSavedInfo &Info : llvm::reverse(CSI))
     if (!isCalleeSavedFPR(Info.getReg()))
       restoreCalleeSavedRegister(MBB, MI, Info, TII, TRI);
