@@ -46,6 +46,16 @@ struct NarrowBitField {
 };
 
 // CHECK: error: Bedrock C ABI does not permit aggregate type with a non-baseline bit-field base type 'struct NarrowBitField' across an external ABI boundary
+
+enum WideEnum { WideEnumValue = 0xffffffffu };
+
+// CHECK: error: Bedrock C ABI does not permit enum type with a non-int representation 'enum WideEnum' across an external ABI boundary
+
+struct WideEnumMember {
+  enum WideEnum value;
+};
+
+// CHECK: error: Bedrock C ABI does not permit type containing an enum with a non-int representation 'struct WideEnumMember' across an external ABI boundary
 #ifndef TEST_CALL
 void exported_nonbaseline_aggregates(struct AttributePacked attribute,
                                      struct PragmaPacked pragma,
@@ -53,7 +63,9 @@ void exported_nonbaseline_aggregates(struct AttributePacked attribute,
                                      struct Empty empty,
                                      struct ZeroLength zero_length,
                                      struct OverAligned over_aligned,
-                                     struct NarrowBitField narrow_bit_field) {}
+                                     struct NarrowBitField narrow_bit_field,
+                                     enum WideEnum wide_enum,
+                                     struct WideEnumMember wide_member) {}
 #endif
 
 // Packed aggregates remain usable within one translation unit when they do
@@ -65,11 +77,14 @@ internal_packed(struct AttributePacked value) {
 
 #ifdef TEST_CALL
 extern void consume_attribute_packed(struct AttributePacked);
+extern void consume_wide_enum(enum WideEnum);
 
 // CALL: error: Bedrock C ABI does not permit packed or under-aligned aggregate type 'struct AttributePacked' across an external ABI boundary
+// CALL: error: Bedrock C ABI does not permit enum type with a non-int representation 'enum WideEnum' across an external ABI boundary
 void call_external_boundary(void) {
   struct AttributePacked value = {0};
   consume_attribute_packed(value);
+  consume_wide_enum(WideEnumValue);
 }
 #endif
 
@@ -83,6 +98,9 @@ struct ValidBoundaries {
 // aggregate features and must not trigger the packed/unaligned diagnostic.
 void exported_valid_boundaries(struct ValidBoundaries *value) {
   struct AttributePacked local = {0};
+  enum WideEnum internal_wide = WideEnumValue;
+  struct WideEnumMember internal_member = {internal_wide};
   (void)value;
   (void)internal_packed(local);
+  (void)internal_member;
 }

@@ -139,14 +139,55 @@ static BedrockAggregateLayoutIssue getNonBaselineAggregateLayoutIssue(
   return BedrockAggregateLayoutIssue::None;
 }
 
-static void diagnoseNonBaselineAggregateTypes(CodeGenModule &CGM,
-                                              SourceLocation Loc,
-                                              ArrayRef<QualType> Types) {
+static bool containsNonBaselineEnum(
+    ASTContext &Context, QualType Ty,
+    llvm::SmallPtrSetImpl<const RecordDecl *> &Visited) {
+  Ty = Ty.getCanonicalType().getUnqualifiedType();
+  if (const auto *EnumTy = Ty->getAs<EnumType>()) {
+    QualType IntegerTy = EnumTy->getDecl()->getIntegerType();
+    return !IntegerTy.isNull() &&
+           !Context.hasSameType(IntegerTy.getCanonicalType().getUnqualifiedType(),
+                                Context.IntTy);
+  }
+  if (const auto *ArrayTy = Context.getAsArrayType(Ty))
+    return containsNonBaselineEnum(Context, ArrayTy->getElementType(),
+                                   Visited);
+  if (const auto *AtomicTy = Ty->getAs<AtomicType>())
+    return containsNonBaselineEnum(Context, AtomicTy->getValueType(), Visited);
+
+  const auto *RecordTy = Ty->getAs<RecordType>();
+  if (!RecordTy)
+    return false;
+  const RecordDecl *Record = RecordTy->getDecl()->getDefinition();
+  if (!Record || !Visited.insert(Record).second)
+    return false;
+  return llvm::any_of(Record->fields(), [&](const FieldDecl *Field) {
+    return containsNonBaselineEnum(Context, Field->getType(), Visited);
+  });
+}
+
+static void diagnoseNonBaselineTypes(CodeGenModule &CGM, SourceLocation Loc,
+                                     ArrayRef<QualType> Types) {
   llvm::SmallPtrSet<const Type *, 4> Diagnosed;
   for (QualType Ty : Types) {
-    if (!Ty->isAggregateType() ||
-        !Diagnosed.insert(Ty.getCanonicalType().getTypePtr()).second)
+    if (!Diagnosed.insert(Ty.getCanonicalType().getTypePtr()).second)
       continue;
+
+    llvm::SmallPtrSet<const RecordDecl *, 4> EnumVisited;
+    if (containsNonBaselineEnum(CGM.getContext(), Ty, EnumVisited)) {
+      std::string Description = Ty->isEnumeralType()
+                                    ? "enum type with a non-int representation"
+                                    : "type containing an enum with a non-int "
+                                      "representation";
+      CGM.Error(Loc, "Bedrock C ABI does not permit " + Description + " '" +
+                         Ty.getAsString() +
+                         "' across an external ABI boundary");
+      continue;
+    }
+
+    if (!Ty->isAggregateType())
+      continue;
+
     llvm::SmallPtrSet<const RecordDecl *, 4> Visited;
     BedrockAggregateLayoutIssue Issue = getNonBaselineAggregateLayoutIssue(
         CGM.getContext(), Ty, Visited);
@@ -181,7 +222,7 @@ void BedrockTargetCodeGenInfo::setTargetAttributes(
   const auto *VD = dyn_cast_or_null<VarDecl>(D);
   if (!VD || !VD->isExternallyVisible())
     return;
-  diagnoseNonBaselineAggregateTypes(CGM, VD->getLocation(), {VD->getType()});
+  diagnoseNonBaselineTypes(CGM, VD->getLocation(), {VD->getType()});
 }
 
 void BedrockTargetCodeGenInfo::checkFunctionABI(
@@ -192,7 +233,7 @@ void BedrockTargetCodeGenInfo::checkFunctionABI(
   Types.push_back(Decl->getReturnType());
   for (const ParmVarDecl *Param : Decl->parameters())
     Types.push_back(Param->getType());
-  diagnoseNonBaselineAggregateTypes(CGM, Decl->getLocation(), Types);
+  diagnoseNonBaselineTypes(CGM, Decl->getLocation(), Types);
 }
 
 void BedrockTargetCodeGenInfo::checkFunctionCallABI(CodeGenModule &CGM,
@@ -207,7 +248,7 @@ void BedrockTargetCodeGenInfo::checkFunctionCallABI(CodeGenModule &CGM,
   Types.push_back(ReturnType);
   for (const CallArg &Arg : Args)
     Types.push_back(Arg.getType());
-  diagnoseNonBaselineAggregateTypes(CGM, CallLoc, Types);
+  diagnoseNonBaselineTypes(CGM, CallLoc, Types);
 }
 
 ABIArgInfo BedrockABIInfo::getByValAggregate(QualType Ty) const {

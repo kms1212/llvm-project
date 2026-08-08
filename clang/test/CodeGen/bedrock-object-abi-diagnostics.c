@@ -3,6 +3,8 @@
 // RUN: not %clang_cc1 -triple bedrock -std=c11 -DTEST_EMPTY -emit-llvm -o /dev/null %s 2>&1 | FileCheck %s --check-prefix=EMPTY
 // RUN: not %clang_cc1 -triple bedrock -std=c11 -DTEST_ZERO_LENGTH -emit-llvm -o /dev/null %s 2>&1 | FileCheck %s --check-prefix=ZERO-LENGTH
 // RUN: not %clang_cc1 -triple bedrock -std=c11 -DTEST_BIT_FIELD -emit-llvm -o /dev/null %s 2>&1 | FileCheck %s --check-prefix=BIT-FIELD
+// RUN: not %clang_cc1 -triple bedrock -std=c11 -DTEST_ENUM -emit-llvm -o /dev/null %s 2>&1 | FileCheck %s --check-prefix=ENUM
+// RUN: not %clang_cc1 -triple bedrock -std=c11 -DTEST_ATOMIC_ENUM -emit-llvm -o /dev/null %s 2>&1 | FileCheck %s --check-prefix=ATOMIC-ENUM
 
 struct AttributePacked {
   char tag;
@@ -39,15 +41,31 @@ struct NarrowBitField {
 struct NarrowBitField external_narrow_bit_field;
 #endif
 
+enum WideEnum { WideEnumValue = 0xffffffffu };
+
+#ifdef TEST_ENUM
+// ENUM: error: Bedrock C ABI does not permit enum type with a non-int representation 'enum WideEnum' across an external ABI boundary
+enum WideEnum external_wide_enum;
+#endif
+
+#ifdef TEST_ATOMIC_ENUM
+// ATOMIC-ENUM: error: Bedrock C ABI does not permit type containing an enum with a non-int representation '_Atomic(enum WideEnum)' across an external ABI boundary
+_Atomic(enum WideEnum) external_atomic_wide_enum;
+#endif
+
 // Non-baseline aggregates remain available to internal compiler extensions.
 static struct AttributePacked internal_packed;
 static struct Empty internal_empty;
 static struct ZeroLength internal_zero_length;
 static struct NarrowBitField internal_narrow_bit_field;
+static enum WideEnum internal_wide_enum;
+static _Atomic(enum WideEnum) internal_atomic_wide_enum;
 
 void use_internal_objects(void) {
   (void)internal_packed;
   (void)internal_empty;
   (void)internal_zero_length;
   (void)internal_narrow_bit_field;
+  (void)internal_wide_enum;
+  (void)internal_atomic_wide_enum;
 }
