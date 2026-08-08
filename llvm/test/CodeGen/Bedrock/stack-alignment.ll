@@ -103,33 +103,46 @@ define void @leaf_clobber_r8_r9() {
   ret void
 }
 
-; CALL pushes an eight-byte return address, so a caller adjusts SP to 8 modulo
-; 16 before the instruction and restores it afterwards.
+; CALL pushes an eight-byte return address, so a fixed-frame caller reserves
+; its eight-byte phase adjustment on entry and restores it in the epilogue.
 define i64 @call_alignment(i64 %x) {
 ; CHECK-LABEL: call_alignment:
 ; CHECK: sub.q 8, sp
 ; CHECK-NEXT: call callee
-; CHECK-NEXT: add.q 8, sp
 ; CHECK-NEXT: inc.q r0
+; CHECK-NEXT: add.q 8, sp
 ; CHECK-NEXT: ret
   %v = call i64 @callee(i64 %x)
   %r = add i64 %v, 1
   ret i64 %r
 }
 
-; Size-optimized frameless callers use the same memory-free stack adjustment;
-; its eight-byte immediate has a dedicated one-byte encoding.
+; Size-optimized frameless callers reserve the same compact eight-byte phase.
 define i64 @compact_call_alignment(i64 %x) minsize optsize {
 ; CHECK-LABEL: compact_call_alignment:
 ; CHECK-NOT: push
 ; CHECK: sub.q 8, sp
 ; CHECK-NEXT: call callee
-; CHECK-NEXT: add.q 8, sp
 ; CHECK-NEXT: inc.q r0
+; CHECK-NEXT: add.q 8, sp
 ; CHECK-NEXT: ret
   %v = call i64 @callee(i64 %x)
   %r = add i64 %v, 1
   ret i64 %r
+}
+
+; Multiple calls reuse one reserved call frame instead of adjusting SP around
+; every call site.
+define void @reused_call_alignment() {
+; CHECK-LABEL: reused_call_alignment:
+; CHECK: sub.q 8, sp
+; CHECK-NEXT: call clobber
+; CHECK-NEXT: call clobber
+; CHECK-NEXT: add.q 8, sp
+; CHECK-NEXT: ret
+  call void @clobber()
+  call void @clobber()
+  ret void
 }
 
 ; A compact pad is removed again when the call becomes a tail jump.
@@ -142,16 +155,15 @@ define i64 @compact_tail_call(i64 %x) minsize optsize {
   ret i64 %v
 }
 
-; Callee saves keep the body aligned independently of the dynamic near-call
-; padding.
+; A fixed outgoing frame is reserved below the callee-save area.
 define i64 @call_with_single_save(i64 %x) {
 ; CHECK-LABEL: call_with_single_save:
-; CHECK: pushp 3
-; CHECK: sub.q 8, sp
-; CHECK-NEXT: call callee
-; CHECK-NEXT: add.q 8, sp
+; CHECK: push r8
+; CHECK-NEXT: sub.q 16, sp
+; CHECK: call callee
 ; CHECK-NEXT: inc.q r0
-; CHECK: popp 3
+; CHECK-NEXT: add.q 16, sp
+; CHECK-NEXT: pop r8
 ; CHECK-NEXT: ret
   call void asm sideeffect "", "~{r8}"()
   %v = call i64 @callee(i64 %x)
@@ -159,18 +171,16 @@ define i64 @call_with_single_save(i64 %x) {
   ret i64 %r
 }
 
-; Declared 16-byte local alignment is preserved independently of the transient
-; eight-byte caller-frame padding.
+; Declared 16-byte local alignment is preserved above the reserved outgoing
+; frame.
 define i64 @aligned_local(i64 %x) {
 ; CHECK-LABEL: aligned_local:
-; CHECK: sub.q 16, sp
-; CHECK-NEXT: mov.q r0, [sp]
-; CHECK-NEXT: sub.q 8, sp
+; CHECK: sub.q 24, sp
+; CHECK-NEXT: mov.q r0, [sp + 8]
 ; CHECK-NEXT: lea.q [sp + 8], r0
 ; CHECK-NEXT: call use
-; CHECK-NEXT: add.q 8, sp
-; CHECK-NEXT: mov.q [sp], r0
-; CHECK-NEXT: add.q 16, sp
+; CHECK-NEXT: mov.q [sp + 8], r0
+; CHECK-NEXT: add.q 24, sp
 ; CHECK-NEXT: ret
   %slot = alloca i64, align 16
   store i64 %x, ptr %slot, align 16

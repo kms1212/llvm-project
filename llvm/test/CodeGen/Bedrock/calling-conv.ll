@@ -54,8 +54,8 @@ define i64 @call_pair_exhaustion() {
 ; CHECK: mov.q {{.*}}, [{{r[0-9]+}} + 16]
 ; CHECK: mov.q {{.*}}, [{{r[0-9]+}} + 8]
 ; CHECK: call sink_pair_exhaustion
-; CHECK-NEXT: add.q 40, sp
 ; CHECK-NEXT: inc.q r0
+; CHECK-NEXT: add.q 40, sp
 ; CHECK-NEXT: ret
   %value = call i64 @sink_pair_exhaustion(
       i64 0, i64 1, i64 2, i64 3, i64 4, i64 5, i64 6,
@@ -83,16 +83,14 @@ define void @sret_reserves_r0(ptr sret(%BigResult) %out, i64 %tag,
 
 define i64 @aggregate_arguments_are_caller_copies(ptr %source) {
 ; CHECK-LABEL: aggregate_arguments_are_caller_copies:
-; CHECK: sub.q 16, sp
-; CHECK: mov.q sp, [[COPY:r[0-9]+]]
+; CHECK: sub.q 24, sp
+; CHECK: lea.q [sp + 8], [[COPY:r[0-9]+]]
 ; CHECK: mov.q [r0 + 8], [{{r[0-9]+}}]
 ; CHECK: mov.q [r0], r0
-; CHECK: mov.q r0, [sp]
-; CHECK: sub.q 8, sp
+; CHECK: mov.q r0, [sp + 8]
 ; CHECK: mov.q [[COPY]], r0
 ; CHECK: call sink_byval
-; CHECK-NEXT: add.q 8, sp
-; CHECK: add.q 16, sp
+; CHECK: add.q 24, sp
   %value = call i64 @sink_byval(ptr byval(%Pair) align 16 %source)
   %result = add i64 %value, 1
   ret i64 %result
@@ -167,12 +165,14 @@ define i64 @call_single_register_exhaustion(
     float %f0, float %f1, float %f2, float %f3, float %f4,
     float %f5, float %f6, float %f7, float %f8) {
 ; CHECK-LABEL: call_single_register_exhaustion:
+; CHECK: fpushp 3
+; CHECK-NEXT: sub.q 24, sp
 ; CHECK: FMOV.S [sp + {{[0-9]+}}], [[STACKF:f[0-9]+]]
-; CHECK: sub.q 24, sp
 ; CHECK: FMOV.S [[STACKF]], [{{r[0-9]+}} + 8]
 ; CHECK: call sink_nine_float
-; CHECK-NEXT: add.q 24, sp
 ; CHECK-NEXT: inc.q r0
+; CHECK-NEXT: add.q 24, sp
+; CHECK-NEXT: fpopp 3
   %value = call i64 @sink_nine_float(
       float %f0, float %f1, float %f2, float %f3, float %f4,
       float %f5, float %f6, float %f7, float %f8)

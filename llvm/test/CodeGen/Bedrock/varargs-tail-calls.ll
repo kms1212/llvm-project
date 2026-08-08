@@ -43,15 +43,15 @@ define i64 @unnamed_after_named_stack(
 
 define i64 @call_variadic(ptr %pair) {
 ; CHECK-LABEL: call_variadic:
-; CHECK: sub.q 16, sp
-; CHECK: sub.q 72, sp
+; CHECK: sub.q 88, sp
+; CHECK: lea.q [sp + 72],
 ; CHECK: mov.q {{.*}}, [{{r[0-9]+}} + 56]
 ; CHECK: mov.q {{.*}}, [{{r[0-9]+}} + 48]
 ; CHECK: mov.q {{.*}}, [{{r[0-9]+}} + 40]
 ; CHECK: mov.q {{.*}}, [{{r[0-9]+}} + 24]
 ; CHECK: mov.q {{.*}}, [{{r[0-9]+}} + 8]
 ; CHECK: call variadic_sink
-; CHECK-NEXT: add.q 72, sp
+; CHECK-NEXT: add.q 88, sp
 ; CHECK: ret
   %result = call i64 (i64, ...) @variadic_sink(
       i64 7, i64 11, double 3.000000e+00,

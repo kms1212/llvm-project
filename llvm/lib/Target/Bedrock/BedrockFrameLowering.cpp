@@ -96,8 +96,8 @@ static uint64_t getFPPairStackSize(unsigned PairMask) {
 
 BedrockFrameLowering::BedrockFrameLowering(const BedrockSubtarget &STI)
     // Generic call-frame tracking rounds adjustments to this value.  Near
-    // calls need an exact eight-byte phase adjustment; emitPrologue still
-    // rounds every persistent function body frame to the ABI's 16 bytes.
+    // calls need an exact eight-byte phase adjustment; emitPrologue aligns the
+    // local-object area to 16 bytes before appending a reserved call frame.
     : TargetFrameLowering(TargetFrameLowering::StackGrowsDown, Align(8), 0,
                           Align(8)) {}
 
@@ -127,10 +127,18 @@ void BedrockFrameLowering::emitPrologue(MachineFunction &MF,
   emitCFI(MCCFIInstruction::createOffset(
       nullptr, TRI.getDwarfRegNum(Bedrock::PC, true), -EntryFrameSize));
   uint64_t StackSize = MFI.getStackSize();
-  // A function observes a 16-byte-aligned SP on entry and keeps its body
-  // frame aligned.  Near-call padding and outgoing arguments are allocated
-  // dynamically around each call rather than being folded into this frame.
+  // Keep local objects on their ABI-aligned side of the frame, then place the
+  // reserved outgoing-call area below them.  Every Bedrock near-call frame is
+  // eight modulo sixteen bytes: its low eight bytes are alignment padding and
+  // the remaining 16-byte slots hold stack arguments. CALL pushes the return
+  // PC immediately below that reserved area.
   StackSize = alignTo(StackSize, Align(16));
+  if (hasReservedCallFrame(MF)) {
+    uint64_t CallFrameSize = MFI.getMaxCallFrameSize();
+    assert((CallFrameSize == 0 || CallFrameSize % 16 == 8) &&
+           "invalid Bedrock near-call frame size");
+    StackSize += CallFrameSize;
+  }
   MFI.setStackSize(StackSize);
   if (StackSize == 0)
     return;
@@ -423,7 +431,7 @@ MachineBasicBlock::iterator BedrockFrameLowering::eliminateCallFramePseudoInstr(
     MachineFunction &MF, MachineBasicBlock &MBB,
     MachineBasicBlock::iterator MI) const {
   int64_t Amount = MI->getOperand(0).getImm();
-  if (Amount != 0) {
+  if (Amount != 0 && !hasReservedCallFrame(MF)) {
     const TargetInstrInfo &TII = *MF.getSubtarget().getInstrInfo();
     unsigned Opcode = MI->getOpcode() == Bedrock::ADJCALLSTACKDOWN
                           ? Bedrock::ADJSP_DOWN
@@ -431,6 +439,12 @@ MachineBasicBlock::iterator BedrockFrameLowering::eliminateCallFramePseudoInstr(
     BuildMI(MBB, MI, MI->getDebugLoc(), TII.get(Opcode)).addImm(Amount);
   }
   return MBB.erase(MI);
+}
+
+bool BedrockFrameLowering::hasReservedCallFrame(
+    const MachineFunction &MF) const {
+  const MachineFrameInfo &MFI = MF.getFrameInfo();
+  return !MFI.hasVarSizedObjects() && !needsStackRealignment(MF);
 }
 
 bool BedrockFrameLowering::hasFPImpl(const MachineFunction &MF) const {
