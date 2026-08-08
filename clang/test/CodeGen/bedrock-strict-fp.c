@@ -33,3 +33,13 @@ int current_rounding(void) {
 // ASM: ret
   return __builtin_flt_rounds();
 }
+
+void set_rounding(int mode) {
+// IR-LABEL: define{{.*}} void @set_rounding(i32
+// IR: call void @llvm.set.rounding(i32
+// ASM-LABEL: set_rounding:
+// ASM: rdfstatus
+// ASM: wrfstatus
+// ASM: ret
+  __builtin_set_flt_rounds(mode);
+}

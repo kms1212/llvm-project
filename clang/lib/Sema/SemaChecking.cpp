@@ -2828,7 +2828,7 @@ Sema::CheckBuiltinFunctionCall(FunctionDecl *FDecl, unsigned BuiltinID,
             {llvm::Triple::x86, llvm::Triple::x86_64, llvm::Triple::arm,
              llvm::Triple::thumb, llvm::Triple::aarch64, llvm::Triple::amdgcn,
              llvm::Triple::ppc, llvm::Triple::ppc64, llvm::Triple::ppcle,
-             llvm::Triple::ppc64le}))
+             llvm::Triple::ppc64le, llvm::Triple::bedrock}))
       return ExprError();
     break;
 

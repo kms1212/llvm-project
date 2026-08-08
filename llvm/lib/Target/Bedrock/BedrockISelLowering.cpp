@@ -117,6 +117,7 @@ BedrockTargetLowering::BedrockTargetLowering(const TargetMachine &TM,
   setOperationAction(ISD::DEBUGTRAP, MVT::Other, Legal);
   setOperationAction(ISD::READCYCLECOUNTER, MVT::i64, Legal);
   setOperationAction(ISD::GET_ROUNDING, MVT::i32, Custom);
+  setOperationAction(ISD::SET_ROUNDING, MVT::Other, Custom);
   for (MVT VT : {MVT::f32, MVT::f64}) {
     setOperationAction(ISD::BR_CC, VT, Custom);
     setOperationAction(ISD::ConstantFP, VT, Expand);
@@ -838,6 +839,8 @@ SDValue BedrockTargetLowering::LowerOperation(SDValue Op,
     return LowerFFREXP(Op, DAG);
   case ISD::GET_ROUNDING:
     return LowerGET_ROUNDING(Op, DAG);
+  case ISD::SET_ROUNDING:
+    return LowerSET_ROUNDING(Op, DAG);
   case ISD::SADDO:
   case ISD::SSUBO:
   case ISD::UADDO:
@@ -1081,6 +1084,36 @@ SDValue BedrockTargetLowering::LowerGET_ROUNDING(SDValue Op,
                      DAG.getConstant(1, DL, MVT::i64));
   Mode = DAG.getNode(ISD::TRUNCATE, DL, MVT::i32, Mode);
   return DAG.getMergeValues({Mode, Chain}, DL);
+}
+
+SDValue BedrockTargetLowering::LowerSET_ROUNDING(SDValue Op,
+                                                 SelectionDAG &DAG) const {
+  SDLoc DL(Op);
+  SDValue Chain = Op.getOperand(0);
+  SDValue Mode = Op.getOperand(1);
+
+  // The public FLT_ROUNDS encoding and FSTATUS.RM differ only by bit 0.
+  Mode = DAG.getNode(ISD::XOR, DL, MVT::i32, Mode,
+                     DAG.getConstant(1, DL, MVT::i32));
+  Mode = DAG.getNode(ISD::AND, DL, MVT::i32, Mode,
+                     DAG.getConstant(3, DL, MVT::i32));
+  Mode = DAG.getNode(ISD::SHL, DL, MVT::i32, Mode,
+                     DAG.getConstant(5, DL, MVT::i32));
+  Mode = DAG.getNode(ISD::ZERO_EXTEND, DL, MVT::i64, Mode);
+
+  SDValue Status = DAG.getNode(
+      ISD::INTRINSIC_W_CHAIN, DL, DAG.getVTList(MVT::i64, MVT::Other),
+      {Chain, DAG.getTargetConstant(Intrinsic::bedrock_read_fstatus, DL,
+                                    MVT::i64)});
+  Chain = Status.getValue(1);
+  Status = DAG.getNode(ISD::AND, DL, MVT::i64, Status,
+                       DAG.getConstant(~UINT64_C(0x60), DL, MVT::i64));
+  Status = DAG.getNode(ISD::OR, DL, MVT::i64, Status, Mode);
+  return DAG.getNode(
+      ISD::INTRINSIC_VOID, DL, MVT::Other,
+      {Chain, DAG.getTargetConstant(Intrinsic::bedrock_write_fstatus, DL,
+                                    MVT::i64),
+       Status});
 }
 
 static unsigned getBedrockFClassMask(unsigned Test) {
