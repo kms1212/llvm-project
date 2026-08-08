@@ -67,12 +67,12 @@
 # RELAX-RELOC-NEXT: ]
 # RELAX-LABEL: <tls_ref>:
 # RELAX: e0 38 6e 00 00 00 00 00 00 00 00 {{.*}}mov.q	0, r0
-# RELAX-NEXT: lea.q	[gs0:0 + r0], r0
+# RELAX-NEXT: seglea.q	[gs0:0 + r0], r0
 # RELAX: ret
 
 # RELAX64-LABEL: <tls_ref_large>:
 # RELAX64: f0 38 6f 00 00 00 00 00 00 00 00 00 00 00 00 {{.*}}mov.q	0, r0
-# RELAX64-NEXT: lea.q	[gs0:0 + r0], r0
+# RELAX64-NEXT: seglea.q	[gs0:0 + r0], r0
 # RELAX64: ret
 
 # IFUNC-OBJ: OS/ABI:                            UNIX - System V
@@ -92,7 +92,7 @@ entry:
   .reloc entry+17, R_BEDROCK_TLSDESC_GOTPCREL32S, tls+3
   .byte 0xc7, 0xc3, 0x70, 0x10
   .reloc entry+21, R_BEDROCK_TLSDESC_CALL, tls
-  .byte 0xc9, 0xf8, 0x04, 0xa9, 0x20
+  .byte 0xcf, 0xc7, 0x80, 0x74, 0xa9, 0x20
   ret
 .type tls,@tls_object
 
@@ -128,7 +128,7 @@ tls_ref:
   .reloc tls_ref+3, R_BEDROCK_TLSDESC_GOTPCREL32S, tls+3
   .byte 0xc7, 0xc3, 0x70, 0x10
   .reloc tls_ref+7, R_BEDROCK_TLSDESC_CALL, tls
-  .byte 0xc9, 0xf8, 0x04, 0xa9, 0x20
+  .byte 0xcf, 0xc7, 0x80, 0x74, 0xa9, 0x20
   ret
 .type tls,@tls_object
 
@@ -148,6 +148,6 @@ tls_ref_large:
   .reloc tls_ref_large+3, R_BEDROCK_TLSDESC_GOTPCREL64, tls+3
   .byte 0xc7, 0xc3, 0x70, 0x10
   .reloc tls_ref_large+11, R_BEDROCK_TLSDESC_CALL, tls
-  .byte 0xc9, 0xf8, 0x04, 0xa9, 0x20
+  .byte 0xcf, 0xc7, 0x80, 0x74, 0xa9, 0x20
   ret
 .type tls,@tls_object

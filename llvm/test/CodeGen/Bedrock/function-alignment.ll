@@ -4,20 +4,20 @@
 ; RUN: llvm-readobj --sections --symbols %t.o | FileCheck %s --check-prefix=OBJ
 
 ; ASM: .globl first
-; ASM-NEXT: .p2align 4
+; ASM-NEXT: .p2align 1
 ; ASM: .globl second
-; ASM-NEXT: .p2align 4
+; ASM-NEXT: .p2align 1
 ; ASM: .globl third
-; ASM-NEXT: .p2align 4
+; ASM-NEXT: .p2align 1
 
 ; OBJ: Name: .text
-; OBJ: AddressAlignment: 16
+; OBJ: AddressAlignment: 4
 ; OBJ: Name: first
 ; OBJ: Value: 0x0
 ; OBJ: Name: second
-; OBJ: Value: 0x10
+; OBJ: Value: 0x4
 ; OBJ: Name: third
-; OBJ: Value: 0x20
+; OBJ: Value: 0xA
 
 define i32 @first() {
   ret i32 1

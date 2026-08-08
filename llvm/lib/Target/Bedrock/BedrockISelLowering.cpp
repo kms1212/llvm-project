@@ -206,7 +206,7 @@ BedrockTargetLowering::BedrockTargetLowering(const TargetMachine &TM,
   setOperationAction(ISD::ATOMIC_FENCE, MVT::Other, Custom);
   setMaxAtomicSizeInBitsSupported(64);
   setMinimumJumpTableEntries(16);
-  setMinFunctionAlignment(Align(16));
+  setMinFunctionAlignment(Align(2));
 
   computeRegisterProperties(Subtarget.getRegisterInfo());
 }

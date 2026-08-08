@@ -1,5 +1,5 @@
 schema: 1
-isa_revision: e6c432a63577218dd2a13e8537e7653707b29a7b
+isa_revision: 5415a2ca6b44b5430ab02f0a17b80dc88bfe92c6
 
 # These builtins are LLVM/Clang APIs layered on top of the optional ISA
 # extension. They are deliberately absent from isa/c/target_intrinsics.yaml.

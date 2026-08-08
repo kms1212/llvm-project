@@ -1,5 +1,6 @@
 ; REQUIRES: bedrock-registered-target
 ; RUN: llc -mtriple=bedrock -O2 -verify-machineinstrs < %s | FileCheck %s
+; RUN: llc -mtriple=bedrock -O2 -filetype=obj < %s | llvm-objdump -d - | FileCheck %s --check-prefix=OBJ
 
 define void @volatile_countdown(ptr %dst, i32 %n, i8 %value) {
 ; CHECK-LABEL: volatile_countdown:
@@ -7,6 +8,7 @@ define void @volatile_countdown(ptr %dst, i32 %n, i8 %value) {
 ; CHECK: mov.b
 ; CHECK: djt
 ; CHECK: ret
+; OBJ: djt	r1, [pc - 5]
 entry:
   %positive = icmp sgt i32 %n, 0
   br i1 %positive, label %preheader, label %exit

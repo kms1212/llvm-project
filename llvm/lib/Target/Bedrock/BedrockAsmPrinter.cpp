@@ -494,6 +494,11 @@ static uint32_t getLeaPayload(uint8_t EA, unsigned Size, Register DstReg) {
   return applyPattern("0eeez1zdddd000eeee", EA, Size, getGPRNo(DstReg), 'd');
 }
 
+static uint32_t getSegLeaPayload(uint8_t EA, unsigned Size, Register DstReg) {
+  return applyPattern("111100011zz0000ddddeeeeeee", EA, Size,
+                      getGPRNo(DstReg), 'd');
+}
+
 static const char *getCondSuffix(unsigned Cond) {
   switch (Cond) {
   case 0x2:
@@ -5812,7 +5817,7 @@ void BedrockAsmPrinter::computeShortBranches(const MachineFunction &MF) {
           const MachineBasicBlock *TargetMBB = MI.getOperand(0).getMBB();
           int64_t Disp =
               static_cast<int64_t>(BlockOffsets[TargetMBB->getNumber()]) -
-              static_cast<int64_t>(Offset + 4);
+              static_cast<int64_t>(Offset);
           if (isInt<8>(Disp)) {
             if (!DJ8Branches.contains(&MI)) {
               DJ8Branches.insert(&MI);
@@ -5944,7 +5949,7 @@ void BedrockAsmPrinter::computeShortBranches(const MachineFunction &MF) {
         const MachineBasicBlock *TargetMBB = MI.getOperand(0).getMBB();
         int64_t Disp =
             static_cast<int64_t>(BlockOffsets[TargetMBB->getNumber()]) -
-            static_cast<int64_t>(Offset + 4);
+            static_cast<int64_t>(Offset);
         if (DJ8Branches.contains(&MI)) {
           if (!isInt<8>(Disp))
             report_fatal_error("Bedrock djt disp8 out of range");
@@ -6202,7 +6207,8 @@ void BedrockAsmPrinter::emitConst(const MachineInstr *MI, bool Is64) {
   if (OutStreamer->hasRawTextSupport()) {
     SmallString<80> Text;
     raw_svector_ostream OS(Text);
-    OS << "\tlea." << (Is64 ? 'q' : 'l') << "\t";
+    OS << '\t' << (IsTLSLE ? "seglea." : "lea.")
+       << (Is64 ? 'q' : 'l') << '\t';
     if (IsTLSLE)
       OS << "[gs0:0 + ";
     else if (IsPCRelative)
@@ -6234,10 +6240,15 @@ void BedrockAsmPrinter::emitConst(const MachineInstr *MI, bool Is64) {
     EA = IsPCRelative ? (FieldBytes == 8 ? 0x67 : 0x66)
                       : (FieldBytes == 8 ? 0x6f : 0x6e);
   }
-  unsigned FixupOffset = 3 + Tail.size();
+  unsigned FixupOffset = (IsTLSLE ? 4 : 3) + Tail.size();
   Tail.append(FieldBytes, 0);
   SmallVector<uint8_t, 16> Bytes;
-  if (!BedrockMC::encodeMedium(getLeaPayload(EA, Size, DstReg), Tail, Bytes))
+  bool Encoded = IsTLSLE
+                     ? BedrockMC::encodeLong(
+                           getSegLeaPayload(EA, Size, DstReg), Tail, Bytes)
+                     : BedrockMC::encodeMedium(getLeaPayload(EA, Size, DstReg),
+                                               Tail, Bytes);
+  if (!Encoded)
     report_fatal_error("failed to encode Bedrock symbolic constant");
 
   MCFixupKind Kind;
@@ -8426,7 +8437,7 @@ void BedrockAsmPrinter::emitTLSDescCall(const MachineInstr *MI) {
     OS << "\n\tcall\t[r0]\n\tadd.q\t8, sp";
     if (SubobjectOffset != 0)
       OS << "\n\tadd.q\t" << SubobjectOffset << ", r0";
-    OS << "\n\tlea.q\t[gs0:0 + r0], r0";
+    OS << "\n\tseglea.q\t[gs0:0 + r0], r0";
     OutStreamer->emitRawText(OS.str());
     return;
   }
@@ -8473,8 +8484,8 @@ void BedrockAsmPrinter::emitTLSDescCall(const MachineInstr *MI) {
 
   SmallVector<uint8_t, 2> GSTail = {0xa9, 0x20};
   SmallVector<uint8_t, 8> ResultBytes;
-  if (!BedrockMC::encodeMedium(
-          getLeaPayload(/*EXT0=*/0x74, /*Size=*/3, Bedrock::R0), GSTail,
+  if (!BedrockMC::encodeLong(
+          getSegLeaPayload(/*EXT0=*/0x74, /*Size=*/3, Bedrock::R0), GSTail,
           ResultBytes))
     report_fatal_error("failed to encode Bedrock GS0 TLS address");
   emitRaw(ResultBytes);

@@ -3,6 +3,7 @@
 ; RUN: llvm-readobj -r %t.low.o | FileCheck %s --check-prefix=LOW
 ; RUN: llc -mtriple=bedrock -relocation-model=static -code-model=small -filetype=obj %s -o %t.small-static.o
 ; RUN: llvm-readobj -r %t.small-static.o | FileCheck %s --check-prefix=SMALL-STATIC
+; RUN: llvm-objdump -d %t.small-static.o | FileCheck %s --check-prefix=STATIC-DISASM
 ; RUN: llc -mtriple=bedrock -relocation-model=static -code-model=medium -filetype=obj %s -o %t.medium.o
 ; RUN: llvm-readobj -r %t.medium.o | FileCheck %s --check-prefix=MEDIUM
 ; RUN: llc -mtriple=bedrock -relocation-model=static -code-model=kernel -filetype=obj %s -o %t.high.o
@@ -103,6 +104,9 @@ define void @external_call() {
 ; LARGE-PIC: R_BEDROCK_TLSDESC_CALL external_tls
 ; LARGE-PIC: R_BEDROCK_GOTPCREL64 external_function 0x3
 
+; STATIC-DISASM-LABEL: <local_tls_address>:
+; STATIC-DISASM: seglea.q	[gs0:0 + 0], r0
+
 ; PIC-DISASM-LABEL: <external_address>:
 ; PIC-DISASM: lea.q	[pc + 0], r0
 ; PIC-DISASM-NEXT: mov.q	[r0], r0
@@ -111,13 +115,13 @@ define void @external_call() {
 ; PIC-DISASM: lea.q	[pc + 0], r0
 ; PIC-DISASM-NEXT: call	[r0]
 ; PIC-DISASM-NEXT: add.q	8, sp
-; PIC-DISASM-NEXT: lea.q	[gs0:0 + r0], r0
+; PIC-DISASM-NEXT: seglea.q	[gs0:0 + r0], r0
 ; PIC-DISASM-LABEL: <external_tls_subobject>:
 ; PIC-DISASM: sub.q	8, sp
 ; PIC-DISASM-NEXT: lea.q	[pc + 0], r0
 ; PIC-DISASM-NEXT: call	[r0]
 ; PIC-DISASM-NEXT: add.q	8, sp
-; PIC-DISASM-NEXT: lea.q	[gs0:0 + r0], r0
+; PIC-DISASM-NEXT: seglea.q	[gs0:0 + r0], r0
 ; PIC-DISASM-NEXT: lea.q	[r0 + 4], r0
 
 ; ASM-RELOC: R_BEDROCK_TLSDESC_GOTPCREL32S external_tls 0x3
