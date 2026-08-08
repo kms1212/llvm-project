@@ -928,20 +928,37 @@ bool BedrockPreEmitPeephole::foldShiftOrOne(MachineBasicBlock::iterator I,
   MachineInstr &OrMI = *I;
   unsigned ShiftOpcode;
   unsigned IncOpcode;
+  int64_t ExpectedImm;
+  bool RemoveFlagsDef = false;
   switch (OrMI.getOpcode()) {
   case Bedrock::ORL3ri:
     ShiftOpcode = Bedrock::SHLL3ri;
     IncOpcode = Bedrock::INCL3r;
+    ExpectedImm = 1;
     break;
   case Bedrock::ORQ3ri:
     ShiftOpcode = Bedrock::SHLQ3ri;
     IncOpcode = Bedrock::INCQ3r;
+    ExpectedImm = 1;
+    break;
+  case Bedrock::BSETL3ri:
+    ShiftOpcode = Bedrock::SHLL3ri;
+    IncOpcode = Bedrock::INCL3r;
+    ExpectedImm = 0;
+    RemoveFlagsDef = true;
+    break;
+  case Bedrock::BSETQ3ri:
+    ShiftOpcode = Bedrock::SHLQ3ri;
+    IncOpcode = Bedrock::INCQ3r;
+    ExpectedImm = 0;
+    RemoveFlagsDef = true;
     break;
   default:
     return false;
   }
 
-  if (!OrMI.getOperand(2).isImm() || OrMI.getOperand(2).getImm() != 1)
+  if (!OrMI.getOperand(2).isImm() ||
+      OrMI.getOperand(2).getImm() != ExpectedImm)
     return false;
   if (I == MBB.begin())
     return false;
@@ -961,6 +978,13 @@ bool BedrockPreEmitPeephole::foldShiftOrOne(MachineBasicBlock::iterator I,
   if (!flagsAreDeadAfter(I, MBB))
     return false;
 
+  if (RemoveFlagsDef) {
+    if (OrMI.getNumOperands() != 4 || !OrMI.getOperand(3).isReg() ||
+        !OrMI.getOperand(3).isDef() ||
+        OrMI.getOperand(3).getReg() != Bedrock::FLAGS)
+      return false;
+    OrMI.removeOperand(3);
+  }
   OrMI.setDesc(TII.get(IncOpcode));
   OrMI.removeOperand(2);
 

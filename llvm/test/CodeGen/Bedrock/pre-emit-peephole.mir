@@ -27,6 +27,14 @@
     ret i32 0
   }
 
+  define i32 @shift_bset_zero_flags_dead() {
+    ret i32 0
+  }
+
+  define i32 @shift_bset_zero_flags_live() {
+    ret i32 0
+  }
+
   define void @shifted_load_byte_store() {
     ret void
   }
@@ -330,6 +338,39 @@ body:             |
     $r1 = nuw nsw SHLL3ri killed $r1, 2
     $r1 = disjoint ORL3ri killed $r1, 1
     $r0 = ADDL3rr killed $r0, $r1
+    RET implicit $r0
+...
+---
+name:            shift_bset_zero_flags_dead
+tracksRegLiveness: true
+body:             |
+  bb.0:
+    ; CHECK-LABEL: name: shift_bset_zero_flags_dead
+    ; CHECK: $r1 = nuw nsw SHLL3ri killed $r1, 2
+    ; CHECK-NEXT: $r1 = disjoint INCL3r killed $r1
+    ; CHECK-NEXT: $r0 = ADDL3rr killed $r0, $r1
+    liveins: $r0, $r1
+
+    $r1 = nuw nsw SHLL3ri killed $r1, 2
+    $r1 = disjoint BSETL3ri killed $r1, 0, implicit-def dead $flags
+    $r0 = ADDL3rr killed $r0, $r1
+    RET implicit $r0
+...
+---
+name:            shift_bset_zero_flags_live
+tracksRegLiveness: true
+body:             |
+  bb.0:
+    ; CHECK-LABEL: name: shift_bset_zero_flags_live
+    ; CHECK: $r1 = nuw nsw SHLL3ri killed $r1, 2
+    ; CHECK-NEXT: $r1 = disjoint BSETL3ri killed $r1, 0, implicit-def $flags
+    ; CHECK-NEXT: $r0 = SETCC 3, implicit $flags
+    ; CHECK-NOT: INCL3r
+    liveins: $r1
+
+    $r1 = nuw nsw SHLL3ri killed $r1, 2
+    $r1 = disjoint BSETL3ri killed $r1, 0, implicit-def $flags
+    $r0 = SETCC 3, implicit $flags
     RET implicit $r0
 ...
 ---
