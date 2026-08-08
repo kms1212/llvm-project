@@ -27,13 +27,22 @@ bool isNextIPRelativeFixup(MCFixupKind Kind) {
          Kind == Bedrock::fixup_bedrock_brdisp32 ||
          Kind == Bedrock::fixup_bedrock_call16 ||
          Kind == Bedrock::fixup_bedrock_call32 ||
+         Kind == Bedrock::fixup_bedrock_brdisp8_local ||
          Kind == Bedrock::fixup_bedrock_brdisp16_local ||
          Kind == Bedrock::fixup_bedrock_call16_local;
 }
 
-bool isLocalTransferFixup(MCFixupKind Kind) {
+bool isRelaxableLocalTransferFixup(MCFixupKind Kind) {
   return Kind == Bedrock::fixup_bedrock_brdisp16_local ||
          Kind == Bedrock::fixup_bedrock_call16_local;
+}
+
+bool isLocalTransferFixup(MCFixupKind Kind) {
+  return Kind == Bedrock::fixup_bedrock_brdisp8_local ||
+         isRelaxableLocalTransferFixup(Kind) ||
+         Kind == Bedrock::fixup_bedrock_pcrel8_local ||
+         Kind == Bedrock::fixup_bedrock_pcrel16_local ||
+         Kind == Bedrock::fixup_bedrock_pcrel32_local;
 }
 
 bool isRelaxableTransfer(unsigned Opcode, ArrayRef<MCOperand> Operands) {
@@ -80,8 +89,12 @@ public:
         {"fixup_bedrock_brdisp32", 0, 32, 0},
         {"fixup_bedrock_call16", 0, 16, 0},
         {"fixup_bedrock_call32", 0, 32, 0},
+        {"fixup_bedrock_brdisp8_local", 0, 8, 0},
         {"fixup_bedrock_brdisp16_local", 0, 16, 0},
         {"fixup_bedrock_call16_local", 0, 16, 0},
+        {"fixup_bedrock_pcrel8_local", 0, 8, 0},
+        {"fixup_bedrock_pcrel16_local", 0, 16, 0},
+        {"fixup_bedrock_pcrel32_local", 0, 32, 0},
         {"fixup_bedrock_pcrel64", 0, 64, 0},
         {"fixup_bedrock_gotpcrel32", 0, 32, 0},
         {"fixup_bedrock_gotpcrel64", 0, 64, 0},
@@ -142,7 +155,7 @@ public:
                             uint64_t Value) const override {
     assert((Fixup.getKind() == Bedrock::fixup_bedrock_brdisp16 ||
             Fixup.getKind() == Bedrock::fixup_bedrock_call16 ||
-            isLocalTransferFixup(Fixup.getKind())) &&
+            isRelaxableLocalTransferFixup(Fixup.getKind())) &&
            "unexpected relaxable Bedrock fixup");
     return !isInt<16>(static_cast<int64_t>(Value) - 2);
   }
@@ -151,7 +164,7 @@ public:
                                     const MCFixup &Fixup,
                                     const MCValue &Target, uint64_t Value,
                                     bool Resolved) const override {
-    if (isLocalTransferFixup(Fixup.getKind())) {
+    if (isRelaxableLocalTransferFixup(Fixup.getKind())) {
       const MCSymbol *Symbol = Target.getAddSym();
       if (Symbol && !Target.getSubSym() && Symbol->isInSection() &&
           &Symbol->getSection() == F.getParent()) {

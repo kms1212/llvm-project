@@ -8260,23 +8260,23 @@ void BedrockAsmPrinter::emitBranch(const MachineInstr *MI, bool IsCond) {
   auto ShortDisp = ShortBranchDisplacements.find(MI);
   if (ShortDisp != ShortBranchDisplacements.end()) {
     uint16_t Payload =
-        ((IsCond ? (0x30 | Cond) : 0x30) << 8) |
-        (static_cast<uint8_t>(ShortDisp->second) & 0xff);
+        (IsCond ? (0x30 | Cond) : 0x30) << 8;
     SmallVector<uint8_t, 2> Bytes;
     if (!BedrockMC::encodeShort(Payload, Bytes))
       report_fatal_error("failed to encode Bedrock short branch");
-    emitRaw(Bytes);
+    emitRawExpr(Bytes, /*FixupOffset=*/1,
+                MCFixupKind(Bedrock::fixup_bedrock_brdisp8_local), Expr);
     return;
   }
 
   auto MediumDisp = MediumBranchDisplacements.find(MI);
   if (MediumDisp != MediumBranchDisplacements.end()) {
-    SmallVector<uint8_t, 2> Tail;
-    appendLE(Tail, static_cast<uint64_t>(MediumDisp->second), 2);
+    SmallVector<uint8_t, 2> Tail(2, 0);
     SmallVector<uint8_t, 8> Bytes;
     if (!BedrockMC::encodeMedium(0x2600 | Cond, Tail, Bytes))
       report_fatal_error("failed to encode Bedrock medium branch");
-    emitRaw(Bytes);
+    emitRawExpr(Bytes, /*FixupOffset=*/3,
+                MCFixupKind(Bedrock::fixup_bedrock_brdisp16_local), Expr);
     return;
   }
 
@@ -8321,9 +8321,8 @@ void BedrockAsmPrinter::emitCmpTestJump(const MachineInstr *MI) {
     report_fatal_error("missing Bedrock cmpj/testj displacement");
 
   bool IsImm8 = CmpTestJump8Branches.contains(MI);
-  int64_t Disp = DispIt->second;
-  SmallVector<uint8_t, 2> Tail;
-  appendLE(Tail, static_cast<uint64_t>(Disp), IsImm8 ? 1 : 2);
+  unsigned Width = IsImm8 ? 1 : 2;
+  SmallVector<uint8_t, 2> Tail(Width, 0);
 
   PatternFieldValue Fields[] = {
       {'z', Size},
@@ -8335,7 +8334,11 @@ void BedrockAsmPrinter::emitCmpTestJump(const MachineInstr *MI) {
   uint32_t Payload = applyPatternValues(IsImm8 ? Pattern8 : Pattern16, Fields);
   if (!BedrockMC::encodeLong(Payload, Tail, Bytes))
     report_fatal_error("failed to encode Bedrock cmpj/testj");
-  emitRaw(Bytes);
+  emitRawExpr(
+      Bytes, /*FixupOffset=*/Bytes.size() - Width,
+      MCFixupKind(IsImm8 ? Bedrock::fixup_bedrock_brdisp8_local
+                         : Bedrock::fixup_bedrock_brdisp16_local),
+      Expr);
 }
 
 void BedrockAsmPrinter::emitDJ(const MachineInstr *MI) {
@@ -8366,8 +8369,7 @@ void BedrockAsmPrinter::emitDJ(const MachineInstr *MI) {
                        : DJ16Branches.contains(MI) ? 1
                                                     : 2;
   unsigned Width = WidthCode == 0 ? 1 : (WidthCode == 1 ? 2 : 4);
-  SmallVector<uint8_t, 4> Tail;
-  appendLE(Tail, static_cast<uint64_t>(DispIt->second), Width);
+  SmallVector<uint8_t, 4> Tail(Width, 0);
 
   PatternFieldValue Fields[] = {
       {'c', 0},
@@ -8379,7 +8381,11 @@ void BedrockAsmPrinter::emitDJ(const MachineInstr *MI) {
       applyPatternValues("11110000111ccccrrrreeeeeee", Fields);
   if (!BedrockMC::encodeLong(Payload, Tail, Bytes))
     report_fatal_error("failed to encode Bedrock djt");
-  emitRaw(Bytes);
+  MCFixupKind Kind = MCFixupKind(
+      Width == 1   ? Bedrock::fixup_bedrock_pcrel8_local
+      : Width == 2 ? Bedrock::fixup_bedrock_pcrel16_local
+                   : Bedrock::fixup_bedrock_pcrel32_local);
+  emitRawExpr(Bytes, /*FixupOffset=*/Bytes.size() - Width, Kind, Expr);
 }
 
 void BedrockAsmPrinter::emitIJ(const MachineInstr *MI) {
@@ -8417,7 +8423,7 @@ void BedrockAsmPrinter::emitIJ(const MachineInstr *MI) {
   if (!BedrockMC::encodeExtraLong(Payload, Tail, Bytes))
     report_fatal_error("failed to encode Bedrock ij instruction");
   emitRawExpr(Bytes, /*FixupOffset=*/5,
-              MCFixupKind(Bedrock::fixup_bedrock_pcrel32), Expr);
+              MCFixupKind(Bedrock::fixup_bedrock_pcrel32_local), Expr);
 }
 
 void BedrockAsmPrinter::emitSetCC(const MachineInstr *MI) {

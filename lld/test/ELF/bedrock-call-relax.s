@@ -29,6 +29,12 @@
 # RELAX-NEXT: {{.*}}R_BEDROCK_BRDISP16S{{.*}}adjusted_local_jump_target
 # RELAX-NEXT: {{.*}}c8 26 00 {{[0-9a-f][0-9a-f]}} {{[0-9a-f][0-9a-f]}} {{.*}}jmp
 # RELAX-NEXT: {{.*}}R_BEDROCK_BRDISP16S{{.*}}target
+# RELAX-LABEL: <short_before_relaxed_call>:
+# RELAX-NEXT: {{.*}}b0 05 {{.*}}jmp{{.*}}5
+# RELAX-NEXT: {{.*}}R_BEDROCK_BRDISP8S{{.*}}.Lshort_after_relaxed_call
+# RELAX-LABEL: <ij_before_relaxed_call>:
+# RELAX-NEXT: {{.*}}db f1 10 80 e6 0e 00 00 00 {{.*}}ijult{{.*}}14
+# RELAX-NEXT: {{.*}}R_BEDROCK_PCREL32S{{.*}}.Lij_after_relaxed_call
 
 # NORELAX-LABEL: <_start>:
 # NORELAX-NEXT: {{.*}}d0 e6 00 {{[0-9a-f ]+}}{{.*}}call
@@ -51,6 +57,12 @@
 # NORELAX-NEXT: {{.*}}R_BEDROCK_BRDISP16S{{.*}}adjusted_local_jump_target
 # NORELAX-NEXT: {{.*}}d0 66 00 {{[0-9a-f ]+}}{{.*}}jmp
 # NORELAX-NEXT: {{.*}}R_BEDROCK_BRDISP32S{{.*}}target
+# NORELAX-LABEL: <short_before_relaxed_call>:
+# NORELAX-NEXT: {{.*}}b0 07 {{.*}}jmp{{.*}}7
+# NORELAX-NEXT: {{.*}}R_BEDROCK_BRDISP8S{{.*}}.Lshort_after_relaxed_call
+# NORELAX-LABEL: <ij_before_relaxed_call>:
+# NORELAX-NEXT: {{.*}}db f1 10 80 e6 10 00 00 00 {{.*}}ijult{{.*}}16
+# NORELAX-NEXT: {{.*}}R_BEDROCK_PCREL32S{{.*}}.Lij_after_relaxed_call
 
 # FAR-LABEL: <_start>:
 # FAR-NEXT: {{.*}}d0 e6 00 {{[0-9a-f ]+}}{{.*}}call
@@ -103,6 +115,24 @@ local_jump_target:
   jmp adjusted_local_jump_target
   jmp target
 adjusted_local_jump_target:
+  ret
+
+short_before_relaxed_call:
+  .byte 0xb0
+.Lshort_field:
+  .byte 0
+  .reloc .Lshort_field, R_BEDROCK_BRDISP8S, .Lshort_after_relaxed_call
+  call target
+.Lshort_after_relaxed_call:
+  ret
+
+ij_before_relaxed_call:
+  .byte 0xdb, 0xf1, 0x10, 0x80, 0xe6
+.Lij_field:
+  .long 0
+  .reloc .Lij_field, R_BEDROCK_PCREL32S, .Lij_after_relaxed_call+5
+  call target
+.Lij_after_relaxed_call:
   ret
 
 .section .text.target,"ax",@progbits

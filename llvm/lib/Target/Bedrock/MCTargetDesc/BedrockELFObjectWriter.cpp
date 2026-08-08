@@ -12,6 +12,7 @@
 #include "llvm/MC/MCELFObjectWriter.h"
 #include "llvm/MC/MCFixup.h"
 #include "llvm/MC/MCObjectWriter.h"
+#include "llvm/MC/MCSymbol.h"
 #include "llvm/MC/MCValue.h"
 
 using namespace llvm;
@@ -28,8 +29,15 @@ public:
   bool usesGnuIFuncOSABI() const override { return false; }
 
 protected:
-  bool needsRelocateWithSymbol(const MCValue &, unsigned Type) const override {
-    return Type == ELF::R_BEDROCK_BRDISP16S ||
+  bool needsRelocateWithSymbol(const MCValue &Target,
+                               unsigned Type) const override {
+    bool IsLocalPCRel =
+        (Type == ELF::R_BEDROCK_PCREL8S ||
+         Type == ELF::R_BEDROCK_PCREL16S ||
+         Type == ELF::R_BEDROCK_PCREL32S) &&
+        Target.getAddSym() && Target.getAddSym()->isTemporary();
+    return IsLocalPCRel || Type == ELF::R_BEDROCK_BRDISP8S ||
+           Type == ELF::R_BEDROCK_BRDISP16S ||
            Type == ELF::R_BEDROCK_BRDISP32S ||
            Type == ELF::R_BEDROCK_CALL16S || Type == ELF::R_BEDROCK_CALL32S;
   }
@@ -63,10 +71,18 @@ protected:
       return ELF::R_BEDROCK_CALL16S;
     case Bedrock::fixup_bedrock_call32:
       return ELF::R_BEDROCK_CALL32S;
+    case Bedrock::fixup_bedrock_brdisp8_local:
+      return ELF::R_BEDROCK_BRDISP8S;
     case Bedrock::fixup_bedrock_brdisp16_local:
       return ELF::R_BEDROCK_BRDISP16S;
     case Bedrock::fixup_bedrock_call16_local:
       return ELF::R_BEDROCK_CALL16S;
+    case Bedrock::fixup_bedrock_pcrel8_local:
+      return ELF::R_BEDROCK_PCREL8S;
+    case Bedrock::fixup_bedrock_pcrel16_local:
+      return ELF::R_BEDROCK_PCREL16S;
+    case Bedrock::fixup_bedrock_pcrel32_local:
+      return ELF::R_BEDROCK_PCREL32S;
     case Bedrock::fixup_bedrock_pcrel64:
       return ELF::R_BEDROCK_PCREL64;
     case Bedrock::fixup_bedrock_gotpcrel32:

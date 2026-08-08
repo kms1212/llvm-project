@@ -45,6 +45,39 @@ define dso_local i64 @replaceable_call(i64 %x) noinline {
   ret i64 %result
 }
 
+define dso_local i64 @local_fused_branch(i64 %x) noinline {
+; OBJ-LABEL: <local_fused_branch>:
+; OBJ: testjeq.q{{.*}}0
+; OBJ-NEXT: {{.*}}R_BEDROCK_BRDISP8S{{.*}}.L
+  %is.zero = icmp eq i64 %x, 0
+  br i1 %is.zero, label %zero, label %nonzero
+
+zero:
+  ret i64 0
+
+nonzero:
+  ret i64 1
+}
+
+define dso_local void @local_index_loop(ptr %dst, i64 %count) noinline {
+; OBJ-LABEL: <local_index_loop>:
+; OBJ: ijult{{.*}}[pc + 0]
+; OBJ-NEXT: {{.*}}R_BEDROCK_PCREL32S{{.*}}.L{{.*}}+0x5
+entry:
+  br label %loop
+
+loop:
+  %index = phi i64 [ 0, %entry ], [ %next, %loop ]
+  %address = getelementptr i8, ptr %dst, i64 %index
+  store volatile i8 1, ptr %address
+  %next = add nuw i64 %index, 1
+  %more = icmp ult i64 %next, %count
+  br i1 %more, label %loop, label %exit
+
+exit:
+  ret void
+}
+
 define dso_local void @padding() noinline {
   call void asm sideeffect ".space 32768", ""()
   ret void

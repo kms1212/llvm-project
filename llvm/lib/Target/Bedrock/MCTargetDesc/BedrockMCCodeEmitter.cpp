@@ -27,6 +27,9 @@ static bool needsFieldOffsetAddend(MCFixupKind Kind) {
   switch (Kind) {
   case Bedrock::fixup_bedrock_pcrel16:
   case Bedrock::fixup_bedrock_pcrel32:
+  case Bedrock::fixup_bedrock_pcrel8_local:
+  case Bedrock::fixup_bedrock_pcrel16_local:
+  case Bedrock::fixup_bedrock_pcrel32_local:
   case Bedrock::fixup_bedrock_pcrel64:
   case Bedrock::fixup_bedrock_gotpcrel32:
   case Bedrock::fixup_bedrock_gotpcrel64:
@@ -174,6 +177,12 @@ void BedrockMCCodeEmitter::encodeInstruction(const MCInst &MI,
                      Kind == Bedrock::fixup_bedrock_brdisp32 ||
                      Kind == Bedrock::fixup_bedrock_call16 ||
                      Kind == Bedrock::fixup_bedrock_call32 ||
+                     Kind == Bedrock::fixup_bedrock_brdisp8_local ||
+                     Kind == Bedrock::fixup_bedrock_brdisp16_local ||
+                     Kind == Bedrock::fixup_bedrock_call16_local ||
+                     Kind == Bedrock::fixup_bedrock_pcrel8_local ||
+                     Kind == Bedrock::fixup_bedrock_pcrel16_local ||
+                     Kind == Bedrock::fixup_bedrock_pcrel32_local ||
                      Kind == Bedrock::fixup_bedrock_pcrel64 ||
                      Kind == Bedrock::fixup_bedrock_gotpcrel32 ||
                      Kind == Bedrock::fixup_bedrock_gotpcrel64 ||

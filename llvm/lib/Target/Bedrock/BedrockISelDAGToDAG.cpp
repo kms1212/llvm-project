@@ -631,8 +631,7 @@ static bool isDirectSymbolMemoryAddress(SDValue Target) {
   auto *GA = dyn_cast<GlobalAddressSDNode>(Target);
   if (!GA)
     return false;
-  unsigned Flag = GA->getTargetFlags();
-  return Flag == BedrockII::MO_ABS32 || Flag == BedrockII::MO_PCREL32;
+  return GA->getTargetFlags() == BedrockII::MO_ABS32;
 }
 
 static bool selectMaterializedSymbolAddress(SelectionDAG *DAG, SDNode *N,
