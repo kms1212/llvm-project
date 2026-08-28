@@ -16,6 +16,10 @@
     ret void
   }
 
+  define void @fold_materialized_global_base_accesses() {
+    ret void
+  }
+
   declare void @callee()
 ...
 ---
@@ -23,7 +27,7 @@ name:            fold_global_base_abs_accesses
 tracksRegLiveness: true
 body:             |
   ; CHECK-LABEL: name: fold_global_base_abs_accesses
-  ; CHECK: PUSHPi 2
+  ; CHECK: PUSHPi 5
   ; CHECK-NEXT: $r0 = CONST64 7
   ; CHECK-NEXT: $r10 = CONST64 @g
   ; CHECK-NEXT: STOREQro $r0, $r10, 8
@@ -36,7 +40,7 @@ body:             |
   bb.0:
     liveins: $r10
 
-    PUSHPi 2
+    PUSHPi 5
     $r0 = CONST64 7
     STOREQabs $r0, @g + 8
     $r1 = LOADQabs @g + 16
@@ -65,4 +69,30 @@ body:             |
     $r3 = LOADQabs @g + 128
     $r4 = LOADQabs @g + 136
     TAILCALL @callee
+...
+---
+name:            fold_materialized_global_base_accesses
+tracksRegLiveness: true
+body:             |
+  ; CHECK-LABEL: name: fold_materialized_global_base_accesses
+  ; CHECK: $r10 = CONST64 @g + 96
+  ; CHECK-NEXT: STOREQrr $r0, $r10
+  ; CHECK-NEXT: STOREQro $r2, $r10, 8
+  ; CHECK-NEXT: $r4 = LOADQro $r10, 24
+  ; CHECK-NEXT: CALL @callee
+  ; CHECK-NEXT: $r1 = CONST64 @g + 128
+  ; CHECK-NEXT: STOREQrr $r2, killed $r1
+  bb.0:
+    liveins: $r0, $r2
+
+    $r10 = CONST64 @g + 96
+    STOREQrr $r0, killed $r10
+    $r1 = CONST64 @g + 104
+    STOREQrr $r2, killed $r1
+    $r3 = CONST64 @g + 120
+    $r4 = LOADQrr killed $r3
+    CALL @callee, csr_bedrock, implicit-def $r0, implicit-def $r1, implicit-def $r2, implicit-def $r3, implicit-def $r4, implicit-def $r5, implicit-def $r6, implicit-def $r7
+    $r1 = CONST64 @g + 128
+    STOREQrr $r2, killed $r1
+    RET
 ...

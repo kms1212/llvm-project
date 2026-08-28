@@ -745,6 +745,25 @@ AsmToken AsmLexer::LexQuote() {
   return AsmToken(AsmToken::String, StringRef(TokStart, CurPtr - TokStart));
 }
 
+/// LexBacktick: quoted identifier: `...`
+AsmToken AsmLexer::LexBacktick() {
+  int CurChar = getNextChar();
+  while (CurChar != '`') {
+    if (CurChar == '\\') {
+      CurChar = getNextChar();
+      if (CurChar != '`' && CurChar != '\\')
+        return ReturnError(TokStart, "invalid escape in quoted identifier");
+    }
+
+    if (CurChar == EOF || CurChar == '\n' || CurChar == '\r')
+      return ReturnError(TokStart, "unterminated quoted identifier");
+
+    CurChar = getNextChar();
+  }
+
+  return AsmToken(AsmToken::String, StringRef(TokStart, CurPtr - TokStart));
+}
+
 StringRef AsmLexer::LexUntilEndOfStatement() {
   TokStart = CurPtr;
 
@@ -980,6 +999,10 @@ AsmToken AsmLexer::LexToken() {
     return LexSlash();
   case '\'': return LexSingleQuote();
   case '"': return LexQuote();
+  case '`':
+    if (MAI.getSymbolQuoteCharacter() == '`')
+      return LexBacktick();
+    return ReturnError(TokStart, "invalid character in input");
   case '0': case '1': case '2': case '3': case '4':
   case '5': case '6': case '7': case '8': case '9':
     return LexDigit();

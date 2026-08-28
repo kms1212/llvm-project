@@ -138,20 +138,20 @@ name:            fold_power_plus_one_mul_dead_pair
 tracksRegLiveness: true
 body:             |
   ; CHECK-LABEL: name: fold_power_plus_one_mul_dead_pair
-  ; CHECK-NOT: PUSHPi 1
+  ; CHECK-NOT: PUSHPi 6
   ; CHECK-NOT: CONST32 5
   ; CHECK: $r0 = MOVQrr $r14
   ; CHECK-NEXT: $r0 = MULL3ri killed $r0, 5
   ; CHECK-NOT: MULL3rr
-  ; CHECK-NOT: POPPi 1
+  ; CHECK-NOT: POPPi 6
   bb.0:
     liveins: $r12, $r13, $r14
 
-    PUSHPi 1
+    PUSHPi 6
     $r12 = CONST32 5
     $r0 = MOVQrr $r14
     $r0 = MULL3rr killed $r0, $r12
-    POPPi 1
+    POPPi 6
     RET implicit $r0
 ...
 ---

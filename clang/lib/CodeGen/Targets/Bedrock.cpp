@@ -17,9 +17,19 @@ using namespace clang::CodeGen;
 
 namespace {
 
+namespace BedrockCABI {
+#define BEDROCK_C_CALLING_CONVENTION(STACK_POINTER, GROWTH, ENTRY_ALIGNMENT,   \
+                                     FIRST_ARGUMENT_OFFSET, ARGUMENT_SLOT,     \
+                                     SRET_REGISTER, RED_ZONE)                  \
+  static constexpr unsigned EntryAlignment = ENTRY_ALIGNMENT;                  \
+  static constexpr unsigned ArgumentSlot = ARGUMENT_SLOT;
+#include "llvm/TargetParser/BedrockGenCABI.inc"
+#undef BEDROCK_C_CALLING_CONVENTION
+} // namespace BedrockCABI
+
 class BedrockABIInfo : public DefaultABIInfo {
-  static constexpr unsigned StackSlotSize = 16;
-  static constexpr unsigned MaxAggregateAlign = 16;
+  static constexpr unsigned StackSlotSize = BedrockCABI::ArgumentSlot;
+  static constexpr unsigned MaxAggregateAlign = BedrockCABI::EntryAlignment;
 
 public:
   BedrockABIInfo(CodeGenTypes &CGT) : DefaultABIInfo(CGT) {}
@@ -169,7 +179,8 @@ static bool containsNonBaselineEnum(
 enum class BedrockNonBaselineTypeKind {
   None,
   BitInt,
-  Vector,
+  FixedVector,
+  ScalableVector,
 };
 
 static BedrockNonBaselineTypeKind getNonBaselineExtendedType(
@@ -178,8 +189,10 @@ static BedrockNonBaselineTypeKind getNonBaselineExtendedType(
   Ty = Ty.getCanonicalType().getUnqualifiedType();
   if (Ty->isBitIntType())
     return BedrockNonBaselineTypeKind::BitInt;
+  if (Ty->isSizelessVectorType())
+    return BedrockNonBaselineTypeKind::ScalableVector;
   if (Ty->isVectorType())
-    return BedrockNonBaselineTypeKind::Vector;
+    return BedrockNonBaselineTypeKind::FixedVector;
   if (const auto *ArrayTy = Context.getAsArrayType(Ty))
     return getNonBaselineExtendedType(Context, ArrayTy->getElementType(),
                                       Visited);
@@ -224,11 +237,16 @@ static void diagnoseNonBaselineTypes(CodeGenModule &CGM, SourceLocation Loc,
     llvm::SmallPtrSet<const RecordDecl *, 4> ExtensionVisited;
     BedrockNonBaselineTypeKind ExtensionKind = getNonBaselineExtendedType(
         CGM.getContext(), Ty, ExtensionVisited);
+    if (ExtensionKind == BedrockNonBaselineTypeKind::ScalableVector &&
+        CGM.getTarget().hasFeature("vector"))
+      ExtensionKind = BedrockNonBaselineTypeKind::None;
     if (ExtensionKind != BedrockNonBaselineTypeKind::None) {
       StringRef Description =
           ExtensionKind == BedrockNonBaselineTypeKind::BitInt
               ? "bit-precise integer type without an extension ABI"
-              : "vector type without an extension ABI";
+              : ExtensionKind == BedrockNonBaselineTypeKind::FixedVector
+                    ? "fixed-length vector type without an extension ABI"
+                    : "scalable vector type without the vector extension";
       std::string Message = "Bedrock C ABI does not permit " +
                             Description.str() + " '" + Ty.getAsString() +
                             "' across an external ABI boundary";
@@ -320,6 +338,14 @@ llvm::Type *BedrockABIInfo::getSmallAggregateCoerceType(QualType Ty) const {
 }
 
 ABIArgInfo BedrockABIInfo::classifyArgumentType(QualType Ty) const {
+  if (Ty->isSizelessVectorType()) {
+    const auto *BT = Ty->castAs<BuiltinType>();
+    if (getContext().getBuiltinVectorTypeInfo(BT).NumVectors == 1)
+      return ABIArgInfo::getDirect();
+    return ABIArgInfo::getIndirect(
+        CharUnits::fromQuantity(MaxAggregateAlign),
+        getDataLayout().getAllocaAddrSpace(), /*ByVal=*/false);
+  }
   // Complex scalars use two consecutive floating-point registers. Keeping
   // the ABI form direct lets Clang expose the real and imaginary components
   // independently to the backend rather than treating the value as an
@@ -372,6 +398,15 @@ ABIArgInfo BedrockABIInfo::classifyReturnType(QualType RetTy) const {
                                  /*Padding=*/nullptr,
                                  /*CanBeFlattened=*/false);
 
+  if (RetTy->isSizelessVectorType()) {
+    const auto *BT = RetTy->castAs<BuiltinType>();
+    if (getContext().getBuiltinVectorTypeInfo(BT).NumVectors == 1)
+      return ABIArgInfo::getDirect();
+    return ABIArgInfo::getIndirect(
+        CharUnits::fromQuantity(MaxAggregateAlign),
+        getDataLayout().getAllocaAddrSpace(), /*ByVal=*/false);
+  }
+
   if (isAggregateTypeForABI(RetTy)) {
     if (isEmptyRecord(getContext(), RetTy, /*AllowArrays=*/true))
       return ABIArgInfo::getIgnore();
@@ -401,7 +436,7 @@ RValue BedrockABIInfo::EmitVAArg(CodeGenFunction &CGF, Address VAListAddr,
     return Slot.asRValue();
 
   TypeInfoChars TInfo = getContext().getTypeInfoInChars(Ty);
-  bool IsIndirect = isAggregateTypeForABI(Ty);
+  bool IsIndirect = isAggregateTypeForABI(Ty) || Ty->isSizelessVectorType();
   return emitVoidPtrVAArg(CGF, VAListAddr, Ty, IsIndirect, TInfo,
                           CharUnits::fromQuantity(StackSlotSize),
                           /*AllowHigherAlign=*/true, Slot);

@@ -25,6 +25,9 @@ public:
   void determineCalleeSaves(MachineFunction &MF, BitVector &SavedRegs,
                             RegScavenger *RS = nullptr) const override;
 
+  void processFunctionBeforeFrameFinalized(
+      MachineFunction &MF, RegScavenger *RS = nullptr) const override;
+
   bool assignCalleeSavedSpillSlots(
       MachineFunction &MF, const TargetRegisterInfo *TRI,
       std::vector<CalleeSavedInfo> &CSI) const override;

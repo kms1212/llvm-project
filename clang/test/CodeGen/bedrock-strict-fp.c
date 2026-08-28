@@ -26,8 +26,9 @@ int current_rounding(void) {
 // IR-LABEL: define{{.*}} i32 @current_rounding()
 // IR: call i32 @llvm.get.rounding()
 // ASM-LABEL: current_rounding:
+// ASM: lea.q{{[ \t]+}}5,
 // ASM: rdfstatus
-// ASM: shr.q{{[ \t]+}}5,
+// ASM: shr.q
 // ASM: and.q{{[ \t]+}}3,
 // ASM: bchg{{[ \t]+}}0,
 // ASM: ret

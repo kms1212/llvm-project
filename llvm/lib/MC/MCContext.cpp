@@ -240,6 +240,10 @@ MCSymbol *MCContext::parseSymbol(const Twine &Name) {
         case '\\':
           C = SV[++I];
           break;
+        case '`':
+          if (MAI->getSymbolQuoteCharacter() == '`')
+            C = SV[++I];
+          break;
         }
       }
       SV[S++] = C;

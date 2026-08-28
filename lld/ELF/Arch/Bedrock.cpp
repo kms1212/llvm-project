@@ -53,15 +53,70 @@ Bedrock::Bedrock(Ctx &ctx) : TargetInfo(ctx) {
   tlsDescRel = R_BEDROCK_TLSDESC;
   tlsGotRel = R_BEDROCK_TLS_OFFSET64;
   gotBaseSymInGotPlt = true;
-  gotEntrySize = 8;
   gotSectionAlignment = 16;
-  tlsDescEntryAlignment = 16;
   gotPltHeaderEntriesNum = 3;
   pltHeaderSize = 0;
-  pltEntrySize = 32;
-  ipltEntrySize = 32;
   defaultImageBase = 0x10000;
   trapInstr = {0x00, 0x00, 0x00, 0x00};
+
+#define BEDROCK_LLD_ORDINARY_PLT_ENTRY_ALIGNMENT_BYTES(VALUE)
+#define BEDROCK_LLD_ORDINARY_PLT_ENTRY_SIZE_BYTES(VALUE)                       \
+  pltEntrySize = VALUE;                                                        \
+  ipltEntrySize = VALUE;
+#define BEDROCK_LLD_ORDINARY_PLT_GOT_SLOT_ALIGNMENT_BYTES(VALUE)
+#define BEDROCK_LLD_ORDINARY_PLT_GOT_SLOT_PUBLICATION(VALUE)
+#define BEDROCK_LLD_ORDINARY_PLT_GOT_SLOT_SIZE_BYTES(VALUE)                    \
+  gotEntrySize = VALUE;
+#define BEDROCK_LLD_ORDINARY_PLT_LAYOUT_INSTRUCTION_OFFSET_BYTES(VALUE)
+#define BEDROCK_LLD_ORDINARY_PLT_LAYOUT_PADDING_BYTE(VALUE)
+#define BEDROCK_LLD_ORDINARY_PLT_LAYOUT_PADDING_OFFSET_BYTES(VALUE)
+#define BEDROCK_LLD_ORDINARY_PLT_LAYOUT_PADDING_SIZE_BYTES(VALUE)
+#define BEDROCK_LLD_ORDINARY_PLT_LAYOUT_RELOCATION_ADDEND(VALUE)
+#define BEDROCK_LLD_ORDINARY_PLT_LAYOUT_RELOCATION_FIELD_OFFSET_BYTES(VALUE)
+#define BEDROCK_LLD_LINKAGE_PROPERTY_ORDINARY_PLT(PROPERTY, VALUE)             \
+  BEDROCK_LLD_ORDINARY_PLT_##PROPERTY(VALUE)
+#define BEDROCK_LLD_LINKAGE_PROPERTY_TLSDESC_CALL(PROPERTY, VALUE)
+#define BEDROCK_ELF_LINKAGE_PROPERTY(PROTOCOL, PROPERTY, VALUE)                \
+  BEDROCK_LLD_LINKAGE_PROPERTY_##PROTOCOL(PROPERTY, VALUE)
+
+#define BEDROCK_LLD_TLSDESC_DESCRIPTOR_ALIGNMENT_BYTES(VALUE)                  \
+  tlsDescEntryAlignment = VALUE;
+#define BEDROCK_LLD_TLSDESC_DESCRIPTOR_FIELDS_0_ID(VALUE)
+#define BEDROCK_LLD_TLSDESC_DESCRIPTOR_FIELDS_0_OFFSET_BYTES(VALUE)
+#define BEDROCK_LLD_TLSDESC_DESCRIPTOR_FIELDS_0_TYPE(VALUE)
+#define BEDROCK_LLD_TLSDESC_DESCRIPTOR_FIELDS_1_ID(VALUE)
+#define BEDROCK_LLD_TLSDESC_DESCRIPTOR_FIELDS_1_OFFSET_BYTES(VALUE)
+#define BEDROCK_LLD_TLSDESC_DESCRIPTOR_FIELDS_1_TYPE(VALUE)
+#define BEDROCK_LLD_TLSDESC_DESCRIPTOR_SIZE_BYTES(VALUE)
+#define BEDROCK_LLD_TLS_PROPERTY_TLSDESC(PROPERTY, VALUE)                      \
+  BEDROCK_LLD_TLSDESC_##PROPERTY(VALUE)
+#define BEDROCK_ELF_TLS_PROPERTY(MODEL, PROPERTY, VALUE)                       \
+  BEDROCK_LLD_TLS_PROPERTY_##MODEL(PROPERTY, VALUE)
+#include "llvm/BinaryFormat/BedrockGenELFABI.inc"
+#undef BEDROCK_ELF_TLS_PROPERTY
+#undef BEDROCK_LLD_TLS_PROPERTY_TLSDESC
+#undef BEDROCK_LLD_TLSDESC_DESCRIPTOR_ALIGNMENT_BYTES
+#undef BEDROCK_LLD_TLSDESC_DESCRIPTOR_FIELDS_0_ID
+#undef BEDROCK_LLD_TLSDESC_DESCRIPTOR_FIELDS_0_OFFSET_BYTES
+#undef BEDROCK_LLD_TLSDESC_DESCRIPTOR_FIELDS_0_TYPE
+#undef BEDROCK_LLD_TLSDESC_DESCRIPTOR_FIELDS_1_ID
+#undef BEDROCK_LLD_TLSDESC_DESCRIPTOR_FIELDS_1_OFFSET_BYTES
+#undef BEDROCK_LLD_TLSDESC_DESCRIPTOR_FIELDS_1_TYPE
+#undef BEDROCK_LLD_TLSDESC_DESCRIPTOR_SIZE_BYTES
+#undef BEDROCK_ELF_LINKAGE_PROPERTY
+#undef BEDROCK_LLD_LINKAGE_PROPERTY_ORDINARY_PLT
+#undef BEDROCK_LLD_LINKAGE_PROPERTY_TLSDESC_CALL
+#undef BEDROCK_LLD_ORDINARY_PLT_ENTRY_ALIGNMENT_BYTES
+#undef BEDROCK_LLD_ORDINARY_PLT_ENTRY_SIZE_BYTES
+#undef BEDROCK_LLD_ORDINARY_PLT_GOT_SLOT_ALIGNMENT_BYTES
+#undef BEDROCK_LLD_ORDINARY_PLT_GOT_SLOT_PUBLICATION
+#undef BEDROCK_LLD_ORDINARY_PLT_GOT_SLOT_SIZE_BYTES
+#undef BEDROCK_LLD_ORDINARY_PLT_LAYOUT_INSTRUCTION_OFFSET_BYTES
+#undef BEDROCK_LLD_ORDINARY_PLT_LAYOUT_PADDING_BYTE
+#undef BEDROCK_LLD_ORDINARY_PLT_LAYOUT_PADDING_OFFSET_BYTES
+#undef BEDROCK_LLD_ORDINARY_PLT_LAYOUT_PADDING_SIZE_BYTES
+#undef BEDROCK_LLD_ORDINARY_PLT_LAYOUT_RELOCATION_ADDEND
+#undef BEDROCK_LLD_ORDINARY_PLT_LAYOUT_RELOCATION_FIELD_OFFSET_BYTES
 }
 
 static uint32_t getEFlags(ELFFileBase *file) {
@@ -166,51 +221,43 @@ int64_t Bedrock::getImplicitAddend(const uint8_t *buf, RelType type) const {
 
 RelExpr Bedrock::getRelExpr(RelType type, const Symbol &s,
                             const uint8_t *loc) const {
+#define BEDROCK_LLD_RELOC_EXPR_NONE R_NONE
+#define BEDROCK_LLD_RELOC_EXPR_ABS R_ABS
+#define BEDROCK_LLD_RELOC_EXPR_PC R_PC
+#define BEDROCK_LLD_RELOC_EXPR_SECTION_REL RE_BEDROCK_SECTION_REL
+#define BEDROCK_LLD_RELOC_EXPR_PLT_PC R_PLT_PC
+#define BEDROCK_LLD_RELOC_EXPR_PLT R_PLT
+#define BEDROCK_LLD_RELOC_EXPR_GOT R_GOT
+#define BEDROCK_LLD_RELOC_EXPR_GOT_PC R_GOT_PC
+#define BEDROCK_LLD_RELOC_EXPR_GOTPLTREL R_GOTPLTREL
+#define BEDROCK_LLD_RELOC_EXPR_GOTPLTONLY_PC R_GOTPLTONLY_PC
+#define BEDROCK_LLD_RELOC_EXPR_TPREL R_TPREL
+#define BEDROCK_LLD_RELOC_EXPR_TLSDESC_PC R_TLSDESC_PC
+#define BEDROCK_LLD_RELOC_EXPR_TLSDESC_CALL R_TLSDESC_CALL
+#define BEDROCK_LLD_RELOC_EXPR_TLSDESC R_TLSDESC
+#define BEDROCK_ELF_RELOCATION(NAME, VALUE, FAMILY, RESULT_KIND, WIDTH,        \
+                               IS_SIGNED, LLD_EXPRESSION, CALCULATION, FIELD)  \
+  case NAME:                                                                   \
+    return BEDROCK_LLD_RELOC_EXPR_##LLD_EXPRESSION;
   switch (type) {
-  case R_BEDROCK_NONE:
-    return R_NONE;
-  case R_BEDROCK_PCREL8S:
-  case R_BEDROCK_PCREL16S:
-  case R_BEDROCK_PCREL32S:
-  case R_BEDROCK_PCREL64:
-  case R_BEDROCK_BRDISP8S:
-  case R_BEDROCK_BRDISP16S:
-  case R_BEDROCK_BRDISP32S:
-  case R_BEDROCK_CALL16S:
-  case R_BEDROCK_CALL32S:
-    return R_PC;
-  case R_BEDROCK_SECTION_REL32:
-  case R_BEDROCK_SECTION_REL64:
-    return RE_BEDROCK_SECTION_REL;
-  case R_BEDROCK_PLT16S:
-  case R_BEDROCK_PLT32S:
-    return R_PLT_PC;
-  case R_BEDROCK_PLT64:
-    return R_PLT;
-  case R_BEDROCK_GOT64:
-    return R_GOT;
-  case R_BEDROCK_GOTPCREL32S:
-  case R_BEDROCK_GOTPCREL64:
-    return R_GOT_PC;
-  case R_BEDROCK_GOTOFF32S:
-  case R_BEDROCK_GOTOFF64:
-    return R_GOTPLTREL;
-  case R_BEDROCK_GOT_BASE_PCREL32S:
-  case R_BEDROCK_GOT_BASE_PCREL64:
-    return R_GOTPLTONLY_PC;
-  case R_BEDROCK_TLS_OFFSET32S:
-  case R_BEDROCK_TLS_OFFSET64:
-    return R_TPREL;
-  case R_BEDROCK_TLSDESC_GOTPCREL32S:
-  case R_BEDROCK_TLSDESC_GOTPCREL64:
-    return R_TLSDESC_PC;
-  case R_BEDROCK_TLSDESC_CALL:
-    return R_TLSDESC_CALL;
-  case R_BEDROCK_TLSDESC:
-    return R_TLSDESC;
-  default:
-    return R_ABS;
+#include "llvm/BinaryFormat/BedrockGenELFABI.inc"
   }
+  llvm_unreachable("unknown Bedrock relocation");
+#undef BEDROCK_ELF_RELOCATION
+#undef BEDROCK_LLD_RELOC_EXPR_NONE
+#undef BEDROCK_LLD_RELOC_EXPR_ABS
+#undef BEDROCK_LLD_RELOC_EXPR_PC
+#undef BEDROCK_LLD_RELOC_EXPR_SECTION_REL
+#undef BEDROCK_LLD_RELOC_EXPR_PLT_PC
+#undef BEDROCK_LLD_RELOC_EXPR_PLT
+#undef BEDROCK_LLD_RELOC_EXPR_GOT
+#undef BEDROCK_LLD_RELOC_EXPR_GOT_PC
+#undef BEDROCK_LLD_RELOC_EXPR_GOTPLTREL
+#undef BEDROCK_LLD_RELOC_EXPR_GOTPLTONLY_PC
+#undef BEDROCK_LLD_RELOC_EXPR_TPREL
+#undef BEDROCK_LLD_RELOC_EXPR_TLSDESC_PC
+#undef BEDROCK_LLD_RELOC_EXPR_TLSDESC_CALL
+#undef BEDROCK_LLD_RELOC_EXPR_TLSDESC
 }
 
 void Bedrock::scanSection(InputSectionBase &sec) {
@@ -245,9 +292,9 @@ void Bedrock::scanSection(InputSectionBase &sec) {
     bool isAddr64 = type == R_BEDROCK_TLSDESC_GOTPCREL64;
     if (isAddr32 || isAddr64) {
       checkTlsSymbol(rel);
-      if (rel.r_addend != 3)
+      if (rel.r_addend != 4)
         report(rel.r_offset,
-               "TLSDESC GOTPCREL relocation addend must be 3");
+               "TLSDESC GOTPCREL relocation addend must be 4");
 
       uint64_t fieldSize = isAddr32 ? 4 : 8;
       uint64_t callOffset = rel.r_offset + fieldSize;
@@ -270,9 +317,9 @@ void Bedrock::scanSection(InputSectionBase &sec) {
           report(callOffset, "TLSDESC call marker addend must be zero");
       }
 
-      static constexpr uint8_t Lea32[] = {0xd1, 0xb8, 0x06};
-      static constexpr uint8_t Lea64[] = {0xe1, 0xb8, 0x07};
-      static constexpr uint8_t CallR0[] = {0xc7, 0xc3, 0x70, 0x10};
+      static constexpr uint8_t Lea32[] = {0xd7, 0xcb, 0xd0, 0x56};
+      static constexpr uint8_t Lea64[] = {0xe7, 0xcb, 0xd0, 0x57};
+      static constexpr uint8_t CallR0[] = {0xc3, 0xb4, 0x20};
       ArrayRef<uint8_t> lea = isAddr32 ? ArrayRef(Lea32) : ArrayRef(Lea64);
       bool inBounds = rel.r_offset >= lea.size() &&
                       callOffset + std::size(CallR0) <= content.size();
@@ -280,7 +327,7 @@ void Bedrock::scanSection(InputSectionBase &sec) {
           content.slice(rel.r_offset - lea.size(), lea.size()) != lea ||
           content.slice(callOffset, std::size(CallR0)) != ArrayRef(CallR0))
         report(rel.r_offset,
-               "TLSDESC relocations require the canonical LEA.Q/CALL [R0] "
+               "TLSDESC relocations require the canonical LEA.Q/CALL R0 "
                "sequence");
       continue;
     }
@@ -335,11 +382,16 @@ static bool hasCanonicalTransfer32(const InputSection &sec,
                                    const Relocation &rel) {
   ArrayRef<uint8_t> content = sec.content();
   if (rel.offset < 3 || rel.offset + 4 > content.size() ||
-      content[rel.offset - 3] != 0xd0)
+      content[rel.offset - 3] != 0xd3)
     return false;
-  uint8_t ExpectedOpcode =
-      rel.type == R_BEDROCK_BRDISP32S ? 0x66 : 0xe6;
-  return content[rel.offset - 2] == ExpectedOpcode;
+  bool IsBranch = rel.type == R_BEDROCK_BRDISP32S;
+  uint8_t Selector = content[rel.offset - 2];
+  uint8_t Opcode = content[rel.offset - 1];
+  if (Selector == 0xbc)
+    return Opcode == (IsBranch ? 0x07 : 0x03);
+  if (Selector == 0xb8)
+    return (Opcode & 0x30) == (IsBranch ? 0x30 : 0x10);
+  return false;
 }
 
 static bool relaxBedrockSection(Ctx &ctx, int pass, InputSection &sec) {
@@ -355,7 +407,7 @@ static bool relaxBedrockSection(Ctx &ctx, int pass, InputSection &sec) {
     uint32_t previousRemove = currentDelta - delta;
     uint32_t remove = 0;
     RelType relaxedType = getRelaxedTransferType(rel.type);
-    if (relaxedType != R_BEDROCK_NONE &&
+    if (sec.addralign <= 1 && relaxedType != R_BEDROCK_NONE &&
         hasCanonicalTransfer32(sec, rel)) {
       if (pass >= 4) {
         remove = previousRemove;
@@ -448,9 +500,13 @@ void Bedrock::finalizeRelax(int passes) const {
           memcpy(out, old.data() + oldOffset, copySize);
           out += copySize;
 
-          out[0] = 0xc8;
-          out[1] = newType == R_BEDROCK_BRDISP16S ? 0x26 : 0xa6;
-          out[2] = old[rel.offset - 1];
+          bool IsBranch = newType == R_BEDROCK_BRDISP16S;
+          bool IsConditional = old[rel.offset - 2] == 0xb8;
+          unsigned Cond = old[rel.offset - 1] & 0xf;
+          out[0] = 0xcb;
+          out[1] = IsConditional ? 0xb8 : 0xbc;
+          out[2] = IsConditional ? ((IsBranch ? 0x20 : 0x00) | Cond)
+                                 : (IsBranch ? 0x06 : 0x02);
           out[3] = 0;
           out[4] = 0;
           out += 5;
@@ -528,13 +584,13 @@ void Bedrock::relocate(uint8_t *loc, const Relocation &rel,
     break;
   case R_BEDROCK_TLSDESC_GOTPCREL64:
     if (rel.expr == R_RELAX_TLS_GD_TO_LE) {
-      uint8_t *start = loc - 3;
-      // LEN 15, MOV.Q tpoff64, R0. The ELF addend includes the three-byte
+      uint8_t *start = loc - 4;
+      // LEN 15, MOV.Q tpoff64, R0. The ELF addend includes the four-byte
       // field offset; it is not part of the semantic TLS subobject offset.
-      start[0] = 0xf0;
-      start[1] = 0x38;
-      start[2] = 0x6f;
-      write64le(start + 3, val - 3);
+      start[0] = 0xf1;
+      start[1] = 0x18;
+      start[2] = 0x5e;
+      write64le(start + 3, val - 4);
       memset(start + 11, 0, 4);
       break;
     }
@@ -571,12 +627,12 @@ void Bedrock::relocate(uint8_t *loc, const Relocation &rel,
   case R_BEDROCK_TLSDESC_GOTPCREL32S:
     if (rel.type == R_BEDROCK_TLSDESC_GOTPCREL32S &&
         rel.expr == R_RELAX_TLS_GD_TO_LE) {
-      uint8_t *start = loc - 3;
+      uint8_t *start = loc - 4;
       // LEN 11, MOV.Q tpoff32, R0. See the 64-bit form above.
-      int64_t tlsOffset = static_cast<int64_t>(val) - 3;
-      start[0] = 0xe0;
-      start[1] = 0x38;
-      start[2] = 0x6e;
+      int64_t tlsOffset = static_cast<int64_t>(val) - 4;
+      start[0] = 0xe1;
+      start[1] = 0x18;
+      start[2] = 0x5d;
       checkInt(ctx, start + 3, tlsOffset, 32, rel);
       write32le(start + 3, tlsOffset);
       memset(start + 7, 0, 4);
@@ -644,12 +700,11 @@ void Bedrock::writePlt(uint8_t *buf, const Symbol &sym,
                        uint64_t pltEntryAddr) const {
   memset(buf, 0x01, pltEntrySize);
   // jmp.q [pc + disp64]. Architectural PC names the entry start, while the
-  // ABI relocation field at +4 carries an addend of 4.
+  // ABI relocation field at +3 carries an addend of 3.
   buf[0] = 0xe7;
-  buf[1] = 0xc9;
-  buf[2] = 0x80;
-  buf[3] = 0x67;
-  write64le(buf + 4, sym.getGotPltVA(ctx) - pltEntryAddr);
+  buf[1] = 0x9d;
+  buf[2] = 0x57;
+  write64le(buf + 3, sym.getGotPltVA(ctx) - pltEntryAddr);
 }
 
 void elf::setBedrockTargetInfo(Ctx &ctx) {

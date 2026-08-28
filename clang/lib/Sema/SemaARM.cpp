@@ -1752,7 +1752,10 @@ bool SemaARM::checkSVETypeSupport(QualType Ty, SourceLocation Loc,
   if (!Ty->isSVESizelessBuiltinType())
     return false;
 
-  if (FeatureMap.lookup("sve"))
+  if (FeatureMap.lookup("sve") ||
+      (getASTContext().getTargetInfo().getTriple().getArch() ==
+           llvm::Triple::bedrock &&
+       FeatureMap.lookup("vector")))
     return false;
 
   // No SVE environment available.

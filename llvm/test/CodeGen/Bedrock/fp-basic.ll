@@ -13,10 +13,10 @@ define double @fp_arith(double %x, double %y) {
 ; CHECK: FSUB.D
 ; CHECK: ret
 ; OBJ-LABEL: <fp_arith>:
-; OBJ: c2 58 92{{.*}}fmul.d
-; OBJ: c2 49 f2{{.*}}fadd.d
-; OBJ: c2 58 a2{{.*}}fdiv.d
-; OBJ: c2 58 02{{.*}}fsub.d
+; OBJ: c2 ec 12{{.*}}fmul.d
+; OBJ: c2 8a 32{{.*}}fadd.d
+; OBJ: c2 ac 12{{.*}}fdiv.d
+; OBJ: c2 8c 02{{.*}}fsub.d
   %mul = fmul double %x, %y
   %add = fadd double %mul, 7.500000e-01
   %div = fdiv double %add, %y
@@ -32,10 +32,10 @@ define float @fp_arith_float(float %x, float %y) {
 ; CHECK: FSUB.S
 ; CHECK: ret
 ; OBJ-LABEL: <fp_arith_float>:
-; OBJ: c2 50 92{{.*}}fmul.s
-; OBJ: c2 41 f2{{.*}}fadd.s
-; OBJ: c2 50 a2{{.*}}fdiv.s
-; OBJ: c2 50 02{{.*}}fsub.s
+; OBJ: c2 e4 12{{.*}}fmul.s
+; OBJ: c2 82 32{{.*}}fadd.s
+; OBJ: c2 a4 12{{.*}}fdiv.s
+; OBJ: c2 84 02{{.*}}fsub.s
   %mul = fmul float %x, %y
   %add = fadd float %mul, 7.500000e-01
   %div = fdiv float %add, %y

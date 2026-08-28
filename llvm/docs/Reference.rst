@@ -10,6 +10,7 @@ LLVM and API reference documentation.
    :hidden:
 
    Atomics
+   BedrockVectorSupport
    BitCodeFormat
    BlockFrequencyTerminology
    BranchWeightMetadata

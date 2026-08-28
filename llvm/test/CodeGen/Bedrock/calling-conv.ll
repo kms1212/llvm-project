@@ -165,14 +165,14 @@ define i64 @call_single_register_exhaustion(
     float %f0, float %f1, float %f2, float %f3, float %f4,
     float %f5, float %f6, float %f7, float %f8) {
 ; CHECK-LABEL: call_single_register_exhaustion:
-; CHECK: fpushp 3
+; CHECK: fpushp 4
 ; CHECK-NEXT: sub.q 24, sp
 ; CHECK: FMOV.S [sp + {{[0-9]+}}], [[STACKF:f[0-9]+]]
 ; CHECK: FMOV.S [[STACKF]], [{{r[0-9]+}} + 8]
 ; CHECK: call sink_nine_float
 ; CHECK-NEXT: inc.q r0
 ; CHECK-NEXT: add.q 24, sp
-; CHECK-NEXT: fpopp 3
+; CHECK-NEXT: fpopp 4
   %value = call i64 @sink_nine_float(
       float %f0, float %f1, float %f2, float %f3, float %f4,
       float %f5, float %f6, float %f7, float %f8)
@@ -198,10 +198,11 @@ define i64 @float_and_general_cursors_are_independent(
 
 define i64 @call_narrow(i8 %a, i16 %b, i32 %c) {
 ; CHECK-LABEL: call_narrow:
+; CHECK: lea.q 32, [[COUNT:r[0-9]+]]
+; CHECK-NEXT: shl.q [[COUNT]],
+; CHECK-NEXT: sar.q [[COUNT]],
 ; CHECK: extsq.b
-; CHECK: extzq.w
-; CHECK: shl.q 32
-; CHECK-NEXT: sar.q 32
+; CHECK: mov.w
 ; CHECK: call sink_narrow
   %value = call i64 @sink_narrow(i8 signext %a, i16 zeroext %b,
                                  i32 signext %c)

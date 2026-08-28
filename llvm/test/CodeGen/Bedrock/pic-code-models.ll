@@ -113,16 +113,16 @@ define void @external_call() {
 ; PIC-DISASM-LABEL: <external_tls_address>:
 ; PIC-DISASM: sub.q	8, sp
 ; PIC-DISASM: lea.q	[pc + 0], r0
-; PIC-DISASM-NEXT: call	[r0]
+; PIC-DISASM-NEXT: call	r0
 ; PIC-DISASM-NEXT: add.q	8, sp
 ; PIC-DISASM-NEXT: seglea.q	[gs0:0 + r0], r0
 ; PIC-DISASM-LABEL: <external_tls_subobject>:
 ; PIC-DISASM: sub.q	8, sp
 ; PIC-DISASM-NEXT: lea.q	[pc + 0], r0
-; PIC-DISASM-NEXT: call	[r0]
+; PIC-DISASM-NEXT: call	r0
 ; PIC-DISASM-NEXT: add.q	8, sp
 ; PIC-DISASM-NEXT: seglea.q	[gs0:0 + r0], r0
 ; PIC-DISASM-NEXT: lea.q	[r0 + 4], r0
 
-; ASM-RELOC: R_BEDROCK_TLSDESC_GOTPCREL32S external_tls 0x3
+; ASM-RELOC: R_BEDROCK_TLSDESC_GOTPCREL32S external_tls 0x4
 ; ASM-RELOC-NEXT: R_BEDROCK_TLSDESC_CALL external_tls 0x0

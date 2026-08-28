@@ -11,6 +11,7 @@ tablegen(LLVM BedrockGenInstrInfo.inc -gen-instr-info)
 tablegen(LLVM BedrockGenMCCodeEmitter.inc -gen-emitter)
 tablegen(LLVM BedrockGenRegisterInfo.inc -gen-register-info)
 tablegen(LLVM BedrockGenSDNodeInfo.inc -gen-sd-node-info)
+tablegen(LLVM BedrockGenSearchableTables.inc -gen-searchable-tables)
 tablegen(LLVM BedrockGenSubtargetInfo.inc -gen-subtarget)
 
 add_public_tablegen_target(BedrockCommonTableGen)

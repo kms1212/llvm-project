@@ -86,8 +86,8 @@ define i64 @realigned_stack_argument(i64 %a0, i64 %a1, i64 %a2, i64 %a3,
 ; uses the adjacent padding register through the compact pair form.
 define void @leaf_clobber_r8() {
 ; CHECK-LABEL: leaf_clobber_r8:
-; CHECK: pushp 3
-; CHECK: popp 3
+; CHECK: pushp 4
+; CHECK: popp 4
 ; CHECK-NEXT: ret
   call void asm sideeffect "", "~{r8}"()
   ret void
@@ -96,8 +96,8 @@ define void @leaf_clobber_r8() {
 ; A real adjacent pair still uses the compact pair save and restore.
 define void @leaf_clobber_r8_r9() {
 ; CHECK-LABEL: leaf_clobber_r8_r9:
-; CHECK: pushp 3
-; CHECK: popp 3
+; CHECK: pushp 4
+; CHECK: popp 4
 ; CHECK-NEXT: ret
   call void asm sideeffect "", "~{r8},~{r9}"()
   ret void

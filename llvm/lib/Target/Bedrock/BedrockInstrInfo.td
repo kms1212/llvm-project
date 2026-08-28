@@ -89,8 +89,6 @@ def BedrockTLSDescCall
 def BedrockTailCallCandidate
     : SDNode<"BedrockISD::TAIL_CALL_CANDIDATE", SDT_BedrockCall,
              [SDNPHasChain, SDNPOptInGlue, SDNPOutGlue, SDNPVariadic]>;
-def BedrockMemset : SDNode<"BedrockISD::MEMSET", SDT_BedrockMemset,
-                           [SDNPHasChain, SDNPMayStore]>;
 def BedrockRetFlag : SDNode<"BedrockISD::RET_FLAG", SDTNone,
                             [SDNPHasChain, SDNPOptInGlue, SDNPVariadic]>;
 def BedrockCmp : SDNode<"BedrockISD::CMP", SDT_BedrockCmp, [SDNPOutGlue]>;
@@ -194,13 +192,6 @@ let isPseudo = 1, isCodeGenOnly = 1,
     hasNoSchedulingInfo =
         1 in def RAW_EXPR : BedrockInst<(outs), (ins variable_ops), "">;
 
-// Marks a counted loop whose REPG counter is intentionally reused as a
-// body-local scratch register.  The late assembly printer consumes this marker
-// while forming the repeat group; it never reaches the emitted instruction
-// stream.
-let isPseudo = 1, isCodeGenOnly = 1, hasNoSchedulingInfo = 1 in
-def REPG_SCRATCH : BedrockInst<(outs), (ins GPR64:$counter), "">;
-
 class BedrockPseudo<dag outs, dag ins, list<dag> pattern = []>
     : BedrockInst<outs, ins, "", pattern> {
   let isPseudo = 1;
@@ -208,11 +199,72 @@ class BedrockPseudo<dag outs, dag ins, list<dag> pattern = []>
   let hasNoSchedulingInfo = 1;
 }
 
-let Constraints = "$dst_out = $dst, $count_out = $count",
-    mayStore = 1, hasSideEffects = 1 in
-def REP_MEMSETB : BedrockPseudo<
-    (outs GPR64:$dst_out, GPR64:$count_out),
-    (ins GPR64:$dst, GPR64:$value, GPR64:$count)>;
+def VECTOR_COPY : BedrockPseudo<(outs VR:$dst), (ins VR:$src)>;
+def PREDICATE_COPY : BedrockPseudo<(outs PR:$dst), (ins PR:$src)>;
+let Constraints = "$dst = $lhs", Defs = [P7] in
+def VECTOR_BINARY : BedrockPseudo<
+    (outs VR:$dst),
+    (ins VR:$lhs, VR:$rhs, i64imm:$operation, i64imm:$element_type)>;
+let Defs = [P7] in
+def VECTOR_COMPARE : BedrockPseudo<
+    (outs PR:$dst),
+    (ins VR:$lhs, VR:$rhs, i64imm:$condition, i64imm:$element_type)>;
+let mayLoad = 1, Defs = [P7] in
+def VECTOR_LOAD : BedrockPseudo<
+    (outs VR:$dst), (ins GPR64:$base, i64imm:$element_type)>;
+let mayStore = 1, Defs = [P7] in
+def VECTOR_STORE : BedrockPseudo<
+    (outs), (ins VR:$src, GPR64:$base, i64imm:$element_type)>;
+let mayLoad = 1, Defs = [P7] in
+def VECTOR_OBJECT_LOAD : BedrockPseudo<
+    (outs VR:$dst),
+    (ins i64imm:$base, i64imm:$offset, i64imm:$element_type)>;
+let mayStore = 1, Defs = [P7] in
+def VECTOR_OBJECT_STORE : BedrockPseudo<
+    (outs),
+    (ins VR:$src, i64imm:$base, i64imm:$offset,
+         i64imm:$element_type)>;
+let mayLoad = 1 in
+def PREDICATE_LOAD : BedrockPseudo<(outs PR:$dst), (ins GPR64:$base)>;
+let mayStore = 1 in
+def PREDICATE_STORE : BedrockPseudo<(outs), (ins PR:$src, GPR64:$base)>;
+def VECTOR_LENGTH : BedrockPseudo<(outs GPR64:$dst), (ins)>;
+let mayLoad = 1, Defs = [P7] in
+def VECTOR_STRIDE_LOAD : BedrockPseudo<
+    (outs VR:$dst),
+    (ins GPR64:$base, GPR64:$stride, i64imm:$displacement,
+         i64imm:$element_type)>;
+let mayStore = 1, Defs = [P7] in
+def VECTOR_STRIDE_STORE : BedrockPseudo<
+    (outs),
+    (ins VR:$src, GPR64:$base, GPR64:$stride, i64imm:$displacement,
+         i64imm:$element_type)>;
+let Defs = [P7] in {
+def VECTOR_REDUCE_INT : BedrockPseudo<
+    (outs GPR64:$dst), (ins VR:$src, i64imm:$element_type)>;
+def VECTOR_REDUCE_FP : BedrockPseudo<
+    (outs FPR64:$dst), (ins VR:$src, i64imm:$element_type)>;
+}
+let mayStore = 1 in {
+def VECTOR_SPILL : BedrockPseudo<(outs),
+                                 (ins VR:$src, i64imm:$base, i64imm:$offset)>;
+def VECTOR_SPILL_RO : BedrockPseudo<
+    (outs), (ins VR:$src, GPR64:$base, i64imm:$offset)>;
+def PREDICATE_SPILL : BedrockPseudo<
+    (outs), (ins PR:$src, i64imm:$base, i64imm:$offset)>;
+def PREDICATE_SPILL_RO : BedrockPseudo<
+    (outs), (ins PR:$src, GPR64:$base, i64imm:$offset)>;
+}
+let mayLoad = 1 in {
+def VECTOR_RELOAD : BedrockPseudo<(outs VR:$dst),
+                                  (ins i64imm:$base, i64imm:$offset)>;
+def VECTOR_RELOAD_RO : BedrockPseudo<
+    (outs VR:$dst), (ins GPR64:$base, i64imm:$offset)>;
+def PREDICATE_RELOAD : BedrockPseudo<
+    (outs PR:$dst), (ins i64imm:$base, i64imm:$offset)>;
+def PREDICATE_RELOAD_RO : BedrockPseudo<
+    (outs PR:$dst), (ins GPR64:$base, i64imm:$offset)>;
+}
 
 class BedrockShort<bits<14> payload, dag outs, dag ins, string asm,
                    list<dag> pattern = []>
@@ -256,7 +308,9 @@ class BedrockRR<bits<6> opcode, string asm>
 
   let Inst{15} = 1;
   let Inst{14} = 0;
-  let Inst{13 -8} = opcode;
+  let Inst{13} = 0;
+  let Inst{12 -9} = opcode{4 -1};
+  let Inst{8} = opcode{0};
   let Inst{7 -4} = rs;
   let Inst{3 -0} = rd;
 }
@@ -269,7 +323,23 @@ class BedrockRRNoOut<bits<6> opcode, string asm, list<dag> pattern = []>
 
   let Inst{15} = 1;
   let Inst{14} = 0;
-  let Inst{13 -8} = opcode;
+  let Inst{13} = 0;
+  let Inst{12 -9} = opcode{4 -1};
+  let Inst{8} = opcode{0};
+  let Inst{7 -4} = rs;
+  let Inst{3 -0} = rd;
+}
+
+class BedrockMiscRR<bits<3> opcode, string asm>
+    : BedrockInst<(outs GPR64:$rd), (ins GPR64:$rs),
+                  !strconcat(asm, "\t$rs, $rd")> {
+  bits<4> rd;
+  bits<4> rs;
+
+  let Inst{15} = 1;
+  let Inst{14} = 0;
+  let Inst{13 -11} = 0b100;
+  let Inst{10 -8} = opcode;
   let Inst{7 -4} = rs;
   let Inst{3 -0} = rd;
 }
@@ -350,9 +420,9 @@ class BedrockSet<bits<4> cc, string asm>
 
   let Inst{15} = 1;
   let Inst{14} = 0;
-  let Inst{13 -8} = 0b100001;
-  let Inst{7 -4} = r;
-  let Inst{3 -0} = cc;
+  let Inst{13 -8} = 0b100000;
+  let Inst{7 -4} = cc;
+  let Inst{3 -0} = r;
   let Uses = [FLAGS];
 }
 
@@ -397,20 +467,19 @@ def RET : BedrockExtraShort<0x02, (outs), (ins), "ret",
                             [(BedrockRetFlag)]>;
 def LRET : BedrockExtraShort<0x03, (outs), (ins), "lret">;
 def SYSCALL : BedrockExtraShort<0x05, (outs), (ins), "syscall">;
-def SYSRET : BedrockExtraShort<0x06, (outs), (ins), "sysret">;
 def ERET : BedrockExtraShort<0x04, (outs), (ins), "eret">;
 let isTrap = 1 in
 def BKPT : BedrockExtraShort<0x07, (outs), (ins), "bkpt">;
 def WAIT : BedrockExtraShort<0x08, (outs), (ins), "wait">;
 def YIELD : BedrockExtraShort<0x09, (outs), (ins), "yield">;
-def HALT : BedrockShort<0x2049, (outs), (ins), "halt">;
+def HALT : BedrockShort<0x2e00, (outs), (ins), "halt">;
 let isTrap = 1 in
 def ILLEGAL : BedrockExtraShort<0x00, (outs), (ins), "illegal">;
 def RFENCE : BedrockExtraShort<0x0a, (outs), (ins), "rfence">;
 def WFENCE : BedrockExtraShort<0x0b, (outs), (ins), "wfence">;
 def AFENCE : BedrockExtraShort<0x0c, (outs), (ins), "afence">;
 def : Pat<(atomic_fence timm, timm), (AFENCE)>;
-def RESET : BedrockShort<0x204e, (outs), (ins), "reset">;
+def RESET : BedrockShort<0x2e01, (outs), (ins), "reset">;
 
 let hasSideEffects = 1 in {
 def BEDROCK_CPUID : BedrockPseudo<(outs GPR64:$dst), (ins GPR64:$src),
@@ -736,49 +805,44 @@ def ROLLrr : BedrockRR<0x18, "rol.l">;
 def ROLQrr : BedrockRR<0x19, "rol.q">;
 def SARLrr : BedrockRR<0x1a, "sar.l">;
 def SARQrr : BedrockRR<0x1b, "sar.q">;
-def EXTZLBrr : BedrockRR<0x1c, "extzl.b">;
-def EXTZLWrr : BedrockRR<0x1d, "extzl.w">;
-def EXTSLBrr : BedrockRR<0x1e, "extsl.b">;
-def EXTSLWrr : BedrockRR<0x1f, "extsl.w">;
-def EXTZQLrr : BedrockRR<0x28, "extzq.l">;
-def EXTSQLrr : BedrockRR<0x29, "extsq.l">;
+def MOVBrr : BedrockMiscRR<0b110, "mov.b">;
+def MOVWrr : BedrockMiscRR<0b111, "mov.w">;
+def EXTSQLrr : BedrockMiscRR<0b010, "extsq.l">;
 
 def EXTSQBrr : BedrockPseudo<(outs GPR64:$rd), (ins GPR64:$src)>;
 def EXTSQWrr : BedrockPseudo<(outs GPR64:$rd), (ins GPR64:$src)>;
-def EXTZQBrr : BedrockPseudo<(outs GPR64:$rd), (ins GPR64:$src)>;
-def EXTZQWrr : BedrockPseudo<(outs GPR64:$rd), (ins GPR64:$src)>;
 
-def MOVQrs : BedrockExtraShortRegIn<0b100, "mov.q\t$r, sp">;
-def MOVQsr : BedrockExtraShortRegOut<0b101, "mov.q\tsp, $r">;
-def PUSHr : BedrockExtraShortRegIn<0b010, "push\t$r">;
-def POPr : BedrockExtraShortRegOut<0b011, "pop\t$r">;
+def MOVQrs : BedrockExtraShortRegIn<0b101, "mov.q\t$r, sp">;
+def MOVQsr : BedrockExtraShortRegOut<0b110, "mov.q\tsp, $r">;
+def PUSHr : BedrockExtraShortRegIn<0b011, "push\t$r">;
+def POPr : BedrockExtraShortRegOut<0b100, "pop\t$r">;
 
 def SETr : BedrockSet<0x0, "set">;
-def INCLr : BedrockRegLow<0b1000100000, "inc.l">;
-def INCQr : BedrockRegLow<0b1000110000, "inc.q">;
-def DECLr : BedrockRegLow<0b1000100001, "dec.l">;
-def DECQr : BedrockRegLow<0b1000110001, "dec.q">;
-def NEGLr : BedrockRegLow<0b1000100010, "neg.l">;
-def NEGQr : BedrockRegLow<0b1000110010, "neg.q">;
-def CLRLr : BedrockRegLow<0b1000100011, "clr.l">;
-def CLRQr : BedrockExtraShortRegIn<0b110, "clr.q\t$r">;
-def ABSLr : BedrockRegLow<0b1000100100, "abs.l">;
-def ABSQr : BedrockRegLow<0b1000110100, "abs.q">;
-def NOTLr : BedrockRegLow<0b1000100101, "not.l">;
-def NOTQr : BedrockRegLow<0b1000110101, "not.q">;
-def REVBYTEWr : BedrockRegLow<0b1000101001, "revbyte.w">;
-def REVBYTELr : BedrockRegLow<0b1000101010, "revbyte.l">;
-def REVBYTEQr : BedrockRegLow<0b1000101011, "revbyte.q">;
+def INCLr : BedrockRegLow<0b1010000000, "inc.l">;
+def INCQr : BedrockRegLow<0b1010010000, "inc.q">;
+def DECLr : BedrockRegLow<0b1010000001, "dec.l">;
+def DECQr : BedrockRegLow<0b1010010001, "dec.q">;
+def NEGLr : BedrockRegLow<0b1010000010, "neg.l">;
+def NEGQr : BedrockRegLow<0b1010010010, "neg.q">;
+def CLRLr : BedrockRegLow<0b1011000000, "clr.l">;
+def CLRQr : BedrockExtraShortRegIn<0b111, "clr.q\t$r">;
+def ABSLr : BedrockRegLow<0b1010000100, "abs.l">;
+def ABSQr : BedrockRegLow<0b1010010100, "abs.q">;
+def NOTLr : BedrockRegLow<0b1010000101, "not.l">;
+def NOTQr : BedrockRegLow<0b1010010101, "not.q">;
+def REVBYTEWr : BedrockRegLow<0b1011000001, "revbyte.w">;
+def REVBYTELr : BedrockRegLow<0b1011000010, "revbyte.l">;
+def REVBYTEQr : BedrockRegLow<0b1011000011, "revbyte.q">;
 def PUSHPi : BedrockExtraShortImm3<0b0010, "pushp">;
 def POPPi : BedrockExtraShortImm3<0b0011, "popp">;
 let mayStore = 1, hasSideEffects = 1, Uses = [SP], Defs = [SP] in
-def FPUSHPi : BedrockExtraShortImm3<0b1110, "fpushp">;
+def FPUSHPi : BedrockExtraShortImm3<0b0100, "fpushp">;
 let mayLoad = 1, hasSideEffects = 1, Uses = [SP], Defs = [SP] in
-def FPOPPi : BedrockExtraShortImm3<0b1111, "fpopp">;
+def FPOPPi : BedrockExtraShortImm3<0b0101, "fpopp">;
 
-def ADDQisp : BedrockImm8<uimm8, 0x2f, "add.q\t$i, sp">;
-def JMPi : BedrockImm8<simm8, 0x30, "jmp\t$i">;
-def SUBQisp : BedrockImm8<uimm8, 0x31, "sub.q\t$i, sp">;
+def ADDQisp : BedrockImm8<uimm8, 0x23, "add.q\t$i, sp">;
+def JMPi : BedrockImm8<simm8, 0x24, "jmp\t$i">;
+def SUBQisp : BedrockImm8<uimm8, 0x25, "sub.q\t$i, sp">;
 
 let isReMaterializable = 1 in {
 def CONST32 : BedrockPseudo<(outs GPR64:$rd), (ins i32imm:$imm)>;
@@ -794,7 +858,7 @@ def : Pat<(i64 tconstpool:$addr), (CONST64 tconstpool:$addr)>;
 def : Pat<(i64 tjumptable:$addr), (CONST64 tjumptable:$addr)>;
 
 def : Pat<(i64 (sext i32:$src)), (EXTSQLrr GPR64:$src)>;
-def : Pat<(i64 (zext i32:$src)), (EXTZQLrr GPR64:$src)>;
+def : Pat<(i64 (zext i32:$src)), (MOVLrr GPR64:$src)>;
 def : Pat<(i64 (anyext i32:$src)), (COPY_TO_REGCLASS $src, GPR64)>;
 def : Pat<(i32 (trunc i64:$src)), (COPY_TO_REGCLASS $src, GPR64)>;
 
@@ -986,11 +1050,11 @@ def FCVTStoDrr : BedrockPseudo<(outs FPR64:$rd), (ins FPR64:$src),
 def : Pat<(f64 (any_sint_to_fp i32:$src)),
           (FCVTSQDrr (EXTSQLrr GPR64:$src))>;
 def : Pat<(f64 (any_uint_to_fp i32:$src)),
-          (FCVTUQDrr (EXTZQLrr GPR64:$src))>;
+          (FCVTUQDrr (MOVLrr GPR64:$src))>;
 def : Pat<(f32 (any_sint_to_fp i32:$src)),
           (FCVTSQSrr (EXTSQLrr GPR64:$src))>;
 def : Pat<(f32 (any_uint_to_fp i32:$src)),
-          (FCVTUQSrr (EXTZQLrr GPR64:$src))>;
+          (FCVTUQSrr (MOVLrr GPR64:$src))>;
 def : Pat<(i32 (any_fp_to_sint f32:$src)), (FCVTStoQrr FPR64:$src)>;
 def : Pat<(i32 (any_fp_to_sint f64:$src)), (FCVTDtoQrr FPR64:$src)>;
 def : Pat<(i32 (any_fp_to_uint f32:$src)), (FCVTUStoQrr FPR64:$src)>;
@@ -1261,6 +1325,9 @@ def DIVMODSQrr
 }
 
 let Constraints = "$rd = $low" in {
+def EXTRACTBrrri
+    : BedrockPseudo<(outs GPR64:$rd),
+                    (ins GPR64:$high, GPR64:$low, i64imm:$offset)>;
 def EXTRACTLrrri
     : BedrockPseudo<(outs GPR64:$rd),
                     (ins GPR64:$high, GPR64:$low, i64imm:$offset),

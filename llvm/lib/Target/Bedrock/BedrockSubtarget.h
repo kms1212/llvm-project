@@ -24,6 +24,7 @@ namespace llvm {
 class BedrockSubtarget : public BedrockGenSubtargetInfo {
   bool HasFPU = false;
   bool HasFPTRANSA = false;
+  bool HasVector = false;
   BedrockInstrInfo InstrInfo;
   BedrockFrameLowering FrameLowering;
   BedrockTargetLowering TLInfo;
@@ -40,6 +41,7 @@ public:
 
   bool hasFPU() const { return HasFPU; }
   bool hasFPTRANSA() const { return HasFPTRANSA; }
+  bool hasVector() const { return HasVector; }
   const BedrockInstrInfo *getInstrInfo() const override { return &InstrInfo; }
   const TargetFrameLowering *getFrameLowering() const override {
     return &FrameLowering;

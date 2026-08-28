@@ -7,6 +7,7 @@
 //===----------------------------------------------------------------------===//
 
 #include "BedrockMCAsmInfo.h"
+#include "BedrockMCEncoding.h"
 
 using namespace llvm;
 
@@ -17,7 +18,13 @@ BedrockMCAsmInfo::BedrockMCAsmInfo(const Triple &TT) {
   CalleeSaveStackSlotSize = 8;
   MinInstAlignment = 2;
   CommentString = ";";
+  SymbolQuoteCharacter = '`';
   UsesELFSectionDirectiveForBSS = true;
   SupportsDebugInformation = true;
   ExceptionsType = ExceptionHandling::DwarfCFI;
+}
+
+bool BedrockMCAsmInfo::isValidUnquotedName(StringRef Name) const {
+  return MCAsmInfoELF::isValidUnquotedName(Name) &&
+         !BedrockMC::isReservedAssemblyName(Name);
 }

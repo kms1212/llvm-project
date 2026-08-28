@@ -67,7 +67,7 @@ _BitInt(33) external_bit_int;
 #endif
 
 #ifdef TEST_VECTOR
-// VECTOR: error: Bedrock C ABI does not permit vector type without an extension ABI 'struct VectorArray' across an external ABI boundary
+// VECTOR: error: Bedrock C ABI does not permit fixed-length vector type without an extension ABI 'struct VectorArray' across an external ABI boundary
 struct VectorArray external_vector_array;
 #endif
 

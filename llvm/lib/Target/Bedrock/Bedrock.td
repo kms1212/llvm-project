@@ -7,6 +7,7 @@
 //===----------------------------------------------------------------------===//
 
 include "llvm/Target/Target.td"
+include "llvm/TableGen/SearchableTable.td"
 
 class Proc<string Name, list<SubtargetFeature> Features>
     : Processor<Name, NoItineraries, Features>;
@@ -17,11 +18,14 @@ def FeatureFPTRANSA
     : SubtargetFeature<"fptransa", "HasFPTRANSA", "true",
                        "Enable approximate transcendental floating-point instructions",
                        [FeatureFPU]>;
-def : Proc<"generic", [FeatureFPU]>;
+def FeatureVector : SubtargetFeature<"vector", "HasVector", "true",
+                                     "Enable scalable-vector instructions">;
+def : Proc<"generic", [FeatureFPU, FeatureVector]>;
 
 include "BedrockRegisterInfo.td"
 include "BedrockCallingConv.td"
 include "BedrockInstrInfo.td"
+include "BedrockGenISACatalog.td"
 
 defm : RemapAllTargetPseudoPointerOperands<GPR64>;
 

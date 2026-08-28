@@ -20,9 +20,11 @@ declare void @f15()
 define void @dense_switch(i32 %x) {
 ; CHECK-LABEL: dense_switch:
 ; CHECK: cmp.l 15,
-; CHECK-NOT: shl.q
+; CHECK: lea.q 2, [[COUNT:r[0-9]+]]
+; CHECK-NEXT: shl.q [[COUNT]], r0
 ; CHECK: lea.q [pc + .LJTI{{[0-9]+}}_{{[0-9]+}}], [[JT:r[0-9]+]]
-; CHECK-NEXT: extsq.l [ds:[[JT]] + r0], r0
+; CHECK-NEXT: add.q [[JT]], r0
+; CHECK-NEXT: extsq.l [r0], r0
 ; CHECK-NEXT: add.q [[JT]], r0
 ; CHECK-NEXT: jmp.q r0
 ; CHECK: .section .rodata

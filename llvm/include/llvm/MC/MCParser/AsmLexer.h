@@ -215,6 +215,7 @@ private:
   AsmToken LexDigit();
   AsmToken LexSingleQuote();
   AsmToken LexQuote();
+  AsmToken LexBacktick();
   AsmToken LexFloatLiteral();
   AsmToken LexHexFloatLiteral(bool NoIntDigits);
 

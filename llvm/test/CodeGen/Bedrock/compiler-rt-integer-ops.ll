@@ -31,7 +31,7 @@ define i32 @ctlz_i32(i32 %value) {
 ; CHECK-LABEL: ctlz_i32:
 ; CHECK: clz.l{{[ \t]+}}r0, r0
 ; OBJ-LABEL: <ctlz_i32>:
-; OBJ: c7 c0 a0 00{{.*}}clz.l{{[ \t]+}}r0, r0
+; OBJ: c2 55 00{{.*}}clz.l{{[ \t]+}}r0, r0
   %result = call i32 @llvm.ctlz.i32(i32 %value, i1 false)
   ret i32 %result
 }
@@ -40,7 +40,7 @@ define i64 @ctlz_i64_zero_undef(i64 %value) {
 ; CHECK-LABEL: ctlz_i64_zero_undef:
 ; CHECK: clz.q{{[ \t]+}}r0, r0
 ; OBJ-LABEL: <ctlz_i64_zero_undef>:
-; OBJ: c7 c0 e0 00{{.*}}clz.q{{[ \t]+}}r0, r0
+; OBJ: c2 5d 00{{.*}}clz.q{{[ \t]+}}r0, r0
   %result = call i64 @llvm.ctlz.i64(i64 %value, i1 true)
   ret i64 %result
 }
@@ -49,7 +49,7 @@ define i32 @cttz_i32_zero_undef(i32 %value) {
 ; CHECK-LABEL: cttz_i32_zero_undef:
 ; CHECK: ctz.l{{[ \t]+}}r0, r0
 ; OBJ-LABEL: <cttz_i32_zero_undef>:
-; OBJ: c7 c0 a8 00{{.*}}ctz.l{{[ \t]+}}r0, r0
+; OBJ: c2 57 00{{.*}}ctz.l{{[ \t]+}}r0, r0
   %result = call i32 @llvm.cttz.i32(i32 %value, i1 true)
   ret i32 %result
 }
@@ -65,7 +65,7 @@ define i32 @ctpop_i32(i32 %value) {
 ; CHECK-LABEL: ctpop_i32:
 ; CHECK: popcnt.l{{[ \t]+}}r0, r0
 ; OBJ-LABEL: <ctpop_i32>:
-; OBJ: c7 c2 80 00{{.*}}popcnt.l{{[ \t]+}}r0, r0
+; OBJ: c2 77 00{{.*}}popcnt.l{{[ \t]+}}r0, r0
   %result = call i32 @llvm.ctpop.i32(i32 %value)
   ret i32 %result
 }
@@ -81,7 +81,7 @@ define i32 @bswap_i32(i32 %value) {
 ; CHECK-LABEL: bswap_i32:
 ; CHECK: revbyte.l{{[ \t]+}}r0
 ; OBJ-LABEL: <bswap_i32>:
-; OBJ: a2 a0{{.*}}revbyte.l{{[ \t]+}}r0
+; OBJ: ac 20{{.*}}revbyte.l{{[ \t]+}}r0
   %result = call i32 @llvm.bswap.i32(i32 %value)
   ret i32 %result
 }
@@ -90,7 +90,7 @@ define i64 @bswap_i64(i64 %value) {
 ; CHECK-LABEL: bswap_i64:
 ; CHECK: revbyte.q{{[ \t]+}}r0
 ; OBJ-LABEL: <bswap_i64>:
-; OBJ: a2 b0{{.*}}revbyte.q{{[ \t]+}}r0
+; OBJ: ac 30{{.*}}revbyte.q{{[ \t]+}}r0
   %result = call i64 @llvm.bswap.i64(i64 %value)
   ret i64 %result
 }
@@ -153,7 +153,7 @@ define i64 @mulhsu_i64(i64 %lhs, i64 %rhs) {
 ; CHECK-LABEL: mulhsu_i64:
 ; CHECK: mulhsu.q{{[ \t]+}}r1, r0
 ; OBJ-LABEL: <mulhsu_i64>:
-; OBJ: c7 ef 48 e0{{.*}}mulhsu.q{{[ \t]+}}r1, r0
+; OBJ: c3 1c 10{{.*}}mulhsu.q{{[ \t]+}}r1, r0
   %lhs.wide = sext i64 %lhs to i128
   %rhs.wide = zext i64 %rhs to i128
   %product = mul i128 %lhs.wide, %rhs.wide
@@ -166,7 +166,7 @@ define i32 @clmul_i32(i32 %lhs, i32 %rhs) {
 ; CHECK-LABEL: clmul_i32:
 ; CHECK: clmul.l{{[ \t]+}}r1, r0
 ; OBJ-LABEL: <clmul_i32>:
-; OBJ: c7 c2 98 01{{.*}}clmul.l{{[ \t]+}}r1, r0
+; OBJ: c2 52 10{{.*}}clmul.l{{[ \t]+}}r1, r0
   %result = call i32 @llvm.clmul.i32(i32 %lhs, i32 %rhs)
   ret i32 %result
 }
@@ -175,7 +175,7 @@ define i64 @clmul_i64(i64 %lhs, i64 %rhs) {
 ; CHECK-LABEL: clmul_i64:
 ; CHECK: clmul.q{{[ \t]+}}r1, r0
 ; OBJ-LABEL: <clmul_i64>:
-; OBJ: c7 c2 d8 01{{.*}}clmul.q{{[ \t]+}}r1, r0
+; OBJ: c2 5a 10{{.*}}clmul.q{{[ \t]+}}r1, r0
   %result = call i64 @llvm.clmul.i64(i64 %lhs, i64 %rhs)
   ret i64 %result
 }
@@ -184,7 +184,7 @@ define i64 @clmulh_i64(i64 %lhs, i64 %rhs) {
 ; CHECK-LABEL: clmulh_i64:
 ; CHECK: clmulh.q{{[ \t]+}}r1, r0
 ; OBJ-LABEL: <clmulh_i64>:
-; OBJ: c7 c3 30 01{{.*}}clmulh.q{{[ \t]+}}r1, r0
+; OBJ: c2 5b 10{{.*}}clmulh.q{{[ \t]+}}r1, r0
   %lhs.wide = zext i64 %lhs to i128
   %rhs.wide = zext i64 %rhs to i128
   %product = call i128 @llvm.clmul.i128(i128 %lhs.wide, i128 %rhs.wide)
@@ -195,136 +195,136 @@ define i64 @clmulh_i64(i64 %lhs, i64 %rhs) {
 
 define i128 @add_i128(i128 %lhs, i128 %rhs) {
 ; CHECK-LABEL: add_i128:
-; CHECK: clc
+; CHECK: setf 0
 ; CHECK-NEXT: adc.q{{[ \t]+}}r2, r0
 ; CHECK-NEXT: adc.q{{[ \t]+}}r3, r1
 ; CHECK-NOT: cmp
 ; CHECK-NOT: setult
 ; CHECK: ret
 ; OBJ-LABEL: <add_i128>:
-; OBJ: c0 25 82{{.*}}clrf{{[ \t]+}}2
-; OBJ-NEXT: {{.*}}c3 39 00{{.*}}adc.q{{[ \t]+}}r2, r0
-; OBJ-NEXT: {{.*}}c3 39 81{{.*}}adc.q{{[ \t]+}}r3, r1
+; OBJ: c3 b9 10{{.*}}setf{{[ \t]+}}0
+; OBJ-NEXT: {{.*}}c2 1c 20{{.*}}adc.q{{[ \t]+}}r2, r0
+; OBJ-NEXT: {{.*}}c2 1c 31{{.*}}adc.q{{[ \t]+}}r3, r1
   %result = add i128 %lhs, %rhs
   ret i128 %result
 }
 
 define i128 @sub_i128(i128 %lhs, i128 %rhs) {
 ; CHECK-LABEL: sub_i128:
-; CHECK: clc
+; CHECK: setf 0
 ; CHECK-NEXT: sbb.q{{[ \t]+}}r2, r0
 ; CHECK-NEXT: sbb.q{{[ \t]+}}r3, r1
 ; CHECK-NOT: cmp
 ; CHECK-NOT: setult
 ; CHECK: ret
 ; OBJ-LABEL: <sub_i128>:
-; OBJ: c0 25 82{{.*}}clrf{{[ \t]+}}2
-; OBJ-NEXT: {{.*}}c3 79 00{{.*}}sbb.q{{[ \t]+}}r2, r0
-; OBJ-NEXT: {{.*}}c3 79 81{{.*}}sbb.q{{[ \t]+}}r3, r1
+; OBJ: c3 b9 10{{.*}}setf{{[ \t]+}}0
+; OBJ-NEXT: {{.*}}c2 1d 20{{.*}}sbb.q{{[ \t]+}}r2, r0
+; OBJ-NEXT: {{.*}}c2 1d 31{{.*}}sbb.q{{[ \t]+}}r3, r1
   %result = sub i128 %lhs, %rhs
   ret i128 %result
 }
 
 define {i32, i1} @saddo_i32(i32 %lhs, i32 %rhs) {
 ; CHECK-LABEL: saddo_i32:
-; CHECK: clc
+; CHECK: setf 0
 ; CHECK-NEXT: adc.l{{[ \t]+}}r1, r0
 ; CHECK-NEXT: setvs{{[ \t]+}}r1
 ; OBJ-LABEL: <saddo_i32>:
-; OBJ: c0 25 82{{.*}}clrf{{[ \t]+}}2
-; OBJ-NEXT: {{.*}}c3 28 80{{.*}}adc.l{{[ \t]+}}r1, r0
-; OBJ-NEXT: {{.*}}a1 18{{.*}}setvs{{[ \t]+}}r1
+; OBJ: c3 b9 10{{.*}}setf{{[ \t]+}}0
+; OBJ-NEXT: {{.*}}c2 14 10{{.*}}adc.l{{[ \t]+}}r1, r0
+; OBJ-NEXT: {{.*}}a0 81{{.*}}setvs{{[ \t]+}}r1
   %result = call {i32, i1} @llvm.sadd.with.overflow.i32(i32 %lhs, i32 %rhs)
   ret {i32, i1} %result
 }
 
 define {i64, i1} @saddo_i64(i64 %lhs, i64 %rhs) {
 ; CHECK-LABEL: saddo_i64:
-; CHECK: clc
+; CHECK: setf 0
 ; CHECK-NEXT: adc.q{{[ \t]+}}r1, r0
 ; CHECK-NEXT: setvs{{[ \t]+}}r1
 ; OBJ-LABEL: <saddo_i64>:
-; OBJ: c0 25 82{{.*}}clrf{{[ \t]+}}2
-; OBJ-NEXT: {{.*}}c3 38 80{{.*}}adc.q{{[ \t]+}}r1, r0
-; OBJ-NEXT: {{.*}}a1 18{{.*}}setvs{{[ \t]+}}r1
+; OBJ: c3 b9 10{{.*}}setf{{[ \t]+}}0
+; OBJ-NEXT: {{.*}}c2 1c 10{{.*}}adc.q{{[ \t]+}}r1, r0
+; OBJ-NEXT: {{.*}}a0 81{{.*}}setvs{{[ \t]+}}r1
   %result = call {i64, i1} @llvm.sadd.with.overflow.i64(i64 %lhs, i64 %rhs)
   ret {i64, i1} %result
 }
 
 define {i32, i1} @ssubo_i32(i32 %lhs, i32 %rhs) {
 ; CHECK-LABEL: ssubo_i32:
-; CHECK: clc
+; CHECK: setf 0
 ; CHECK-NEXT: sbb.l{{[ \t]+}}r1, r0
 ; CHECK-NEXT: setvs{{[ \t]+}}r1
 ; OBJ-LABEL: <ssubo_i32>:
-; OBJ: c0 25 82{{.*}}clrf{{[ \t]+}}2
-; OBJ-NEXT: {{.*}}c3 68 80{{.*}}sbb.l{{[ \t]+}}r1, r0
-; OBJ-NEXT: {{.*}}a1 18{{.*}}setvs{{[ \t]+}}r1
+; OBJ: c3 b9 10{{.*}}setf{{[ \t]+}}0
+; OBJ-NEXT: {{.*}}c2 15 10{{.*}}sbb.l{{[ \t]+}}r1, r0
+; OBJ-NEXT: {{.*}}a0 81{{.*}}setvs{{[ \t]+}}r1
   %result = call {i32, i1} @llvm.ssub.with.overflow.i32(i32 %lhs, i32 %rhs)
   ret {i32, i1} %result
 }
 
 define {i64, i1} @ssubo_i64(i64 %lhs, i64 %rhs) {
 ; CHECK-LABEL: ssubo_i64:
-; CHECK: clc
+; CHECK: setf 0
 ; CHECK-NEXT: sbb.q{{[ \t]+}}r1, r0
 ; CHECK-NEXT: setvs{{[ \t]+}}r1
 ; OBJ-LABEL: <ssubo_i64>:
-; OBJ: c0 25 82{{.*}}clrf{{[ \t]+}}2
-; OBJ-NEXT: {{.*}}c3 78 80{{.*}}sbb.q{{[ \t]+}}r1, r0
-; OBJ-NEXT: {{.*}}a1 18{{.*}}setvs{{[ \t]+}}r1
+; OBJ: c3 b9 10{{.*}}setf{{[ \t]+}}0
+; OBJ-NEXT: {{.*}}c2 1d 10{{.*}}sbb.q{{[ \t]+}}r1, r0
+; OBJ-NEXT: {{.*}}a0 81{{.*}}setvs{{[ \t]+}}r1
   %result = call {i64, i1} @llvm.ssub.with.overflow.i64(i64 %lhs, i64 %rhs)
   ret {i64, i1} %result
 }
 
 define {i32, i1} @uaddo_i32(i32 %lhs, i32 %rhs) {
 ; CHECK-LABEL: uaddo_i32:
-; CHECK: clc
+; CHECK: setf 0
 ; CHECK-NEXT: adc.l{{[ \t]+}}r1, r0
 ; CHECK-NEXT: setult{{[ \t]+}}r1
 ; OBJ-LABEL: <uaddo_i32>:
-; OBJ: c0 25 82{{.*}}clrf{{[ \t]+}}2
-; OBJ-NEXT: {{.*}}c3 28 80{{.*}}adc.l{{[ \t]+}}r1, r0
-; OBJ-NEXT: {{.*}}a1 14{{.*}}setult{{[ \t]+}}r1
+; OBJ: c3 b9 10{{.*}}setf{{[ \t]+}}0
+; OBJ-NEXT: {{.*}}c2 14 10{{.*}}adc.l{{[ \t]+}}r1, r0
+; OBJ-NEXT: {{.*}}a0 41{{.*}}setult{{[ \t]+}}r1
   %result = call {i32, i1} @llvm.uadd.with.overflow.i32(i32 %lhs, i32 %rhs)
   ret {i32, i1} %result
 }
 
 define {i64, i1} @uaddo_i64(i64 %lhs, i64 %rhs) {
 ; CHECK-LABEL: uaddo_i64:
-; CHECK: clc
+; CHECK: setf 0
 ; CHECK-NEXT: adc.q{{[ \t]+}}r1, r0
 ; CHECK-NEXT: setult{{[ \t]+}}r1
 ; OBJ-LABEL: <uaddo_i64>:
-; OBJ: c0 25 82{{.*}}clrf{{[ \t]+}}2
-; OBJ-NEXT: {{.*}}c3 38 80{{.*}}adc.q{{[ \t]+}}r1, r0
-; OBJ-NEXT: {{.*}}a1 14{{.*}}setult{{[ \t]+}}r1
+; OBJ: c3 b9 10{{.*}}setf{{[ \t]+}}0
+; OBJ-NEXT: {{.*}}c2 1c 10{{.*}}adc.q{{[ \t]+}}r1, r0
+; OBJ-NEXT: {{.*}}a0 41{{.*}}setult{{[ \t]+}}r1
   %result = call {i64, i1} @llvm.uadd.with.overflow.i64(i64 %lhs, i64 %rhs)
   ret {i64, i1} %result
 }
 
 define {i32, i1} @usubo_i32(i32 %lhs, i32 %rhs) {
 ; CHECK-LABEL: usubo_i32:
-; CHECK: clc
+; CHECK: setf 0
 ; CHECK-NEXT: sbb.l{{[ \t]+}}r1, r0
 ; CHECK-NEXT: setult{{[ \t]+}}r1
 ; OBJ-LABEL: <usubo_i32>:
-; OBJ: c0 25 82{{.*}}clrf{{[ \t]+}}2
-; OBJ-NEXT: {{.*}}c3 68 80{{.*}}sbb.l{{[ \t]+}}r1, r0
-; OBJ-NEXT: {{.*}}a1 14{{.*}}setult{{[ \t]+}}r1
+; OBJ: c3 b9 10{{.*}}setf{{[ \t]+}}0
+; OBJ-NEXT: {{.*}}c2 15 10{{.*}}sbb.l{{[ \t]+}}r1, r0
+; OBJ-NEXT: {{.*}}a0 41{{.*}}setult{{[ \t]+}}r1
   %result = call {i32, i1} @llvm.usub.with.overflow.i32(i32 %lhs, i32 %rhs)
   ret {i32, i1} %result
 }
 
 define {i64, i1} @usubo_i64(i64 %lhs, i64 %rhs) {
 ; CHECK-LABEL: usubo_i64:
-; CHECK: clc
+; CHECK: setf 0
 ; CHECK-NEXT: sbb.q{{[ \t]+}}r1, r0
 ; CHECK-NEXT: setult{{[ \t]+}}r1
 ; OBJ-LABEL: <usubo_i64>:
-; OBJ: c0 25 82{{.*}}clrf{{[ \t]+}}2
-; OBJ-NEXT: {{.*}}c3 78 80{{.*}}sbb.q{{[ \t]+}}r1, r0
-; OBJ-NEXT: {{.*}}a1 14{{.*}}setult{{[ \t]+}}r1
+; OBJ: c3 b9 10{{.*}}setf{{[ \t]+}}0
+; OBJ-NEXT: {{.*}}c2 1d 10{{.*}}sbb.q{{[ \t]+}}r1, r0
+; OBJ-NEXT: {{.*}}a0 41{{.*}}setult{{[ \t]+}}r1
   %result = call {i64, i1} @llvm.usub.with.overflow.i64(i64 %lhs, i64 %rhs)
   ret {i64, i1} %result
 }
@@ -335,8 +335,8 @@ define {i32, i1} @saddo_i32_one(i32 %value) {
 ; CHECK-NEXT: setvs{{[ \t]+}}r1
 ; CHECK-NOT: adc
 ; OBJ-LABEL: <saddo_i32_one>:
-; OBJ: c0 28 80{{.*}}incf.l{{[ \t]+}}r0
-; OBJ-NEXT: {{.*}}a1 18{{.*}}setvs{{[ \t]+}}r1
+; OBJ: c3 b0 90{{.*}}incf.l{{[ \t]+}}r0
+; OBJ-NEXT: {{.*}}a0 81{{.*}}setvs{{[ \t]+}}r1
   %result = call {i32, i1} @llvm.sadd.with.overflow.i32(i32 %value, i32 1)
   ret {i32, i1} %result
 }
@@ -347,8 +347,8 @@ define {i64, i1} @uaddo_i64_one(i64 %value) {
 ; CHECK-NEXT: setult{{[ \t]+}}r1
 ; CHECK-NOT: adc
 ; OBJ-LABEL: <uaddo_i64_one>:
-; OBJ: c0 2a 80{{.*}}incf.q{{[ \t]+}}r0
-; OBJ-NEXT: {{.*}}a1 14{{.*}}setult{{[ \t]+}}r1
+; OBJ: c3 b0 d0{{.*}}incf.q{{[ \t]+}}r0
+; OBJ-NEXT: {{.*}}a0 41{{.*}}setult{{[ \t]+}}r1
   %result = call {i64, i1} @llvm.uadd.with.overflow.i64(i64 %value, i64 1)
   ret {i64, i1} %result
 }
@@ -359,8 +359,8 @@ define {i32, i1} @ssubo_i32_one(i32 %value) {
 ; CHECK-NEXT: setvs{{[ \t]+}}r1
 ; CHECK-NOT: sbb
 ; OBJ-LABEL: <ssubo_i32_one>:
-; OBJ: c0 29 80{{.*}}decf.l{{[ \t]+}}r0
-; OBJ-NEXT: {{.*}}a1 18{{.*}}setvs{{[ \t]+}}r1
+; OBJ: c3 b0 80{{.*}}decf.l{{[ \t]+}}r0
+; OBJ-NEXT: {{.*}}a0 81{{.*}}setvs{{[ \t]+}}r1
   %result = call {i32, i1} @llvm.ssub.with.overflow.i32(i32 %value, i32 1)
   ret {i32, i1} %result
 }
@@ -371,8 +371,8 @@ define {i64, i1} @usubo_i64_one(i64 %value) {
 ; CHECK-NEXT: setult{{[ \t]+}}r1
 ; CHECK-NOT: sbb
 ; OBJ-LABEL: <usubo_i64_one>:
-; OBJ: c0 2b 80{{.*}}decf.q{{[ \t]+}}r0
-; OBJ-NEXT: {{.*}}a1 14{{.*}}setult{{[ \t]+}}r1
+; OBJ: c3 b0 c0{{.*}}decf.q{{[ \t]+}}r0
+; OBJ-NEXT: {{.*}}a0 41{{.*}}setult{{[ \t]+}}r1
   %result = call {i64, i1} @llvm.usub.with.overflow.i64(i64 %value, i64 1)
   ret {i64, i1} %result
 }
@@ -448,9 +448,10 @@ define i64 @integer_bit_operations(i64 %value) {
 
 define i128 @wide_variable_shift(i128 %value, i64 %amount) {
 ; CHECK-LABEL: wide_variable_shift:
-; CHECK: shl.q{{[ \t]+}}32, [[AMOUNT:r[0-9]+]]
-; CHECK-NEXT: sar.q{{[ \t]+}}32, [[AMOUNT]]
-; CHECK-NOT: extzq.l
+; CHECK: lea.q{{[ \t]+}}32, [[COUNT:r[0-9]+]]
+; CHECK-NEXT: shl.q{{[ \t]+}}[[COUNT]], [[AMOUNT:r[0-9]+]]
+; CHECK-NEXT: sar.q{{[ \t]+}}[[COUNT]], [[AMOUNT]]
+; CHECK-NOT: mov.l
 ; CHECK: call __ashlti3
 ; CHECK: call __lshrti3
 ; CHECK: ret

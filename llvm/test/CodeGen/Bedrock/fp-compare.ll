@@ -152,8 +152,8 @@ define double @select_olt(double %a, double %b, double %x, double %y) {
 ; CHECK: FCMP.D
 ; CHECK-NEXT: FMOVult
 ; OBJ-LABEL: <select_olt>:
-; OBJ: c2 28 01{{.*}}fcmp.d
-; OBJ-NEXT: c7 d9 21 03{{.*}}fmovult
+; OBJ: c2 8f 10{{.*}}fcmp.d
+; OBJ-NEXT: c7 e2 84 23{{.*}}fmovult
   %cmp = fcmp olt double %a, %b
   %result = select i1 %cmp, double %x, double %y
   ret double %result
@@ -166,9 +166,9 @@ define double @select_one(double %a, double %b, double %x, double %y) {
 ; CHECK: FMOVeq
 ; CHECK-NEXT: FMOVvs
 ; OBJ-LABEL: <select_one>:
-; OBJ: c2 28 01{{.*}}fcmp.d
-; OBJ-NEXT: c7 d9 11 82{{.*}}fmoveq
-; OBJ-NEXT: c7 d9 41 82{{.*}}fmovvs
+; OBJ: c2 8f 10{{.*}}fcmp.d
+; OBJ-NEXT: c7 e2 82 32{{.*}}fmoveq
+; OBJ-NEXT: c7 e2 88 32{{.*}}fmovvs
   %cmp = fcmp one double %a, %b
   %result = select i1 %cmp, double %x, double %y
   ret double %result
@@ -187,7 +187,7 @@ define i1 @test_positive_zero(float %value) {
 ; CHECK: FTEST.S{{[ \t]+}}f0
 ; CHECK-NEXT: seteq
 ; OBJ-LABEL: <test_positive_zero>:
-; OBJ: c7 d6 30 00{{.*}}ftest.s{{[ \t]+}}f0
+; OBJ: c3 b2 10{{.*}}ftest.s{{[ \t]+}}f0
   %result = fcmp oeq float %value, 0.0
   ret i1 %result
 }
@@ -197,7 +197,7 @@ define i1 @test_negative_zero(double %value) {
 ; CHECK: FTEST.D{{[ \t]+}}f0
 ; CHECK-NEXT: setult
 ; OBJ-LABEL: <test_negative_zero>:
-; OBJ: c7 d6 b0 00{{.*}}ftest.d{{[ \t]+}}f0
+; OBJ: c3 b2 50{{.*}}ftest.d{{[ \t]+}}f0
   %result = fcmp olt double %value, -0.0
   ret i1 %result
 }
@@ -208,8 +208,8 @@ define double @select_float_test_double_result(float %value, double %t,
 ; CHECK: FTEST.S{{[ \t]+}}f0
 ; CHECK-NEXT: FMOVult
 ; OBJ-LABEL: <select_float_test_double_result>:
-; OBJ: c7 d6 30 00{{.*}}ftest.s{{[ \t]+}}f0
-; OBJ-NEXT: {{.*}}c7 d9 20 82{{.*}}fmovult
+; OBJ: c3 b2 10{{.*}}ftest.s{{[ \t]+}}f0
+; OBJ-NEXT: {{.*}}c7 e2 84 12{{.*}}fmovult
   %condition = fcmp olt float %value, 0.0
   %result = select i1 %condition, double %t, double %f
   ret double %result
@@ -221,8 +221,8 @@ define float @select_double_test_float_result(double %value, float %t,
 ; CHECK: FTEST.D{{[ \t]+}}f0
 ; CHECK-NEXT: FMOVgt
 ; OBJ-LABEL: <select_double_test_float_result>:
-; OBJ: c7 d6 b0 00{{.*}}ftest.d{{[ \t]+}}f0
-; OBJ-NEXT: {{.*}}c7 d9 78 82{{.*}}fmovgt
+; OBJ: c3 b2 50{{.*}}ftest.d{{[ \t]+}}f0
+; OBJ-NEXT: {{.*}}c7 e2 8f 12{{.*}}fmovgt
   %condition = fcmp ogt double %value, -0.0
   %result = select i1 %condition, float %t, float %f
   ret float %result

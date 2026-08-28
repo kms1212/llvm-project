@@ -13,7 +13,7 @@ define i128 @wide_add(i128 %lhs, i128 %rhs) {
 ; MIR: ADDCQ3rr {{.*}}, implicit-def $flags
 ; MIR-NEXT: {{.*}}ADCQ3rr {{.*}}, implicit-def dead $flags, implicit $flags
 ; ASM-LABEL: wide_add:
-; ASM: clc
+; ASM: setf 0
 ; ASM-NEXT: adc.q
 ; ASM-NEXT: adc.q
   %result = add i128 %lhs, %rhs

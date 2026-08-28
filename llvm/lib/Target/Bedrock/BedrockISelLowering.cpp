@@ -25,6 +25,7 @@
 #include "llvm/Support/ErrorHandling.h"
 #include "llvm/Target/TargetMachine.h"
 #include <cmath>
+#include <optional>
 
 using namespace llvm;
 
@@ -39,6 +40,30 @@ BedrockTargetLowering::BedrockTargetLowering(const TargetMachine &TM,
   addRegisterClass(MVT::i64, &Bedrock::GPR64RegClass);
   addRegisterClass(MVT::f32, &Bedrock::FPR64RegClass);
   addRegisterClass(MVT::f64, &Bedrock::FPR64RegClass);
+  if (Subtarget.hasVector()) {
+    for (MVT VT : {MVT::nxv16i8, MVT::nxv8i16, MVT::nxv4i32,
+                   MVT::nxv2i64, MVT::nxv8f16, MVT::nxv4f32,
+                   MVT::nxv2f64}) {
+      addRegisterClass(VT, &Bedrock::VRRegClass);
+      setOperationAction(ISD::LOAD, VT, Legal);
+      setOperationAction(ISD::STORE, VT, Legal);
+      setOperationAction(ISD::SETCC, VT, Legal);
+    }
+    for (MVT VT : {MVT::nxv16i8, MVT::nxv8i16, MVT::nxv4i32,
+                   MVT::nxv2i64})
+      for (unsigned Opcode : {ISD::ADD, ISD::SUB, ISD::MUL, ISD::AND,
+                              ISD::OR, ISD::XOR})
+        setOperationAction(Opcode, VT, Legal);
+    for (MVT VT : {MVT::nxv8f16, MVT::nxv4f32, MVT::nxv2f64})
+      for (unsigned Opcode : {ISD::FADD, ISD::FSUB, ISD::FMUL, ISD::FDIV})
+        setOperationAction(Opcode, VT, Legal);
+    for (MVT VT : {MVT::nxv16i1, MVT::nxv8i1, MVT::nxv4i1,
+                   MVT::nxv2i1}) {
+      addRegisterClass(VT, &Bedrock::PRRegClass);
+      setOperationAction(ISD::LOAD, VT, Legal);
+      setOperationAction(ISD::STORE, VT, Legal);
+    }
+  }
 
   setBooleanContents(ZeroOrOneBooleanContent);
   for (MVT VT : {MVT::i32, MVT::i64}) {
@@ -201,6 +226,8 @@ BedrockTargetLowering::BedrockTargetLowering(const TargetMachine &TM,
   setOperationAction(ISD::BR_JT, MVT::Other, Expand);
   setOperationAction(ISD::BRCOND, MVT::Other, Custom);
   setOperationAction(ISD::VASTART, MVT::Other, Custom);
+  setOperationAction(ISD::VAEND, MVT::Other, Expand);
+  setOperationAction(ISD::VACOPY, MVT::Other, Expand);
   setOperationAction(ISD::DYNAMIC_STACKALLOC, MVT::i64, Custom);
   setOperationAction(ISD::GlobalTLSAddress, MVT::i64, Custom);
   setOperationAction(ISD::ATOMIC_FENCE, MVT::Other, Custom);
@@ -527,6 +554,131 @@ SDValue BedrockTargetLowering::PerformDAGCombine(SDNode *N,
   return DAG.getNode(Opcode, DL, VT, Arg);
 }
 
+namespace {
+
+enum class BedrockCAtomicOrder {
+#define BEDROCK_C_MEMORY_ORDER(ID, INSTRUCTION_ORDER, HAS_LOAD, HAS_STORE) ID,
+#include "llvm/TargetParser/BedrockGenCABI.inc"
+#undef BEDROCK_C_MEMORY_ORDER
+};
+
+enum class BedrockCAtomicAccess { LOAD, STORE, THREAD_FENCE };
+enum class BedrockCAtomicStepKind { ACCESS, INSTRUCTION };
+enum class BedrockCAtomicInstruction { NONE, AFENCE };
+
+struct BedrockCAtomicStep {
+  BedrockCAtomicOrder Order;
+  BedrockCAtomicAccess Access;
+  unsigned Index;
+  BedrockCAtomicStepKind Kind;
+  BedrockCAtomicInstruction Instruction;
+};
+
+constexpr BedrockCAtomicStep BedrockCAtomicSteps[] = {
+#define BEDROCK_C_MEMORY_ORDER_STEP(ID, ACCESS, INDEX, KIND, VALUE)            \
+  {BedrockCAtomicOrder::ID, BedrockCAtomicAccess::ACCESS, INDEX,               \
+   BedrockCAtomicStepKind::KIND, BedrockCAtomicInstruction::VALUE},
+#include "llvm/TargetParser/BedrockGenCABI.inc"
+#undef BEDROCK_C_MEMORY_ORDER_STEP
+};
+
+static BedrockCAtomicOrder getBedrockCAtomicOrder(AtomicOrdering Order) {
+  switch (Order) {
+  case AtomicOrdering::NotAtomic:
+  case AtomicOrdering::Unordered:
+  case AtomicOrdering::Monotonic:
+    return BedrockCAtomicOrder::RELAXED;
+  case AtomicOrdering::Acquire:
+    return BedrockCAtomicOrder::ACQUIRE;
+  case AtomicOrdering::Release:
+    return BedrockCAtomicOrder::RELEASE;
+  case AtomicOrdering::AcquireRelease:
+    return BedrockCAtomicOrder::ACQ_REL;
+  case AtomicOrdering::SequentiallyConsistent:
+    return BedrockCAtomicOrder::SEQ_CST;
+  }
+  llvm_unreachable("unknown C atomic ordering");
+}
+
+static bool hasBedrockCAtomicFence(AtomicOrdering Order,
+                                   BedrockCAtomicAccess Access,
+                                   bool BeforeAccess) {
+  BedrockCAtomicOrder COrder = getBedrockCAtomicOrder(Order);
+  std::optional<unsigned> AccessIndex;
+  for (const BedrockCAtomicStep &Step : BedrockCAtomicSteps)
+    if (Step.Order == COrder && Step.Access == Access &&
+        Step.Kind == BedrockCAtomicStepKind::ACCESS) {
+      AccessIndex = Step.Index;
+      break;
+    }
+  if (!AccessIndex)
+    return false;
+  for (const BedrockCAtomicStep &Step : BedrockCAtomicSteps)
+    if (Step.Order == COrder && Step.Access == Access &&
+        Step.Kind == BedrockCAtomicStepKind::INSTRUCTION &&
+        Step.Instruction == BedrockCAtomicInstruction::AFENCE &&
+        ((BeforeAccess && Step.Index < *AccessIndex) ||
+         (!BeforeAccess && Step.Index > *AccessIndex)))
+      return true;
+  return false;
+}
+
+enum class BedrockCAtomicStrategy {
+  ALIGNED_ACCESS,
+  INSTRUCTION,
+  COMPARE_EXCHANGE_LOOP,
+};
+
+#define BEDROCK_C_ATOMIC_LOWERING(ID, STRATEGY)                                \
+  [[maybe_unused]] static constexpr BedrockCAtomicStrategy                     \
+      BedrockAtomicStrategy_##ID = BedrockCAtomicStrategy::STRATEGY;
+#include "llvm/TargetParser/BedrockGenCABI.inc"
+#undef BEDROCK_C_ATOMIC_LOWERING
+
+static BedrockCAtomicStrategy
+getBedrockCAtomicRMWStrategy(AtomicRMWInst::BinOp Operation) {
+#define BEDROCK_C_ATOMIC_CASE_ATOMIC_LOAD(ID)
+#define BEDROCK_C_ATOMIC_CASE_ATOMIC_STORE(ID)
+#define BEDROCK_C_ATOMIC_CASE_ATOMIC_COMPARE_EXCHANGE(ID)
+#define BEDROCK_C_ATOMIC_CASE_ATOMIC_EXCHANGE(ID)                              \
+  case AtomicRMWInst::Xchg:                                                    \
+    return BedrockAtomicStrategy_##ID;
+#define BEDROCK_C_ATOMIC_CASE_ATOMIC_FETCH_ADD(ID)                             \
+  case AtomicRMWInst::Add:                                                     \
+    return BedrockAtomicStrategy_##ID;
+#define BEDROCK_C_ATOMIC_CASE_ATOMIC_FETCH_SUB(ID)                             \
+  case AtomicRMWInst::Sub:                                                     \
+    return BedrockAtomicStrategy_##ID;
+#define BEDROCK_C_ATOMIC_CASE_ATOMIC_FETCH_AND(ID)                             \
+  case AtomicRMWInst::And:                                                     \
+    return BedrockAtomicStrategy_##ID;
+#define BEDROCK_C_ATOMIC_CASE_ATOMIC_FETCH_OR(ID)                              \
+  case AtomicRMWInst::Or:                                                      \
+    return BedrockAtomicStrategy_##ID;
+#define BEDROCK_C_ATOMIC_CASE_ATOMIC_FETCH_XOR(ID)                             \
+  case AtomicRMWInst::Xor:                                                     \
+    return BedrockAtomicStrategy_##ID;
+#define BEDROCK_C_ATOMIC_OPERATION(ID, OPERATION)                              \
+  BEDROCK_C_ATOMIC_CASE_##OPERATION(ID)
+  switch (Operation) {
+#include "llvm/TargetParser/BedrockGenCABI.inc"
+  default:
+    return BedrockCAtomicStrategy::COMPARE_EXCHANGE_LOOP;
+  }
+#undef BEDROCK_C_ATOMIC_OPERATION
+#undef BEDROCK_C_ATOMIC_CASE_ATOMIC_LOAD
+#undef BEDROCK_C_ATOMIC_CASE_ATOMIC_STORE
+#undef BEDROCK_C_ATOMIC_CASE_ATOMIC_COMPARE_EXCHANGE
+#undef BEDROCK_C_ATOMIC_CASE_ATOMIC_EXCHANGE
+#undef BEDROCK_C_ATOMIC_CASE_ATOMIC_FETCH_ADD
+#undef BEDROCK_C_ATOMIC_CASE_ATOMIC_FETCH_SUB
+#undef BEDROCK_C_ATOMIC_CASE_ATOMIC_FETCH_AND
+#undef BEDROCK_C_ATOMIC_CASE_ATOMIC_FETCH_OR
+#undef BEDROCK_C_ATOMIC_CASE_ATOMIC_FETCH_XOR
+}
+
+} // namespace
+
 bool BedrockTargetLowering::shouldInsertFencesForAtomic(
     const Instruction *I) const {
   // FETCH* and CMPXCHG carry the requested memory order in the instruction.
@@ -535,36 +687,40 @@ bool BedrockTargetLowering::shouldInsertFencesForAtomic(
   return isa<LoadInst, StoreInst>(I);
 }
 
-Instruction *BedrockTargetLowering::emitLeadingFence(
-    IRBuilderBase &Builder, Instruction *Inst, AtomicOrdering Ord) const {
-  if ((isa<LoadInst>(Inst) && Ord == AtomicOrdering::SequentiallyConsistent) ||
-      (isa<StoreInst>(Inst) && isReleaseOrStronger(Ord)))
+Instruction *BedrockTargetLowering::emitLeadingFence(IRBuilderBase &Builder,
+                                                     Instruction *Inst,
+                                                     AtomicOrdering Ord) const {
+  BedrockCAtomicAccess Access = isa<LoadInst>(Inst)
+                                    ? BedrockCAtomicAccess::LOAD
+                                    : BedrockCAtomicAccess::STORE;
+  if (hasBedrockCAtomicFence(Ord, Access, true))
     return Builder.CreateFence(AtomicOrdering::SequentiallyConsistent);
   return nullptr;
 }
 
 Instruction *BedrockTargetLowering::emitTrailingFence(
     IRBuilderBase &Builder, Instruction *Inst, AtomicOrdering Ord) const {
-  if ((isa<LoadInst>(Inst) && isAcquireOrStronger(Ord)) ||
-      (isa<StoreInst>(Inst) && Ord == AtomicOrdering::SequentiallyConsistent))
+  BedrockCAtomicAccess Access = isa<LoadInst>(Inst)
+                                    ? BedrockCAtomicAccess::LOAD
+                                    : BedrockCAtomicAccess::STORE;
+  if (hasBedrockCAtomicFence(Ord, Access, false))
     return Builder.CreateFence(AtomicOrdering::SequentiallyConsistent);
   return nullptr;
 }
 
 TargetLowering::AtomicExpansionKind
 BedrockTargetLowering::shouldExpandAtomicRMWInIR(AtomicRMWInst *RMW) const {
-  switch (RMW->getOperation()) {
-  case AtomicRMWInst::Add:
-  case AtomicRMWInst::Sub:
-  case AtomicRMWInst::And:
-  case AtomicRMWInst::Or:
-  case AtomicRMWInst::Xor:
+  switch (getBedrockCAtomicRMWStrategy(RMW->getOperation())) {
+  case BedrockCAtomicStrategy::INSTRUCTION:
     return AtomicExpansionKind::None;
-  default:
+  case BedrockCAtomicStrategy::COMPARE_EXCHANGE_LOOP:
     // Bedrock has no native exchange/min/max/nand operation. AtomicExpand
     // builds the required retry loop from the native CMPXCHG instruction.
     return AtomicExpansionKind::CmpXChg;
+  case BedrockCAtomicStrategy::ALIGNED_ACCESS:
+    llvm_unreachable("atomic RMW cannot use aligned-access lowering");
   }
+  llvm_unreachable("unknown Bedrock C atomic lowering strategy");
 }
 
 const char *BedrockTargetLowering::getTargetNodeName(unsigned Opcode) const {
@@ -689,6 +845,8 @@ const char *BedrockTargetLowering::getTargetNodeName(unsigned Opcode) const {
 EVT BedrockTargetLowering::getSetCCResultType(const DataLayout &DL,
                                               LLVMContext &Context,
                                               EVT VT) const {
+  if (VT.isScalableVector())
+    return EVT::getVectorVT(Context, MVT::i1, VT.getVectorElementCount());
   return MVT::i64;
 }
 
@@ -1959,9 +2117,13 @@ SDValue BedrockTargetLowering::LowerFormalArguments(
     const CCValAssign &VA = ArgLocs[I];
     SDValue ArgValue;
     if (VA.isRegLoc()) {
-      const TargetRegisterClass *RC =
-          VA.getLocVT().isFloatingPoint() ? &Bedrock::FPR64RegClass
-                                          : &Bedrock::GPR64RegClass;
+      const TargetRegisterClass *RC = &Bedrock::GPR64RegClass;
+      if (VA.getLocVT().isFloatingPoint())
+        RC = &Bedrock::FPR64RegClass;
+      else if (VA.getLocVT() == MVT::nxv16i1)
+        RC = &Bedrock::PRRegClass;
+      else if (VA.getLocVT().isScalableVector())
+        RC = &Bedrock::VRRegClass;
       Register VReg = RegInfo.createVirtualRegister(RC);
       RegInfo.addLiveIn(VA.getLocReg(), VReg);
       ArgValue = DAG.getCopyFromReg(Chain, DL, VReg, VA.getLocVT());
@@ -1978,7 +2140,14 @@ SDValue BedrockTargetLowering::LowerFormalArguments(
           MachinePointerInfo::getFixedStack(MF, FI));
       ArgChains.push_back(ArgValue.getValue(1));
     }
-    InVals.push_back(convertLocVT(ArgValue, VA, DL, DAG));
+    if (VA.getLocInfo() == CCValAssign::Indirect) {
+      SDValue Loaded = DAG.getLoad(VA.getValVT(), DL, ArgValue.getValue(1),
+                                   ArgValue, MachinePointerInfo());
+      ArgChains.push_back(Loaded.getValue(1));
+      InVals.push_back(Loaded);
+    } else {
+      InVals.push_back(convertLocVT(ArgValue, VA, DL, DAG));
+    }
   }
 
   if (!ArgChains.empty())
@@ -2050,7 +2219,8 @@ BedrockTargetLowering::LowerCall(TargetLowering::CallLoweringInfo &CLI,
       TailCallRequested && CallConv == Caller.getCallingConv() &&
       CCInfo.getStackSize() == 0 && !HasByVal && !PassesCallerFrameAddress &&
       Caller.hasStructRetAttr() == CalleeUsesSRet &&
-      CLI.OrigRetTy == Caller.getReturnType() &&
+      (Caller.getReturnType()->isVoidTy() ||
+       CLI.OrigRetTy == Caller.getReturnType()) &&
       Caller.hasRetAttribute(Attribute::SExt) == CLI.RetSExt &&
       Caller.hasRetAttribute(Attribute::ZExt) == CLI.RetZExt;
   if (!TailCallEligible && CLI.CB && CLI.CB->isMustTailCall())
@@ -2077,6 +2247,24 @@ BedrockTargetLowering::LowerCall(TargetLowering::CallLoweringInfo &CLI,
     ArgValues[I] = FIPtr;
   }
 
+  for (unsigned I = 0, E = ArgLocs.size(); I != E; ++I) {
+    if (ArgLocs[I].getLocInfo() != CCValAssign::Indirect)
+      continue;
+    EVT ValueVT = ArgValues[I].getValueType();
+    bool IsPredicate = ValueVT.isScalableVector() &&
+                       ValueVT.getVectorElementType() == MVT::i1;
+    // Reserve the maximum architectural image. Vector stack access also uses
+    // the following 64 bytes to save its P15 scratch predicate.
+    uint64_t ObjectSize = IsPredicate ? 64 : 576;
+    int FI = MF.getFrameInfo().CreateStackObject(
+        ObjectSize, Align(16), /*isSpillSlot=*/false);
+    SDValue Object =
+        DAG.getFrameIndex(FI, getPointerTy(DAG.getDataLayout()));
+    Chain = DAG.getStore(Chain, DL, ArgValues[I], Object,
+                         MachinePointerInfo::getFixedStack(MF, FI));
+    ArgValues[I] = Object;
+  }
+
   uint64_t CallFrameSize = 8 + CCInfo.getStackSize();
   Chain = DAG.getCALLSEQ_START(Chain, CallFrameSize, 0, DL);
 
@@ -2090,7 +2278,9 @@ BedrockTargetLowering::LowerCall(TargetLowering::CallLoweringInfo &CLI,
   SDValue StackPtr;
   for (unsigned I = 0, E = ArgLocs.size(); I != E; ++I) {
     const CCValAssign &VA = ArgLocs[I];
-    SDValue ArgValue = promoteToLocVT(ArgValues[I], VA, DL, DAG);
+    SDValue ArgValue = VA.getLocInfo() == CCValAssign::Indirect
+                           ? ArgValues[I]
+                           : promoteToLocVT(ArgValues[I], VA, DL, DAG);
     if (VA.isRegLoc()) {
       RegsToPass.push_back({VA.getLocReg(), ArgValue});
       continue;

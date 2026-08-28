@@ -90,9 +90,6 @@ void BedrockMCCodeEmitter::encodeInstruction(const MCInst &MI,
   case Bedrock::SYSCALL:
     EmitByte(0x05);
     return;
-  case Bedrock::SYSRET:
-    EmitByte(0x06);
-    return;
   case Bedrock::BKPT:
     EmitByte(0x07);
     return;
@@ -130,25 +127,25 @@ void BedrockMCCodeEmitter::encodeInstruction(const MCInst &MI,
     EmitByte(0x18 | static_cast<uint8_t>(MI.getOperand(0).getImm()));
     return;
   case Bedrock::FPUSHPi:
-    EmitByte(0x70 | static_cast<uint8_t>(MI.getOperand(0).getImm()));
+    EmitByte(0x20 | static_cast<uint8_t>(MI.getOperand(0).getImm()));
     return;
   case Bedrock::FPOPPi:
-    EmitByte(0x78 | static_cast<uint8_t>(MI.getOperand(0).getImm()));
+    EmitByte(0x28 | static_cast<uint8_t>(MI.getOperand(0).getImm()));
     return;
   case Bedrock::PUSHr:
-    EmitByte(0x20 | GetRegNo(0));
-    return;
-  case Bedrock::POPr:
     EmitByte(0x30 | GetRegNo(0));
     return;
-  case Bedrock::MOVQrs:
+  case Bedrock::POPr:
     EmitByte(0x40 | GetRegNo(0));
     return;
-  case Bedrock::MOVQsr:
+  case Bedrock::MOVQrs:
     EmitByte(0x50 | GetRegNo(0));
     return;
-  case Bedrock::CLRQr:
+  case Bedrock::MOVQsr:
     EmitByte(0x60 | GetRegNo(0));
+    return;
+  case Bedrock::CLRQr:
+    EmitByte(0x70 | GetRegNo(0));
     return;
   default:
     break;

@@ -50,17 +50,21 @@ bool isRelaxableTransfer(unsigned Opcode, ArrayRef<MCOperand> Operands) {
       !Operands[0].isImm() || Operands[0].getImm() != 1 ||
       !Operands[1].isImm() || Operands[1].getImm() != 3 ||
       !Operands[2].isImm() || !Operands[4].isImm() ||
-      Operands[4].getImm() != 0xc8 || !Operands[5].isImm())
+      Operands[4].getImm() != 0xcb || !Operands[5].isImm() ||
+      !Operands[6].isImm())
     return false;
 
   unsigned Kind = Operands[2].getImm();
-  int64_t OpcodeByte = Operands[5].getImm();
+  int64_t SelectorByte = Operands[5].getImm();
+  int64_t OpcodeByte = Operands[6].getImm();
   return ((Kind == Bedrock::fixup_bedrock_call16 ||
            Kind == Bedrock::fixup_bedrock_call16_local) &&
-          OpcodeByte == 0xa6) ||
+          ((SelectorByte == 0xbc && OpcodeByte == 0x02) ||
+           (SelectorByte == 0xb8 && (OpcodeByte & 0x30) == 0x00))) ||
          ((Kind == Bedrock::fixup_bedrock_brdisp16 ||
            Kind == Bedrock::fixup_bedrock_brdisp16_local) &&
-          OpcodeByte == 0x26);
+          ((SelectorByte == 0xbc && OpcodeByte == 0x06) ||
+           (SelectorByte == 0xb8 && (OpcodeByte & 0x30) == 0x20)));
 }
 
 class BedrockAsmBackend : public MCAsmBackend {
@@ -190,7 +194,10 @@ public:
     unsigned Kind = Inst.getOperand(2).getImm();
     bool IsCall = Kind == Bedrock::fixup_bedrock_call16 ||
                   Kind == Bedrock::fixup_bedrock_call16_local;
-    unsigned Cond = Inst.getOperand(6).getImm();
+    unsigned SelectorByte = Inst.getOperand(5).getImm();
+    unsigned OpcodeByte = Inst.getOperand(6).getImm();
+    bool IsConditional = SelectorByte == 0xb8;
+    unsigned Cond = OpcodeByte & 0xf;
     Inst.clear();
     Inst.setOpcode(Bedrock::RAW_EXPR);
     Inst.addOperand(MCOperand::createImm(1));
@@ -199,9 +206,11 @@ public:
         IsCall ? Bedrock::fixup_bedrock_call32
                : Bedrock::fixup_bedrock_brdisp32));
     Inst.addOperand(MCOperand::createExpr(Expr));
-    Inst.addOperand(MCOperand::createImm(0xd0));
-    Inst.addOperand(MCOperand::createImm(IsCall ? 0xe6 : 0x66));
-    Inst.addOperand(MCOperand::createImm(Cond));
+    Inst.addOperand(MCOperand::createImm(0xd3));
+    Inst.addOperand(MCOperand::createImm(IsConditional ? 0xb8 : 0xbc));
+    Inst.addOperand(MCOperand::createImm(
+        IsConditional ? ((IsCall ? 0x10 : 0x30) | Cond)
+                      : (IsCall ? 0x03 : 0x07)));
     for (unsigned I = 0; I != 4; ++I)
       Inst.addOperand(MCOperand::createImm(0));
   }

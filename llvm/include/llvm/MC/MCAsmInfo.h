@@ -206,6 +206,10 @@ protected:
   /// quotes.
   bool SupportsQuotedNames = true;
 
+  /// Delimiter used for quoted symbol names. Targets may select a backtick to
+  /// keep quoted identifiers distinct from string literals.
+  char SymbolQuoteCharacter = '"';
+
   /// This is true if data region markers should be printed as
   /// ".data_region/.end_data_region" directives. If false, use "$d/$a" labels
   /// instead.
@@ -570,6 +574,7 @@ public:
     return AllowDollarAtStartOfIdentifier;
   }
   bool supportsNameQuoting() const { return SupportsQuotedNames; }
+  char getSymbolQuoteCharacter() const { return SymbolQuoteCharacter; }
 
   bool doesSupportDataRegionDirectives() const {
     return UseDataRegionDirectives;

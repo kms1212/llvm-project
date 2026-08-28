@@ -51,6 +51,11 @@ static bool isPPCBareMetal(const llvm::Triple &Triple) {
          Triple.getEnvironment() == llvm::Triple::EABI;
 }
 
+static bool isBedrockBareMetal(const llvm::Triple &Triple) {
+  return Triple.getArch() == llvm::Triple::bedrock &&
+         Triple.getOS() == llvm::Triple::UnknownOS;
+}
+
 static bool findRISCVMultilibs(const Driver &D,
                                const llvm::Triple &TargetTriple,
                                const ArgList &Args, DetectedMultilibs &Result) {
@@ -351,7 +356,7 @@ void BareMetal::findMultilibs(const Driver &D, const llvm::Triple &Triple,
 bool BareMetal::handlesTarget(const llvm::Triple &Triple) {
   return arm::isARMEABIBareMetal(Triple) ||
          aarch64::isAArch64BareMetal(Triple) || isRISCVBareMetal(Triple) ||
-         isPPCBareMetal(Triple);
+         isPPCBareMetal(Triple) || isBedrockBareMetal(Triple);
 }
 
 Tool *BareMetal::buildLinker() const {

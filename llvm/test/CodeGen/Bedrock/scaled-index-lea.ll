@@ -40,8 +40,8 @@ define ptr @gep_i32_commuted(ptr %base, i64 %index) {
 
 define void @shared_scaled_index(ptr %dst, ptr %src, i64 %index) {
 ; SHARED-LABEL: shared_scaled_index:
-; SHARED-COUNT-1: shl.q 3
-; SHARED-NOT:     lea.q
+; SHARED-COUNT-1: lea.q 3, [[COUNT:r[0-9]+]]
+; SHARED-COUNT-1: shl.q [[COUNT]],
   %src.element = getelementptr i64, ptr %src, i64 %index
   %value = load i64, ptr %src.element, align 8
   %dst.element = getelementptr i64, ptr %dst, i64 %index
@@ -113,15 +113,17 @@ exit:
 define ptr @expanded_sdiv_gep_i32(ptr %base, i64 %byte_offset)
     minsize optsize {
 ; CHECK-LABEL: expanded_sdiv_gep_i32:
-; CHECK:       sar.q 63
-; CHECK:       shr.q 62
+; CHECK:       lea.q 63, [[COUNT63:r[0-9]+]]
+; CHECK:       sar.q [[COUNT63]],
+; CHECK:       lea.q 62, [[COUNT62:r[0-9]+]]
+; CHECK:       shr.q [[COUNT62]],
 ; CHECK:       and.q -4
 ; CHECK-NOT:   divs.q
 ; CHECK-NOT:   lea.l
 ; CHECK:       ret
 ; SIZE:        Name: expanded_sdiv_gep_i32
 ; SIZE-NEXT:   Value:
-; SIZE-NEXT:   Size: 19
+; SIZE-NEXT:   Size: 23
   %sign = ashr i64 %byte_offset, 63
   %bias = lshr i64 %sign, 62
   %biased = add i64 %byte_offset, %bias
@@ -157,9 +159,12 @@ define i64 @sdiv_i64_oz(i64 %value) minsize optsize {
 define i64 @sdiv_i64_speed(i64 %value) {
 ; CHECK-LABEL: sdiv_i64_speed:
 ; CHECK-NOT:   divs.q
-; CHECK:       sar.q 63
-; CHECK:       shr.q 62
-; CHECK:       sar.q 2
+; CHECK:       lea.q 63, [[COUNT63:r[0-9]+]]
+; CHECK:       sar.q [[COUNT63]],
+; CHECK:       lea.q 62, [[COUNT62:r[0-9]+]]
+; CHECK:       shr.q [[COUNT62]],
+; CHECK:       lea.q 2, [[COUNT2:r[0-9]+]]
+; CHECK:       sar.q [[COUNT2]],
 ; CHECK-NEXT:  ret
   %result = sdiv i64 %value, 4
   ret i64 %result

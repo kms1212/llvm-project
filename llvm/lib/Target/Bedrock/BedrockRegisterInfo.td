@@ -6,16 +6,20 @@
 //
 //===----------------------------------------------------------------------===//
 
-class BedrockReg<bits<4> enc, int dwarf, string name, list<string> alt = []>
+class BedrockReg<bits<5> enc, int dwarf, string name, list<string> alt = []>
     : Register<name> {
   let Namespace = "Bedrock";
-  let HWEncoding{3-0} = enc;
+  let HWEncoding{4-0} = enc;
   let AltNames = alt;
   let DwarfNumbers = [dwarf];
 }
 
-class BedrockGPR<bits<4> enc, string name> : BedrockReg<enc, enc, name>;
-class BedrockFPR<bits<4> enc, int dwarf, string name>
+class BedrockGPR<bits<5> enc, string name> : BedrockReg<enc, enc, name>;
+class BedrockFPR<bits<5> enc, int dwarf, string name>
+    : BedrockReg<enc, dwarf, name>;
+class BedrockVR<bits<5> enc, int dwarf, string name>
+    : BedrockReg<enc, dwarf, name>;
+class BedrockPR<bits<5> enc, int dwarf, string name>
     : BedrockReg<enc, dwarf, name>;
 
 def R0  : BedrockGPR<0,  "r0">;
@@ -72,6 +76,13 @@ def F13 : BedrockFPR<13, 45, "f13">;
 def F14 : BedrockFPR<14, 46, "f14">;
 def F15 : BedrockFPR<15, 47, "f15">;
 
+foreach I = 0-31 in {
+  def V#I : BedrockVR<I, !add(64, I), "v"#I>;
+}
+foreach I = 0-15 in {
+  def P#I : BedrockPR<I, !add(96, I), "p"#I>;
+}
+
 def GPR64 : RegisterClass<"Bedrock", [i32, i64], 64, (sequence "R%u", 0, 15)> {
   let DecoderMethod = "DecodeGPR64RegisterClass";
 }
@@ -86,3 +97,17 @@ def GPR64NoR0R3 :
 def SPReg : RegisterClass<"Bedrock", [i64], 64, (add SP)>;
 
 def FPR64 : RegisterClass<"Bedrock", [f32, f64], 64, (sequence "F%u", 0, 15)>;
+
+def VR : RegisterClass<"Bedrock",
+                       [nxv16i8, nxv8i16, nxv4i32, nxv2i64,
+                        nxv8f16, nxv4f32, nxv2f64],
+                       128, (sequence "V%u", 0, 31)> {
+  let Size = 128;
+  let DecoderMethod = "DecodeVRRegisterClass";
+}
+
+def PR : RegisterClass<"Bedrock", [nxv16i1, nxv8i1, nxv4i1, nxv2i1], 16,
+                       (sequence "P%u", 0, 15)> {
+  let Size = 16;
+  let DecoderMethod = "DecodePRRegisterClass";
+}

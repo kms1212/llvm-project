@@ -84,11 +84,10 @@ define i32 @zero_result_precheck(ptr %p, i32 %n) {
 ; O1: test.l r1, r1
 ; O1-NEXT: jle
 ; O1: clr.q [[ACC:r[0-9]+]]
-; O1-NOT: cmp.l
-; O1: repgf {{r[0-9]+}}, {
-; O1-NEXT: add.l [r0++], [[ACC]]
-; O1-NEXT: }
-; O1-NOT: djt
+; O1: add.l [r0++], [[ACC]]
+; O1-NEXT: dec.q [[COUNT:r[0-9]+]]
+; O1-NEXT: test.q [[COUNT]], [[COUNT]]
+; O1-NEXT: jne
 entry:
   %cmp = icmp sgt i32 %n, 0
   br i1 %cmp, label %loop.preheader, label %exit

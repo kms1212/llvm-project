@@ -32,6 +32,24 @@ enum TargetOperandFlag : unsigned {
 };
 } // namespace BedrockII
 
+namespace BedrockVectorPseudo {
+enum BinaryOperation : unsigned {
+  Add,
+  Sub,
+  Mul,
+  And,
+  Or,
+  Xor,
+  MinSigned,
+  MinUnsigned,
+  MaxSigned,
+  MaxUnsigned,
+  MinFP,
+  MaxFP,
+  DivFP,
+};
+} // namespace BedrockVectorPseudo
+
 class BedrockTargetMachine;
 class FunctionPass;
 class PassRegistry;

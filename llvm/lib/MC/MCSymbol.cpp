@@ -69,18 +69,19 @@ void MCSymbol::print(raw_ostream &OS, const MCAsmInfo *MAI) const {
   if (MAI && !MAI->supportsNameQuoting())
     report_fatal_error("Symbol name with unsupported characters");
 
-  OS << '"';
+  const char Quote = MAI->getSymbolQuoteCharacter();
+  OS << Quote;
   for (char C : Name) {
     if (C == '\n')
       OS << "\\n";
-    else if (C == '"')
-      OS << "\\\"";
+    else if (C == Quote)
+      OS << '\\' << Quote;
     else if (C == '\\')
       OS << "\\\\";
     else
       OS << C;
   }
-  OS << '"';
+  OS << Quote;
 }
 
 #if !defined(NDEBUG) || defined(LLVM_ENABLE_DUMP)

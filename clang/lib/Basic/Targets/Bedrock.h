@@ -22,6 +22,7 @@ class LLVM_LIBRARY_VISIBILITY BedrockTargetInfo : public TargetInfo {
   static const TargetInfo::GCCRegAlias GCCRegAliases[];
   bool HasFPU = true;
   bool HasFPTRANSA = false;
+  bool HasVector = true;
 
 public:
   BedrockTargetInfo(const llvm::Triple &Triple, const TargetOptions &)
@@ -47,6 +48,10 @@ public:
     HasFloat128 = false;
     HasIbm128 = false;
     HasStrictFP = true;
+    // Reuse Clang's target-independent 128-bit-minimum scalable-vector AST
+    // representation. Bedrock exposes target-named aliases in
+    // <bedrock_vector.h>; no Arm feature or ABI is enabled.
+    HasAArch64ACLETypes = true;
     MaxAtomicPromoteWidth = MaxAtomicInlineWidth = 64;
   }
 
@@ -57,7 +62,8 @@ public:
 
   bool hasFeature(StringRef Feature) const override {
     return Feature == "bedrock" || (Feature == "fpu" && HasFPU) ||
-           (Feature == "fptransa" && HasFPTRANSA);
+           (Feature == "fptransa" && HasFPTRANSA) ||
+           (Feature == "vector" && HasVector);
   }
   bool
   initFeatureMap(llvm::StringMap<bool> &Features, DiagnosticsEngine &Diags,
@@ -65,6 +71,14 @@ public:
                  const std::vector<std::string> &FeaturesVec) const override;
   bool handleTargetFeatures(std::vector<std::string> &Features,
                             DiagnosticsEngine &Diags) override;
+
+  std::optional<std::pair<unsigned, unsigned>>
+  getVScaleRange(const LangOptions &, ArmStreamingKind,
+                 llvm::StringMap<bool> * = nullptr) const override {
+    if (!HasVector)
+      return std::nullopt;
+    return std::pair<unsigned, unsigned>(1, 16);
+  }
 
   ArrayRef<const char *> getGCCRegNames() const override;
   ArrayRef<TargetInfo::GCCRegAlias> getGCCRegAliases() const override;

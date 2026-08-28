@@ -139,7 +139,7 @@
     ret i64 0
   }
 
-  define i64 @known_zero_high_long_extend_preserves_high() {
+  define i64 @known_zero_high_long_ops_stay_canonical() {
     ret i64 0
   }
 
@@ -282,6 +282,18 @@
   define void @remove_fallthrough_branch() {
     ret void
   }
+
+  define void @materialized_scaled_index_store() {
+    ret void
+  }
+
+  define void @wrong_materialized_scale_store() {
+    ret void
+  }
+
+  define i64 @materialized_shift_mask_byte() {
+    ret i64 0
+  }
 ...
 ---
 name:            redundant_frame_store
@@ -422,7 +434,7 @@ tracksRegLiveness: true
 body:             |
   bb.0:
     ; CHECK-LABEL: name: shift_mask_byte_extend
-    ; CHECK: $r0 = EXTZQBrr killed $r0
+    ; CHECK: $r0 = MOVBrr killed $r0
     ; CHECK-NEXT: $r0 = SHLL3ri killed $r0, 8
     ; CHECK-NEXT: $r0 = ORL3rr killed $r0, killed $r1
     ; CHECK-NOT: ANDL3ri
@@ -440,16 +452,16 @@ body:             |
   bb.0:
     ; CHECK-LABEL: name: shift_mask_byte_extend_after_copy
     ; CHECK-NOT: MOVQrr
-    ; CHECK: $r0 = EXTZQBrr $r1
+    ; CHECK: $r0 = MOVBrr $r1
     ; CHECK-NEXT: $r0 = SHLL3ri killed $r0, 3
     ; CHECK-NOT: ANDL3ri
-    ; CHECK-NOT: EXTZQLrr
+    ; CHECK-NOT: MOVLrr
     liveins: $r1
 
     $r0 = MOVQrr $r1
     $r0 = SHLL3ri killed $r0, 3
     $r0 = ANDL3ri killed $r0, 2040
-    $r0 = EXTZQLrr killed $r0
+    $r0 = MOVLrr killed $r0
     RET implicit $r0
 ...
 ---
@@ -712,13 +724,13 @@ tracksRegLiveness: true
 body:             |
   bb.0:
     ; CHECK-LABEL: name: two_stage_zext_byte
-    ; CHECK: $r0 = EXTZQBrr killed $r1
+    ; CHECK: $r0 = MOVBrr killed $r1
     ; CHECK-NEXT: RET implicit $r0
-    ; CHECK-NOT: EXTZQLrr
+    ; CHECK-NOT: MOVLrr
     liveins: $r1
 
-    $r2 = EXTZLBrr killed $r1
-    $r0 = EXTZQLrr killed $r2
+    $r2 = MOVBrr killed $r1
+    $r0 = MOVLrr killed $r2
     RET implicit $r0
 ...
 ---
@@ -732,7 +744,7 @@ body:             |
     ; CHECK-NOT: EXTSQLrr
     liveins: $r1
 
-    $r2 = EXTSLWrr killed $r1
+    $r2 = EXTSQWrr killed $r1
     $r0 = EXTSQLrr killed $r2
     RET implicit $r0
 ...
@@ -742,13 +754,13 @@ tracksRegLiveness: true
 body:             |
   bb.0:
     ; CHECK-LABEL: name: andl_zextq
-    ; CHECK: $r0 = ANDQ3ri killed $r0, 2040
+    ; CHECK: $r0 = ANDL3ri killed $r0, 2040
     ; CHECK-NEXT: RET implicit $r0
-    ; CHECK-NOT: EXTZQLrr
+    ; CHECK-NOT: MOVLrr
     liveins: $r0
 
     $r0 = ANDL3ri killed $r0, 2040
-    $r0 = EXTZQLrr killed $r0
+    $r0 = MOVLrr killed $r0
     RET implicit $r0
 ...
 ---
@@ -758,12 +770,12 @@ body:             |
   bb.0:
     ; CHECK-LABEL: name: andl_negative_mask_zextq
     ; CHECK: $r0 = ANDL3ri killed $r0, -2
-    ; CHECK-NEXT: $r0 = EXTZQLrr killed $r0
     ; CHECK-NEXT: RET implicit $r0
+    ; CHECK-NOT: MOVLrr
     liveins: $r0
 
     $r0 = ANDL3ri killed $r0, -2
-    $r0 = EXTZQLrr killed $r0
+    $r0 = MOVLrr killed $r0
     RET implicit $r0
 ...
 ---
@@ -772,15 +784,15 @@ tracksRegLiveness: true
 body:             |
   bb.0:
     ; CHECK-LABEL: name: known_zero_high_local
-    ; CHECK: $r0 = EXTZQBrr killed $r1
+    ; CHECK: $r0 = MOVBrr killed $r1
     ; CHECK-NEXT: $r0 = SHLL3ri killed $r0, 3
     ; CHECK-NEXT: RET implicit $r0
-    ; CHECK-NOT: EXTZQLrr
+    ; CHECK-NOT: MOVLrr
     liveins: $r1
 
-    $r0 = EXTZQBrr killed $r1
+    $r0 = MOVBrr killed $r1
     $r0 = SHLL3ri killed $r0, 3
-    $r0 = EXTZQLrr killed $r0
+    $r0 = MOVLrr killed $r0
     RET implicit $r0
 ...
 ---
@@ -791,11 +803,11 @@ body:             |
     ; CHECK-LABEL: name: known_zero_high_arg
     ; CHECK: $r0 = SHLL3ri killed $r0, 3
     ; CHECK-NEXT: RET implicit $r0
-    ; CHECK-NOT: EXTZQLrr
+    ; CHECK-NOT: MOVLrr
     liveins: $r0
 
     $r0 = SHLL3ri killed $r0, 3
-    $r0 = EXTZQLrr killed $r0
+    $r0 = MOVLrr killed $r0
     RET implicit $r0
 ...
 ---
@@ -809,7 +821,7 @@ body:             |
     ; CHECK: $r1 = MOVQrr $r9
     ; CHECK-NEXT: $r1 = ANDL3ri killed $r1, 3
     ; CHECK-NEXT: $r1 = INCL3r killed $r1
-    ; CHECK-NOT: $r1 = EXTZQLrr
+    ; CHECK-NOT: $r1 = MOVLrr
     ; CHECK-NEXT: RET implicit $r1
     successors: %bb.1
 
@@ -822,7 +834,7 @@ body:             |
     $r1 = MOVQrr $r9
     $r1 = ANDL3ri killed $r1, 3
     $r1 = INCL3r killed $r1
-    $r1 = EXTZQLrr killed $r1
+    $r1 = MOVLrr killed $r1
     RET implicit $r1
 ...
 ---
@@ -833,7 +845,7 @@ body:             |
     ; CHECK-LABEL: name: known_zero_high_copy_extend
     ; CHECK: $r9 = CONST64 0
     ; CHECK: bb.1:
-    ; CHECK-NOT: EXTZQLrr
+    ; CHECK-NOT: MOVLrr
     ; CHECK: $r0 = MOVQrr $r9
     ; CHECK: CALL @callee
     ; CHECK: $r0 = MOVQrr $r9
@@ -846,7 +858,7 @@ body:             |
   bb.1:
     liveins: $r9
 
-    $r10 = EXTZQLrr $r9
+    $r10 = MOVLrr $r9
     $r0 = MOVQrr $r10
     CALL @callee, csr_bedrock, implicit-def $r0, implicit-def dead $r1, implicit-def dead $r2, implicit-def dead $r3, implicit-def dead $r4, implicit-def dead $r5, implicit-def dead $r6, implicit-def dead $r7, implicit-def dead $f0, implicit-def dead $f1, implicit-def dead $f2, implicit-def dead $f3, implicit-def dead $f4, implicit-def dead $f5, implicit-def dead $f6, implicit-def dead $f7, implicit $r0
     $r0 = MOVQrr $r10
@@ -860,7 +872,7 @@ body:             |
     ; CHECK-LABEL: name: known_zero_high_copy_extend_caller_saved_call
     ; CHECK: $r0 = CONST64 0
     ; CHECK: bb.1:
-    ; CHECK: $r8 = EXTZQLrr $r0
+    ; CHECK: $r8 = MOVLrr $r0
     ; CHECK: CALL @callee
     ; CHECK: $r2 = MOVQrr $r8
     successors: %bb.1
@@ -871,22 +883,22 @@ body:             |
   bb.1:
     liveins: $r0
 
-    $r8 = EXTZQLrr $r0
+    $r8 = MOVLrr $r0
     CALL @callee, csr_bedrock, implicit-def $r0, implicit-def dead $r1, implicit-def dead $r2, implicit-def dead $r3, implicit-def dead $r4, implicit-def dead $r5, implicit-def dead $r6, implicit-def dead $r7, implicit-def dead $f0, implicit-def dead $f1, implicit-def dead $f2, implicit-def dead $f3, implicit-def dead $f4, implicit-def dead $f5, implicit-def dead $f6, implicit-def dead $f7, implicit $r0
     $r2 = MOVQrr $r8
     RET implicit $r2
 ...
 ---
-name:            known_zero_high_long_extend_preserves_high
+name:            known_zero_high_long_ops_stay_canonical
 tracksRegLiveness: true
 body:             |
   bb.0:
-    ; CHECK-LABEL: name: known_zero_high_long_extend_preserves_high
+    ; CHECK-LABEL: name: known_zero_high_long_ops_stay_canonical
     ; CHECK: $r9 = CONST64 0
     ; CHECK: bb.1:
-    ; CHECK: $r9 = EXTZLBrr killed $r8
+    ; CHECK: $r9 = MOVBrr killed $r8
     ; CHECK-NEXT: $r9 = XORL3ri killed $r9, 32
-    ; CHECK-NOT: EXTZQLrr
+    ; CHECK-NOT: MOVLrr
     ; CHECK-NEXT: $r0 = MOVQrr $r9
     ; CHECK-NEXT: RET implicit $r0
     successors: %bb.1
@@ -898,9 +910,9 @@ body:             |
   bb.1:
     liveins: $r8, $r9
 
-    $r9 = EXTZLBrr killed $r8
+    $r9 = MOVBrr killed $r8
     $r9 = XORL3ri killed $r9, 32
-    $r10 = EXTZQLrr $r9
+    $r10 = MOVLrr $r9
     $r0 = MOVQrr $r10
     RET implicit $r0
 ...
@@ -911,12 +923,12 @@ body:             |
   bb.0:
     ; CHECK-LABEL: name: unknown_high_arg
     ; CHECK: $r0 = SHLL3ri killed $r0, 3
-    ; CHECK-NEXT: $r0 = EXTZQLrr killed $r0
     ; CHECK-NEXT: RET implicit $r0
+    ; CHECK-NOT: MOVLrr
     liveins: $r0
 
     $r0 = SHLL3ri killed $r0, 3
-    $r0 = EXTZQLrr killed $r0
+    $r0 = MOVLrr killed $r0
     RET implicit $r0
 ...
 ---
@@ -927,11 +939,11 @@ body:             |
     ; CHECK-LABEL: name: smax_zero_signext_arg
     ; CHECK: $r0 = SMAX_ZERO_Q killed $r0
     ; CHECK-NEXT: RET implicit $r0
-    ; CHECK-NOT: EXTZQLrr
+    ; CHECK-NOT: MOVLrr
     liveins: $r0
 
     $r0 = SMAX_ZERO_L killed $r0
-    $r0 = EXTZQLrr killed $r0
+    $r0 = MOVLrr killed $r0
     RET implicit $r0
 ...
 ---
@@ -941,12 +953,12 @@ body:             |
   bb.0:
     ; CHECK-LABEL: name: smax_zero_unknown_arg
     ; CHECK: $r0 = SMAX_ZERO_L killed $r0
-    ; CHECK-NEXT: $r0 = EXTZQLrr killed $r0
+    ; CHECK-NEXT: $r0 = MOVLrr killed $r0
     ; CHECK-NEXT: RET implicit $r0
     liveins: $r0
 
     $r0 = SMAX_ZERO_L killed $r0
-    $r0 = EXTZQLrr killed $r0
+    $r0 = MOVLrr killed $r0
     RET implicit $r0
 ...
 ---
@@ -956,13 +968,13 @@ body:             |
   bb.0:
     ; CHECK-LABEL: name: smax_zero_signext_readonly_bound
     ; CHECK: $r1 = SMAX_ZERO_Q killed $r1
-    ; CHECK-NOT: EXTZQLrr
+    ; CHECK-NOT: MOVLrr
     ; CHECK: CMPQrr $r0, $r1
     successors: %bb.1
     liveins: $r0, $r1
 
     $r1 = SMAX_ZERO_L killed $r1
-    $r3 = EXTZQLrr $r1
+    $r3 = MOVLrr $r1
 
   bb.1:
     liveins: $r0, $r1, $r3
@@ -977,13 +989,13 @@ body:             |
   bb.0:
     ; CHECK-LABEL: name: smax_zero_signext_mutated_bound
     ; CHECK: $r1 = SMAX_ZERO_L killed $r1
-    ; CHECK-NEXT: $r3 = EXTZQLrr $r1
+    ; CHECK-NEXT: $r3 = MOVLrr $r1
     ; CHECK-NEXT: $r3 = INCQ3r killed $r3
     successors: %bb.1
     liveins: $r0, $r1
 
     $r1 = SMAX_ZERO_L killed $r1
-    $r3 = EXTZQLrr $r1
+    $r3 = MOVLrr $r1
     $r3 = INCQ3r killed $r3
 
   bb.1:
@@ -1067,17 +1079,17 @@ tracksRegLiveness: true
 body:             |
   bb.0:
     ; CHECK-LABEL: name: andl_known_zero_operand_zextq
-    ; CHECK: $r2 = EXTZQBrr killed $r2
+    ; CHECK: $r2 = MOVBrr killed $r2
     ; CHECK-NEXT: $r1 = ANDQ3rr killed $r1, $r2
     ; CHECK-NEXT: CMPLri $r0, 0
     ; CHECK-NEXT: RET implicit $r1
-    ; CHECK-NOT: EXTZQLrr
+    ; CHECK-NOT: MOVLrr
     liveins: $r0, $r1, $r2
 
-    $r2 = EXTZLBrr killed $r2
+    $r2 = MOVBrr killed $r2
     $r1 = ANDL3rr killed $r1, $r2
     CMPLri $r0, 0, implicit-def $flags
-    $r1 = EXTZQLrr killed $r1
+    $r1 = MOVLrr killed $r1
     RET implicit $r1
 ...
 ---
@@ -1086,16 +1098,16 @@ tracksRegLiveness: true
 body:             |
   bb.0:
     ; CHECK-LABEL: name: andl_known_zero_operand_flags_live
-    ; CHECK: $r2 = EXTZLBrr killed $r2
+    ; CHECK: $r2 = MOVBrr killed $r2
     ; CHECK-NEXT: $r1 = ANDL3rr killed $r1, $r2
-    ; CHECK-NEXT: $r1 = EXTZQLrr killed $r1
     ; CHECK-NEXT: BRCC %bb.1, 2
+    ; CHECK-NOT: MOVLrr
     successors: %bb.1
     liveins: $r1, $r2
 
-    $r2 = EXTZLBrr killed $r2
+    $r2 = MOVBrr killed $r2
     $r1 = ANDL3rr killed $r1, $r2
-    $r1 = EXTZQLrr killed $r1
+    $r1 = MOVLrr killed $r1
     BRCC %bb.1, 2, implicit $flags
 
   bb.1:
@@ -1109,23 +1121,23 @@ tracksRegLiveness: true
 body:             |
   bb.0:
     ; CHECK-LABEL: name: andl_entry_zero_ext_operand_zextq
-    ; CHECK: $r2 = EXTZQBrr killed $r2
+    ; CHECK: $r2 = MOVBrr killed $r2
     ; CHECK: $r1 = ANDQ3rr killed $r1, $r2
-    ; CHECK-NEXT: $r0 = EXTZQLrr killed $r0
+    ; CHECK-NEXT: $r0 = MOVLrr killed $r0
     ; CHECK-NEXT: RET implicit $r1
-    ; CHECK-NOT: EXTZQLrr
+    ; CHECK-NOT: MOVLrr
     successors: %bb.1
     liveins: $r0, $r1, $r2
 
-    $r2 = EXTZLBrr killed $r2
+    $r2 = MOVBrr killed $r2
     BR %bb.1
 
   bb.1:
     liveins: $r0, $r1, $r2
 
     $r1 = ANDL3rr killed $r1, $r2
-    $r0 = EXTZQLrr killed $r0
-    $r1 = EXTZQLrr killed $r1
+    $r0 = MOVLrr killed $r0
+    $r1 = MOVLrr killed $r1
     RET implicit $r1
 ...
 ---
@@ -1247,7 +1259,7 @@ body:             |
     ; CHECK-NOT: ADDL3ri $r1, 55
     ; CHECK: $r2 = ADDL3ri $r2, 7
     ; CHECK: bb.2:
-    ; CHECK: $r0 = EXTZQLrr killed $r2
+    ; CHECK: $r0 = MOVLrr killed $r2
     ; CHECK: $r11 = ANDL3ri killed $r11, 15
     ; CHECK-NEXT: $r11 = ORL3ri killed $r11, 48
     ; CHECK-NEXT: CMPLrr killed $r12, $r11
@@ -1257,7 +1269,7 @@ body:             |
     ; CHECK-NOT: ADDL3ri $r1, 55
     ; CHECK: $r11 = ADDL3ri $r11, 7
     ; CHECK: bb.4:
-    ; CHECK: $r0 = EXTZQLrr killed $r11
+    ; CHECK: $r0 = MOVLrr killed $r11
     successors: %bb.1, %bb.2
     liveins: $r2, $r11
 
@@ -1279,7 +1291,7 @@ body:             |
     successors: %bb.3, %bb.4
     liveins: $r1, $r11, $r12
 
-    $r0 = EXTZQLrr killed $r1
+    $r0 = MOVLrr killed $r1
     $r11 = ANDL3ri killed $r11, 15
     $r1 = MOVQrr $r11
     $r1 = ORL3ri killed $r1, 48
@@ -1296,7 +1308,7 @@ body:             |
   bb.4:
     liveins: $r1
 
-    $r0 = EXTZQLrr killed $r1
+    $r0 = MOVLrr killed $r1
     RET implicit $r0
 ...
 ---
@@ -1305,12 +1317,12 @@ tracksRegLiveness: true
 body:             |
   bb.0:
     ; CHECK-LABEL: name: callee_saved_pair_pushpop
-    ; CHECK: PUSHPi 3
+    ; CHECK: PUSHPi 4
     ; CHECK-NEXT: PUSHr killed $r10
     ; CHECK-NEXT: ADJSP_DOWN 24
     ; CHECK: ADJSP_UP 24
     ; CHECK-NEXT: $r10 = POPr
-    ; CHECK-NEXT: POPPi 3
+    ; CHECK-NEXT: POPPi 4
     ; CHECK-NEXT: RET implicit $r0
     liveins: $r8, $r9, $r10
 
@@ -1352,10 +1364,10 @@ body:             |
   bb.0:
     ; CHECK-LABEL: name: callee_saved_pair_keeps_unpaired_top_slot
     ; CHECK: PUSHr killed $r8
-    ; CHECK-NEXT: PUSHPi 2
+    ; CHECK-NEXT: PUSHPi 5
     ; CHECK-NEXT: ADJSP_DOWN 24
     ; CHECK: ADJSP_UP 24
-    ; CHECK-NEXT: POPPi 2
+    ; CHECK-NEXT: POPPi 5
     ; CHECK-NEXT: $r8 = POPr
     ; CHECK: RET implicit $r0
     liveins: $r8, $r10, $r11
@@ -1376,12 +1388,12 @@ tracksRegLiveness: true
 body:             |
   bb.0:
     ; CHECK-LABEL: name: callee_saved_pair_with_unpaired_r14
-    ; CHECK: PUSHPi 3
+    ; CHECK: PUSHPi 4
     ; CHECK-NEXT: PUSHr killed $r14
     ; CHECK-NEXT: ADJSP_DOWN 24
     ; CHECK: ADJSP_UP 24
     ; CHECK-NEXT: $r14 = POPr
-    ; CHECK-NEXT: POPPi 3
+    ; CHECK-NEXT: POPPi 4
     ; CHECK-NEXT: RET implicit $r0
     liveins: $r8, $r9, $r14
 
@@ -1402,10 +1414,10 @@ tracksRegLiveness: true
 body:             |
   bb.0:
     ; CHECK-LABEL: name: callee_saved_padding_pair
-    ; CHECK: PUSHPi 3
+    ; CHECK: PUSHPi 4
     ; CHECK-NOT: PUSHr killed $r8
     ; CHECK-NOT: ADJSP_DOWN 8
-    ; CHECK: POPPi 3
+    ; CHECK: POPPi 4
     ; CHECK-NEXT: RET implicit $r0
     liveins: $r8
 
@@ -1422,10 +1434,10 @@ tracksRegLiveness: true
 body:             |
   bb.0:
     ; CHECK-LABEL: name: callee_saved_padding_pair_r14
-    ; CHECK: PUSHPi 0
+    ; CHECK: PUSHPi 7
     ; CHECK-NOT: PUSHr killed $r14
     ; CHECK-NOT: ADJSP_DOWN 8
-    ; CHECK: POPPi 0
+    ; CHECK: POPPi 7
     ; CHECK-NEXT: RET implicit $r0
     liveins: $r14
 
@@ -1442,12 +1454,12 @@ tracksRegLiveness: true
 body:             |
   bb.0:
     ; CHECK-LABEL: name: callee_saved_frame_padding_pair
-    ; CHECK: PUSHPi 2
+    ; CHECK: PUSHPi 5
     ; CHECK-NEXT: ADJSP_DOWN 16
     ; CHECK: $r0 = LEAfi 0, 0
     ; CHECK: $r1 = LOADB_Zfi 15, 0
     ; CHECK: ADJSP_UP 16
-    ; CHECK-NEXT: POPPi 2
+    ; CHECK-NEXT: POPPi 5
     liveins: $r10
 
     PUSHr killed $r10
@@ -1519,7 +1531,7 @@ body:             |
     ; CHECK-LABEL: name: tail_call_after_epilogue
     ; CHECK: ADJSP_UP 24
     ; CHECK-NEXT: $r8 = POPr
-    ; CHECK-NEXT: POPPi 3
+    ; CHECK-NEXT: POPPi 4
     ; CHECK-NEXT: TAILCALL @callee
     ; CHECK-NOT: RET
     liveins: $r0
@@ -1527,7 +1539,7 @@ body:             |
     CALL_TAIL @callee, csr_bedrock, implicit-def $r0, implicit-def dead $r1, implicit-def dead $r2, implicit-def dead $r3, implicit-def dead $r4, implicit-def dead $r5, implicit-def dead $r6, implicit-def dead $r7, implicit-def dead $f0, implicit-def dead $f1, implicit-def dead $f2, implicit-def dead $f3, implicit-def dead $f4, implicit-def dead $f5, implicit-def dead $f6, implicit-def dead $f7, implicit $r0
     ADJSP_UP 24
     $r8 = POPr
-    POPPi 3
+    POPPi 4
     RET implicit $r0
 ...
 ---
@@ -1640,7 +1652,7 @@ body:             |
     ; CHECK: BRCC %bb.2, 2
     ; CHECK: $r0 = CONST64 4
     ; CHECK: CALL @callee
-    ; CHECK: $r0 = EXTZQLrr killed $r0
+    ; CHECK: $r0 = MOVLrr killed $r0
     ; CHECK: bb.2:
     ; CHECK-NEXT: liveins: $r0
     ; CHECK: RET implicit $r0
@@ -1661,7 +1673,7 @@ body:             |
 
     $r0 = CONST64 4
     CALL @callee, csr_bedrock, implicit-def $r0, implicit-def dead $r1, implicit-def dead $r2, implicit-def dead $r3, implicit-def dead $r4, implicit-def dead $r5, implicit-def dead $r6, implicit-def dead $r7, implicit-def dead $f0, implicit-def dead $f1, implicit-def dead $f2, implicit-def dead $f3, implicit-def dead $f4, implicit-def dead $f5, implicit-def dead $f6, implicit-def dead $f7, implicit $r0
-    $r8 = EXTZQLrr killed $r0
+    $r8 = MOVLrr killed $r0
 
   bb.2:
     liveins: $r8
@@ -1686,4 +1698,67 @@ body:             |
 
   bb.1:
     RET
+...
+---
+name:            materialized_scaled_index_store
+tracksRegLiveness: true
+body:             |
+  bb.0:
+    ; CHECK-LABEL: name: materialized_scaled_index_store
+    ; CHECK: $r2 = CONST64 3
+    ; CHECK-NOT: SHLQ3rr
+    ; CHECK-NOT: ADDQ3rr
+    ; CHECK: STOREQrx $r4, $r0, $r1
+    successors: %bb.1
+    liveins: $r0, $r1, $r4
+
+    $r2 = CONST64 3
+    BR %bb.1
+
+  bb.1:
+    liveins: $r0, $r1, $r2, $r4
+
+    $r3 = MOVQrr $r1
+    $r3 = SHLQ3rr killed $r3, $r2
+    $r3 = ADDQ3rr killed $r3, $r0
+    STOREQrr $r4, killed $r3
+    RET
+...
+---
+name:            wrong_materialized_scale_store
+tracksRegLiveness: true
+body:             |
+  bb.0:
+    ; CHECK-LABEL: name: wrong_materialized_scale_store
+    ; CHECK: $r2 = CONST64 2
+    ; CHECK: $r3 = MOVQrr $r1
+    ; CHECK-NEXT: $r3 = SHLQ3rr killed $r3, $r2
+    ; CHECK-NEXT: $r3 = ADDQ3rr killed $r3, $r0
+    ; CHECK-NEXT: STOREQrr $r4, killed $r3
+    liveins: $r0, $r1, $r4
+
+    $r2 = CONST64 2
+    $r3 = MOVQrr $r1
+    $r3 = SHLQ3rr killed $r3, $r2
+    $r3 = ADDQ3rr killed $r3, $r0
+    STOREQrr $r4, killed $r3
+    RET
+...
+---
+name:            materialized_shift_mask_byte
+tracksRegLiveness: true
+body:             |
+  bb.0:
+    ; CHECK-LABEL: name: materialized_shift_mask_byte
+    ; CHECK: $r2 = CONST64 8
+    ; CHECK-NEXT: $r0 = MOVBrr killed $r0
+    ; CHECK-NEXT: $r0 = SHLL3rr killed $r0, killed $r2
+    ; CHECK-NOT: ANDQ3ri
+    ; CHECK-NEXT: RET implicit $r0
+    liveins: $r0
+
+    $r2 = CONST64 8
+    $r0 = SHLL3rr killed $r0, killed $r2
+    $r0 = ANDQ3ri killed $r0, 65280
+    RET implicit $r0
 ...

@@ -48,3 +48,25 @@ define float @float_from_bits(i32 %bits) {
   %value = bitcast i32 %bits to float
   ret float %value
 }
+
+define void @fpu_store_sp_zero(double %value) {
+; CHECK-LABEL: fpu_store_sp_zero:
+; CHECK: FMOV.D f0, [sp]
+; OBJ-LABEL: <fpu_store_sp_zero>:
+; OBJ: cb e4 f0 50 00{{.*}}fmov.d f0, [sp + 0]
+  %slots = alloca [2 x double], align 16
+  %slot = getelementptr inbounds [2 x double], ptr %slots, i64 0, i64 0
+  store volatile double %value, ptr %slot, align 8
+  ret void
+}
+
+define double @fpu_load_sp_zero() {
+; CHECK-LABEL: fpu_load_sp_zero:
+; CHECK: FMOV.D [sp], f0
+; OBJ-LABEL: <fpu_load_sp_zero>:
+; OBJ: cb e5 d8 50 00{{.*}}fmov.d [sp + 0], f0
+  %slots = alloca [2 x double], align 16
+  %slot = getelementptr inbounds [2 x double], ptr %slots, i64 0, i64 0
+  %value = load volatile double, ptr %slot, align 8
+  ret double %value
+}

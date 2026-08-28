@@ -15,6 +15,7 @@
 #include "llvm/CodeGen/MachineInstrBuilder.h"
 #include "llvm/CodeGen/TargetInstrInfo.h"
 #include "llvm/IR/Module.h"
+#include "llvm/IR/Instructions.h"
 #include "llvm/MC/MCDwarf.h"
 #include "llvm/Support/ErrorHandling.h"
 #include "llvm/Target/TargetMachine.h"
@@ -45,21 +46,21 @@ static bool isCalleeSavedFPR(Register Reg) {
 static void getFPPairRegs(unsigned PairIndex, Register &First,
                           Register &Second) {
   switch (PairIndex) {
-  case 0:
-    First = Bedrock::F14;
-    Second = Bedrock::F15;
+  case 4:
+    First = Bedrock::F8;
+    Second = Bedrock::F9;
     return;
-  case 1:
-    First = Bedrock::F12;
-    Second = Bedrock::F13;
-    return;
-  case 2:
+  case 5:
     First = Bedrock::F10;
     Second = Bedrock::F11;
     return;
-  case 3:
-    First = Bedrock::F8;
-    Second = Bedrock::F9;
+  case 6:
+    First = Bedrock::F12;
+    Second = Bedrock::F13;
+    return;
+  case 7:
+    First = Bedrock::F14;
+    Second = Bedrock::F15;
     return;
   default:
     llvm_unreachable("invalid Bedrock floating-point pair index");
@@ -68,7 +69,7 @@ static void getFPPairRegs(unsigned PairIndex, Register &First,
 
 static unsigned getSavedFPPairMask(const MachineFrameInfo &MFI) {
   unsigned Mask = 0;
-  for (unsigned PairIndex = 0; PairIndex != 4; ++PairIndex) {
+  for (unsigned PairIndex = 4; PairIndex != 8; ++PairIndex) {
     Register First;
     Register Second;
     getFPPairRegs(PairIndex, First, Second);
@@ -88,7 +89,7 @@ static unsigned getSavedFPPairMask(const MachineFrameInfo &MFI) {
 
 static uint64_t getFPPairStackSize(unsigned PairMask) {
   uint64_t Size = 0;
-  for (unsigned PairIndex = 0; PairIndex != 4; ++PairIndex)
+  for (unsigned PairIndex = 4; PairIndex != 8; ++PairIndex)
     if (PairMask & (1u << PairIndex))
       Size += 16;
   return Size;
@@ -100,6 +101,24 @@ BedrockFrameLowering::BedrockFrameLowering(const BedrockSubtarget &STI)
     // local-object area to 16 bytes before appending a reserved call frame.
     : TargetFrameLowering(TargetFrameLowering::StackGrowsDown, Align(8), 0,
                           Align(8)) {}
+
+void BedrockFrameLowering::processFunctionBeforeFrameFinalized(
+    MachineFunction &MF, RegScavenger *RS) const {
+  MachineFrameInfo &MFI = MF.getFrameInfo();
+  for (int FI = MFI.getObjectIndexBegin(), End = MFI.getObjectIndexEnd();
+       FI != End; ++FI) {
+    if (MFI.isDeadObjectIndex(FI))
+      continue;
+    const AllocaInst *Allocation = MFI.getObjectAllocation(FI);
+    if (!Allocation || !Allocation->getAllocatedType()->isScalableTy())
+      continue;
+    // LLVM records the minimum vscale=1 footprint. Bedrock promises vscale
+    // 1..16 and keeps it reset-stable, so reserving the architectural maximum
+    // provides a fixed frame that is valid for every implementation.
+    MFI.setObjectSize(FI, MFI.getObjectSize(FI) * 16);
+    MFI.setObjectAlignment(FI, Align(16));
+  }
+}
 
 void BedrockFrameLowering::emitPrologue(MachineFunction &MF,
                                         MachineBasicBlock &MBB) const {
@@ -151,7 +170,7 @@ void BedrockFrameLowering::emitPrologue(MachineFunction &MF,
   const auto *BFI = MF.getInfo<BedrockMachineFunctionInfo>();
 
   uint64_t PushedFPBytes = 0;
-  for (unsigned PairIndex = 0; PairIndex != 4; ++PairIndex) {
+  for (unsigned PairIndex = 4; PairIndex != 8; ++PairIndex) {
     if (!(FPPairMask & (1u << PairIndex)))
       continue;
     Register First;
@@ -289,7 +308,7 @@ void BedrockFrameLowering::emitEpilogue(MachineFunction &MF,
 
   uint64_t RemainingFPBytes = FPPairStackSize;
   const TargetRegisterInfo &TRI = *MF.getSubtarget().getRegisterInfo();
-  for (unsigned PairIndex = 4; PairIndex-- != 0;) {
+  for (unsigned PairIndex = 8; PairIndex-- != 4;) {
     if (!(FPPairMask & (1u << PairIndex)))
       continue;
     Register First;
@@ -330,7 +349,7 @@ void BedrockFrameLowering::determineCalleeSaves(MachineFunction &MF,
   if (needsStackRealignment(MF))
     SavedRegs.set(Bedrock::R14);
 
-  for (unsigned PairIndex = 0; PairIndex != 4; ++PairIndex) {
+  for (unsigned PairIndex = 4; PairIndex != 8; ++PairIndex) {
     Register First;
     Register Second;
     getFPPairRegs(PairIndex, First, Second);
@@ -346,7 +365,7 @@ bool BedrockFrameLowering::assignCalleeSavedSpillSlots(
     std::vector<CalleeSavedInfo> &CSI) const {
   std::vector<CalleeSavedInfo> Ordered;
   Ordered.reserve(CSI.size());
-  for (unsigned PairIndex = 0; PairIndex != 4; ++PairIndex) {
+  for (unsigned PairIndex = 4; PairIndex != 8; ++PairIndex) {
     Register First;
     Register Second;
     getFPPairRegs(PairIndex, First, Second);

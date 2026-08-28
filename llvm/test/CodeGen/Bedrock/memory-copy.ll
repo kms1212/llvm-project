@@ -64,10 +64,11 @@ done:
 
 define i32 @copy_countdown(ptr %dst, ptr %src, i32 %n) {
 ; CHECK-LABEL: copy_countdown:
-; CHECK: repgf {{r[0-9]+}}, {
-; CHECK-NEXT: mov.q [r1++], [r0++]
-; CHECK-NEXT: }
-; CHECK-NOT: djt
+; CHECK: testjle.l [[COUNT:r[0-9]+]], [[COUNT]],
+; CHECK: mov.q [r1++], [r0++]
+; CHECK-NEXT: dec.q [[LOOPCOUNT:r[0-9]+]]
+; CHECK-NEXT: test.q [[LOOPCOUNT]], [[LOOPCOUNT]]
+; CHECK-NEXT: jne
 ; CHECK: ret
 entry:
   %cmp = icmp sgt i32 %n, 0

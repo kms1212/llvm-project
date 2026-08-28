@@ -24,6 +24,42 @@
   define void @indexed_load_cmp() {
     ret void
   }
+
+  define void @direct_add_load_q() {
+    ret void
+  }
+
+  define void @copied_base_index_load_q() {
+    ret void
+  }
+
+  define void @copied_base_index_store_q() {
+    ret void
+  }
+
+  define void @sp_index_load_q() {
+    ret void
+  }
+
+  define void @sp_index_store_q() {
+    ret void
+  }
+
+  define void @direct_add_cmp_l_mr() {
+    ret void
+  }
+
+  define void @direct_add_cmp_l_rm() {
+    ret void
+  }
+
+  define void @direct_add_cmp_q_mr() {
+    ret void
+  }
+
+  define void @direct_add_cmp_q_rm() {
+    ret void
+  }
 ...
 ---
 name:            copied_base_index_load
@@ -32,7 +68,7 @@ body:             |
   ; CHECK-LABEL: copied_base_index_load:
   ; CHECK-NOT: mov.q{{.*}}r8, r0
   ; CHECK-NOT: add.q{{.*}}r9, r0
-  ; CHECK: extzq.b	[ds:r8 + r9], r0
+  ; CHECK: mov.b	[ds:r8 + r9], r0
   bb.0:
     liveins: $r8, $r9
 
@@ -64,7 +100,7 @@ body:             |
   ; CHECK-LABEL: sp_index_load:
   ; CHECK-NOT: mov.q{{.*}}sp, r0
   ; CHECK-NOT: add.q{{.*}}r9, r0
-  ; CHECK: extzq.b	[sp + r9], r0
+  ; CHECK: mov.b	[sp + r9], r0
   bb.0:
     liveins: $r9
 
@@ -101,5 +137,140 @@ body:             |
 
     $r0 = LOADLrx $r1, $r2 :: (load (s32))
     CMPLrr $r3, killed $r0, implicit-def $flags
+    RET
+...
+---
+name:            direct_add_load_q
+tracksRegLiveness: true
+body:             |
+  ; CHECK-LABEL: direct_add_load_q:
+  ; CHECK: add.q	r9, r0
+  ; CHECK-NEXT: mov.q	[r0], r1
+  bb.0:
+    liveins: $r9
+
+    $r0 = CONST64 64
+    $r0 = ADDQ3rr killed $r0, $r9
+    $r1 = LOADQrr killed $r0 :: (load (s64))
+    RET implicit $r1
+...
+---
+name:            copied_base_index_load_q
+tracksRegLiveness: true
+body:             |
+  ; CHECK-LABEL: copied_base_index_load_q:
+  ; CHECK: add.q	r9, r0
+  ; CHECK-NEXT: mov.q	[r0], r1
+  bb.0:
+    liveins: $r8, $r9
+
+    $r0 = MOVQrr $r8
+    $r0 = ADDQ3rr killed $r0, $r9
+    $r1 = LOADQrr killed $r0 :: (load (s64))
+    RET implicit $r1
+...
+---
+name:            copied_base_index_store_q
+tracksRegLiveness: true
+body:             |
+  ; CHECK-LABEL: copied_base_index_store_q:
+  ; CHECK: add.q	r9, r0
+  ; CHECK-NEXT: mov.q	r10, [r0]
+  bb.0:
+    liveins: $r8, $r9, $r10
+
+    $r0 = MOVQrr $r8
+    $r0 = ADDQ3rr killed $r0, $r9
+    STOREQrr $r10, killed $r0 :: (store (s64))
+    RET
+...
+---
+name:            sp_index_load_q
+tracksRegLiveness: true
+body:             |
+  ; CHECK-LABEL: sp_index_load_q:
+  ; CHECK: add.q	r9, r0
+  ; CHECK-NEXT: mov.q	[r0], r1
+  bb.0:
+    liveins: $r9
+
+    $r0 = LEAfi 0, 0
+    $r0 = ADDQ3rr killed $r0, $r9
+    $r1 = LOADQrr killed $r0 :: (load (s64))
+    RET implicit $r1
+...
+---
+name:            sp_index_store_q
+tracksRegLiveness: true
+body:             |
+  ; CHECK-LABEL: sp_index_store_q:
+  ; CHECK: add.q	r9, r0
+  ; CHECK-NEXT: mov.q	r10, [r0]
+  bb.0:
+    liveins: $r9, $r10
+
+    $r0 = LEAfi 0, 0
+    $r0 = ADDQ3rr killed $r0, $r9
+    STOREQrr $r10, killed $r0 :: (store (s64))
+    RET
+...
+---
+name:            direct_add_cmp_l_mr
+tracksRegLiveness: true
+body:             |
+  ; CHECK-LABEL: direct_add_cmp_l_mr:
+  ; CHECK: add.q	r9, r0
+  ; CHECK-NEXT: cmp.l	[r0], r3
+  bb.0:
+    liveins: $r3, $r9
+
+    $r0 = CONST64 64
+    $r0 = ADDQ3rr killed $r0, $r9
+    CMPLmr killed $r0, $r3, implicit-def $flags :: (load (s32))
+    RET
+...
+---
+name:            direct_add_cmp_l_rm
+tracksRegLiveness: true
+body:             |
+  ; CHECK-LABEL: direct_add_cmp_l_rm:
+  ; CHECK: add.q	r9, r0
+  ; CHECK-NEXT: cmp.l	r3, [r0]
+  bb.0:
+    liveins: $r3, $r9
+
+    $r0 = CONST64 64
+    $r0 = ADDQ3rr killed $r0, $r9
+    CMPLrm $r3, killed $r0, implicit-def $flags :: (load (s32))
+    RET
+...
+---
+name:            direct_add_cmp_q_mr
+tracksRegLiveness: true
+body:             |
+  ; CHECK-LABEL: direct_add_cmp_q_mr:
+  ; CHECK: add.q	r9, r0
+  ; CHECK-NEXT: cmp.q	[r0], r3
+  bb.0:
+    liveins: $r3, $r9
+
+    $r0 = CONST64 64
+    $r0 = ADDQ3rr killed $r0, $r9
+    CMPQmr killed $r0, $r3, implicit-def $flags :: (load (s64))
+    RET
+...
+---
+name:            direct_add_cmp_q_rm
+tracksRegLiveness: true
+body:             |
+  ; CHECK-LABEL: direct_add_cmp_q_rm:
+  ; CHECK: add.q	r9, r0
+  ; CHECK-NEXT: cmp.q	r3, [r0]
+  bb.0:
+    liveins: $r3, $r9
+
+    $r0 = CONST64 64
+    $r0 = ADDQ3rr killed $r0, $r9
+    CMPQrm $r3, killed $r0, implicit-def $flags :: (load (s64))
     RET
 ...

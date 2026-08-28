@@ -34,7 +34,7 @@ define i64 @cycle_counter() {
 ; CHECK-NOT: clr
 ; CHECK: ret
 ; OBJ-LABEL: <cycle_counter>:
-; OBJ: cf ef 47 a0 01 00{{.*}}rdpmc{{[ \t]+}}1, r0
+; OBJ: cb b4 50 01 00{{.*}}rdpmc{{[ \t]+}}1, r0
   %value = call i64 @llvm.readcyclecounter()
   ret i64 %value
 }

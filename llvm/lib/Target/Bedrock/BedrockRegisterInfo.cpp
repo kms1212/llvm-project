@@ -49,6 +49,21 @@ BedrockRegisterInfo::getReservedRegs(const MachineFunction &MF) const {
         Bedrock::GS4, Bedrock::GS5, Bedrock::FSTATUS, Bedrock::FFLAGS})
     Reserved.set(Reg);
 
+  // Scalable callee-save storage is represented architecturally by the vector
+  // SAVE/RESTORE component rather than fixed-size frame slots. Until a
+  // function explicitly requests that component, keep the callee-saved half
+  // out of ordinary allocation so generated code preserves it without
+  // constructing a VLEN-dependent stack frame.
+  for (MCPhysReg Reg :
+       {Bedrock::V16, Bedrock::V17, Bedrock::V18, Bedrock::V19,
+        Bedrock::V20, Bedrock::V21, Bedrock::V22, Bedrock::V23,
+        Bedrock::V24, Bedrock::V25, Bedrock::V26, Bedrock::V27,
+        Bedrock::V28, Bedrock::V29, Bedrock::V30, Bedrock::V31,
+        Bedrock::P7,
+        Bedrock::P8, Bedrock::P9, Bedrock::P10, Bedrock::P11,
+        Bedrock::P12, Bedrock::P13, Bedrock::P14, Bedrock::P15})
+    Reserved.set(Reg);
+
   return Reserved;
 }
 
@@ -126,6 +141,18 @@ bool BedrockRegisterInfo::eliminateFrameIndex(MachineBasicBlock::iterator II,
       break;
     case Bedrock::FSTOREDfi:
       RegisterBaseOpcode = Bedrock::FSTOREDro;
+      break;
+    case Bedrock::VECTOR_SPILL:
+      RegisterBaseOpcode = Bedrock::VECTOR_SPILL_RO;
+      break;
+    case Bedrock::PREDICATE_SPILL:
+      RegisterBaseOpcode = Bedrock::PREDICATE_SPILL_RO;
+      break;
+    case Bedrock::VECTOR_RELOAD:
+      RegisterBaseOpcode = Bedrock::VECTOR_RELOAD_RO;
+      break;
+    case Bedrock::PREDICATE_RELOAD:
+      RegisterBaseOpcode = Bedrock::PREDICATE_RELOAD_RO;
       break;
     case Bedrock::STOREB_Immfi:
       RegisterBaseOpcode = Bedrock::STOREB_Immro;

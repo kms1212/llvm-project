@@ -63,8 +63,8 @@ struct VectorMember {
 };
 
 // CHECK: error: Bedrock C ABI does not permit bit-precise integer type without an extension ABI '_BitInt(17)' across an external ABI boundary
-// CHECK: error: Bedrock C ABI does not permit vector type without an extension ABI 'IntVector' across an external ABI boundary
-// CHECK: error: Bedrock C ABI does not permit vector type without an extension ABI 'struct VectorMember' across an external ABI boundary
+// CHECK: error: Bedrock C ABI does not permit fixed-length vector type without an extension ABI 'IntVector' across an external ABI boundary
+// CHECK: error: Bedrock C ABI does not permit fixed-length vector type without an extension ABI 'struct VectorMember' across an external ABI boundary
 #ifndef TEST_CALL
 void exported_nonbaseline_aggregates(struct AttributePacked attribute,
                                      struct PragmaPacked pragma,
@@ -96,7 +96,7 @@ extern void consume_vector(IntVector);
 // CALL: error: Bedrock C ABI does not permit packed or under-aligned aggregate type 'struct AttributePacked' across an external ABI boundary
 // CALL: error: Bedrock C ABI does not permit enum type with a non-int representation 'enum WideEnum' across an external ABI boundary
 // CALL: error: Bedrock C ABI does not permit bit-precise integer type without an extension ABI '_BitInt(17)' across an external ABI boundary
-// CALL: error: Bedrock C ABI does not permit vector type without an extension ABI '{{.*}}int' across an external ABI boundary
+// CALL: error: Bedrock C ABI does not permit fixed-length vector type without an extension ABI '{{.*}}int' across an external ABI boundary
 void call_external_boundary(void) {
   struct AttributePacked value = {0};
   consume_attribute_packed(value);

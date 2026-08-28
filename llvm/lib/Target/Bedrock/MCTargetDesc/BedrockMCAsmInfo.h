@@ -20,6 +20,7 @@ class BedrockMCAsmInfo : public MCAsmInfoELF {
 
 public:
   explicit BedrockMCAsmInfo(const Triple &TT);
+  bool isValidUnquotedName(StringRef Name) const override;
 };
 
 } // namespace llvm

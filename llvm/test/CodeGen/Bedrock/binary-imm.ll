@@ -59,7 +59,7 @@ define i32 @or_single_bit_i32(i32 %a) {
 ; CHECK: bset 31, r0
 ; CHECK: ret
 ; OBJ-LABEL: <or_single_bit_i32>:
-; OBJ: c7 ee 6f 80{{.*}}bset{{[ \t]+}}31, r0
+; OBJ: c7 d9 a8 1f{{.*}}bset{{[ \t]+}}31, r0
   %r = or i32 %a, -2147483648
   ret i32 %r
 }
@@ -70,7 +70,7 @@ define i64 @and_clear_single_bit_i64(i64 %a) {
 ; CHECK: bclr 40, r0
 ; CHECK: ret
 ; OBJ-LABEL: <and_clear_single_bit_i64>:
-; OBJ: c7 ee b4 00{{.*}}bclr{{[ \t]+}}40, r0
+; OBJ: c7 d9 a4 28{{.*}}bclr{{[ \t]+}}40, r0
   %r = and i64 %a, -1099511627777
   ret i64 %r
 }
@@ -81,7 +81,7 @@ define i32 @and_clear_single_bit_i32(i32 %a) {
 ; CHECK: bclr 31, r0
 ; CHECK: ret
 ; OBJ-LABEL: <and_clear_single_bit_i32>:
-; OBJ: c7 ee af 80{{.*}}bclr{{[ \t]+}}31, r0
+; OBJ: c7 d9 a4 1f{{.*}}bclr{{[ \t]+}}31, r0
   %r = and i32 %a, 2147483647
   ret i32 %r
 }
@@ -92,7 +92,7 @@ define i64 @xor_single_bit_i64(i64 %a) {
 ; CHECK: bchg 40, r0
 ; CHECK: ret
 ; OBJ-LABEL: <xor_single_bit_i64>:
-; OBJ: c7 ee f4 00{{.*}}bchg{{[ \t]+}}40, r0
+; OBJ: c7 d9 a0 28{{.*}}bchg{{[ \t]+}}40, r0
   %r = xor i64 %a, 1099511627776
   ret i64 %r
 }
@@ -103,7 +103,7 @@ define i32 @xor_single_bit_i32(i32 %a) {
 ; CHECK: bchg 31, r0
 ; CHECK: ret
 ; OBJ-LABEL: <xor_single_bit_i32>:
-; OBJ: c7 ee ef 80{{.*}}bchg{{[ \t]+}}31, r0
+; OBJ: c7 d9 a0 1f{{.*}}bchg{{[ \t]+}}31, r0
   %r = xor i32 %a, -2147483648
   ret i32 %r
 }
@@ -115,7 +115,7 @@ define i1 @test_single_bit_i64(i64 %a) {
 ; CHECK-NEXT: seteq r0
 ; CHECK: ret
 ; OBJ-LABEL: <test_single_bit_i64>:
-; OBJ: c7 ee 34 00{{.*}}btest{{[ \t]+}}40, r0
+; OBJ: c7 d9 ac 28{{.*}}btest{{[ \t]+}}40, r0
 ; OBJ-NEXT: {{.*}}seteq{{[ \t]+}}r0
   %masked = and i64 %a, 1099511627776
   %result = icmp eq i64 %masked, 0
@@ -129,7 +129,7 @@ define i1 @test_single_bit_i32(i32 %a) {
 ; CHECK-NEXT: setne r0
 ; CHECK: ret
 ; OBJ-LABEL: <test_single_bit_i32>:
-; OBJ: c7 ee 2f 80{{.*}}btest{{[ \t]+}}31, r0
+; OBJ: c7 d9 ac 1f{{.*}}btest{{[ \t]+}}31, r0
 ; OBJ-NEXT: {{.*}}setne{{[ \t]+}}r0
   %masked = and i32 %a, -2147483648
   %result = icmp ne i32 %masked, 0
@@ -164,7 +164,8 @@ define i32 @xor_imm(i32 %a) {
 
 define i32 @shl_imm(i32 %a) {
 ; CHECK-LABEL: shl_imm:
-; CHECK: shl.l 2, r0
+; CHECK: lea.q 2, [[COUNT:r[0-9]+]]
+; CHECK-NEXT: shl.l [[COUNT]], r0
 ; CHECK: ret
   %r = shl i32 %a, 2
   ret i32 %r
@@ -172,7 +173,8 @@ define i32 @shl_imm(i32 %a) {
 
 define i32 @srl_imm(i32 %a) {
 ; CHECK-LABEL: srl_imm:
-; CHECK: shr.l 3, r0
+; CHECK: lea.q 3, [[COUNT:r[0-9]+]]
+; CHECK-NEXT: shr.l [[COUNT]], r0
 ; CHECK: ret
   %r = lshr i32 %a, 3
   ret i32 %r
@@ -180,7 +182,8 @@ define i32 @srl_imm(i32 %a) {
 
 define i32 @sra_imm(i32 %a) {
 ; CHECK-LABEL: sra_imm:
-; CHECK: sar.l 4, r0
+; CHECK: lea.q 4, [[COUNT:r[0-9]+]]
+; CHECK-NEXT: sar.l [[COUNT]], r0
 ; CHECK: ret
   %r = ashr i32 %a, 4
   ret i32 %r

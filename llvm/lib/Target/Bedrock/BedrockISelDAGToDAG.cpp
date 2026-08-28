@@ -13,6 +13,7 @@
 #include "MCTargetDesc/BedrockMCTargetDesc.h"
 #include "llvm/CodeGen/SelectionDAGISel.h"
 #include "llvm/IR/Function.h"
+#include "llvm/IR/IntrinsicsBedrock.h"
 #include "llvm/Support/Debug.h"
 #include "llvm/Support/ErrorHandling.h"
 
@@ -161,9 +162,9 @@ static unsigned getSignExtendInRegPseudo(MVT VT, MVT ExtVT) {
   if (VT == MVT::i32) {
     switch (ExtVT.SimpleTy) {
     case MVT::i8:
-      return Bedrock::EXTSLBrr;
+      return Bedrock::EXTSQBrr;
     case MVT::i16:
-      return Bedrock::EXTSLWrr;
+      return Bedrock::EXTSQWrr;
     default:
       return 0;
     }
@@ -188,19 +189,19 @@ static unsigned getSignExtendInRegPseudo(MVT VT, MVT ExtVT) {
 static unsigned getZeroExtendMaskPseudo(MVT VT, const APInt &Mask) {
   if (VT == MVT::i32) {
     if (Mask == UINT64_C(0xff))
-      return Bedrock::EXTZLBrr;
+      return Bedrock::MOVBrr;
     if (Mask == UINT64_C(0xffff))
-      return Bedrock::EXTZLWrr;
+      return Bedrock::MOVWrr;
     return 0;
   }
 
   if (VT == MVT::i64) {
     if (Mask == UINT64_C(0xff))
-      return Bedrock::EXTZQBrr;
+      return Bedrock::MOVBrr;
     if (Mask == UINT64_C(0xffff))
-      return Bedrock::EXTZQWrr;
+      return Bedrock::MOVWrr;
     if (Mask == UINT64_C(0xffffffff))
-      return Bedrock::EXTZQLrr;
+      return Bedrock::MOVLrr;
     return 0;
   }
 
@@ -362,13 +363,16 @@ static bool selectBinaryImmediate(SelectionDAG *DAG, SDNode *N, SDLoc DL,
   SDValue RHS = N->getOperand(1);
 
   if (auto *CN = dyn_cast<ConstantSDNode>(RHS)) {
+    // Compact EA no longer has register-direct destinations. Keep shift and
+    // rotate counts in registers so their register destination form remains
+    // encodable.
+    if (isShiftOrRotateOpcode(Opcode))
+      return false;
+
     if (selectBitModifyImmediate(DAG, N, DL, VT, LHS, CN))
       return true;
 
     int64_t Imm = CN->getSExtValue();
-    if (isShiftOrRotateOpcode(Opcode) && !isUInt<6>(Imm))
-      return false;
-
     SDValue Ops[] = {LHS, DAG->getTargetConstant(Imm, DL, MVT::i64)};
     DAG->SelectNodeTo(N, getBinaryImmPseudo(Opcode, VT), VT, Ops);
     return true;
@@ -982,6 +986,88 @@ static void selectMemoryNode(SelectionDAG *DAG, SDNode *N, unsigned Opcode,
   DAG->setNodeMemRefs(cast<MachineSDNode>(Selected), {MemOperand});
 }
 
+static int getVectorElementType(EVT VT) {
+  switch (VT.getSimpleVT().SimpleTy) {
+  case MVT::nxv16i8:
+    return 0;
+  case MVT::nxv8i16:
+    return 1;
+  case MVT::nxv4i32:
+    return 2;
+  case MVT::nxv2i64:
+    return 3;
+  case MVT::nxv8f16:
+    return 5;
+  case MVT::nxv4f32:
+    return 6;
+  case MVT::nxv2f64:
+    return 7;
+  default:
+    return -1;
+  }
+}
+
+static int getVectorBinaryOperation(unsigned Opcode) {
+  switch (Opcode) {
+  case ISD::ADD:
+  case ISD::FADD:
+    return BedrockVectorPseudo::Add;
+  case ISD::SUB:
+  case ISD::FSUB:
+    return BedrockVectorPseudo::Sub;
+  case ISD::MUL:
+  case ISD::FMUL:
+    return BedrockVectorPseudo::Mul;
+  case ISD::AND:
+    return BedrockVectorPseudo::And;
+  case ISD::OR:
+    return BedrockVectorPseudo::Or;
+  case ISD::XOR:
+    return BedrockVectorPseudo::Xor;
+  case ISD::FDIV:
+    return BedrockVectorPseudo::DivFP;
+  default:
+    return -1;
+  }
+}
+
+static int getVectorCondition(ISD::CondCode Condition, bool IsFP) {
+  switch (Condition) {
+  case ISD::SETEQ:
+  case ISD::SETOEQ:
+    return 2;
+  case ISD::SETNE:
+  case ISD::SETONE:
+    return 3;
+  case ISD::SETULT:
+    return IsFP ? -1 : 4;
+  case ISD::SETUGE:
+    return IsFP ? -1 : 5;
+  case ISD::SETULE:
+    return IsFP ? -1 : 10;
+  case ISD::SETUGT:
+    return IsFP ? -1 : 11;
+  case ISD::SETLT:
+  case ISD::SETOLT:
+    return 12;
+  case ISD::SETGE:
+  case ISD::SETOGE:
+    return 13;
+  case ISD::SETLE:
+  case ISD::SETOLE:
+    return 14;
+  case ISD::SETGT:
+  case ISD::SETOGT:
+    return 15;
+  case ISD::SETUO:
+    return IsFP ? 8 : -1;
+  case ISD::SETO:
+    return IsFP ? 9 : -1;
+  default:
+    return -1;
+  }
+}
+
 void BedrockDAGToDAGISel::Select(SDNode *N) {
   if (N->isMachineOpcode()) {
     N->setNodeId(-1);
@@ -989,13 +1075,103 @@ void BedrockDAGToDAGISel::Select(SDNode *N) {
   }
 
   SDLoc DL(N);
-  if (N->getOpcode() == BedrockISD::MEMSET) {
-    SDValue Ops[] = {N->getOperand(1), N->getOperand(2), N->getOperand(3),
-                     N->getOperand(0)};
-    CurDAG->SelectNodeTo(N, Bedrock::REP_MEMSETB,
-                         CurDAG->getVTList(MVT::i64, MVT::i64, MVT::Other),
-                         Ops);
-    return;
+  if (N->getOpcode() == ISD::VSCALE) {
+    auto *Scale = dyn_cast<ConstantSDNode>(N->getOperand(0));
+    if (Scale && Scale->getZExtValue() == 16) {
+      SmallVector<SDValue, 0> Ops;
+      CurDAG->SelectNodeTo(N, Bedrock::VECTOR_LENGTH, N->getValueType(0), Ops);
+      return;
+    }
+  }
+  if (N->getOpcode() == ISD::INTRINSIC_W_CHAIN) {
+    auto IntrinsicID = cast<ConstantSDNode>(N->getOperand(1))->getZExtValue();
+    if (IntrinsicID == Intrinsic::bedrock_vector_strided_load) {
+      int ElementType = getVectorElementType(N->getValueType(0));
+      auto *Displacement = dyn_cast<ConstantSDNode>(N->getOperand(4));
+      if (ElementType < 0 || !Displacement)
+        report_fatal_error("invalid Bedrock vector strided-load intrinsic");
+      SDValue Ops[] = {
+          N->getOperand(2), N->getOperand(3),
+          CurDAG->getTargetConstant(Displacement->getSExtValue(), DL,
+                                    MVT::i64),
+          CurDAG->getTargetConstant(ElementType, DL, MVT::i64),
+          N->getOperand(0),
+      };
+      CurDAG->SelectNodeTo(N, Bedrock::VECTOR_STRIDE_LOAD, N->getVTList(),
+                           Ops);
+      return;
+    }
+  }
+  if (N->getOpcode() == ISD::INTRINSIC_VOID) {
+    auto IntrinsicID = cast<ConstantSDNode>(N->getOperand(1))->getZExtValue();
+    if (IntrinsicID == Intrinsic::bedrock_vector_strided_store) {
+      int ElementType = getVectorElementType(N->getOperand(2).getValueType());
+      auto *Displacement = dyn_cast<ConstantSDNode>(N->getOperand(5));
+      if (ElementType < 0 || !Displacement)
+        report_fatal_error("invalid Bedrock vector strided-store intrinsic");
+      SDValue Ops[] = {
+          N->getOperand(2), N->getOperand(3), N->getOperand(4),
+          CurDAG->getTargetConstant(Displacement->getSExtValue(), DL,
+                                    MVT::i64),
+          CurDAG->getTargetConstant(ElementType, DL, MVT::i64),
+          N->getOperand(0),
+      };
+      CurDAG->SelectNodeTo(N, Bedrock::VECTOR_STRIDE_STORE, N->getVTList(),
+                           Ops);
+      return;
+    }
+  }
+  if (N->getOpcode() == ISD::INTRINSIC_WO_CHAIN) {
+    auto IntrinsicID = cast<ConstantSDNode>(N->getOperand(0))->getZExtValue();
+    bool IsInteger =
+        IntrinsicID == Intrinsic::bedrock_vector_reduce_add_i64;
+    bool IsFP = IntrinsicID == Intrinsic::bedrock_vector_reduce_add_f64;
+    if (IsInteger || IsFP) {
+      int ElementType = getVectorElementType(N->getOperand(1).getValueType());
+      if (ElementType < 0 || IsFP != (ElementType >= 5))
+        report_fatal_error("invalid Bedrock vector reduction intrinsic");
+      SDValue Ops[] = {
+          N->getOperand(1),
+          CurDAG->getTargetConstant(ElementType, DL, MVT::i64),
+      };
+      CurDAG->SelectNodeTo(N, IsFP ? Bedrock::VECTOR_REDUCE_FP
+                                  : Bedrock::VECTOR_REDUCE_INT,
+                           N->getValueType(0), Ops);
+      return;
+    }
+  }
+  if (N->getOpcode() == ISD::SETCC && N->getValueType(0).isScalableVector()) {
+    auto *CC = cast<CondCodeSDNode>(N->getOperand(2));
+    EVT OperandVT = N->getOperand(0).getValueType();
+    int OperandType = getVectorElementType(OperandVT);
+    int Condition = getVectorCondition(
+        CC->get(), OperandVT.getVectorElementType().isFloatingPoint());
+    if (OperandType >= 0 && Condition >= 0) {
+      SDValue Ops[] = {
+          N->getOperand(0), N->getOperand(1),
+          CurDAG->getTargetConstant(Condition, DL, MVT::i64),
+          CurDAG->getTargetConstant(OperandType, DL, MVT::i64),
+      };
+      CurDAG->SelectNodeTo(N, Bedrock::VECTOR_COMPARE, N->getValueType(0),
+                           Ops);
+      return;
+    }
+  }
+  if (N->getNumValues() > 0) {
+    EVT ResultVT = N->getValueType(0);
+    int ElementType = getVectorElementType(ResultVT);
+    if (ElementType >= 0) {
+      int Operation = getVectorBinaryOperation(N->getOpcode());
+      if (Operation >= 0) {
+        SDValue Ops[] = {
+            N->getOperand(0), N->getOperand(1),
+            CurDAG->getTargetConstant(Operation, DL, MVT::i64),
+            CurDAG->getTargetConstant(ElementType, DL, MVT::i64),
+        };
+        CurDAG->SelectNodeTo(N, Bedrock::VECTOR_BINARY, ResultVT, Ops);
+        return;
+      }
+    }
   }
   if (selectCompareImmediate(CurDAG, N, DL))
     return;
@@ -1007,6 +1183,49 @@ void BedrockDAGToDAGISel::Select(SDNode *N) {
   }
 
   if (auto *LD = dyn_cast<LoadSDNode>(N)) {
+    if (LD->getValueType(0).isScalableVector() &&
+        LD->getValueType(0).getVectorElementType() == MVT::i1) {
+      SDValue FrameIndex;
+      int64_t Offset = 0;
+      if (selectFrameAddress(CurDAG, LD->getBasePtr(), DL, FrameIndex,
+                             Offset)) {
+        SDValue Ops[] = {
+            FrameIndex, CurDAG->getTargetConstant(Offset, DL, MVT::i64),
+            LD->getChain(),
+        };
+        selectMemoryNode(CurDAG, N, Bedrock::PREDICATE_RELOAD, Ops,
+                         LD->getMemOperand());
+        return;
+      }
+      SDValue Ops[] = {LD->getBasePtr(), LD->getChain()};
+      selectMemoryNode(CurDAG, N, Bedrock::PREDICATE_LOAD, Ops,
+                       LD->getMemOperand());
+      return;
+    }
+    int ElementType = getVectorElementType(LD->getValueType(0));
+    if (ElementType >= 0) {
+      SDValue FrameIndex;
+      int64_t Offset = 0;
+      if (selectFrameAddress(CurDAG, LD->getBasePtr(), DL, FrameIndex,
+                             Offset)) {
+        SDValue Ops[] = {
+            FrameIndex, CurDAG->getTargetConstant(Offset, DL, MVT::i64),
+            CurDAG->getTargetConstant(ElementType, DL, MVT::i64),
+            LD->getChain(),
+        };
+        selectMemoryNode(CurDAG, N, Bedrock::VECTOR_OBJECT_LOAD, Ops,
+                         LD->getMemOperand());
+        return;
+      }
+      SDValue Ops[] = {
+          LD->getBasePtr(),
+          CurDAG->getTargetConstant(ElementType, DL, MVT::i64),
+          LD->getChain(),
+      };
+      selectMemoryNode(CurDAG, N, Bedrock::VECTOR_LOAD, Ops,
+                       LD->getMemOperand());
+      return;
+    }
     SDValue FrameIndex;
     int64_t Offset = 0;
     bool IsFrame =
@@ -1051,6 +1270,50 @@ void BedrockDAGToDAGISel::Select(SDNode *N) {
   }
 
   if (auto *ST = dyn_cast<StoreSDNode>(N)) {
+    if (ST->getMemoryVT().isScalableVector() &&
+        ST->getMemoryVT().getVectorElementType() == MVT::i1) {
+      SDValue FrameIndex;
+      int64_t Offset = 0;
+      if (selectFrameAddress(CurDAG, ST->getBasePtr(), DL, FrameIndex,
+                             Offset)) {
+        SDValue Ops[] = {
+            ST->getValue(), FrameIndex,
+            CurDAG->getTargetConstant(Offset, DL, MVT::i64), ST->getChain(),
+        };
+        selectMemoryNode(CurDAG, N, Bedrock::PREDICATE_SPILL, Ops,
+                         ST->getMemOperand());
+        return;
+      }
+      SDValue Ops[] = {ST->getValue(), ST->getBasePtr(), ST->getChain()};
+      selectMemoryNode(CurDAG, N, Bedrock::PREDICATE_STORE, Ops,
+                       ST->getMemOperand());
+      return;
+    }
+    int ElementType = getVectorElementType(ST->getMemoryVT());
+    if (ElementType >= 0) {
+      SDValue FrameIndex;
+      int64_t Offset = 0;
+      if (selectFrameAddress(CurDAG, ST->getBasePtr(), DL, FrameIndex,
+                             Offset)) {
+        SDValue Ops[] = {
+            ST->getValue(), FrameIndex,
+            CurDAG->getTargetConstant(Offset, DL, MVT::i64),
+            CurDAG->getTargetConstant(ElementType, DL, MVT::i64),
+            ST->getChain(),
+        };
+        selectMemoryNode(CurDAG, N, Bedrock::VECTOR_OBJECT_STORE, Ops,
+                         ST->getMemOperand());
+        return;
+      }
+      SDValue Ops[] = {
+          ST->getValue(), ST->getBasePtr(),
+          CurDAG->getTargetConstant(ElementType, DL, MVT::i64),
+          ST->getChain(),
+      };
+      selectMemoryNode(CurDAG, N, Bedrock::VECTOR_STORE, Ops,
+                       ST->getMemOperand());
+      return;
+    }
     int64_t StoreImm = 0;
     bool HasStoreImm = selectStoreImmediate(ST, StoreImm);
 

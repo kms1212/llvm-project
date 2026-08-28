@@ -15,9 +15,85 @@
 
 namespace llvm {
 
+namespace BedrockCABI {
+
+#define BEDROCK_C_CALLING_CONVENTION(STACK_POINTER, GROWTH, ENTRY_ALIGNMENT,   \
+                                     FIRST_ARGUMENT_OFFSET, ARGUMENT_SLOT,     \
+                                     SRET_REGISTER, RED_ZONE)                  \
+  inline constexpr unsigned EntryAlignment = ENTRY_ALIGNMENT;                  \
+  inline constexpr unsigned FirstArgumentOffset = FIRST_ARGUMENT_OFFSET;       \
+  inline constexpr unsigned ArgumentSlot = ARGUMENT_SLOT;                      \
+  inline constexpr unsigned RedZone = RED_ZONE;
+#include "llvm/TargetParser/BedrockGenCABI.inc"
+#undef BEDROCK_C_CALLING_CONVENTION
+
+#define BEDROCK_C_EMIT_GENERAL(REG) Bedrock::REG,
+#define BEDROCK_C_EMIT_FLOATING(REG)
+#define BEDROCK_C_EMIT_VECTOR(REG)
+#define BEDROCK_C_EMIT_PREDICATE(REG)
+#define BEDROCK_C_ARGUMENT_REGISTER(CLASS, INDEX, REG)                         \
+  BEDROCK_C_EMIT_##CLASS(REG)
+inline constexpr MCPhysReg GeneralArgumentRegisters[] = {
+#include "llvm/TargetParser/BedrockGenCABI.inc"
+};
+#undef BEDROCK_C_ARGUMENT_REGISTER
+#undef BEDROCK_C_EMIT_GENERAL
+#undef BEDROCK_C_EMIT_FLOATING
+#undef BEDROCK_C_EMIT_VECTOR
+#undef BEDROCK_C_EMIT_PREDICATE
+
+#define BEDROCK_C_EMIT_GENERAL(REG)
+#define BEDROCK_C_EMIT_FLOATING(REG) Bedrock::REG,
+#define BEDROCK_C_EMIT_VECTOR(REG)
+#define BEDROCK_C_EMIT_PREDICATE(REG)
+#define BEDROCK_C_ARGUMENT_REGISTER(CLASS, INDEX, REG)                         \
+  BEDROCK_C_EMIT_##CLASS(REG)
+inline constexpr MCPhysReg FloatingArgumentRegisters[] = {
+#include "llvm/TargetParser/BedrockGenCABI.inc"
+};
+#undef BEDROCK_C_ARGUMENT_REGISTER
+#undef BEDROCK_C_EMIT_GENERAL
+#undef BEDROCK_C_EMIT_FLOATING
+#undef BEDROCK_C_EMIT_VECTOR
+#undef BEDROCK_C_EMIT_PREDICATE
+
+#define BEDROCK_C_EMIT_GENERAL(REG)
+#define BEDROCK_C_EMIT_FLOATING(REG)
+#define BEDROCK_C_EMIT_VECTOR(REG) Bedrock::REG,
+#define BEDROCK_C_EMIT_PREDICATE(REG)
+#define BEDROCK_C_ARGUMENT_REGISTER(CLASS, INDEX, REG)                         \
+  BEDROCK_C_EMIT_##CLASS(REG)
+inline constexpr MCPhysReg VectorArgumentRegisters[] = {
+#include "llvm/TargetParser/BedrockGenCABI.inc"
+};
+#undef BEDROCK_C_ARGUMENT_REGISTER
+#undef BEDROCK_C_EMIT_GENERAL
+#undef BEDROCK_C_EMIT_FLOATING
+#undef BEDROCK_C_EMIT_VECTOR
+#undef BEDROCK_C_EMIT_PREDICATE
+
+#define BEDROCK_C_EMIT_GENERAL(REG)
+#define BEDROCK_C_EMIT_FLOATING(REG)
+#define BEDROCK_C_EMIT_VECTOR(REG)
+#define BEDROCK_C_EMIT_PREDICATE(REG) Bedrock::REG,
+#define BEDROCK_C_ARGUMENT_REGISTER(CLASS, INDEX, REG)                         \
+  BEDROCK_C_EMIT_##CLASS(REG)
+inline constexpr MCPhysReg PredicateArgumentRegisters[] = {
+#include "llvm/TargetParser/BedrockGenCABI.inc"
+};
+#undef BEDROCK_C_ARGUMENT_REGISTER
+#undef BEDROCK_C_EMIT_GENERAL
+#undef BEDROCK_C_EMIT_FLOATING
+#undef BEDROCK_C_EMIT_VECTOR
+#undef BEDROCK_C_EMIT_PREDICATE
+
+} // namespace BedrockCABI
+
 class BedrockCCState final : public CCState {
   unsigned GeneralCursor = 0;
   unsigned FloatCursor = 0;
+  unsigned VectorCursor = 0;
+  unsigned PredicateCursor = 0;
   bool GeneralExhausted = false;
   bool FloatExhausted = false;
 
@@ -35,15 +111,19 @@ public:
   void setGeneralCursor(unsigned Cursor) { GeneralCursor = Cursor; }
   unsigned getFloatCursor() const { return FloatCursor; }
   void setFloatCursor(unsigned Cursor) { FloatCursor = Cursor; }
+  unsigned getVectorCursor() const { return VectorCursor; }
+  void setVectorCursor(unsigned Cursor) { VectorCursor = Cursor; }
+  unsigned getPredicateCursor() const { return PredicateCursor; }
+  void setPredicateCursor(unsigned Cursor) { PredicateCursor = Cursor; }
   bool isGeneralExhausted() const { return GeneralExhausted; }
   void exhaustGeneral() {
     GeneralExhausted = true;
-    GeneralCursor = 8;
+    GeneralCursor = std::size(BedrockCABI::GeneralArgumentRegisters);
   }
   bool isFloatExhausted() const { return FloatExhausted; }
   void exhaustFloat() {
     FloatExhausted = true;
-    FloatCursor = 8;
+    FloatCursor = std::size(BedrockCABI::FloatingArgumentRegisters);
   }
 
   bool hasPendingPair() const { return HasPendingPair; }
@@ -90,14 +170,10 @@ inline bool CC_Bedrock(unsigned ValNo, MVT ValVT, MVT LocVT,
                        CCValAssign::LocInfo LocInfo, ISD::ArgFlagsTy ArgFlags,
                        Type *OrigTy, CCState &State) {
   auto &BState = static_cast<BedrockCCState &>(State);
-  static const MCPhysReg GPRs[] = {
-      Bedrock::R0, Bedrock::R1, Bedrock::R2, Bedrock::R3,
-      Bedrock::R4, Bedrock::R5, Bedrock::R6, Bedrock::R7,
-  };
-  static const MCPhysReg FPRs[] = {
-      Bedrock::F0, Bedrock::F1, Bedrock::F2, Bedrock::F3,
-      Bedrock::F4, Bedrock::F5, Bedrock::F6, Bedrock::F7,
-  };
+  ArrayRef<MCPhysReg> GPRs = BedrockCABI::GeneralArgumentRegisters;
+  ArrayRef<MCPhysReg> FPRs = BedrockCABI::FloatingArgumentRegisters;
+  ArrayRef<MCPhysReg> VRs = BedrockCABI::VectorArgumentRegisters;
+  ArrayRef<MCPhysReg> PRs = BedrockCABI::PredicateArgumentRegisters;
   if (BState.hasPendingPair()) {
     if (BState.pendingPairIsReg())
       State.addLoc(CCValAssign::getReg(
@@ -113,11 +189,54 @@ inline bool CC_Bedrock(unsigned ValNo, MVT ValVT, MVT LocVT,
   const bool IsFloatPair = isBedrockComplexPair(OrigTy) ||
                            ((ValVT == MVT::f32 || ValVT == MVT::f64) &&
                             (ArgFlags.isSplit() || ArgFlags.isInReg()));
+  const bool IsPredicate =
+      ValVT.isScalableVector() && ValVT.getVectorElementType() == MVT::i1;
+  const bool IsVector = ValVT.isScalableVector() && !IsPredicate;
+  if (IsVector || IsPredicate) {
+    unsigned Cursor = IsPredicate ? BState.getPredicateCursor()
+                                  : BState.getVectorCursor();
+    ArrayRef<MCPhysReg> Regs = IsPredicate ? PRs : VRs;
+    if (!ArgFlags.isVarArg() && Cursor < Regs.size()) {
+      MCRegister Reg = State.AllocateReg(Regs[Cursor]);
+      assert(Reg && "Bedrock scalable cursor disagrees with CC state");
+      if (IsPredicate)
+        BState.setPredicateCursor(Cursor + 1);
+      else
+        BState.setVectorCursor(Cursor + 1);
+      State.addLoc(
+          CCValAssign::getReg(ValNo, ValVT, Reg, ValVT, CCValAssign::Full));
+      return false;
+    }
+
+    // The caller owns the complete scalable object. The ABI passes its
+    // address as a GENERAL value, except that an unnamed variadic argument
+    // forces that pointer itself into a complete 16-byte stack slot.
+    if (!ArgFlags.isVarArg()) {
+      unsigned GeneralCursor = BState.getGeneralCursor();
+      if (!BState.isGeneralExhausted() &&
+          GeneralCursor < std::size(GPRs)) {
+        MCRegister Reg = State.AllocateReg(GPRs[GeneralCursor]);
+        assert(Reg && "Bedrock indirect cursor disagrees with CC state");
+        BState.setGeneralCursor(GeneralCursor + 1);
+        State.addLoc(CCValAssign::getReg(ValNo, ValVT, Reg, MVT::i64,
+                                         CCValAssign::Indirect));
+        return false;
+      }
+      BState.exhaustGeneral();
+    }
+    int64_t Offset = State.AllocateStack(
+        BedrockCABI::ArgumentSlot, Align(BedrockCABI::ArgumentSlot));
+    State.addLoc(CCValAssign::getMem(ValNo, ValVT, Offset, MVT::i64,
+                                     CCValAssign::Indirect));
+    return false;
+  }
+
   // The fixed and variable portions intentionally use different placement
   // rules. Every unnamed argument occupies one complete 16-byte stack slot;
   // it neither consumes nor exhausts either register cursor.
   if (ArgFlags.isVarArg()) {
-    int64_t Offset = State.AllocateStack(16, Align(16));
+    int64_t Offset = State.AllocateStack(
+        BedrockCABI::ArgumentSlot, Align(BedrockCABI::ArgumentSlot));
     if (IsGeneralPair || IsFloatPair)
       BState.setPendingPairOffset(Offset +
                                   (IsFloatPair ? ValVT.getStoreSize() : 8));
@@ -141,7 +260,8 @@ inline bool CC_Bedrock(unsigned ValNo, MVT ValVT, MVT LocVT,
     }
 
     BState.exhaustFloat();
-    int64_t Offset = State.AllocateStack(16, Align(16));
+    int64_t Offset = State.AllocateStack(
+        BedrockCABI::ArgumentSlot, Align(BedrockCABI::ArgumentSlot));
     BState.setPendingPairOffset(Offset + ValVT.getStoreSize());
     State.addLoc(
         CCValAssign::getMem(ValNo, ValVT, Offset, ValVT, CCValAssign::Full));
@@ -162,7 +282,8 @@ inline bool CC_Bedrock(unsigned ValNo, MVT ValVT, MVT LocVT,
     }
 
     BState.exhaustGeneral();
-    int64_t Offset = State.AllocateStack(16, Align(16));
+    int64_t Offset = State.AllocateStack(
+        BedrockCABI::ArgumentSlot, Align(BedrockCABI::ArgumentSlot));
     BState.setPendingPairOffset(Offset + 8);
     State.addLoc(
         CCValAssign::getMem(ValNo, ValVT, Offset, MVT::i64, CCValAssign::Full));
@@ -181,7 +302,8 @@ inline bool CC_Bedrock(unsigned ValNo, MVT ValVT, MVT LocVT,
     }
 
     BState.exhaustFloat();
-    int64_t Offset = State.AllocateStack(16, Align(16));
+    int64_t Offset = State.AllocateStack(
+        BedrockCABI::ArgumentSlot, Align(BedrockCABI::ArgumentSlot));
     State.addLoc(
         CCValAssign::getMem(ValNo, ValVT, Offset, ValVT, CCValAssign::Full));
     return false;
@@ -206,7 +328,8 @@ inline bool CC_Bedrock(unsigned ValNo, MVT ValVT, MVT LocVT,
   }
 
   BState.exhaustGeneral();
-  int64_t Offset = State.AllocateStack(16, Align(16));
+  int64_t Offset = State.AllocateStack(
+      BedrockCABI::ArgumentSlot, Align(BedrockCABI::ArgumentSlot));
   State.addLoc(
       CCValAssign::getMem(ValNo, ValVT, Offset, ValVT, CCValAssign::Full));
   return false;

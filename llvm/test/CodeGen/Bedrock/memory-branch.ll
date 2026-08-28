@@ -26,7 +26,7 @@ define i64 @stack_slot(i64 %x) {
 define i64 @narrow(ptr %p) {
 ; CHECK-LABEL: narrow:
 ; CHECK: extsq.w [r0 + 2], r1
-; CHECK: extzq.b [r0], r0
+; CHECK: mov.b [r0], r0
 ; CHECK: add.q r1, r0
 ; CHECK: ret
   %b = load i8, ptr %p, align 1
@@ -46,7 +46,7 @@ define i64 @branch(i64 %a, i64 %b) {
 ; CHECK: lea.q 2, r0
 ; CHECK: ret
 ; OBJ-LABEL: <branch>:
-; OBJ: cb c5 a8 80 00{{[ \t]+}}cmpjuge.q{{[ \t]+}}r1, r0, 0
+; OBJ: cb d0 35 10 00{{[ \t]+}}cmpjuge.q{{[ \t]+}}r1, r0, 0
 ; OBJ-NEXT: {{.*}}R_BEDROCK_BRDISP8S{{.*}}.L
 ; OBJ-NOT: d0 66
 ; OBJ-LABEL: <setcc>:
@@ -81,7 +81,7 @@ define i64 @medium_branch(i64 %a, ptr %p) {
 ; CHECK-NEXT: pop r8
 ; CHECK: ret
 ; OBJ-LABEL: <medium_branch>:
-; OBJ: cf c5 90 30 00 00{{[ \t]+}}testjeq.q{{[ \t]+}}r0, r0, 0
+; OBJ: cf d0 f2 00 00 00{{[ \t]+}}LEN 6, testjeq.q{{[ \t]+}}r0, r0, 0
 ; OBJ-NEXT: {{.*}}R_BEDROCK_BRDISP16S{{.*}}.L
 ; OBJ-NOT: d0 66
   %c = icmp eq i64 %a, 0

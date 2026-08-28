@@ -141,4 +141,19 @@ let TargetPrefix = "bedrock" in {
       Intrinsic<[], [llvm_ptr_ty], [IntrHasSideEffects]>;
   def int_bedrock_restore_processor_state :
       Intrinsic<[], [llvm_ptr_ty], [IntrHasSideEffects]>;
+
+  // Vector memory and reduction operations whose semantics cannot be
+  // represented by a target-independent scalable-vector IR operation.
+  def int_bedrock_vector_strided_load :
+      Intrinsic<[llvm_anyvector_ty],
+                [llvm_ptr_ty, llvm_i64_ty, llvm_i64_ty],
+                [IntrReadMem, IntrArgMemOnly, NoCapture<ArgIndex<0>>]>;
+  def int_bedrock_vector_strided_store :
+      Intrinsic<[],
+                [llvm_anyvector_ty, llvm_ptr_ty, llvm_i64_ty, llvm_i64_ty],
+                [IntrWriteMem, IntrArgMemOnly, NoCapture<ArgIndex<1>>]>;
+  def int_bedrock_vector_reduce_add_i64 :
+      Intrinsic<[llvm_i64_ty], [llvm_anyvector_ty], [IntrNoMem]>;
+  def int_bedrock_vector_reduce_add_f64 :
+      Intrinsic<[llvm_double_ty], [llvm_anyvector_ty], [IntrNoMem]>;
 }

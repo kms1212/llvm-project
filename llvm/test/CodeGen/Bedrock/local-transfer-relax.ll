@@ -15,7 +15,7 @@ define dso_local i64 @local_call(i64 %x) noinline {
 ; CHECK-LABEL: local_call:
 ; CHECK: call local_callee
 ; OBJ-LABEL: <local_call>:
-; OBJ: c8 a6 00 00 00 {{.*}}call
+; OBJ: cb bc 02 00 00 {{.*}}call
 ; OBJ-NEXT: {{.*}}R_BEDROCK_CALL16S{{.*}}local_callee
   %value = call i64 @local_callee(i64 %x)
   %result = add i64 %value, 1
@@ -26,7 +26,7 @@ define dso_local i64 @local_tail(i64 %x) noinline {
 ; CHECK-LABEL: local_tail:
 ; CHECK: jmp local_callee
 ; OBJ-LABEL: <local_tail>:
-; OBJ: c8 26 00 00 00 {{.*}}jmp
+; OBJ: cb bc 06 00 00 {{.*}}jmp
 ; OBJ-NEXT: {{.*}}R_BEDROCK_BRDISP16S{{.*}}local_callee
   %value = tail call i64 @local_callee(i64 %x)
   ret i64 %value
@@ -38,7 +38,7 @@ define dso_preemptable i64 @replaceable_callee(i64 %x) noinline {
 
 define dso_local i64 @replaceable_call(i64 %x) noinline {
 ; OBJ-LABEL: <replaceable_call>:
-; OBJ: d0 e6 00 00 00 00 00 {{.*}}call
+; OBJ: d3 bc 03 00 00 00 00 {{.*}}call
 ; OBJ-NEXT: {{.*}}R_BEDROCK_CALL32S{{.*}}replaceable_callee
   %value = call i64 @replaceable_callee(i64 %x)
   %result = add i64 %value, 1
@@ -60,9 +60,22 @@ nonzero:
 }
 
 define dso_local void @local_index_loop(ptr %dst, i64 %count) noinline {
+; CHECK-LABEL: local_index_loop:
+; CHECK-NOT: ij
+; CHECK: inc.q [[INDEX:r[0-9]+]]
+; CHECK-NEXT: cmp.q [[BOUND:r[0-9]+]], [[INDEX]]
+; CHECK-NEXT: jult
+; CHECK-NOT: ij
+; CHECK: ret
 ; OBJ-LABEL: <local_index_loop>:
-; OBJ: ijult{{.*}}[pc + 0]
-; OBJ-NEXT: {{.*}}R_BEDROCK_PCREL32S{{.*}}.L{{.*}}+0x5
+; OBJ-NOT: ij
+; OBJ-NOT: R_BEDROCK_PCREL32S
+; OBJ: inc.q [[OBJ_INDEX:r[0-9]+]]
+; OBJ-NEXT: cmp.q [[OBJ_BOUND:r[0-9]+]], [[OBJ_INDEX]]
+; OBJ-NEXT: jult
+; OBJ-NOT: ij
+; OBJ-NOT: R_BEDROCK_PCREL32S
+; OBJ: ret
 entry:
   br label %loop
 
@@ -85,7 +98,7 @@ define dso_local void @padding() noinline {
 
 define dso_local i64 @far_local_call(i64 %x) noinline {
 ; OBJ-LABEL: <far_local_call>:
-; OBJ: d0 e6 00 00 00 00 00 {{.*}}call
+; OBJ: d3 bc 03 00 00 00 00 {{.*}}call
 ; OBJ-NEXT: {{.*}}R_BEDROCK_CALL32S{{.*}}local_callee
   %value = call i64 @local_callee(i64 %x)
   %result = add i64 %value, 1

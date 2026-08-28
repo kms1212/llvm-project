@@ -9,6 +9,7 @@
 #include "BedrockInstrInfo.h"
 #include "BedrockSubtarget.h"
 #include "MCTargetDesc/BedrockMCTargetDesc.h"
+#include "llvm/CodeGen/MachineFrameInfo.h"
 #include "llvm/CodeGen/MachineInstrBuilder.h"
 #include "llvm/CodeGen/MachineOutliner.h"
 #include "llvm/IR/Module.h"
@@ -140,8 +141,20 @@ void BedrockInstrInfo::copyPhysReg(MachineBasicBlock &MBB,
     return;
   }
 
+  if (Bedrock::VRRegClass.contains(DestReg, SrcReg)) {
+    BuildMI(MBB, I, DL, get(Bedrock::VECTOR_COPY), DestReg)
+        .addReg(SrcReg, getKillRegState(KillSrc));
+    return;
+  }
+
+  if (Bedrock::PRRegClass.contains(DestReg, SrcReg)) {
+    BuildMI(MBB, I, DL, get(Bedrock::PREDICATE_COPY), DestReg)
+        .addReg(SrcReg, getKillRegState(KillSrc));
+    return;
+  }
+
   if (!Bedrock::GPR64RegClass.contains(DestReg, SrcReg))
-    report_fatal_error("Bedrock only supports same-class GPR/FPR copies");
+    report_fatal_error("Bedrock only supports same-class register copies");
 
   BuildMI(MBB, I, DL, get(Bedrock::MOVQrr), DestReg)
       .addReg(SrcReg, getKillRegState(KillSrc));
@@ -163,8 +176,30 @@ void BedrockInstrInfo::storeRegToStackSlot(
     return;
   }
 
+  if (RC == &Bedrock::VRRegClass) {
+    MachineFrameInfo &MFI = MBB.getParent()->getFrameInfo();
+    MFI.setObjectSize(FrameIndex, 576);
+    MFI.setObjectAlignment(FrameIndex, Align(16));
+    BuildMI(MBB, MI, DL, get(Bedrock::VECTOR_SPILL))
+        .addReg(SrcReg, getKillRegState(IsKill))
+        .addFrameIndex(FrameIndex)
+        .addImm(0);
+    return;
+  }
+
+  if (RC == &Bedrock::PRRegClass) {
+    MachineFrameInfo &MFI = MBB.getParent()->getFrameInfo();
+    MFI.setObjectSize(FrameIndex, 64);
+    MFI.setObjectAlignment(FrameIndex, Align(16));
+    BuildMI(MBB, MI, DL, get(Bedrock::PREDICATE_SPILL))
+        .addReg(SrcReg, getKillRegState(IsKill))
+        .addFrameIndex(FrameIndex)
+        .addImm(0);
+    return;
+  }
+
   if (!Bedrock::GPR64RegClass.hasSubClassEq(RC))
-    report_fatal_error("Bedrock only supports GPR/FPR stack-slot stores");
+    report_fatal_error("unsupported Bedrock stack-slot store class");
 
   BuildMI(MBB, MI, DL, get(Bedrock::STOREQfi))
       .addReg(SrcReg, getKillRegState(IsKill))
@@ -189,8 +224,28 @@ void BedrockInstrInfo::loadRegFromStackSlot(MachineBasicBlock &MBB,
     return;
   }
 
+  if (RC == &Bedrock::VRRegClass) {
+    MachineFrameInfo &MFI = MBB.getParent()->getFrameInfo();
+    MFI.setObjectSize(FrameIndex, 576);
+    MFI.setObjectAlignment(FrameIndex, Align(16));
+    BuildMI(MBB, MI, DL, get(Bedrock::VECTOR_RELOAD), DestReg)
+        .addFrameIndex(FrameIndex)
+        .addImm(0);
+    return;
+  }
+
+  if (RC == &Bedrock::PRRegClass) {
+    MachineFrameInfo &MFI = MBB.getParent()->getFrameInfo();
+    MFI.setObjectSize(FrameIndex, 64);
+    MFI.setObjectAlignment(FrameIndex, Align(16));
+    BuildMI(MBB, MI, DL, get(Bedrock::PREDICATE_RELOAD), DestReg)
+        .addFrameIndex(FrameIndex)
+        .addImm(0);
+    return;
+  }
+
   if (!Bedrock::GPR64RegClass.hasSubClassEq(RC))
-    report_fatal_error("Bedrock only supports GPR/FPR stack-slot loads");
+    report_fatal_error("unsupported Bedrock stack-slot load class");
 
   BuildMI(MBB, MI, DL, get(Bedrock::LOADQfi), DestReg)
       .addFrameIndex(FrameIndex)
@@ -392,7 +447,9 @@ BedrockInstrInfo::getOutliningCandidateInfo(
 
   outliner::Candidate &Candidate = RepeatedSequenceLocs.front();
   unsigned ConstructionID = BedrockOutlinerDefault;
-  unsigned CallOverhead = 7;
+  // Local CALL/JMP transfers use a three-byte medium opcode followed by a
+  // two-byte PC-relative displacement.
+  unsigned CallOverhead = 5;
   // Account for both the one-byte return and worst-case function alignment.
   unsigned FrameOverhead = 2;
   if (Candidate.back().isReturn()) {
@@ -417,7 +474,6 @@ BedrockInstrInfo::getOutliningTypeImpl(const MachineModuleInfo &MMI,
                                        unsigned Flags) const {
   const MachineInstr &MI = *MBBI;
   if (MI.isCFIInstruction() || isOutlinerStackInstruction(MI) ||
-      MI.getOpcode() == Bedrock::REPG_SCRATCH ||
       MI.getOpcode() == Bedrock::CONST32 ||
       MI.getOpcode() == Bedrock::CONST64 || MI.getOpcode() == Bedrock::CLRQr)
     return outliner::InstrType::Illegal;

@@ -17,69 +17,69 @@
 # RUN: llvm-mc -triple=bedrock -filetype=obj %t/static-undefined.s -o %t/static-undefined.o
 # RUN: not ld.lld --unresolved-symbols=ignore-all %t/static-undefined.o -e entry -o /dev/null 2>&1 | FileCheck %s --check-prefix=STATIC
 
-# ADDEND: TLSDESC GOTPCREL relocation addend must be 3
+# ADDEND: TLSDESC GOTPCREL relocation addend must be 4
 # MISSING: TLSDESC GOTPCREL relocation is not followed by a call marker
 # MARKER: TLSDESC call marker addend must be zero
 # MISMATCH: TLSDESC relocation pair must name the same TLS symbol
-# CODE: TLSDESC relocations require the canonical LEA.Q/CALL [R0] sequence
+# CODE: TLSDESC relocations require the canonical LEA.Q/CALL R0 sequence
 # TYPE: TLSDESC relocation requires an STT_TLS symbol
 # WEAK: TLSDESC relocation cannot leave a weak TLS symbol unresolved
 # STATIC: TLSDESC relocation cannot remain unresolved in an executable without a runtime loader
 
 #--- bad-addend.s
 .text
-.byte 0xd1, 0xb8, 0x06, 0, 0, 0, 0
+.byte 0xd7, 0xcb, 0xd0, 0x56, 0, 0, 0, 0
 .reloc .-4, R_BEDROCK_TLSDESC_GOTPCREL32S, tls
 .reloc ., R_BEDROCK_TLSDESC_CALL, tls
-.byte 0xc7, 0xc3, 0x70, 0x10
+.byte 0xc3, 0xb4, 0x20
 .type tls,@tls_object
 
 #--- missing-marker.s
 .text
-.byte 0xd1, 0xb8, 0x06, 0, 0, 0, 0
-.reloc .-4, R_BEDROCK_TLSDESC_GOTPCREL32S, tls+3
-.byte 0xc7, 0xc3, 0x70, 0x10
+.byte 0xd7, 0xcb, 0xd0, 0x56, 0, 0, 0, 0
+.reloc .-4, R_BEDROCK_TLSDESC_GOTPCREL32S, tls+4
+.byte 0xc3, 0xb4, 0x20
 .type tls,@tls_object
 
 #--- bad-marker.s
 .text
-.byte 0xd1, 0xb8, 0x06, 0, 0, 0, 0
-.reloc .-4, R_BEDROCK_TLSDESC_GOTPCREL32S, tls+3
+.byte 0xd7, 0xcb, 0xd0, 0x56, 0, 0, 0, 0
+.reloc .-4, R_BEDROCK_TLSDESC_GOTPCREL32S, tls+4
 .reloc ., R_BEDROCK_TLSDESC_CALL, tls+1
-.byte 0xc7, 0xc3, 0x70, 0x10
+.byte 0xc3, 0xb4, 0x20
 .type tls,@tls_object
 
 #--- mismatch.s
 .text
-.byte 0xd1, 0xb8, 0x06, 0, 0, 0, 0
-.reloc .-4, R_BEDROCK_TLSDESC_GOTPCREL32S, tls+3
+.byte 0xd7, 0xcb, 0xd0, 0x56, 0, 0, 0, 0
+.reloc .-4, R_BEDROCK_TLSDESC_GOTPCREL32S, tls+4
 .reloc ., R_BEDROCK_TLSDESC_CALL, other
-.byte 0xc7, 0xc3, 0x70, 0x10
+.byte 0xc3, 0xb4, 0x20
 .type tls,@tls_object
 .type other,@tls_object
 
 #--- bad-code.s
 .text
-.byte 0xd1, 0xb8, 0x06, 0, 0, 0, 0
-.reloc .-4, R_BEDROCK_TLSDESC_GOTPCREL32S, tls+3
+.byte 0xd7, 0xcb, 0xd0, 0x56, 0, 0, 0, 0
+.reloc .-4, R_BEDROCK_TLSDESC_GOTPCREL32S, tls+4
 .reloc ., R_BEDROCK_TLSDESC_CALL, tls
-.byte 0x01, 0x01, 0x01, 0x01
+.byte 0x01, 0x01, 0x01
 .type tls,@tls_object
 
 #--- non-tls.s
 .text
-.byte 0xd1, 0xb8, 0x06, 0, 0, 0, 0
-.reloc .-4, R_BEDROCK_TLSDESC_GOTPCREL32S, object+3
+.byte 0xd7, 0xcb, 0xd0, 0x56, 0, 0, 0, 0
+.reloc .-4, R_BEDROCK_TLSDESC_GOTPCREL32S, object+4
 .reloc ., R_BEDROCK_TLSDESC_CALL, object
-.byte 0xc7, 0xc3, 0x70, 0x10
+.byte 0xc3, 0xb4, 0x20
 .type object,@object
 
 #--- weak.s
 .text
-.byte 0xd1, 0xb8, 0x06, 0, 0, 0, 0
-.reloc .-4, R_BEDROCK_TLSDESC_GOTPCREL32S, tls+3
+.byte 0xd7, 0xcb, 0xd0, 0x56, 0, 0, 0, 0
+.reloc .-4, R_BEDROCK_TLSDESC_GOTPCREL32S, tls+4
 .reloc ., R_BEDROCK_TLSDESC_CALL, tls
-.byte 0xc7, 0xc3, 0x70, 0x10
+.byte 0xc3, 0xb4, 0x20
 .weak tls
 .type tls,@tls_object
 
@@ -88,8 +88,8 @@
 .globl entry
 .type entry,@function
 entry:
-.byte 0xd1, 0xb8, 0x06, 0, 0, 0, 0
-.reloc .-4, R_BEDROCK_TLSDESC_GOTPCREL32S, tls+3
+.byte 0xd7, 0xcb, 0xd0, 0x56, 0, 0, 0, 0
+.reloc .-4, R_BEDROCK_TLSDESC_GOTPCREL32S, tls+4
 .reloc ., R_BEDROCK_TLSDESC_CALL, tls
-.byte 0xc7, 0xc3, 0x70, 0x10
+.byte 0xc3, 0xb4, 0x20
 .type tls,@tls_object

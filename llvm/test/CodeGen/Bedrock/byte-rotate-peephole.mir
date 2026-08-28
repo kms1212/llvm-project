@@ -13,6 +13,15 @@
   join:
     ret i32 0
   }
+
+  define i32 @fold_materialized_rotl8(i32 %x) {
+  entry:
+    br label %rot
+  rot:
+    br label %join
+  join:
+    ret i32 0
+  }
 ...
 ---
 name:            fold_rotl8
@@ -27,7 +36,7 @@ body:             |
     successors: %bb.1(0x80000000)
     liveins: $r0
 
-    $r0 = EXTZLBrr killed $r0
+    $r0 = MOVBrr killed $r0
     BR %bb.1
 
   bb.1.rot:
@@ -44,5 +53,40 @@ body:             |
     liveins: $r0, $r1
 
     $r0 = ORL3rr killed $r0, killed $r1
+    RET implicit $r0
+...
+---
+name:            fold_materialized_rotl8
+tracksRegLiveness: true
+body:             |
+  ; CHECK-LABEL: name: fold_materialized_rotl8
+  ; CHECK: $r0 = EXTRACTBrrri $r0, killed $r0, 7
+  ; CHECK-NEXT: $r2 = CONST64 0
+  ; CHECK-NOT: SHRL3rr
+  ; CHECK-NOT: SHLL3rr
+  ; CHECK-NOT: ANDL3ri
+  bb.0.entry:
+    successors: %bb.1
+    liveins: $r0
+
+    $r0 = MOVBrr killed $r0
+    BR %bb.1
+
+  bb.1.rot:
+    successors: %bb.2
+    liveins: $r0
+
+    $r1 = CONST64 7
+    $r2 = MOVQrr $r0
+    $r2 = SHRL3rr killed $r2, $r1
+    $r1 = CONST64 1
+    $r0 = SHLL3rr killed $r0, killed $r1
+    $r0 = ANDL3ri killed $r0, 254
+    BR %bb.2
+
+  bb.2.join:
+    liveins: $r0, $r2
+
+    $r0 = ORL3rr killed $r0, killed $r2
     RET implicit $r0
 ...

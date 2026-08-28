@@ -6,6 +6,7 @@
 target triple = "bedrock"
 
 declare void @sink(i32)
+declare i32 @returning_sink(i32)
 
 define void @tail_call_void(i32 %x) {
 ; CHECK-LABEL: tail_call_void:
@@ -15,5 +16,16 @@ define void @tail_call_void(i32 %x) {
 ; OBJ: jmp
 ; OBJ-NOT: ret
   tail call void @sink(i32 %x)
+  ret void
+}
+
+define void @tail_call_discarded_result(i32 %x) {
+; CHECK-LABEL: tail_call_discarded_result:
+; CHECK: jmp returning_sink
+; CHECK-NOT: ret
+; OBJ-LABEL: <tail_call_discarded_result>:
+; OBJ: jmp
+; OBJ-NOT: ret
+  %ignored = tail call i32 @returning_sink(i32 %x)
   ret void
 }
