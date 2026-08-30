@@ -79,6 +79,9 @@ fbndii.d f4, [r5 + 8], f6
 fbndii.s [r7 + 1], f8, [r9 + 2]
 // CHECK-INST: fbndii.s	[r7 + 1], f8, [r9 + 2]          ; encoding: [0xd3,0xf3,0x02,0x0b,0x99,0x01,0x02]
 
+fbndii.s [ds:r1 + 1], f8, [ss:r2 + 2]
+// CHECK-INST: fbndii.s	[ds:r1 + 1], f8, [ss:r2 + 2]    ; encoding: [0xdb,0xf3,0x02,0x2f,0xdf,0x01,0x12,0x01,0x02]
+
 fbndix.d f10, f11, f12
 // CHECK-INST: fbndix.d	f10, f11, f12                   ; encoding: [0xcb,0xf3,0x28,0x3a,0xbc]
 

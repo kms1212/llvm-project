@@ -1,6 +1,7 @@
 ; REQUIRES: bedrock-registered-target
-; RUN: llc -mtriple=bedrock -mattr=+vector < %s | FileCheck %s
+; RUN: llc -mtriple=bedrock -mattr=+vectorfp < %s | FileCheck %s
 ; RUN: not --crash llc -mtriple=bedrock -mattr=-vector < %s 2>&1 | FileCheck %s --check-prefix=NO-VECTOR
+; RUN: not --crash llc -mtriple=bedrock -mattr=+vector,-vectorfp < %s 2>&1 | FileCheck %s --check-prefix=NO-VECTORFP
 
 declare i64 @llvm.vscale.i64()
 
@@ -26,7 +27,7 @@ define <vscale x 4 x float> @floating_add(<vscale x 4 x float> %lhs,
                                           <vscale x 4 x float> %rhs) {
 ; CHECK-LABEL: floating_add:
 ; CHECK: ptrue.b p7
-; CHECK-NEXT: vadd.s p7, v1, v0
+; CHECK-NEXT: vfadd.s p7, v1, v0
   %result = fadd <vscale x 4 x float> %lhs, %rhs
   ret <vscale x 4 x float> %result
 }
@@ -44,7 +45,7 @@ define <vscale x 4 x i1> @floating_compare(<vscale x 4 x float> %lhs,
                                            <vscale x 4 x float> %rhs) {
 ; CHECK-LABEL: floating_compare:
 ; CHECK: ptrue.b p7
-; CHECK-NEXT: vcmplt.s p7, v0, v1, p0
+; CHECK-NEXT: vfcmplt.s p7, v0, v1, p0
   %result = fcmp olt <vscale x 4 x float> %lhs, %rhs
   ret <vscale x 4 x i1> %result
 }
@@ -66,3 +67,4 @@ define void @contiguous_store(ptr %address, <vscale x 2 x i64> %value) {
 }
 
 ; NO-VECTOR: LLVM ERROR: Don't know how to legalize this scalable vector type
+; NO-VECTORFP: LLVM ERROR: Don't know how to legalize this scalable vector type

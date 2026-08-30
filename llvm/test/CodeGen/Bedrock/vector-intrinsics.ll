@@ -1,5 +1,5 @@
 ; REQUIRES: bedrock-registered-target
-; RUN: llc -mtriple=bedrock -mattr=+vector < %s | FileCheck %s
+; RUN: llc -mtriple=bedrock -mattr=+vectorfp < %s | FileCheck %s
 ; RUN: not --crash llc -mtriple=bedrock -mattr=-vector < %s 2>&1 | FileCheck %s --check-prefix=NO-VECTOR
 
 declare <vscale x 4 x i32> @llvm.bedrock.vector.strided.load.nxv4i32(
@@ -43,7 +43,7 @@ define i64 @integer_reduction(<vscale x 2 x i64> %value) {
 define double @floating_reduction(<vscale x 2 x double> %value) {
 ; CHECK-LABEL: floating_reduction:
 ; CHECK: ptrue.b p7
-; CHECK-NEXT: vredadd.d p7, v0, f0
+; CHECK-NEXT: vfredadd.d p7, v0, f0
   %result = call double @llvm.bedrock.vector.reduce.add.f64.nxv2f64(
       <vscale x 2 x double> %value)
   ret double %result

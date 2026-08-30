@@ -139,6 +139,7 @@ struct VectorOperandDesc {
 struct VectorEncodingForm {
   const char *Id;
   const char *Mnemonic;
+  const char *Owner;
   const char *Pattern;
   const char *Suffixes;
   uint8_t EncodingClass;
@@ -202,6 +203,11 @@ bool isRegisterSelectorName(StringRef Name);
 bool isReservedAssemblyName(StringRef Name);
 bool lookupRegisterSelector(unsigned Group, StringRef Name,
                             uint64_t &Encoding);
+
+bool getCompactEALayout(uint8_t EA, unsigned &DescriptorBytes,
+                        unsigned &PayloadBytes);
+bool getVectorEALayout(uint8_t EA, unsigned &DescriptorBytes,
+                       unsigned &PayloadBytes);
 
 void createRawInst(ArrayRef<uint8_t> Bytes, MCInst &Inst);
 bool getRawInstBytes(const MCInst &Inst, SmallVectorImpl<uint8_t> &Bytes);

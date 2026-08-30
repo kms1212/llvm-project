@@ -1,4 +1,4 @@
-# RUN: not llvm-mc -triple=bedrock -mattr=+vector,+fpu %s 2>&1 | FileCheck %s
+# RUN: not llvm-mc -triple=bedrock -mattr=+vectorfp %s 2>&1 | FileCheck %s
 
 # Vector-context selector 0x58 is VSTRIDE and cannot spell scalar [sp].
 # CHECK: error: invalid operand for instruction
@@ -22,6 +22,16 @@ rep r0, (vadd.q p0, v1, v2)
 # CHECK: error: instruction is not eligible as a repeat body
 repeq r0, (vmov.q p0, v1, v2)
 
+# Resumable gather/scatter require distinct governing and completion predicates.
+# CHECK: error: invalid operand for instruction
+vgather.b p0, p0, [r1 + r2], v3
+# CHECK: error: invalid operand for instruction
+vscatter.b p0, p0, v3, [r1 + r2]
+
+# A gather address vector must remain stable while destination lanes commit.
+# CHECK: error: invalid operand for instruction
+vgather.l p0, p1, [v2], v2
+
 # Integer VCMP rejects every condition outside its ten-condition domain.
 # CHECK: error: invalid operand for instruction
 vcmpt.q p0, v1, v2, p1
@@ -36,20 +46,20 @@ vcmpvs.q p0, v1, v2, p1
 # CHECK: error: invalid operand for instruction
 vcmpvc.q p0, v1, v2, p1
 
-# FP VCMP rejects every condition outside its eight-condition domain.
+# FP VFCMP rejects every condition outside its eight-condition domain.
 # CHECK: error: invalid operand for instruction
-vcmpt.d p0, v1, v2, p1
+vfcmpt.d p0, v1, v2, p1
 # CHECK: error: invalid operand for instruction
-vcmpf.d p0, v1, v2, p1
+vfcmpf.d p0, v1, v2, p1
 # CHECK: error: invalid operand for instruction
-vcmpult.d p0, v1, v2, p1
+vfcmpult.d p0, v1, v2, p1
 # CHECK: error: invalid operand for instruction
-vcmpuge.d p0, v1, v2, p1
+vfcmpuge.d p0, v1, v2, p1
 # CHECK: error: invalid operand for instruction
-vcmpmi.d p0, v1, v2, p1
+vfcmpmi.d p0, v1, v2, p1
 # CHECK: error: invalid operand for instruction
-vcmppl.d p0, v1, v2, p1
+vfcmppl.d p0, v1, v2, p1
 # CHECK: error: invalid operand for instruction
-vcmpule.d p0, v1, v2, p1
+vfcmpule.d p0, v1, v2, p1
 # CHECK: error: invalid operand for instruction
-vcmpugt.d p0, v1, v2, p1
+vfcmpugt.d p0, v1, v2, p1

@@ -1,4 +1,4 @@
-# RUN: llvm-mc -triple=bedrock -mattr=+vector,+fpu -filetype=obj %s -o %t
+# RUN: llvm-mc -triple=bedrock -mattr=+vectorfp -filetype=obj %s -o %t
 # RUN: llvm-objdump -d --no-show-raw-insn %t | FileCheck %s
 
 # Integer positive domain matrix (one size is sufficient because YAML-derived
@@ -25,19 +25,19 @@ vcmple.q p0, v1, v2, p1
 vcmpgt.q p0, v1, v2, p1
 
 # FP positive domain matrix.
-# CHECK-NEXT: vcmpeq.d
-vcmpeq.d p0, v1, v2, p1
-# CHECK-NEXT: vcmpne.d
-vcmpne.d p0, v1, v2, p1
-# CHECK-NEXT: vcmplt.d
-vcmplt.d p0, v1, v2, p1
-# CHECK-NEXT: vcmple.d
-vcmple.d p0, v1, v2, p1
-# CHECK-NEXT: vcmpge.d
-vcmpge.d p0, v1, v2, p1
-# CHECK-NEXT: vcmpgt.d
-vcmpgt.d p0, v1, v2, p1
-# CHECK-NEXT: vcmpvs.d
-vcmpvs.d p0, v1, v2, p1
-# CHECK-NEXT: vcmpvc.d
-vcmpvc.d p0, v1, v2, p1
+# CHECK-NEXT: vfcmpeq.d
+vfcmpeq.d p0, v1, v2, p1
+# CHECK-NEXT: vfcmpne.d
+vfcmpne.d p0, v1, v2, p1
+# CHECK-NEXT: vfcmplt.d
+vfcmplt.d p0, v1, v2, p1
+# CHECK-NEXT: vfcmple.d
+vfcmple.d p0, v1, v2, p1
+# CHECK-NEXT: vfcmpge.d
+vfcmpge.d p0, v1, v2, p1
+# CHECK-NEXT: vfcmpgt.d
+vfcmpgt.d p0, v1, v2, p1
+# CHECK-NEXT: vfcmpvs.d
+vfcmpvs.d p0, v1, v2, p1
+# CHECK-NEXT: vfcmpvc.d
+vfcmpvc.d p0, v1, v2, p1

@@ -1752,10 +1752,21 @@ bool SemaARM::checkSVETypeSupport(QualType Ty, SourceLocation Loc,
   if (!Ty->isSVESizelessBuiltinType())
     return false;
 
-  if (FeatureMap.lookup("sve") ||
-      (getASTContext().getTargetInfo().getTriple().getArch() ==
-           llvm::Triple::bedrock &&
-       FeatureMap.lookup("vector")))
+  if (getASTContext().getTargetInfo().getTriple().getArch() ==
+      llvm::Triple::bedrock) {
+    const auto Kind = Ty->castAs<BuiltinType>()->getKind();
+    const bool IsFloatingPointVector =
+        Kind == BuiltinType::SveFloat16 || Kind == BuiltinType::SveFloat32 ||
+        Kind == BuiltinType::SveFloat64;
+    StringRef RequiredFeature =
+        IsFloatingPointVector ? "vectorfp" : "vector";
+    if (FeatureMap.lookup(RequiredFeature))
+      return false;
+    return Diag(Loc, diag::err_bedrock_vector_type_requires_feature)
+           << Ty << RequiredFeature;
+  }
+
+  if (FeatureMap.lookup("sve"))
     return false;
 
   // No SVE environment available.

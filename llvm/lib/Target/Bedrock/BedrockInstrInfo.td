@@ -470,7 +470,7 @@ def SYSCALL : BedrockExtraShort<0x05, (outs), (ins), "syscall">;
 def ERET : BedrockExtraShort<0x04, (outs), (ins), "eret">;
 let isTrap = 1 in
 def BKPT : BedrockExtraShort<0x07, (outs), (ins), "bkpt">;
-def WAIT : BedrockExtraShort<0x08, (outs), (ins), "wait">;
+def WAIT : BedrockExtraShort<0x08, (outs), (ins), "relax">;
 def YIELD : BedrockExtraShort<0x09, (outs), (ins), "yield">;
 def HALT : BedrockShort<0x2e00, (outs), (ins), "halt">;
 let isTrap = 1 in

@@ -44,2794 +44,2854 @@ def lookupBedrockISAFormById : SearchIndex {
   let Key = ["Id"];
 }
 
-def BRForm_base_instructions_ABS_l_q_z_rn_r : BedrockISAForm<
-  "base.instructions.ABS.l_q_z_rn_r", "abs", "ABS.{L|Q}(z) Rn(r)", "10100z0100rrrr", "short", "base",
+def BRForm_base_ABS_l_q_z_rn_r : BedrockISAForm<
+  "base.ABS.l_q_z_rn_r", "abs", "ABS.{L|Q}(z) Rn(r)", "10100z0100rrrr", "short", "base",
   2, 0, 0, 0, 1,
-  "z;r", "size;dst", "base.field_types.SIZE_LQ;base.field_types.Rn", "", "">;
-def BRForm_base_instructions_ABS_b_w_l_q_z_ea_e : BedrockISAForm<
-  "base.instructions.ABS.b_w_l_q_z_ea_e", "abs", "ABS.{B|W|L|Q}(z) <ea>(e)", "11100zz0000eeeeeee", "medium", "base",
+  "z;r", "size;dst", "SIZE_LQ;Rn", "", "">;
+def BRForm_base_ABS_b_w_l_q_z_ea_e : BedrockISAForm<
+  "base.ABS.b_w_l_q_z_ea_e", "abs", "ABS.{B|W|L|Q}(z) <ea>(e)", "11100zz0000eeeeeee", "medium", "base",
   3, 0, 1, 1, 0,
-  "z;e", "size;dst", "base.field_types.SIZE_BWLQ;base.field_types.EA", "", "">;
-def BRForm_base_instructions_ADC_b_w_l_q_z_rn_s_rn_d : BedrockISAForm<
-  "base.instructions.ADC.b_w_l_q_z_rn_s_rn_d", "adc", "ADC.{B|W|L|Q}(z) Rn(s), Rn(d)", "10000zz100ssssdddd", "medium", "base",
+  "z;e", "size;dst", "SIZE_BWLQ;EA", "", "">;
+def BRForm_base_ADC_b_w_l_q_z_rn_s_rn_d : BedrockISAForm<
+  "base.ADC.b_w_l_q_z_rn_s_rn_d", "adc", "ADC.{B|W|L|Q}(z) Rn(s), Rn(d)", "10000zz100ssssdddd", "medium", "base",
   3, 0, 0, 0, 1,
-  "z;s;d", "size;src;dst", "base.field_types.SIZE_BWLQ;base.field_types.Rn;base.field_types.Rn", "", "">;
-def BRForm_base_instructions_ADC_b_w_l_q_z_rn_s_ea_e : BedrockISAForm<
-  "base.instructions.ADC.b_w_l_q_z_rn_s_ea_e", "adc", "ADC.{B|W|L|Q}(z) Rn(s), <ea>(e)", "1111001100zz100sssseeeeeee", "long", "base",
+  "z;s;d", "size;src;dst", "SIZE_BWLQ;Rn;Rn", "", "">;
+def BRForm_base_ADC_b_w_l_q_z_rn_s_ea_e : BedrockISAForm<
+  "base.ADC.b_w_l_q_z_rn_s_ea_e", "adc", "ADC.{B|W|L|Q}(z) Rn(s), <ea>(e)", "1111001100zz100sssseeeeeee", "long", "base",
   4, 0, 1, 1, 0,
-  "z;s;e", "size;src;dst", "base.field_types.SIZE_BWLQ;base.field_types.Rn;base.field_types.EA", "", "">;
-def BRForm_base_instructions_ADC_b_w_l_q_z_ea_e_rn_s : BedrockISAForm<
-  "base.instructions.ADC.b_w_l_q_z_ea_e_rn_s", "adc", "ADC.{B|W|L|Q}(z) <ea>(e), Rn(s)", "1111001000zz100sssseeeeeee", "long", "base",
+  "z;s;e", "size;src;dst", "SIZE_BWLQ;Rn;EA", "", "">;
+def BRForm_base_ADC_b_w_l_q_z_ea_e_rn_s : BedrockISAForm<
+  "base.ADC.b_w_l_q_z_ea_e_rn_s", "adc", "ADC.{B|W|L|Q}(z) <ea>(e), Rn(s)", "1111001000zz100sssseeeeeee", "long", "base",
   4, 0, 1, 1, 0,
-  "z;s;e", "size;dst;src", "base.field_types.SIZE_BWLQ;base.field_types.Rn;base.field_types.EA", "", "">;
-def BRForm_base_instructions_ADD_q_8_sp : BedrockISAForm<
-  "base.instructions.ADD.q_8_sp", "add", "ADD.Q 8, SP", "0001110", "extrashort", "base",
+  "z;s;e", "size;dst;src", "SIZE_BWLQ;Rn;EA", "", "">;
+def BRForm_base_ADD_q_8_sp : BedrockISAForm<
+  "base.ADD.q_8_sp", "add", "ADD.Q 8, SP", "0001110", "extrashort", "base",
   1, 0, 0, 0, 1,
   "", "", "", "", "">;
-def BRForm_base_instructions_ADD_l_q_z_rn_s_rn_d : BedrockISAForm<
-  "base.instructions.ADD.l_q_z_rn_s_rn_d", "add", "ADD.{L|Q}(z) Rn(s), Rn(d)", "00001zssssdddd", "short", "base",
+def BRForm_base_ADD_l_q_z_rn_s_rn_d : BedrockISAForm<
+  "base.ADD.l_q_z_rn_s_rn_d", "add", "ADD.{L|Q}(z) Rn(s), Rn(d)", "00001zssssdddd", "short", "base",
   2, 0, 0, 0, 1,
-  "z;s;d", "size;src;dst", "base.field_types.SIZE_LQ;base.field_types.Rn;base.field_types.Rn", "", "">;
-def BRForm_base_instructions_ADD_q_imm8_i_sp : BedrockISAForm<
-  "base.instructions.ADD.q_imm8_i_sp", "add", "ADD.Q imm8(i), SP", "100011iiiiiiii", "short", "base",
+  "z;s;d", "size;src;dst", "SIZE_LQ;Rn;Rn", "", "">;
+def BRForm_base_ADD_q_imm8_i_sp : BedrockISAForm<
+  "base.ADD.q_imm8_i_sp", "add", "ADD.Q imm8(i), SP", "100011iiiiiiii", "short", "base",
   2, 0, 0, 0, 1,
-  "i", "imm", "base.field_types.IMM8", "", "">;
-def BRForm_base_instructions_ADD_q_imm16s_sp : BedrockISAForm<
-  "base.instructions.ADD.q_imm16s_sp", "add", "ADD.Q <imm16s>, SP", "111011110000000000", "medium", "base",
+  "i", "imm", "IMM8", "", "">;
+def BRForm_base_ADD_q_imm16s_sp : BedrockISAForm<
+  "base.ADD.q_imm16s_sp", "add", "ADD.Q <imm16s>, SP", "111011110000000000", "medium", "base",
   3, 2, 0, 0, 1,
-  "", "", "", "imm", "base.payload_types.IMM16S">;
-def BRForm_base_instructions_ADD_q_imm32s_sp : BedrockISAForm<
-  "base.instructions.ADD.q_imm32s_sp", "add", "ADD.Q <imm32s>, SP", "111011110000000001", "medium", "base",
+  "", "", "", "imm", "IMM16S">;
+def BRForm_base_ADD_q_imm32s_sp : BedrockISAForm<
+  "base.ADD.q_imm32s_sp", "add", "ADD.Q <imm32s>, SP", "111011110000000001", "medium", "base",
   3, 4, 0, 0, 1,
-  "", "", "", "imm", "base.payload_types.IMM32S">;
-def BRForm_base_instructions_ADD_b_w_l_q_z_rn_s_ea_e : BedrockISAForm<
-  "base.instructions.ADD.b_w_l_q_z_rn_s_ea_e", "add", "ADD.{B|W|L|Q}(z) Rn(s), <ea>(e)", "00001zzsssseeeeeee", "medium", "base",
+  "", "", "", "imm", "IMM32S">;
+def BRForm_base_ADD_b_w_l_q_z_rn_s_ea_e : BedrockISAForm<
+  "base.ADD.b_w_l_q_z_rn_s_ea_e", "add", "ADD.{B|W|L|Q}(z) Rn(s), <ea>(e)", "00001zzsssseeeeeee", "medium", "base",
   3, 0, 1, 1, 0,
-  "z;s;e", "size;src;dst", "base.field_types.SIZE_BWLQ;base.field_types.Rn;base.field_types.EA", "", "">;
-def BRForm_base_instructions_ADD_b_w_l_q_z_ea_e_rn_d : BedrockISAForm<
-  "base.instructions.ADD.b_w_l_q_z_ea_e_rn_d", "add", "ADD.{B|W|L|Q}(z) <ea>(e), Rn(d)", "01001zzddddeeeeeee", "medium", "base",
+  "z;s;e", "size;src;dst", "SIZE_BWLQ;Rn;EA", "", "">;
+def BRForm_base_ADD_b_w_l_q_z_ea_e_rn_d : BedrockISAForm<
+  "base.ADD.b_w_l_q_z_ea_e_rn_d", "add", "ADD.{B|W|L|Q}(z) <ea>(e), Rn(d)", "01001zzddddeeeeeee", "medium", "base",
   3, 0, 1, 1, 0,
-  "z;d;e", "size;dst;src", "base.field_types.SIZE_BWLQ;base.field_types.Rn;base.field_types.EA", "", "">;
-def BRForm_base_instructions_ADD_b_w_l_q_z_imm8s_ea_e : BedrockISAForm<
-  "base.instructions.ADD.b_w_l_q_z_imm8s_ea_e", "add", "ADD.{B|W|L|Q}(z) <imm8s>, <ea>(e)", "11100zz0001eeeeeee", "medium", "base",
+  "z;d;e", "size;dst;src", "SIZE_BWLQ;Rn;EA", "", "">;
+def BRForm_base_ADD_b_w_l_q_z_imm8s_ea_e : BedrockISAForm<
+  "base.ADD.b_w_l_q_z_imm8s_ea_e", "add", "ADD.{B|W|L|Q}(z) <imm8s>, <ea>(e)", "11100zz0001eeeeeee", "medium", "base",
   3, 1, 1, 1, 0,
-  "z;e", "size;dst", "base.field_types.SIZE_BWLQ;base.field_types.EA", "src", "base.payload_types.IMM8S">;
-def BRForm_base_instructions_ADD_w_l_q_z_imm16s_ea_e : BedrockISAForm<
-  "base.instructions.ADD.w_l_q_z_imm16s_ea_e", "add", "ADD.{W|L|Q}(z) <imm16s>, <ea>(e)", "11100zz0010eeeeeee", "medium", "base",
+  "z;e", "size;dst", "SIZE_BWLQ;EA", "src", "IMM8S">;
+def BRForm_base_ADD_w_l_q_z_imm16s_ea_e : BedrockISAForm<
+  "base.ADD.w_l_q_z_imm16s_ea_e", "add", "ADD.{W|L|Q}(z) <imm16s>, <ea>(e)", "11100zz0010eeeeeee", "medium", "base",
   3, 2, 1, 1, 0,
-  "z;e", "size;dst", "base.field_types.SIZE_WLQ;base.field_types.EA", "src", "base.payload_types.IMM16S">;
-def BRForm_base_instructions_ADD_l_q_z_imm32s_ea_e : BedrockISAForm<
-  "base.instructions.ADD.l_q_z_imm32s_ea_e", "add", "ADD.{L|Q}(z) <imm32s>, <ea>(e)", "111001z0011eeeeeee", "medium", "base",
+  "z;e", "size;dst", "SIZE_WLQ;EA", "src", "IMM16S">;
+def BRForm_base_ADD_l_q_z_imm32s_ea_e : BedrockISAForm<
+  "base.ADD.l_q_z_imm32s_ea_e", "add", "ADD.{L|Q}(z) <imm32s>, <ea>(e)", "111001z0011eeeeeee", "medium", "base",
   3, 4, 1, 1, 0,
-  "z;e", "size;dst", "base.field_types.SIZE_LQ;base.field_types.EA", "src", "base.payload_types.IMM32S">;
-def BRForm_base_instructions_ADD_q_imm64_ea_e : BedrockISAForm<
-  "base.instructions.ADD.q_imm64_ea_e", "add", "ADD.Q <imm64>, <ea>(e)", "11101000000eeeeeee", "medium", "base",
+  "z;e", "size;dst", "SIZE_LQ;EA", "src", "IMM32S">;
+def BRForm_base_ADD_q_imm64_ea_e : BedrockISAForm<
+  "base.ADD.q_imm64_ea_e", "add", "ADD.Q <imm64>, <ea>(e)", "11101000000eeeeeee", "medium", "base",
   3, 8, 1, 1, 0,
-  "e", "dst", "base.field_types.EA", "src", "base.payload_types.IMM64">;
-def BRForm_base_instructions_AFENCE_plain : BedrockISAForm<
-  "base.instructions.AFENCE.plain", "afence", "AFENCE", "0001100", "extrashort", "base",
+  "e", "dst", "EA", "src", "IMM64">;
+def BRForm_base_AFENCE_plain : BedrockISAForm<
+  "base.AFENCE.plain", "afence", "AFENCE", "0001100", "extrashort", "base",
   1, 0, 0, 0, 1,
   "", "", "", "", "">;
-def BRForm_base_instructions_AND_l_q_z_rn_s_rn_d : BedrockISAForm<
-  "base.instructions.AND.l_q_z_rn_s_rn_d", "and", "AND.{L|Q}(z) Rn(s), Rn(d)", "00100zssssdddd", "short", "base",
+def BRForm_base_AND_l_q_z_rn_s_rn_d : BedrockISAForm<
+  "base.AND.l_q_z_rn_s_rn_d", "and", "AND.{L|Q}(z) Rn(s), Rn(d)", "00100zssssdddd", "short", "base",
   2, 0, 0, 0, 1,
-  "z;s;d", "size;src;dst", "base.field_types.SIZE_LQ;base.field_types.Rn;base.field_types.Rn", "", "">;
-def BRForm_base_instructions_AND_b_w_l_q_z_rn_s_ea_e : BedrockISAForm<
-  "base.instructions.AND.b_w_l_q_z_rn_s_ea_e", "and", "AND.{B|W|L|Q}(z) Rn(s), <ea>(e)", "00100zzsssseeeeeee", "medium", "base",
+  "z;s;d", "size;src;dst", "SIZE_LQ;Rn;Rn", "", "">;
+def BRForm_base_AND_b_w_l_q_z_rn_s_ea_e : BedrockISAForm<
+  "base.AND.b_w_l_q_z_rn_s_ea_e", "and", "AND.{B|W|L|Q}(z) Rn(s), <ea>(e)", "00100zzsssseeeeeee", "medium", "base",
   3, 0, 1, 1, 0,
-  "z;s;e", "size;src;dst", "base.field_types.SIZE_BWLQ;base.field_types.Rn;base.field_types.EA", "", "">;
-def BRForm_base_instructions_AND_b_w_l_q_z_ea_e_rn_d : BedrockISAForm<
-  "base.instructions.AND.b_w_l_q_z_ea_e_rn_d", "and", "AND.{B|W|L|Q}(z) <ea>(e), Rn(d)", "01100zzddddeeeeeee", "medium", "base",
+  "z;s;e", "size;src;dst", "SIZE_BWLQ;Rn;EA", "", "">;
+def BRForm_base_AND_b_w_l_q_z_ea_e_rn_d : BedrockISAForm<
+  "base.AND.b_w_l_q_z_ea_e_rn_d", "and", "AND.{B|W|L|Q}(z) <ea>(e), Rn(d)", "01100zzddddeeeeeee", "medium", "base",
   3, 0, 1, 1, 0,
-  "z;d;e", "size;dst;src", "base.field_types.SIZE_BWLQ;base.field_types.Rn;base.field_types.EA", "", "">;
-def BRForm_base_instructions_AND_b_w_l_q_z_imm8s_ea_e : BedrockISAForm<
-  "base.instructions.AND.b_w_l_q_z_imm8s_ea_e", "and", "AND.{B|W|L|Q}(z) <imm8s>, <ea>(e)", "11100zz0100eeeeeee", "medium", "base",
+  "z;d;e", "size;dst;src", "SIZE_BWLQ;Rn;EA", "", "">;
+def BRForm_base_AND_b_w_l_q_z_imm8s_ea_e : BedrockISAForm<
+  "base.AND.b_w_l_q_z_imm8s_ea_e", "and", "AND.{B|W|L|Q}(z) <imm8s>, <ea>(e)", "11100zz0100eeeeeee", "medium", "base",
   3, 1, 1, 1, 0,
-  "z;e", "size;dst", "base.field_types.SIZE_BWLQ;base.field_types.EA", "src", "base.payload_types.IMM8S">;
-def BRForm_base_instructions_AND_w_l_q_z_imm16s_ea_e : BedrockISAForm<
-  "base.instructions.AND.w_l_q_z_imm16s_ea_e", "and", "AND.{W|L|Q}(z) <imm16s>, <ea>(e)", "11100zz0101eeeeeee", "medium", "base",
+  "z;e", "size;dst", "SIZE_BWLQ;EA", "src", "IMM8S">;
+def BRForm_base_AND_w_l_q_z_imm16s_ea_e : BedrockISAForm<
+  "base.AND.w_l_q_z_imm16s_ea_e", "and", "AND.{W|L|Q}(z) <imm16s>, <ea>(e)", "11100zz0101eeeeeee", "medium", "base",
   3, 2, 1, 1, 0,
-  "z;e", "size;dst", "base.field_types.SIZE_WLQ;base.field_types.EA", "src", "base.payload_types.IMM16S">;
-def BRForm_base_instructions_AND_l_q_z_imm32s_ea_e : BedrockISAForm<
-  "base.instructions.AND.l_q_z_imm32s_ea_e", "and", "AND.{L|Q}(z) <imm32s>, <ea>(e)", "111001z0110eeeeeee", "medium", "base",
+  "z;e", "size;dst", "SIZE_WLQ;EA", "src", "IMM16S">;
+def BRForm_base_AND_l_q_z_imm32s_ea_e : BedrockISAForm<
+  "base.AND.l_q_z_imm32s_ea_e", "and", "AND.{L|Q}(z) <imm32s>, <ea>(e)", "111001z0110eeeeeee", "medium", "base",
   3, 4, 1, 1, 0,
-  "z;e", "size;dst", "base.field_types.SIZE_LQ;base.field_types.EA", "src", "base.payload_types.IMM32S">;
-def BRForm_base_instructions_AND_q_imm64_ea_e : BedrockISAForm<
-  "base.instructions.AND.q_imm64_ea_e", "and", "AND.Q <imm64>, <ea>(e)", "11101000001eeeeeee", "medium", "base",
+  "z;e", "size;dst", "SIZE_LQ;EA", "src", "IMM32S">;
+def BRForm_base_AND_q_imm64_ea_e : BedrockISAForm<
+  "base.AND.q_imm64_ea_e", "and", "AND.Q <imm64>, <ea>(e)", "11101000001eeeeeee", "medium", "base",
   3, 8, 1, 1, 0,
-  "e", "dst", "base.field_types.EA", "src", "base.payload_types.IMM64">;
-def BRForm_base_instructions_BCHG_rn_b_ea_e : BedrockISAForm<
-  "base.instructions.BCHG.rn_b_ea_e", "bchg", "BCHG Rn(b), <ea>(e)", "111100110000000bbbbeeeeeee", "long", "base",
+  "e", "dst", "EA", "src", "IMM64">;
+def BRForm_base_BCHG_rn_b_ea_e : BedrockISAForm<
+  "base.BCHG.rn_b_ea_e", "bchg", "BCHG Rn(b), <ea>(e)", "111100110000000bbbbeeeeeee", "long", "base",
   4, 0, 1, 1, 0,
-  "b;e", "bit_index;dst", "base.field_types.Rn;base.field_types.EA", "", "">;
-def BRForm_base_instructions_BCHG_imm6_i_ea_e : BedrockISAForm<
-  "base.instructions.BCHG.imm6_i_ea_e", "bchg", "BCHG imm6(i), <ea>(e)", "1111011100000iiiiiieeeeeee", "long", "base",
+  "b;e", "bit_index;dst", "Rn;EA", "", "">;
+def BRForm_base_BCHG_imm6_i_ea_e : BedrockISAForm<
+  "base.BCHG.imm6_i_ea_e", "bchg", "BCHG imm6(i), <ea>(e)", "1111011100000iiiiiieeeeeee", "long", "base",
   4, 0, 1, 1, 0,
-  "i;e", "bit_index;dst", "base.field_types.IMM6;base.field_types.EA", "", "">;
-def BRForm_base_instructions_BCHG_rn_b_rn_e : BedrockISAForm<
-  "base.instructions.BCHG.rn_b_rn_e", "bchg", "BCHG Rn(b), Rn(e)", "1000000000bbbbeeee", "medium", "base",
+  "i;e", "bit_index;dst", "IMM6;EA", "", "">;
+def BRForm_base_BCHG_rn_b_rn_e : BedrockISAForm<
+  "base.BCHG.rn_b_rn_e", "bchg", "BCHG Rn(b), Rn(e)", "1000000000bbbbeeee", "medium", "base",
   3, 0, 0, 0, 1,
-  "b;e", "bit_index;dst", "base.field_types.Rn;base.field_types.Rn", "", "">;
-def BRForm_base_instructions_BCHG_imm6_i_rn_e : BedrockISAForm<
-  "base.instructions.BCHG.imm6_i_rn_e", "bchg", "BCHG imm6(i), Rn(e)", "1111011001101000eeeeiiiiii", "long", "base",
+  "b;e", "bit_index;dst", "Rn;Rn", "", "">;
+def BRForm_base_BCHG_imm6_i_rn_e : BedrockISAForm<
+  "base.BCHG.imm6_i_rn_e", "bchg", "BCHG imm6(i), Rn(e)", "1111011001101000eeeeiiiiii", "long", "base",
   4, 0, 0, 0, 1,
-  "e;i", "dst;bit_index", "base.field_types.Rn;base.field_types.IMM6", "", "">;
-def BRForm_base_instructions_BCLR_rn_b_ea_e : BedrockISAForm<
-  "base.instructions.BCLR.rn_b_ea_e", "bclr", "BCLR Rn(b), <ea>(e)", "111100110000001bbbbeeeeeee", "long", "base",
+  "e;i", "dst;bit_index", "Rn;IMM6", "", "">;
+def BRForm_base_BCLR_rn_b_ea_e : BedrockISAForm<
+  "base.BCLR.rn_b_ea_e", "bclr", "BCLR Rn(b), <ea>(e)", "111100110000001bbbbeeeeeee", "long", "base",
   4, 0, 1, 1, 0,
-  "b;e", "bit_index;dst", "base.field_types.Rn;base.field_types.EA", "", "">;
-def BRForm_base_instructions_BCLR_imm6_i_ea_e : BedrockISAForm<
-  "base.instructions.BCLR.imm6_i_ea_e", "bclr", "BCLR imm6(i), <ea>(e)", "1111011100001iiiiiieeeeeee", "long", "base",
+  "b;e", "bit_index;dst", "Rn;EA", "", "">;
+def BRForm_base_BCLR_imm6_i_ea_e : BedrockISAForm<
+  "base.BCLR.imm6_i_ea_e", "bclr", "BCLR imm6(i), <ea>(e)", "1111011100001iiiiiieeeeeee", "long", "base",
   4, 0, 1, 1, 0,
-  "i;e", "bit_index;dst", "base.field_types.IMM6;base.field_types.EA", "", "">;
-def BRForm_base_instructions_BCLR_rn_b_rn_e : BedrockISAForm<
-  "base.instructions.BCLR.rn_b_rn_e", "bclr", "BCLR Rn(b), Rn(e)", "1000000001bbbbeeee", "medium", "base",
+  "i;e", "bit_index;dst", "IMM6;EA", "", "">;
+def BRForm_base_BCLR_rn_b_rn_e : BedrockISAForm<
+  "base.BCLR.rn_b_rn_e", "bclr", "BCLR Rn(b), Rn(e)", "1000000001bbbbeeee", "medium", "base",
   3, 0, 0, 0, 1,
-  "b;e", "bit_index;dst", "base.field_types.Rn;base.field_types.Rn", "", "">;
-def BRForm_base_instructions_BCLR_imm6_i_rn_e : BedrockISAForm<
-  "base.instructions.BCLR.imm6_i_rn_e", "bclr", "BCLR imm6(i), Rn(e)", "1111011001101001eeeeiiiiii", "long", "base",
+  "b;e", "bit_index;dst", "Rn;Rn", "", "">;
+def BRForm_base_BCLR_imm6_i_rn_e : BedrockISAForm<
+  "base.BCLR.imm6_i_rn_e", "bclr", "BCLR imm6(i), Rn(e)", "1111011001101001eeeeiiiiii", "long", "base",
   4, 0, 0, 0, 1,
-  "e;i", "dst;bit_index", "base.field_types.Rn;base.field_types.IMM6", "", "">;
-def BRForm_base_instructions_BKPT_plain : BedrockISAForm<
-  "base.instructions.BKPT.plain", "bkpt", "BKPT", "0000111", "extrashort", "base",
+  "e;i", "dst;bit_index", "Rn;IMM6", "", "">;
+def BRForm_base_BKPT_plain : BedrockISAForm<
+  "base.BKPT.plain", "bkpt", "BKPT", "0000111", "extrashort", "base",
   1, 0, 0, 0, 1,
   "", "", "", "", "">;
-def BRForm_base_instructions_BNDSII_b_w_l_q_z_rn_l_ea_e_rn_h : BedrockISAForm<
-  "base.instructions.BNDSII.b_w_l_q_z_rn_l_ea_e_rn_h", "bndsii", "BNDSII.{B|W|L|Q}(z) Rn(l), <ea>(e), Rn(h)", "11111100010000zz000llllhhhheeeeeee", "extralong", "base",
+def BRForm_base_BNDSII_b_w_l_q_z_rn_l_ea_e_rn_h : BedrockISAForm<
+  "base.BNDSII.b_w_l_q_z_rn_l_ea_e_rn_h", "bndsii", "BNDSII.{B|W|L|Q}(z) Rn(l), <ea>(e), Rn(h)", "11111100010000zz000llllhhhheeeeeee", "extralong", "base",
   5, 0, 1, 1, 0,
-  "z;l;h;e", "size;lo;hi;value", "base.field_types.SIZE_BWLQ;base.field_types.Rn;base.field_types.Rn;base.field_types.EA", "", "">;
-def BRForm_base_instructions_BNDSII_b_w_l_q_z_rn_l_rn_v_rn_h : BedrockISAForm<
-  "base.instructions.BNDSII.b_w_l_q_z_rn_l_rn_v_rn_h", "bndsii", "BNDSII.{B|W|L|Q}(z) Rn(l), Rn(v), Rn(h)", "11111100000000zz000000llllvvvvhhhh", "extralong", "base",
+  "z;l;h;e", "size;lo;hi;value", "SIZE_BWLQ;Rn;Rn;EA", "", "">;
+def BRForm_base_BNDSII_b_w_l_q_z_rn_l_rn_v_rn_h : BedrockISAForm<
+  "base.BNDSII.b_w_l_q_z_rn_l_rn_v_rn_h", "bndsii", "BNDSII.{B|W|L|Q}(z) Rn(l), Rn(v), Rn(h)", "11111100000000zz000000llllvvvvhhhh", "extralong", "base",
   5, 0, 0, 0, 1,
-  "z;l;v;h", "size;lo;value;hi", "base.field_types.SIZE_BWLQ;base.field_types.Rn;base.field_types.Rn;base.field_types.Rn", "", "">;
-def BRForm_base_instructions_BNDSIX_b_w_l_q_z_rn_l_ea_e_rn_h : BedrockISAForm<
-  "base.instructions.BNDSIX.b_w_l_q_z_rn_l_ea_e_rn_h", "bndsix", "BNDSIX.{B|W|L|Q}(z) Rn(l), <ea>(e), Rn(h)", "11111100010000zz001llllhhhheeeeeee", "extralong", "base",
+  "z;l;v;h", "size;lo;value;hi", "SIZE_BWLQ;Rn;Rn;Rn", "", "">;
+def BRForm_base_BNDSIX_b_w_l_q_z_rn_l_ea_e_rn_h : BedrockISAForm<
+  "base.BNDSIX.b_w_l_q_z_rn_l_ea_e_rn_h", "bndsix", "BNDSIX.{B|W|L|Q}(z) Rn(l), <ea>(e), Rn(h)", "11111100010000zz001llllhhhheeeeeee", "extralong", "base",
   5, 0, 1, 1, 0,
-  "z;l;h;e", "size;lo;hi;value", "base.field_types.SIZE_BWLQ;base.field_types.Rn;base.field_types.Rn;base.field_types.EA", "", "">;
-def BRForm_base_instructions_BNDSIX_b_w_l_q_z_rn_l_rn_v_rn_h : BedrockISAForm<
-  "base.instructions.BNDSIX.b_w_l_q_z_rn_l_rn_v_rn_h", "bndsix", "BNDSIX.{B|W|L|Q}(z) Rn(l), Rn(v), Rn(h)", "11111100000000zz000001llllvvvvhhhh", "extralong", "base",
+  "z;l;h;e", "size;lo;hi;value", "SIZE_BWLQ;Rn;Rn;EA", "", "">;
+def BRForm_base_BNDSIX_b_w_l_q_z_rn_l_rn_v_rn_h : BedrockISAForm<
+  "base.BNDSIX.b_w_l_q_z_rn_l_rn_v_rn_h", "bndsix", "BNDSIX.{B|W|L|Q}(z) Rn(l), Rn(v), Rn(h)", "11111100000000zz000001llllvvvvhhhh", "extralong", "base",
   5, 0, 0, 0, 1,
-  "z;l;v;h", "size;lo;value;hi", "base.field_types.SIZE_BWLQ;base.field_types.Rn;base.field_types.Rn;base.field_types.Rn", "", "">;
-def BRForm_base_instructions_BNDSXI_b_w_l_q_z_rn_l_ea_e_rn_h : BedrockISAForm<
-  "base.instructions.BNDSXI.b_w_l_q_z_rn_l_ea_e_rn_h", "bndsxi", "BNDSXI.{B|W|L|Q}(z) Rn(l), <ea>(e), Rn(h)", "11111100010000zz010llllhhhheeeeeee", "extralong", "base",
+  "z;l;v;h", "size;lo;value;hi", "SIZE_BWLQ;Rn;Rn;Rn", "", "">;
+def BRForm_base_BNDSXI_b_w_l_q_z_rn_l_ea_e_rn_h : BedrockISAForm<
+  "base.BNDSXI.b_w_l_q_z_rn_l_ea_e_rn_h", "bndsxi", "BNDSXI.{B|W|L|Q}(z) Rn(l), <ea>(e), Rn(h)", "11111100010000zz010llllhhhheeeeeee", "extralong", "base",
   5, 0, 1, 1, 0,
-  "z;l;h;e", "size;lo;hi;value", "base.field_types.SIZE_BWLQ;base.field_types.Rn;base.field_types.Rn;base.field_types.EA", "", "">;
-def BRForm_base_instructions_BNDSXI_b_w_l_q_z_rn_l_rn_v_rn_h : BedrockISAForm<
-  "base.instructions.BNDSXI.b_w_l_q_z_rn_l_rn_v_rn_h", "bndsxi", "BNDSXI.{B|W|L|Q}(z) Rn(l), Rn(v), Rn(h)", "11111100000000zz000010llllvvvvhhhh", "extralong", "base",
+  "z;l;h;e", "size;lo;hi;value", "SIZE_BWLQ;Rn;Rn;EA", "", "">;
+def BRForm_base_BNDSXI_b_w_l_q_z_rn_l_rn_v_rn_h : BedrockISAForm<
+  "base.BNDSXI.b_w_l_q_z_rn_l_rn_v_rn_h", "bndsxi", "BNDSXI.{B|W|L|Q}(z) Rn(l), Rn(v), Rn(h)", "11111100000000zz000010llllvvvvhhhh", "extralong", "base",
   5, 0, 0, 0, 1,
-  "z;l;v;h", "size;lo;value;hi", "base.field_types.SIZE_BWLQ;base.field_types.Rn;base.field_types.Rn;base.field_types.Rn", "", "">;
-def BRForm_base_instructions_BNDSXX_b_w_l_q_z_rn_l_ea_e_rn_h : BedrockISAForm<
-  "base.instructions.BNDSXX.b_w_l_q_z_rn_l_ea_e_rn_h", "bndsxx", "BNDSXX.{B|W|L|Q}(z) Rn(l), <ea>(e), Rn(h)", "11111100010000zz011llllhhhheeeeeee", "extralong", "base",
+  "z;l;v;h", "size;lo;value;hi", "SIZE_BWLQ;Rn;Rn;Rn", "", "">;
+def BRForm_base_BNDSXX_b_w_l_q_z_rn_l_ea_e_rn_h : BedrockISAForm<
+  "base.BNDSXX.b_w_l_q_z_rn_l_ea_e_rn_h", "bndsxx", "BNDSXX.{B|W|L|Q}(z) Rn(l), <ea>(e), Rn(h)", "11111100010000zz011llllhhhheeeeeee", "extralong", "base",
   5, 0, 1, 1, 0,
-  "z;l;h;e", "size;lo;hi;value", "base.field_types.SIZE_BWLQ;base.field_types.Rn;base.field_types.Rn;base.field_types.EA", "", "">;
-def BRForm_base_instructions_BNDSXX_b_w_l_q_z_rn_l_rn_v_rn_h : BedrockISAForm<
-  "base.instructions.BNDSXX.b_w_l_q_z_rn_l_rn_v_rn_h", "bndsxx", "BNDSXX.{B|W|L|Q}(z) Rn(l), Rn(v), Rn(h)", "11111100000000zz000011llllvvvvhhhh", "extralong", "base",
+  "z;l;h;e", "size;lo;hi;value", "SIZE_BWLQ;Rn;Rn;EA", "", "">;
+def BRForm_base_BNDSXX_b_w_l_q_z_rn_l_rn_v_rn_h : BedrockISAForm<
+  "base.BNDSXX.b_w_l_q_z_rn_l_rn_v_rn_h", "bndsxx", "BNDSXX.{B|W|L|Q}(z) Rn(l), Rn(v), Rn(h)", "11111100000000zz000011llllvvvvhhhh", "extralong", "base",
   5, 0, 0, 0, 1,
-  "z;l;v;h", "size;lo;value;hi", "base.field_types.SIZE_BWLQ;base.field_types.Rn;base.field_types.Rn;base.field_types.Rn", "", "">;
-def BRForm_base_instructions_BNDUII_b_w_l_q_z_rn_l_ea_e_rn_h : BedrockISAForm<
-  "base.instructions.BNDUII.b_w_l_q_z_rn_l_ea_e_rn_h", "bnduii", "BNDUII.{B|W|L|Q}(z) Rn(l), <ea>(e), Rn(h)", "11111100010000zz100llllhhhheeeeeee", "extralong", "base",
+  "z;l;v;h", "size;lo;value;hi", "SIZE_BWLQ;Rn;Rn;Rn", "", "">;
+def BRForm_base_BNDUII_b_w_l_q_z_rn_l_ea_e_rn_h : BedrockISAForm<
+  "base.BNDUII.b_w_l_q_z_rn_l_ea_e_rn_h", "bnduii", "BNDUII.{B|W|L|Q}(z) Rn(l), <ea>(e), Rn(h)", "11111100010000zz100llllhhhheeeeeee", "extralong", "base",
   5, 0, 1, 1, 0,
-  "z;l;h;e", "size;lo;hi;value", "base.field_types.SIZE_BWLQ;base.field_types.Rn;base.field_types.Rn;base.field_types.EA", "", "">;
-def BRForm_base_instructions_BNDUII_b_w_l_q_z_rn_l_rn_v_rn_h : BedrockISAForm<
-  "base.instructions.BNDUII.b_w_l_q_z_rn_l_rn_v_rn_h", "bnduii", "BNDUII.{B|W|L|Q}(z) Rn(l), Rn(v), Rn(h)", "11111100000000zz000100llllvvvvhhhh", "extralong", "base",
+  "z;l;h;e", "size;lo;hi;value", "SIZE_BWLQ;Rn;Rn;EA", "", "">;
+def BRForm_base_BNDUII_b_w_l_q_z_rn_l_rn_v_rn_h : BedrockISAForm<
+  "base.BNDUII.b_w_l_q_z_rn_l_rn_v_rn_h", "bnduii", "BNDUII.{B|W|L|Q}(z) Rn(l), Rn(v), Rn(h)", "11111100000000zz000100llllvvvvhhhh", "extralong", "base",
   5, 0, 0, 0, 1,
-  "z;l;v;h", "size;lo;value;hi", "base.field_types.SIZE_BWLQ;base.field_types.Rn;base.field_types.Rn;base.field_types.Rn", "", "">;
-def BRForm_base_instructions_BNDUIX_b_w_l_q_z_rn_l_ea_e_rn_h : BedrockISAForm<
-  "base.instructions.BNDUIX.b_w_l_q_z_rn_l_ea_e_rn_h", "bnduix", "BNDUIX.{B|W|L|Q}(z) Rn(l), <ea>(e), Rn(h)", "11111100010000zz101llllhhhheeeeeee", "extralong", "base",
+  "z;l;v;h", "size;lo;value;hi", "SIZE_BWLQ;Rn;Rn;Rn", "", "">;
+def BRForm_base_BNDUIX_b_w_l_q_z_rn_l_ea_e_rn_h : BedrockISAForm<
+  "base.BNDUIX.b_w_l_q_z_rn_l_ea_e_rn_h", "bnduix", "BNDUIX.{B|W|L|Q}(z) Rn(l), <ea>(e), Rn(h)", "11111100010000zz101llllhhhheeeeeee", "extralong", "base",
   5, 0, 1, 1, 0,
-  "z;l;h;e", "size;lo;hi;value", "base.field_types.SIZE_BWLQ;base.field_types.Rn;base.field_types.Rn;base.field_types.EA", "", "">;
-def BRForm_base_instructions_BNDUIX_b_w_l_q_z_rn_l_rn_v_rn_h : BedrockISAForm<
-  "base.instructions.BNDUIX.b_w_l_q_z_rn_l_rn_v_rn_h", "bnduix", "BNDUIX.{B|W|L|Q}(z) Rn(l), Rn(v), Rn(h)", "11111100000000zz000101llllvvvvhhhh", "extralong", "base",
+  "z;l;h;e", "size;lo;hi;value", "SIZE_BWLQ;Rn;Rn;EA", "", "">;
+def BRForm_base_BNDUIX_b_w_l_q_z_rn_l_rn_v_rn_h : BedrockISAForm<
+  "base.BNDUIX.b_w_l_q_z_rn_l_rn_v_rn_h", "bnduix", "BNDUIX.{B|W|L|Q}(z) Rn(l), Rn(v), Rn(h)", "11111100000000zz000101llllvvvvhhhh", "extralong", "base",
   5, 0, 0, 0, 1,
-  "z;l;v;h", "size;lo;value;hi", "base.field_types.SIZE_BWLQ;base.field_types.Rn;base.field_types.Rn;base.field_types.Rn", "", "">;
-def BRForm_base_instructions_BNDUXI_b_w_l_q_z_rn_l_ea_e_rn_h : BedrockISAForm<
-  "base.instructions.BNDUXI.b_w_l_q_z_rn_l_ea_e_rn_h", "bnduxi", "BNDUXI.{B|W|L|Q}(z) Rn(l), <ea>(e), Rn(h)", "11111100010000zz110llllhhhheeeeeee", "extralong", "base",
+  "z;l;v;h", "size;lo;value;hi", "SIZE_BWLQ;Rn;Rn;Rn", "", "">;
+def BRForm_base_BNDUXI_b_w_l_q_z_rn_l_ea_e_rn_h : BedrockISAForm<
+  "base.BNDUXI.b_w_l_q_z_rn_l_ea_e_rn_h", "bnduxi", "BNDUXI.{B|W|L|Q}(z) Rn(l), <ea>(e), Rn(h)", "11111100010000zz110llllhhhheeeeeee", "extralong", "base",
   5, 0, 1, 1, 0,
-  "z;l;h;e", "size;lo;hi;value", "base.field_types.SIZE_BWLQ;base.field_types.Rn;base.field_types.Rn;base.field_types.EA", "", "">;
-def BRForm_base_instructions_BNDUXI_b_w_l_q_z_rn_l_rn_v_rn_h : BedrockISAForm<
-  "base.instructions.BNDUXI.b_w_l_q_z_rn_l_rn_v_rn_h", "bnduxi", "BNDUXI.{B|W|L|Q}(z) Rn(l), Rn(v), Rn(h)", "11111100000000zz000110llllvvvvhhhh", "extralong", "base",
+  "z;l;h;e", "size;lo;hi;value", "SIZE_BWLQ;Rn;Rn;EA", "", "">;
+def BRForm_base_BNDUXI_b_w_l_q_z_rn_l_rn_v_rn_h : BedrockISAForm<
+  "base.BNDUXI.b_w_l_q_z_rn_l_rn_v_rn_h", "bnduxi", "BNDUXI.{B|W|L|Q}(z) Rn(l), Rn(v), Rn(h)", "11111100000000zz000110llllvvvvhhhh", "extralong", "base",
   5, 0, 0, 0, 1,
-  "z;l;v;h", "size;lo;value;hi", "base.field_types.SIZE_BWLQ;base.field_types.Rn;base.field_types.Rn;base.field_types.Rn", "", "">;
-def BRForm_base_instructions_BNDUXX_b_w_l_q_z_rn_l_ea_e_rn_h : BedrockISAForm<
-  "base.instructions.BNDUXX.b_w_l_q_z_rn_l_ea_e_rn_h", "bnduxx", "BNDUXX.{B|W|L|Q}(z) Rn(l), <ea>(e), Rn(h)", "11111100010000zz111llllhhhheeeeeee", "extralong", "base",
+  "z;l;v;h", "size;lo;value;hi", "SIZE_BWLQ;Rn;Rn;Rn", "", "">;
+def BRForm_base_BNDUXX_b_w_l_q_z_rn_l_ea_e_rn_h : BedrockISAForm<
+  "base.BNDUXX.b_w_l_q_z_rn_l_ea_e_rn_h", "bnduxx", "BNDUXX.{B|W|L|Q}(z) Rn(l), <ea>(e), Rn(h)", "11111100010000zz111llllhhhheeeeeee", "extralong", "base",
   5, 0, 1, 1, 0,
-  "z;l;h;e", "size;lo;hi;value", "base.field_types.SIZE_BWLQ;base.field_types.Rn;base.field_types.Rn;base.field_types.EA", "", "">;
-def BRForm_base_instructions_BNDUXX_b_w_l_q_z_rn_l_rn_v_rn_h : BedrockISAForm<
-  "base.instructions.BNDUXX.b_w_l_q_z_rn_l_rn_v_rn_h", "bnduxx", "BNDUXX.{B|W|L|Q}(z) Rn(l), Rn(v), Rn(h)", "11111100000000zz000111llllvvvvhhhh", "extralong", "base",
+  "z;l;h;e", "size;lo;hi;value", "SIZE_BWLQ;Rn;Rn;EA", "", "">;
+def BRForm_base_BNDUXX_b_w_l_q_z_rn_l_rn_v_rn_h : BedrockISAForm<
+  "base.BNDUXX.b_w_l_q_z_rn_l_rn_v_rn_h", "bnduxx", "BNDUXX.{B|W|L|Q}(z) Rn(l), Rn(v), Rn(h)", "11111100000000zz000111llllvvvvhhhh", "extralong", "base",
   5, 0, 0, 0, 1,
-  "z;l;v;h", "size;lo;value;hi", "base.field_types.SIZE_BWLQ;base.field_types.Rn;base.field_types.Rn;base.field_types.Rn", "", "">;
-def BRForm_base_instructions_BSET_rn_b_ea_e : BedrockISAForm<
-  "base.instructions.BSET.rn_b_ea_e", "bset", "BSET Rn(b), <ea>(e)", "111100110000010bbbbeeeeeee", "long", "base",
+  "z;l;v;h", "size;lo;value;hi", "SIZE_BWLQ;Rn;Rn;Rn", "", "">;
+def BRForm_base_BSET_rn_b_ea_e : BedrockISAForm<
+  "base.BSET.rn_b_ea_e", "bset", "BSET Rn(b), <ea>(e)", "111100110000010bbbbeeeeeee", "long", "base",
   4, 0, 1, 1, 0,
-  "b;e", "bit_index;dst", "base.field_types.Rn;base.field_types.EA", "", "">;
-def BRForm_base_instructions_BSET_imm6_i_ea_e : BedrockISAForm<
-  "base.instructions.BSET.imm6_i_ea_e", "bset", "BSET imm6(i), <ea>(e)", "1111011100010iiiiiieeeeeee", "long", "base",
+  "b;e", "bit_index;dst", "Rn;EA", "", "">;
+def BRForm_base_BSET_imm6_i_ea_e : BedrockISAForm<
+  "base.BSET.imm6_i_ea_e", "bset", "BSET imm6(i), <ea>(e)", "1111011100010iiiiiieeeeeee", "long", "base",
   4, 0, 1, 1, 0,
-  "i;e", "bit_index;dst", "base.field_types.IMM6;base.field_types.EA", "", "">;
-def BRForm_base_instructions_BSET_rn_b_rn_e : BedrockISAForm<
-  "base.instructions.BSET.rn_b_rn_e", "bset", "BSET Rn(b), Rn(e)", "1000000010bbbbeeee", "medium", "base",
+  "i;e", "bit_index;dst", "IMM6;EA", "", "">;
+def BRForm_base_BSET_rn_b_rn_e : BedrockISAForm<
+  "base.BSET.rn_b_rn_e", "bset", "BSET Rn(b), Rn(e)", "1000000010bbbbeeee", "medium", "base",
   3, 0, 0, 0, 1,
-  "b;e", "bit_index;dst", "base.field_types.Rn;base.field_types.Rn", "", "">;
-def BRForm_base_instructions_BSET_imm6_i_rn_e : BedrockISAForm<
-  "base.instructions.BSET.imm6_i_rn_e", "bset", "BSET imm6(i), Rn(e)", "1111011001101010eeeeiiiiii", "long", "base",
+  "b;e", "bit_index;dst", "Rn;Rn", "", "">;
+def BRForm_base_BSET_imm6_i_rn_e : BedrockISAForm<
+  "base.BSET.imm6_i_rn_e", "bset", "BSET imm6(i), Rn(e)", "1111011001101010eeeeiiiiii", "long", "base",
   4, 0, 0, 0, 1,
-  "e;i", "dst;bit_index", "base.field_types.Rn;base.field_types.IMM6", "", "">;
-def BRForm_base_instructions_BTEST_rn_b_ea_e : BedrockISAForm<
-  "base.instructions.BTEST.rn_b_ea_e", "btest", "BTEST Rn(b), <ea>(e)", "111100110000011bbbbeeeeeee", "long", "base",
+  "e;i", "dst;bit_index", "Rn;IMM6", "", "">;
+def BRForm_base_BTEST_rn_b_ea_e : BedrockISAForm<
+  "base.BTEST.rn_b_ea_e", "btest", "BTEST Rn(b), <ea>(e)", "111100110000011bbbbeeeeeee", "long", "base",
   4, 0, 1, 1, 0,
-  "b;e", "bit_index;dst", "base.field_types.Rn;base.field_types.EA", "", "">;
-def BRForm_base_instructions_BTEST_imm6_i_ea_e : BedrockISAForm<
-  "base.instructions.BTEST.imm6_i_ea_e", "btest", "BTEST imm6(i), <ea>(e)", "1111011100011iiiiiieeeeeee", "long", "base",
+  "b;e", "bit_index;dst", "Rn;EA", "", "">;
+def BRForm_base_BTEST_imm6_i_ea_e : BedrockISAForm<
+  "base.BTEST.imm6_i_ea_e", "btest", "BTEST imm6(i), <ea>(e)", "1111011100011iiiiiieeeeeee", "long", "base",
   4, 0, 1, 1, 0,
-  "i;e", "bit_index;dst", "base.field_types.IMM6;base.field_types.EA", "", "">;
-def BRForm_base_instructions_BTEST_rn_b_rn_e : BedrockISAForm<
-  "base.instructions.BTEST.rn_b_rn_e", "btest", "BTEST Rn(b), Rn(e)", "1000000011bbbbeeee", "medium", "base",
+  "i;e", "bit_index;dst", "IMM6;EA", "", "">;
+def BRForm_base_BTEST_rn_b_rn_e : BedrockISAForm<
+  "base.BTEST.rn_b_rn_e", "btest", "BTEST Rn(b), Rn(e)", "1000000011bbbbeeee", "medium", "base",
   3, 0, 0, 0, 1,
-  "b;e", "bit_index;dst", "base.field_types.Rn;base.field_types.Rn", "", "">;
-def BRForm_base_instructions_BTEST_imm6_i_rn_e : BedrockISAForm<
-  "base.instructions.BTEST.imm6_i_rn_e", "btest", "BTEST imm6(i), Rn(e)", "1111011001101011eeeeiiiiii", "long", "base",
+  "b;e", "bit_index;dst", "Rn;Rn", "", "">;
+def BRForm_base_BTEST_imm6_i_rn_e : BedrockISAForm<
+  "base.BTEST.imm6_i_rn_e", "btest", "BTEST imm6(i), Rn(e)", "1111011001101011eeeeiiiiii", "long", "base",
   4, 0, 0, 0, 1,
-  "e;i", "dst;bit_index", "base.field_types.Rn;base.field_types.IMM6", "", "">;
-def BRForm_base_instructions_CALL_imm16s : BedrockISAForm<
-  "base.instructions.CALL.imm16s", "call", "CALL <imm16s>", "111011110000000010", "medium", "base",
+  "e;i", "dst;bit_index", "Rn;IMM6", "", "">;
+def BRForm_base_CALL_imm16s : BedrockISAForm<
+  "base.CALL.imm16s", "call", "CALL <imm16s>", "111011110000000010", "medium", "base",
   3, 2, 0, 0, 1,
-  "", "", "", "target", "base.payload_types.DISP16S">;
-def BRForm_base_instructions_CALL_imm32s : BedrockISAForm<
-  "base.instructions.CALL.imm32s", "call", "CALL <imm32s>", "111011110000000011", "medium", "base",
+  "", "", "", "target", "DISP16S">;
+def BRForm_base_CALL_imm32s : BedrockISAForm<
+  "base.CALL.imm32s", "call", "CALL <imm32s>", "111011110000000011", "medium", "base",
   3, 4, 0, 0, 1,
-  "", "", "", "target", "base.payload_types.DISP32S">;
-def BRForm_base_instructions_CALL_ea_e : BedrockISAForm<
-  "base.instructions.CALL.ea_e", "call", "CALL <ea>(e)", "11101000010eeeeeee", "medium", "base",
+  "", "", "", "target", "DISP32S">;
+def BRForm_base_CALL_ea_e : BedrockISAForm<
+  "base.CALL.ea_e", "call", "CALL <ea>(e)", "11101000010eeeeeee", "medium", "base",
   3, 0, 1, 1, 0,
-  "e", "target", "base.field_types.EA", "", "">;
-def BRForm_base_instructions_CALL_rn_r : BedrockISAForm<
-  "base.instructions.CALL.rn_r", "call", "CALL Rn(r)", "11101101000010rrrr", "medium", "base",
+  "e", "target", "EA", "", "">;
+def BRForm_base_CALL_rn_r : BedrockISAForm<
+  "base.CALL.rn_r", "call", "CALL Rn(r)", "11101101000010rrrr", "medium", "base",
   3, 0, 0, 0, 1,
-  "r", "target", "base.field_types.Rn", "", "">;
-def BRForm_base_instructions_CALLcc_imm16s : BedrockISAForm<
-  "base.instructions.CALLcc.imm16s", "callcc", "CALLcc <imm16s>", "11101110000000cccc", "medium", "base",
+  "r", "target", "Rn", "", "">;
+def BRForm_base_CALLcc_imm16s : BedrockISAForm<
+  "base.CALLcc.imm16s", "callcc", "CALLcc <imm16s>", "11101110000000cccc", "medium", "base",
   3, 2, 0, 0, 1,
-  "c", "cc", "base.field_types.CC", "target", "base.payload_types.DISP16S">;
-def BRForm_base_instructions_CALLcc_imm32s : BedrockISAForm<
-  "base.instructions.CALLcc.imm32s", "callcc", "CALLcc <imm32s>", "11101110000001cccc", "medium", "base",
+  "c", "cc", "CC", "target", "DISP16S">;
+def BRForm_base_CALLcc_imm32s : BedrockISAForm<
+  "base.CALLcc.imm32s", "callcc", "CALLcc <imm32s>", "11101110000001cccc", "medium", "base",
   3, 4, 0, 0, 1,
-  "c", "cc", "base.field_types.CC", "target", "base.payload_types.DISP32S">;
-def BRForm_base_instructions_CALLcc_ea_e : BedrockISAForm<
-  "base.instructions.CALLcc.ea_e", "callcc", "CALLcc <ea>(e)", "111101100010000cccceeeeeee", "long", "base",
+  "c", "cc", "CC", "target", "DISP32S">;
+def BRForm_base_CALLcc_ea_e : BedrockISAForm<
+  "base.CALLcc.ea_e", "callcc", "CALLcc <ea>(e)", "111101100010000cccceeeeeee", "long", "base",
   4, 0, 1, 1, 0,
-  "c;e", "cc;target", "base.field_types.CC;base.field_types.EA", "", "">;
-def BRForm_base_instructions_CALLcc_rn_r : BedrockISAForm<
-  "base.instructions.CALLcc.rn_r", "callcc", "CALLcc Rn(r)", "111101100110000000ccccrrrr", "long", "base",
+  "c;e", "cc;target", "CC;EA", "", "">;
+def BRForm_base_CALLcc_rn_r : BedrockISAForm<
+  "base.CALLcc.rn_r", "callcc", "CALLcc Rn(r)", "111101100110000000ccccrrrr", "long", "base",
   4, 0, 0, 0, 1,
-  "c;r", "cc;target", "base.field_types.CC;base.field_types.Rn", "", "">;
-def BRForm_base_instructions_CLMUL_b_w_l_q_z_ea_e_rn_d : BedrockISAForm<
-  "base.instructions.CLMUL.b_w_l_q_z_ea_e_rn_d", "clmul", "CLMUL.{B|W|L|Q}(z) <ea>(e), Rn(d)", "1111001010zz010ddddeeeeeee", "long", "base",
+  "c;r", "cc;target", "CC;Rn", "", "">;
+def BRForm_base_CLMUL_b_w_l_q_z_ea_e_rn_d : BedrockISAForm<
+  "base.CLMUL.b_w_l_q_z_ea_e_rn_d", "clmul", "CLMUL.{B|W|L|Q}(z) <ea>(e), Rn(d)", "1111001010zz010ddddeeeeeee", "long", "base",
   4, 0, 1, 1, 0,
-  "z;d;e", "size;dst;src", "base.field_types.SIZE_BWLQ;base.field_types.Rn;base.field_types.EA", "", "">;
-def BRForm_base_instructions_CLMUL_b_w_l_q_z_rn_s_rn_d : BedrockISAForm<
-  "base.instructions.CLMUL.b_w_l_q_z_rn_s_rn_d", "clmul", "CLMUL.{B|W|L|Q}(z) Rn(s), Rn(d)", "10010zz010ssssdddd", "medium", "base",
+  "z;d;e", "size;dst;src", "SIZE_BWLQ;Rn;EA", "", "">;
+def BRForm_base_CLMUL_b_w_l_q_z_rn_s_rn_d : BedrockISAForm<
+  "base.CLMUL.b_w_l_q_z_rn_s_rn_d", "clmul", "CLMUL.{B|W|L|Q}(z) Rn(s), Rn(d)", "10010zz010ssssdddd", "medium", "base",
   3, 0, 0, 0, 1,
-  "z;s;d", "size;src;dst", "base.field_types.SIZE_BWLQ;base.field_types.Rn;base.field_types.Rn", "", "">;
-def BRForm_base_instructions_CLMULH_q_ea_e_rn_d : BedrockISAForm<
-  "base.instructions.CLMULH.q_ea_e_rn_d", "clmulh", "CLMULH.Q <ea>(e), Rn(d)", "111100101011011ddddeeeeeee", "long", "base",
+  "z;s;d", "size;src;dst", "SIZE_BWLQ;Rn;Rn", "", "">;
+def BRForm_base_CLMULH_q_ea_e_rn_d : BedrockISAForm<
+  "base.CLMULH.q_ea_e_rn_d", "clmulh", "CLMULH.Q <ea>(e), Rn(d)", "111100101011011ddddeeeeeee", "long", "base",
   4, 0, 1, 1, 0,
-  "d;e", "dst;src", "base.field_types.Rn;base.field_types.EA", "", "">;
-def BRForm_base_instructions_CLMULH_q_rn_s_rn_d : BedrockISAForm<
-  "base.instructions.CLMULH.q_rn_s_rn_d", "clmulh", "CLMULH.Q Rn(s), Rn(d)", "1001011011ssssdddd", "medium", "base",
+  "d;e", "dst;src", "Rn;EA", "", "">;
+def BRForm_base_CLMULH_q_rn_s_rn_d : BedrockISAForm<
+  "base.CLMULH.q_rn_s_rn_d", "clmulh", "CLMULH.Q Rn(s), Rn(d)", "1001011011ssssdddd", "medium", "base",
   3, 0, 0, 0, 1,
-  "s;d", "src;dst", "base.field_types.Rn;base.field_types.Rn", "", "">;
-def BRForm_base_instructions_CLR_q_rn_r : BedrockISAForm<
-  "base.instructions.CLR.q_rn_r", "clr", "CLR.Q Rn(r)", "111rrrr", "extrashort", "base",
+  "s;d", "src;dst", "Rn;Rn", "", "">;
+def BRForm_base_CLR_q_rn_r : BedrockISAForm<
+  "base.CLR.q_rn_r", "clr", "CLR.Q Rn(r)", "111rrrr", "extrashort", "base",
   1, 0, 0, 0, 1,
-  "r", "dst", "base.field_types.Rn", "", "">;
-def BRForm_base_instructions_CLR_l_rn_r : BedrockISAForm<
-  "base.instructions.CLR.l_rn_r", "clr", "CLR.L Rn(r)", "1011000000rrrr", "short", "base",
+  "r", "dst", "Rn", "", "">;
+def BRForm_base_CLR_l_rn_r : BedrockISAForm<
+  "base.CLR.l_rn_r", "clr", "CLR.L Rn(r)", "1011000000rrrr", "short", "base",
   2, 0, 0, 0, 1,
-  "r", "dst", "base.field_types.Rn", "", "">;
-def BRForm_base_instructions_CLR_b_w_l_q_z_ea_e : BedrockISAForm<
-  "base.instructions.CLR.b_w_l_q_z_ea_e", "clr", "CLR.{B|W|L|Q}(z) <ea>(e)", "11100zz0111eeeeeee", "medium", "base",
+  "r", "dst", "Rn", "", "">;
+def BRForm_base_CLR_b_w_l_q_z_ea_e : BedrockISAForm<
+  "base.CLR.b_w_l_q_z_ea_e", "clr", "CLR.{B|W|L|Q}(z) <ea>(e)", "11100zz0111eeeeeee", "medium", "base",
   3, 0, 1, 1, 0,
-  "z;e", "size;dst", "base.field_types.SIZE_BWLQ;base.field_types.EA", "", "">;
-def BRForm_base_instructions_CLS_b_w_l_q_z_ea_e_rn_d : BedrockISAForm<
-  "base.instructions.CLS.b_w_l_q_z_ea_e_rn_d", "cls", "CLS.{B|W|L|Q}(z) <ea>(e), Rn(d)", "1111001010zz100ddddeeeeeee", "long", "base",
+  "z;e", "size;dst", "SIZE_BWLQ;EA", "", "">;
+def BRForm_base_CLS_b_w_l_q_z_ea_e_rn_d : BedrockISAForm<
+  "base.CLS.b_w_l_q_z_ea_e_rn_d", "cls", "CLS.{B|W|L|Q}(z) <ea>(e), Rn(d)", "1111001010zz100ddddeeeeeee", "long", "base",
   4, 0, 1, 1, 0,
-  "z;d;e", "size;dst;src", "base.field_types.SIZE_BWLQ;base.field_types.Rn;base.field_types.EA", "", "">;
-def BRForm_base_instructions_CLS_b_w_l_q_z_rn_s_rn_d : BedrockISAForm<
-  "base.instructions.CLS.b_w_l_q_z_rn_s_rn_d", "cls", "CLS.{B|W|L|Q}(z) Rn(s), Rn(d)", "10010zz100ssssdddd", "medium", "base",
+  "z;d;e", "size;dst;src", "SIZE_BWLQ;Rn;EA", "", "">;
+def BRForm_base_CLS_b_w_l_q_z_rn_s_rn_d : BedrockISAForm<
+  "base.CLS.b_w_l_q_z_rn_s_rn_d", "cls", "CLS.{B|W|L|Q}(z) Rn(s), Rn(d)", "10010zz100ssssdddd", "medium", "base",
   3, 0, 0, 0, 1,
-  "z;s;d", "size;src;dst", "base.field_types.SIZE_BWLQ;base.field_types.Rn;base.field_types.Rn", "", "">;
-def BRForm_base_instructions_CLZ_b_w_l_q_z_ea_e_rn_d : BedrockISAForm<
-  "base.instructions.CLZ.b_w_l_q_z_ea_e_rn_d", "clz", "CLZ.{B|W|L|Q}(z) <ea>(e), Rn(d)", "1111001010zz101ddddeeeeeee", "long", "base",
+  "z;s;d", "size;src;dst", "SIZE_BWLQ;Rn;Rn", "", "">;
+def BRForm_base_CLZ_b_w_l_q_z_ea_e_rn_d : BedrockISAForm<
+  "base.CLZ.b_w_l_q_z_ea_e_rn_d", "clz", "CLZ.{B|W|L|Q}(z) <ea>(e), Rn(d)", "1111001010zz101ddddeeeeeee", "long", "base",
   4, 0, 1, 1, 0,
-  "z;d;e", "size;dst;src", "base.field_types.SIZE_BWLQ;base.field_types.Rn;base.field_types.EA", "", "">;
-def BRForm_base_instructions_CLZ_b_w_l_q_z_rn_s_rn_d : BedrockISAForm<
-  "base.instructions.CLZ.b_w_l_q_z_rn_s_rn_d", "clz", "CLZ.{B|W|L|Q}(z) Rn(s), Rn(d)", "10010zz101ssssdddd", "medium", "base",
+  "z;d;e", "size;dst;src", "SIZE_BWLQ;Rn;EA", "", "">;
+def BRForm_base_CLZ_b_w_l_q_z_rn_s_rn_d : BedrockISAForm<
+  "base.CLZ.b_w_l_q_z_rn_s_rn_d", "clz", "CLZ.{B|W|L|Q}(z) Rn(s), Rn(d)", "10010zz101ssssdddd", "medium", "base",
   3, 0, 0, 0, 1,
-  "z;s;d", "size;src;dst", "base.field_types.SIZE_BWLQ;base.field_types.Rn;base.field_types.Rn", "", "">;
-def BRForm_base_instructions_CMP_l_q_z_rn_s_rn_d : BedrockISAForm<
-  "base.instructions.CMP.l_q_z_rn_s_rn_d", "cmp", "CMP.{L|Q}(z) Rn(s), Rn(d)", "00011zssssdddd", "short", "base",
+  "z;s;d", "size;src;dst", "SIZE_BWLQ;Rn;Rn", "", "">;
+def BRForm_base_CMP_l_q_z_rn_s_rn_d : BedrockISAForm<
+  "base.CMP.l_q_z_rn_s_rn_d", "cmp", "CMP.{L|Q}(z) Rn(s), Rn(d)", "00011zssssdddd", "short", "base",
   2, 0, 0, 0, 1,
-  "z;s;d", "size;src;dst", "base.field_types.SIZE_LQ;base.field_types.Rn;base.field_types.Rn", "", "">;
-def BRForm_base_instructions_CMP_b_w_l_q_z_rn_s_ea_e : BedrockISAForm<
-  "base.instructions.CMP.b_w_l_q_z_rn_s_ea_e", "cmp", "CMP.{B|W|L|Q}(z) Rn(s), <ea>(e)", "00011zzsssseeeeeee", "medium", "base",
+  "z;s;d", "size;src;dst", "SIZE_LQ;Rn;Rn", "", "">;
+def BRForm_base_CMP_b_w_l_q_z_rn_s_ea_e : BedrockISAForm<
+  "base.CMP.b_w_l_q_z_rn_s_ea_e", "cmp", "CMP.{B|W|L|Q}(z) Rn(s), <ea>(e)", "00011zzsssseeeeeee", "medium", "base",
   3, 0, 1, 1, 0,
-  "z;s;e", "size;lhs;rhs", "base.field_types.SIZE_BWLQ;base.field_types.Rn;base.field_types.EA", "", "">;
-def BRForm_base_instructions_CMP_b_w_l_q_z_ea_e_rn_d : BedrockISAForm<
-  "base.instructions.CMP.b_w_l_q_z_ea_e_rn_d", "cmp", "CMP.{B|W|L|Q}(z) <ea>(e), Rn(d)", "01011zzddddeeeeeee", "medium", "base",
+  "z;s;e", "size;lhs;rhs", "SIZE_BWLQ;Rn;EA", "", "">;
+def BRForm_base_CMP_b_w_l_q_z_ea_e_rn_d : BedrockISAForm<
+  "base.CMP.b_w_l_q_z_ea_e_rn_d", "cmp", "CMP.{B|W|L|Q}(z) <ea>(e), Rn(d)", "01011zzddddeeeeeee", "medium", "base",
   3, 0, 1, 1, 0,
-  "z;d;e", "size;rhs;lhs", "base.field_types.SIZE_BWLQ;base.field_types.Rn;base.field_types.EA", "", "">;
-def BRForm_base_instructions_CMP_b_w_l_q_z_ea_s_ea_d : BedrockISAForm<
-  "base.instructions.CMP.b_w_l_q_z_ea_s_ea_d", "cmp", "CMP.{B|W|L|Q}(z) <ea>(s), <ea>(d)", "1111000000zzsssssssddddddd", "long", "base",
+  "z;d;e", "size;rhs;lhs", "SIZE_BWLQ;Rn;EA", "", "">;
+def BRForm_base_CMP_b_w_l_q_z_ea_s_ea_d : BedrockISAForm<
+  "base.CMP.b_w_l_q_z_ea_s_ea_d", "cmp", "CMP.{B|W|L|Q}(z) <ea>(s), <ea>(d)", "1111000000zzsssssssddddddd", "long", "base",
   4, 0, 1, 1, 0,
-  "z;s;d", "size;lhs;rhs", "base.field_types.SIZE_BWLQ;base.field_types.EA;base.field_types.EA", "", "">;
-def BRForm_base_instructions_CMPJcc_b_w_l_q_z_rn_s_rn_d_imm8s : BedrockISAForm<
-  "base.instructions.CMPJcc.b_w_l_q_z_rn_s_rn_d_imm8s", "cmpjcc", "CMPJcc.{B|W|L|Q}(z) Rn(s), Rn(d), <imm8s>", "111101000000zzccccssssdddd", "long", "base",
+  "z;s;d", "size;lhs;rhs", "SIZE_BWLQ;EA;EA", "", "">;
+def BRForm_base_CMPJcc_b_w_l_q_z_rn_s_rn_d_imm8s : BedrockISAForm<
+  "base.CMPJcc.b_w_l_q_z_rn_s_rn_d_imm8s", "cmpjcc", "CMPJcc.{B|W|L|Q}(z) Rn(s), Rn(d), <imm8s>", "111101000000zzccccssssdddd", "long", "base",
   4, 1, 0, 0, 1,
-  "z;c;s;d", "size;cc;src;dst", "base.field_types.SIZE_BWLQ;base.field_types.CC;base.field_types.Rn;base.field_types.Rn", "target", "base.payload_types.DISP8S">;
-def BRForm_base_instructions_CMPJcc_b_w_l_q_z_rn_s_rn_d_imm16s : BedrockISAForm<
-  "base.instructions.CMPJcc.b_w_l_q_z_rn_s_rn_d_imm16s", "cmpjcc", "CMPJcc.{B|W|L|Q}(z) Rn(s), Rn(d), <imm16s>", "111101000001zzccccssssdddd", "long", "base",
+  "z;c;s;d", "size;cc;src;dst", "SIZE_BWLQ;CC;Rn;Rn", "target", "DISP8S">;
+def BRForm_base_CMPJcc_b_w_l_q_z_rn_s_rn_d_imm16s : BedrockISAForm<
+  "base.CMPJcc.b_w_l_q_z_rn_s_rn_d_imm16s", "cmpjcc", "CMPJcc.{B|W|L|Q}(z) Rn(s), Rn(d), <imm16s>", "111101000001zzccccssssdddd", "long", "base",
   4, 2, 0, 0, 1,
-  "z;c;s;d", "size;cc;src;dst", "base.field_types.SIZE_BWLQ;base.field_types.CC;base.field_types.Rn;base.field_types.Rn", "target", "base.payload_types.DISP16S">;
-def BRForm_base_instructions_CMPXCHG_b_w_l_q_z_order_o_rn_x_rn_d_ea_e : BedrockISAForm<
-  "base.instructions.CMPXCHG.b_w_l_q_z_order_o_rn_x_rn_d_ea_e", "cmpxchg", "CMPXCHG.{B|W|L|Q}(z)/order(o) Rn(x), Rn(d), <ea>(e)", "11111100010100zzoooxxxxddddeeeeeee", "extralong", "base",
+  "z;c;s;d", "size;cc;src;dst", "SIZE_BWLQ;CC;Rn;Rn", "target", "DISP16S">;
+def BRForm_base_CMPXCHG_b_w_l_q_z_order_o_rn_x_rn_d_ea_e : BedrockISAForm<
+  "base.CMPXCHG.b_w_l_q_z_order_o_rn_x_rn_d_ea_e", "cmpxchg", "CMPXCHG.{B|W|L|Q}(z)/order(o) Rn(x), Rn(d), <ea>(e)", "11111100010100zzoooxxxxddddeeeeeee", "extralong", "base",
   5, 0, 1, 1, 0,
-  "z;o;x;d;e", "size;order;expected;desired;memory", "base.field_types.SIZE_BWLQ;base.field_types.MORDER;base.field_types.Rn;base.field_types.Rn;base.field_types.EA", "", "">;
-def BRForm_base_instructions_CPUID_rn_r : BedrockISAForm<
-  "base.instructions.CPUID.rn_r", "cpuid", "CPUID Rn(r)", "11101101000000rrrr", "medium", "base",
+  "z;o;x;d;e", "size;order;expected;desired;memory", "SIZE_BWLQ;MORDER;Rn;Rn;EA", "", "">;
+def BRForm_base_CPUID_rn_r : BedrockISAForm<
+  "base.CPUID.rn_r", "cpuid", "CPUID Rn(r)", "11101101000000rrrr", "medium", "base",
   3, 0, 0, 0, 1,
-  "r", "reg", "base.field_types.Rn", "", "">;
-def BRForm_base_instructions_CTS_b_w_l_q_z_ea_e_rn_d : BedrockISAForm<
-  "base.instructions.CTS.b_w_l_q_z_ea_e_rn_d", "cts", "CTS.{B|W|L|Q}(z) <ea>(e), Rn(d)", "1111001010zz110ddddeeeeeee", "long", "base",
+  "r", "reg", "Rn", "", "">;
+def BRForm_base_CTS_b_w_l_q_z_ea_e_rn_d : BedrockISAForm<
+  "base.CTS.b_w_l_q_z_ea_e_rn_d", "cts", "CTS.{B|W|L|Q}(z) <ea>(e), Rn(d)", "1111001010zz110ddddeeeeeee", "long", "base",
   4, 0, 1, 1, 0,
-  "z;d;e", "size;dst;src", "base.field_types.SIZE_BWLQ;base.field_types.Rn;base.field_types.EA", "", "">;
-def BRForm_base_instructions_CTS_b_w_l_q_z_rn_s_rn_d : BedrockISAForm<
-  "base.instructions.CTS.b_w_l_q_z_rn_s_rn_d", "cts", "CTS.{B|W|L|Q}(z) Rn(s), Rn(d)", "10010zz110ssssdddd", "medium", "base",
+  "z;d;e", "size;dst;src", "SIZE_BWLQ;Rn;EA", "", "">;
+def BRForm_base_CTS_b_w_l_q_z_rn_s_rn_d : BedrockISAForm<
+  "base.CTS.b_w_l_q_z_rn_s_rn_d", "cts", "CTS.{B|W|L|Q}(z) Rn(s), Rn(d)", "10010zz110ssssdddd", "medium", "base",
   3, 0, 0, 0, 1,
-  "z;s;d", "size;src;dst", "base.field_types.SIZE_BWLQ;base.field_types.Rn;base.field_types.Rn", "", "">;
-def BRForm_base_instructions_CTZ_b_w_l_q_z_ea_e_rn_d : BedrockISAForm<
-  "base.instructions.CTZ.b_w_l_q_z_ea_e_rn_d", "ctz", "CTZ.{B|W|L|Q}(z) <ea>(e), Rn(d)", "1111001010zz111ddddeeeeeee", "long", "base",
+  "z;s;d", "size;src;dst", "SIZE_BWLQ;Rn;Rn", "", "">;
+def BRForm_base_CTZ_b_w_l_q_z_ea_e_rn_d : BedrockISAForm<
+  "base.CTZ.b_w_l_q_z_ea_e_rn_d", "ctz", "CTZ.{B|W|L|Q}(z) <ea>(e), Rn(d)", "1111001010zz111ddddeeeeeee", "long", "base",
   4, 0, 1, 1, 0,
-  "z;d;e", "size;dst;src", "base.field_types.SIZE_BWLQ;base.field_types.Rn;base.field_types.EA", "", "">;
-def BRForm_base_instructions_CTZ_b_w_l_q_z_rn_s_rn_d : BedrockISAForm<
-  "base.instructions.CTZ.b_w_l_q_z_rn_s_rn_d", "ctz", "CTZ.{B|W|L|Q}(z) Rn(s), Rn(d)", "10010zz111ssssdddd", "medium", "base",
+  "z;d;e", "size;dst;src", "SIZE_BWLQ;Rn;EA", "", "">;
+def BRForm_base_CTZ_b_w_l_q_z_rn_s_rn_d : BedrockISAForm<
+  "base.CTZ.b_w_l_q_z_rn_s_rn_d", "ctz", "CTZ.{B|W|L|Q}(z) Rn(s), Rn(d)", "10010zz111ssssdddd", "medium", "base",
   3, 0, 0, 0, 1,
-  "z;s;d", "size;src;dst", "base.field_types.SIZE_BWLQ;base.field_types.Rn;base.field_types.Rn", "", "">;
-def BRForm_base_instructions_DEC_l_q_z_rn_r : BedrockISAForm<
-  "base.instructions.DEC.l_q_z_rn_r", "dec", "DEC.{L|Q}(z) Rn(r)", "10100z0001rrrr", "short", "base",
+  "z;s;d", "size;src;dst", "SIZE_BWLQ;Rn;Rn", "", "">;
+def BRForm_base_DEC_l_q_z_rn_r : BedrockISAForm<
+  "base.DEC.l_q_z_rn_r", "dec", "DEC.{L|Q}(z) Rn(r)", "10100z0001rrrr", "short", "base",
   2, 0, 0, 0, 1,
-  "z;r", "size;dst", "base.field_types.SIZE_LQ;base.field_types.Rn", "", "">;
-def BRForm_base_instructions_DEC_b_w_l_q_z_ea_e : BedrockISAForm<
-  "base.instructions.DEC.b_w_l_q_z_ea_e", "dec", "DEC.{B|W|L|Q}(z) <ea>(e)", "11100zz1000eeeeeee", "medium", "base",
+  "z;r", "size;dst", "SIZE_LQ;Rn", "", "">;
+def BRForm_base_DEC_b_w_l_q_z_ea_e : BedrockISAForm<
+  "base.DEC.b_w_l_q_z_ea_e", "dec", "DEC.{B|W|L|Q}(z) <ea>(e)", "11100zz1000eeeeeee", "medium", "base",
   3, 0, 1, 1, 0,
-  "z;e", "size;dst", "base.field_types.SIZE_BWLQ;base.field_types.EA", "", "">;
-def BRForm_base_instructions_DECF_b_w_l_q_z_rn_r : BedrockISAForm<
-  "base.instructions.DECF.b_w_l_q_z_rn_r", "decf", "DECF.{B|W|L|Q}(z) Rn(r)", "1110110000zz00rrrr", "medium", "base",
+  "z;e", "size;dst", "SIZE_BWLQ;EA", "", "">;
+def BRForm_base_DECF_b_w_l_q_z_rn_r : BedrockISAForm<
+  "base.DECF.b_w_l_q_z_rn_r", "decf", "DECF.{B|W|L|Q}(z) Rn(r)", "1110110000zz00rrrr", "medium", "base",
   3, 0, 0, 0, 1,
-  "z;r", "size;dst", "base.field_types.SIZE_BWLQ;base.field_types.Rn", "", "">;
-def BRForm_base_instructions_DIVMODS_b_w_l_q_z_ea_e_rn_q_rn_r : BedrockISAForm<
-  "base.instructions.DIVMODS.b_w_l_q_z_ea_e_rn_q_rn_r", "divmods", "DIVMODS.{B|W|L|Q}(z) <ea>(e), Rn(q), Rn(r)", "11111100010001zz000qqqqrrrreeeeeee", "extralong", "base",
+  "z;r", "size;dst", "SIZE_BWLQ;Rn", "", "">;
+def BRForm_base_DIVMODS_b_w_l_q_z_ea_e_rn_q_rn_r : BedrockISAForm<
+  "base.DIVMODS.b_w_l_q_z_ea_e_rn_q_rn_r", "divmods", "DIVMODS.{B|W|L|Q}(z) <ea>(e), Rn(q), Rn(r)", "11111100010001zz000qqqqrrrreeeeeee", "extralong", "base",
   5, 0, 1, 1, 0,
-  "z;q;r;e", "size;quotient;remainder;src", "base.field_types.SIZE_BWLQ;base.field_types.Rn;base.field_types.Rn;base.field_types.EA", "", "">;
-def BRForm_base_instructions_DIVMODS_b_w_l_q_z_rn_e_rn_q_rn_r : BedrockISAForm<
-  "base.instructions.DIVMODS.b_w_l_q_z_rn_e_rn_q_rn_r", "divmods", "DIVMODS.{B|W|L|Q}(z) Rn(e), Rn(q), Rn(r)", "11111100000000zz001000eeeeqqqqrrrr", "extralong", "base",
+  "z;q;r;e", "size;quotient;remainder;src", "SIZE_BWLQ;Rn;Rn;EA", "", "">;
+def BRForm_base_DIVMODS_b_w_l_q_z_rn_e_rn_q_rn_r : BedrockISAForm<
+  "base.DIVMODS.b_w_l_q_z_rn_e_rn_q_rn_r", "divmods", "DIVMODS.{B|W|L|Q}(z) Rn(e), Rn(q), Rn(r)", "11111100000000zz001000eeeeqqqqrrrr", "extralong", "base",
   5, 0, 0, 0, 1,
-  "z;e;q;r", "size;src;quotient;remainder", "base.field_types.SIZE_BWLQ;base.field_types.Rn;base.field_types.Rn;base.field_types.Rn", "", "">;
-def BRForm_base_instructions_DIVMODU_b_w_l_q_z_ea_e_rn_q_rn_r : BedrockISAForm<
-  "base.instructions.DIVMODU.b_w_l_q_z_ea_e_rn_q_rn_r", "divmodu", "DIVMODU.{B|W|L|Q}(z) <ea>(e), Rn(q), Rn(r)", "11111100010001zz001qqqqrrrreeeeeee", "extralong", "base",
+  "z;e;q;r", "size;src;quotient;remainder", "SIZE_BWLQ;Rn;Rn;Rn", "", "">;
+def BRForm_base_DIVMODU_b_w_l_q_z_ea_e_rn_q_rn_r : BedrockISAForm<
+  "base.DIVMODU.b_w_l_q_z_ea_e_rn_q_rn_r", "divmodu", "DIVMODU.{B|W|L|Q}(z) <ea>(e), Rn(q), Rn(r)", "11111100010001zz001qqqqrrrreeeeeee", "extralong", "base",
   5, 0, 1, 1, 0,
-  "z;q;r;e", "size;quotient;remainder;src", "base.field_types.SIZE_BWLQ;base.field_types.Rn;base.field_types.Rn;base.field_types.EA", "", "">;
-def BRForm_base_instructions_DIVMODU_b_w_l_q_z_rn_e_rn_q_rn_r : BedrockISAForm<
-  "base.instructions.DIVMODU.b_w_l_q_z_rn_e_rn_q_rn_r", "divmodu", "DIVMODU.{B|W|L|Q}(z) Rn(e), Rn(q), Rn(r)", "11111100000000zz001001eeeeqqqqrrrr", "extralong", "base",
+  "z;q;r;e", "size;quotient;remainder;src", "SIZE_BWLQ;Rn;Rn;EA", "", "">;
+def BRForm_base_DIVMODU_b_w_l_q_z_rn_e_rn_q_rn_r : BedrockISAForm<
+  "base.DIVMODU.b_w_l_q_z_rn_e_rn_q_rn_r", "divmodu", "DIVMODU.{B|W|L|Q}(z) Rn(e), Rn(q), Rn(r)", "11111100000000zz001001eeeeqqqqrrrr", "extralong", "base",
   5, 0, 0, 0, 1,
-  "z;e;q;r", "size;src;quotient;remainder", "base.field_types.SIZE_BWLQ;base.field_types.Rn;base.field_types.Rn;base.field_types.Rn", "", "">;
-def BRForm_base_instructions_DIVS_b_w_l_q_z_ea_e_rn_d : BedrockISAForm<
-  "base.instructions.DIVS.b_w_l_q_z_ea_e_rn_d", "divs", "DIVS.{B|W|L|Q}(z) <ea>(e), Rn(d)", "1111001011zz000ddddeeeeeee", "long", "base",
+  "z;e;q;r", "size;src;quotient;remainder", "SIZE_BWLQ;Rn;Rn;Rn", "", "">;
+def BRForm_base_DIVS_b_w_l_q_z_ea_e_rn_d : BedrockISAForm<
+  "base.DIVS.b_w_l_q_z_ea_e_rn_d", "divs", "DIVS.{B|W|L|Q}(z) <ea>(e), Rn(d)", "1111001011zz000ddddeeeeeee", "long", "base",
   4, 0, 1, 1, 0,
-  "z;d;e", "size;dst;src", "base.field_types.SIZE_BWLQ;base.field_types.Rn;base.field_types.EA", "", "">;
-def BRForm_base_instructions_DIVS_b_w_l_q_z_rn_s_rn_d : BedrockISAForm<
-  "base.instructions.DIVS.b_w_l_q_z_rn_s_rn_d", "divs", "DIVS.{B|W|L|Q}(z) Rn(s), Rn(d)", "10011zz000ssssdddd", "medium", "base",
+  "z;d;e", "size;dst;src", "SIZE_BWLQ;Rn;EA", "", "">;
+def BRForm_base_DIVS_b_w_l_q_z_rn_s_rn_d : BedrockISAForm<
+  "base.DIVS.b_w_l_q_z_rn_s_rn_d", "divs", "DIVS.{B|W|L|Q}(z) Rn(s), Rn(d)", "10011zz000ssssdddd", "medium", "base",
   3, 0, 0, 0, 1,
-  "z;s;d", "size;src;dst", "base.field_types.SIZE_BWLQ;base.field_types.Rn;base.field_types.Rn", "", "">;
-def BRForm_base_instructions_DIVU_b_w_l_q_z_ea_e_rn_d : BedrockISAForm<
-  "base.instructions.DIVU.b_w_l_q_z_ea_e_rn_d", "divu", "DIVU.{B|W|L|Q}(z) <ea>(e), Rn(d)", "1111001011zz001ddddeeeeeee", "long", "base",
+  "z;s;d", "size;src;dst", "SIZE_BWLQ;Rn;Rn", "", "">;
+def BRForm_base_DIVU_b_w_l_q_z_ea_e_rn_d : BedrockISAForm<
+  "base.DIVU.b_w_l_q_z_ea_e_rn_d", "divu", "DIVU.{B|W|L|Q}(z) <ea>(e), Rn(d)", "1111001011zz001ddddeeeeeee", "long", "base",
   4, 0, 1, 1, 0,
-  "z;d;e", "size;dst;src", "base.field_types.SIZE_BWLQ;base.field_types.Rn;base.field_types.EA", "", "">;
-def BRForm_base_instructions_DIVU_b_w_l_q_z_rn_s_rn_d : BedrockISAForm<
-  "base.instructions.DIVU.b_w_l_q_z_rn_s_rn_d", "divu", "DIVU.{B|W|L|Q}(z) Rn(s), Rn(d)", "10011zz001ssssdddd", "medium", "base",
+  "z;d;e", "size;dst;src", "SIZE_BWLQ;Rn;EA", "", "">;
+def BRForm_base_DIVU_b_w_l_q_z_rn_s_rn_d : BedrockISAForm<
+  "base.DIVU.b_w_l_q_z_rn_s_rn_d", "divu", "DIVU.{B|W|L|Q}(z) Rn(s), Rn(d)", "10011zz001ssssdddd", "medium", "base",
   3, 0, 0, 0, 1,
-  "z;s;d", "size;src;dst", "base.field_types.SIZE_BWLQ;base.field_types.Rn;base.field_types.Rn", "", "">;
-def BRForm_base_instructions_DJcc_rn_r_ea_e : BedrockISAForm<
-  "base.instructions.DJcc.rn_r_ea_e", "djcc", "DJcc Rn(r), <ea>(e)", "11110110100ccccrrrreeeeeee", "long", "base",
+  "z;s;d", "size;src;dst", "SIZE_BWLQ;Rn;Rn", "", "">;
+def BRForm_base_DJcc_rn_r_ea_e : BedrockISAForm<
+  "base.DJcc.rn_r_ea_e", "djcc", "DJcc Rn(r), <ea>(e)", "11110110100ccccrrrreeeeeee", "long", "base",
   4, 0, 1, 1, 0,
-  "c;r;e", "cc;counter;target", "base.field_types.CC;base.field_types.Rn;base.field_types.EA", "", "">;
-def BRForm_base_instructions_DJcc_rn_r_rn_e : BedrockISAForm<
-  "base.instructions.DJcc.rn_r_rn_e", "djcc", "DJcc Rn(r), Rn(e)", "11110100010000ccccrrrreeee", "long", "base",
+  "c;r;e", "cc;counter;target", "CC;Rn;EA", "", "">;
+def BRForm_base_DJcc_rn_r_rn_e : BedrockISAForm<
+  "base.DJcc.rn_r_rn_e", "djcc", "DJcc Rn(r), Rn(e)", "11110100010000ccccrrrreeee", "long", "base",
   4, 0, 0, 0, 1,
-  "c;r;e", "cc;counter;target", "base.field_types.CC;base.field_types.Rn;base.field_types.Rn", "", "">;
-def BRForm_base_instructions_ERET_plain : BedrockISAForm<
-  "base.instructions.ERET.plain", "eret", "ERET", "0000100", "extrashort", "base",
+  "c;r;e", "cc;counter;target", "CC;Rn;Rn", "", "">;
+def BRForm_base_ERET_plain : BedrockISAForm<
+  "base.ERET.plain", "eret", "ERET", "0000100", "extrashort", "base",
   1, 0, 0, 0, 1,
   "", "", "", "", "">;
-def BRForm_base_instructions_EXTRACT_b_w_l_q_z_imm7_i_rn_h_rn_l : BedrockISAForm<
-  "base.instructions.EXTRACT.b_w_l_q_z_imm7_i_rn_h_rn_l", "extract", "EXTRACT.{B|W|L|Q}(z) imm7(i), Rn(h), Rn(l)", "11111100000001zz000hhhhlllliiiiiii", "extralong", "base",
+def BRForm_base_EXTRACT_b_w_l_q_z_imm7_i_rn_h_rn_l : BedrockISAForm<
+  "base.EXTRACT.b_w_l_q_z_imm7_i_rn_h_rn_l", "extract", "EXTRACT.{B|W|L|Q}(z) imm7(i), Rn(h), Rn(l)", "11111100000001zz000hhhhlllliiiiiii", "extralong", "base",
   5, 0, 0, 0, 1,
-  "z;h;l;i", "size;high;low_dst;offset", "base.field_types.SIZE_BWLQ;base.field_types.Rn;base.field_types.Rn;base.field_types.IMM7", "", "">;
-def BRForm_base_instructions_EXTSL_b_rn_s_ea_e : BedrockISAForm<
-  "base.instructions.EXTSL.b_rn_s_ea_e", "extsl", "EXTSL.B Rn(s), <ea>(e)", "111100110100111sssseeeeeee", "long", "base",
+  "z;h;l;i", "size;high;low_dst;offset", "SIZE_BWLQ;Rn;Rn;IMM7", "", "">;
+def BRForm_base_EXTSL_b_rn_s_ea_e : BedrockISAForm<
+  "base.EXTSL.b_rn_s_ea_e", "extsl", "EXTSL.B Rn(s), <ea>(e)", "111100110100111sssseeeeeee", "long", "base",
   4, 0, 1, 1, 0,
-  "s;e", "src;dst", "base.field_types.Rn;base.field_types.EA", "", "">;
-def BRForm_base_instructions_EXTSL_w_rn_s_ea_e : BedrockISAForm<
-  "base.instructions.EXTSL.w_rn_s_ea_e", "extsl", "EXTSL.W Rn(s), <ea>(e)", "111100110101111sssseeeeeee", "long", "base",
+  "s;e", "src;dst", "Rn;EA", "", "">;
+def BRForm_base_EXTSL_w_rn_s_ea_e : BedrockISAForm<
+  "base.EXTSL.w_rn_s_ea_e", "extsl", "EXTSL.W Rn(s), <ea>(e)", "111100110101111sssseeeeeee", "long", "base",
   4, 0, 1, 1, 0,
-  "s;e", "src;dst", "base.field_types.Rn;base.field_types.EA", "", "">;
-def BRForm_base_instructions_EXTSL_b_w_z_ea_s_ea_d : BedrockISAForm<
-  "base.instructions.EXTSL.b_w_z_ea_s_ea_d", "extsl", "EXTSL.{B|W}(z) <ea>(s), <ea>(d)", "11110000010zsssssssddddddd", "long", "base",
+  "s;e", "src;dst", "Rn;EA", "", "">;
+def BRForm_base_EXTSL_b_w_z_ea_s_ea_d : BedrockISAForm<
+  "base.EXTSL.b_w_z_ea_s_ea_d", "extsl", "EXTSL.{B|W}(z) <ea>(s), <ea>(d)", "11110000010zsssssssddddddd", "long", "base",
   4, 0, 1, 1, 0,
-  "z;s;d", "size;src;dst", "base.field_types.SIZE_BW;base.field_types.EA;base.field_types.EA", "", "">;
-def BRForm_base_instructions_EXTSQ_b_rn_s_rn_d : BedrockISAForm<
-  "base.instructions.EXTSQ.b_rn_s_rn_d", "extsq", "EXTSQ.B Rn(s), Rn(d)", "1000100110ssssdddd", "medium", "base",
+  "z;s;d", "size;src;dst", "SIZE_BW;EA;EA", "", "">;
+def BRForm_base_EXTSQ_b_rn_s_rn_d : BedrockISAForm<
+  "base.EXTSQ.b_rn_s_rn_d", "extsq", "EXTSQ.B Rn(s), Rn(d)", "1000100110ssssdddd", "medium", "base",
   3, 0, 0, 0, 1,
-  "s;d", "src;dst", "base.field_types.Rn;base.field_types.Rn", "", "">;
-def BRForm_base_instructions_EXTSQ_w_rn_s_rn_d : BedrockISAForm<
-  "base.instructions.EXTSQ.w_rn_s_rn_d", "extsq", "EXTSQ.W Rn(s), Rn(d)", "1000101110ssssdddd", "medium", "base",
+  "s;d", "src;dst", "Rn;Rn", "", "">;
+def BRForm_base_EXTSQ_w_rn_s_rn_d : BedrockISAForm<
+  "base.EXTSQ.w_rn_s_rn_d", "extsq", "EXTSQ.W Rn(s), Rn(d)", "1000101110ssssdddd", "medium", "base",
   3, 0, 0, 0, 1,
-  "s;d", "src;dst", "base.field_types.Rn;base.field_types.Rn", "", "">;
-def BRForm_base_instructions_EXTSQ_l_rn_s_rn_d : BedrockISAForm<
-  "base.instructions.EXTSQ.l_rn_s_rn_d", "extsq", "EXTSQ.L Rn(s), Rn(d)", "100010ssssdddd", "short", "base",
+  "s;d", "src;dst", "Rn;Rn", "", "">;
+def BRForm_base_EXTSQ_l_rn_s_rn_d : BedrockISAForm<
+  "base.EXTSQ.l_rn_s_rn_d", "extsq", "EXTSQ.L Rn(s), Rn(d)", "100010ssssdddd", "short", "base",
   2, 0, 0, 0, 1,
-  "s;d", "src;dst", "base.field_types.Rn;base.field_types.Rn", "", "">;
-def BRForm_base_instructions_EXTSQ_b_rn_s_ea_e : BedrockISAForm<
-  "base.instructions.EXTSQ.b_rn_s_ea_e", "extsq", "EXTSQ.B Rn(s), <ea>(e)", "111100110000110sssseeeeeee", "long", "base",
+  "s;d", "src;dst", "Rn;Rn", "", "">;
+def BRForm_base_EXTSQ_b_rn_s_ea_e : BedrockISAForm<
+  "base.EXTSQ.b_rn_s_ea_e", "extsq", "EXTSQ.B Rn(s), <ea>(e)", "111100110000110sssseeeeeee", "long", "base",
   4, 0, 1, 1, 0,
-  "s;e", "src;dst", "base.field_types.Rn;base.field_types.EA", "", "">;
-def BRForm_base_instructions_EXTSQ_b_ea_e_rn_d : BedrockISAForm<
-  "base.instructions.EXTSQ.b_ea_e_rn_d", "extsq", "EXTSQ.B <ea>(e), Rn(d)", "1101100ddddeeeeeee", "medium", "base",
+  "s;e", "src;dst", "Rn;EA", "", "">;
+def BRForm_base_EXTSQ_b_ea_e_rn_d : BedrockISAForm<
+  "base.EXTSQ.b_ea_e_rn_d", "extsq", "EXTSQ.B <ea>(e), Rn(d)", "1101100ddddeeeeeee", "medium", "base",
   3, 0, 1, 1, 0,
-  "d;e", "dst;src", "base.field_types.Rn;base.field_types.EA", "", "">;
-def BRForm_base_instructions_EXTSQ_w_rn_s_ea_e : BedrockISAForm<
-  "base.instructions.EXTSQ.w_rn_s_ea_e", "extsq", "EXTSQ.W Rn(s), <ea>(e)", "111100110001110sssseeeeeee", "long", "base",
+  "d;e", "dst;src", "Rn;EA", "", "">;
+def BRForm_base_EXTSQ_w_rn_s_ea_e : BedrockISAForm<
+  "base.EXTSQ.w_rn_s_ea_e", "extsq", "EXTSQ.W Rn(s), <ea>(e)", "111100110001110sssseeeeeee", "long", "base",
   4, 0, 1, 1, 0,
-  "s;e", "src;dst", "base.field_types.Rn;base.field_types.EA", "", "">;
-def BRForm_base_instructions_EXTSQ_w_ea_e_rn_d : BedrockISAForm<
-  "base.instructions.EXTSQ.w_ea_e_rn_d", "extsq", "EXTSQ.W <ea>(e), Rn(d)", "1101101ddddeeeeeee", "medium", "base",
+  "s;e", "src;dst", "Rn;EA", "", "">;
+def BRForm_base_EXTSQ_w_ea_e_rn_d : BedrockISAForm<
+  "base.EXTSQ.w_ea_e_rn_d", "extsq", "EXTSQ.W <ea>(e), Rn(d)", "1101101ddddeeeeeee", "medium", "base",
   3, 0, 1, 1, 0,
-  "d;e", "dst;src", "base.field_types.Rn;base.field_types.EA", "", "">;
-def BRForm_base_instructions_EXTSQ_l_rn_s_ea_e : BedrockISAForm<
-  "base.instructions.EXTSQ.l_rn_s_ea_e", "extsq", "EXTSQ.L Rn(s), <ea>(e)", "111100110010110sssseeeeeee", "long", "base",
+  "d;e", "dst;src", "Rn;EA", "", "">;
+def BRForm_base_EXTSQ_l_rn_s_ea_e : BedrockISAForm<
+  "base.EXTSQ.l_rn_s_ea_e", "extsq", "EXTSQ.L Rn(s), <ea>(e)", "111100110010110sssseeeeeee", "long", "base",
   4, 0, 1, 1, 0,
-  "s;e", "src;dst", "base.field_types.Rn;base.field_types.EA", "", "">;
-def BRForm_base_instructions_EXTSQ_l_ea_e_rn_d : BedrockISAForm<
-  "base.instructions.EXTSQ.l_ea_e_rn_d", "extsq", "EXTSQ.L <ea>(e), Rn(d)", "1101110ddddeeeeeee", "medium", "base",
+  "s;e", "src;dst", "Rn;EA", "", "">;
+def BRForm_base_EXTSQ_l_ea_e_rn_d : BedrockISAForm<
+  "base.EXTSQ.l_ea_e_rn_d", "extsq", "EXTSQ.L <ea>(e), Rn(d)", "1101110ddddeeeeeee", "medium", "base",
   3, 0, 1, 1, 0,
-  "d;e", "dst;src", "base.field_types.Rn;base.field_types.EA", "", "">;
-def BRForm_base_instructions_EXTSQ_b_ea_s_ea_d : BedrockISAForm<
-  "base.instructions.EXTSQ.b_ea_s_ea_d", "extsq", "EXTSQ.B <ea>(s), <ea>(d)", "111100000110sssssssddddddd", "long", "base",
+  "d;e", "dst;src", "Rn;EA", "", "">;
+def BRForm_base_EXTSQ_b_ea_s_ea_d : BedrockISAForm<
+  "base.EXTSQ.b_ea_s_ea_d", "extsq", "EXTSQ.B <ea>(s), <ea>(d)", "111100000110sssssssddddddd", "long", "base",
   4, 0, 1, 1, 0,
-  "s;d", "src;dst", "base.field_types.EA;base.field_types.EA", "", "">;
-def BRForm_base_instructions_EXTSQ_w_ea_s_ea_d : BedrockISAForm<
-  "base.instructions.EXTSQ.w_ea_s_ea_d", "extsq", "EXTSQ.W <ea>(s), <ea>(d)", "111100000111sssssssddddddd", "long", "base",
+  "s;d", "src;dst", "EA;EA", "", "">;
+def BRForm_base_EXTSQ_w_ea_s_ea_d : BedrockISAForm<
+  "base.EXTSQ.w_ea_s_ea_d", "extsq", "EXTSQ.W <ea>(s), <ea>(d)", "111100000111sssssssddddddd", "long", "base",
   4, 0, 1, 1, 0,
-  "s;d", "src;dst", "base.field_types.EA;base.field_types.EA", "", "">;
-def BRForm_base_instructions_EXTSQ_l_ea_s_ea_d : BedrockISAForm<
-  "base.instructions.EXTSQ.l_ea_s_ea_d", "extsq", "EXTSQ.L <ea>(s), <ea>(d)", "111100001000sssssssddddddd", "long", "base",
+  "s;d", "src;dst", "EA;EA", "", "">;
+def BRForm_base_EXTSQ_l_ea_s_ea_d : BedrockISAForm<
+  "base.EXTSQ.l_ea_s_ea_d", "extsq", "EXTSQ.L <ea>(s), <ea>(d)", "111100001000sssssssddddddd", "long", "base",
   4, 0, 1, 1, 0,
-  "s;d", "src;dst", "base.field_types.EA;base.field_types.EA", "", "">;
-def BRForm_base_instructions_EXTSW_b_rn_s_ea_e : BedrockISAForm<
-  "base.instructions.EXTSW.b_rn_s_ea_e", "extsw", "EXTSW.B Rn(s), <ea>(e)", "111100110000111sssseeeeeee", "long", "base",
+  "s;d", "src;dst", "EA;EA", "", "">;
+def BRForm_base_EXTSW_b_rn_s_ea_e : BedrockISAForm<
+  "base.EXTSW.b_rn_s_ea_e", "extsw", "EXTSW.B Rn(s), <ea>(e)", "111100110000111sssseeeeeee", "long", "base",
   4, 0, 1, 1, 0,
-  "s;e", "src;dst", "base.field_types.Rn;base.field_types.EA", "", "">;
-def BRForm_base_instructions_EXTSW_b_ea_s_ea_d : BedrockISAForm<
-  "base.instructions.EXTSW.b_ea_s_ea_d", "extsw", "EXTSW.B <ea>(s), <ea>(d)", "111100001001sssssssddddddd", "long", "base",
+  "s;e", "src;dst", "Rn;EA", "", "">;
+def BRForm_base_EXTSW_b_ea_s_ea_d : BedrockISAForm<
+  "base.EXTSW.b_ea_s_ea_d", "extsw", "EXTSW.B <ea>(s), <ea>(d)", "111100001001sssssssddddddd", "long", "base",
   4, 0, 1, 1, 0,
-  "s;d", "src;dst", "base.field_types.EA;base.field_types.EA", "", "">;
-def BRForm_base_instructions_EXTZL_b_rn_s_ea_e : BedrockISAForm<
-  "base.instructions.EXTZL.b_rn_s_ea_e", "extzl", "EXTZL.B Rn(s), <ea>(e)", "111100110100110sssseeeeeee", "long", "base",
+  "s;d", "src;dst", "EA;EA", "", "">;
+def BRForm_base_EXTZL_b_rn_s_ea_e : BedrockISAForm<
+  "base.EXTZL.b_rn_s_ea_e", "extzl", "EXTZL.B Rn(s), <ea>(e)", "111100110100110sssseeeeeee", "long", "base",
   4, 0, 1, 1, 0,
-  "s;e", "src;dst", "base.field_types.Rn;base.field_types.EA", "", "">;
-def BRForm_base_instructions_EXTZL_w_rn_s_ea_e : BedrockISAForm<
-  "base.instructions.EXTZL.w_rn_s_ea_e", "extzl", "EXTZL.W Rn(s), <ea>(e)", "111100110101110sssseeeeeee", "long", "base",
+  "s;e", "src;dst", "Rn;EA", "", "">;
+def BRForm_base_EXTZL_w_rn_s_ea_e : BedrockISAForm<
+  "base.EXTZL.w_rn_s_ea_e", "extzl", "EXTZL.W Rn(s), <ea>(e)", "111100110101110sssseeeeeee", "long", "base",
   4, 0, 1, 1, 0,
-  "s;e", "src;dst", "base.field_types.Rn;base.field_types.EA", "", "">;
-def BRForm_base_instructions_EXTZL_b_w_z_ea_s_ea_d : BedrockISAForm<
-  "base.instructions.EXTZL.b_w_z_ea_s_ea_d", "extzl", "EXTZL.{B|W}(z) <ea>(s), <ea>(d)", "11110000101zsssssssddddddd", "long", "base",
+  "s;e", "src;dst", "Rn;EA", "", "">;
+def BRForm_base_EXTZL_b_w_z_ea_s_ea_d : BedrockISAForm<
+  "base.EXTZL.b_w_z_ea_s_ea_d", "extzl", "EXTZL.{B|W}(z) <ea>(s), <ea>(d)", "11110000101zsssssssddddddd", "long", "base",
   4, 0, 1, 1, 0,
-  "z;s;d", "size;src;dst", "base.field_types.SIZE_BW;base.field_types.EA;base.field_types.EA", "", "">;
-def BRForm_base_instructions_EXTZQ_b_rn_s_ea_e : BedrockISAForm<
-  "base.instructions.EXTZQ.b_rn_s_ea_e", "extzq", "EXTZQ.B Rn(s), <ea>(e)", "111100110100000sssseeeeeee", "long", "base",
+  "z;s;d", "size;src;dst", "SIZE_BW;EA;EA", "", "">;
+def BRForm_base_EXTZQ_b_rn_s_ea_e : BedrockISAForm<
+  "base.EXTZQ.b_rn_s_ea_e", "extzq", "EXTZQ.B Rn(s), <ea>(e)", "111100110100000sssseeeeeee", "long", "base",
   4, 0, 1, 1, 0,
-  "s;e", "src;dst", "base.field_types.Rn;base.field_types.EA", "", "">;
-def BRForm_base_instructions_EXTZQ_w_rn_s_ea_e : BedrockISAForm<
-  "base.instructions.EXTZQ.w_rn_s_ea_e", "extzq", "EXTZQ.W Rn(s), <ea>(e)", "111100110101000sssseeeeeee", "long", "base",
+  "s;e", "src;dst", "Rn;EA", "", "">;
+def BRForm_base_EXTZQ_w_rn_s_ea_e : BedrockISAForm<
+  "base.EXTZQ.w_rn_s_ea_e", "extzq", "EXTZQ.W Rn(s), <ea>(e)", "111100110101000sssseeeeeee", "long", "base",
   4, 0, 1, 1, 0,
-  "s;e", "src;dst", "base.field_types.Rn;base.field_types.EA", "", "">;
-def BRForm_base_instructions_EXTZQ_l_rn_s_ea_e : BedrockISAForm<
-  "base.instructions.EXTZQ.l_rn_s_ea_e", "extzq", "EXTZQ.L Rn(s), <ea>(e)", "111100110110000sssseeeeeee", "long", "base",
+  "s;e", "src;dst", "Rn;EA", "", "">;
+def BRForm_base_EXTZQ_l_rn_s_ea_e : BedrockISAForm<
+  "base.EXTZQ.l_rn_s_ea_e", "extzq", "EXTZQ.L Rn(s), <ea>(e)", "111100110110000sssseeeeeee", "long", "base",
   4, 0, 1, 1, 0,
-  "s;e", "src;dst", "base.field_types.Rn;base.field_types.EA", "", "">;
-def BRForm_base_instructions_EXTZQ_b_ea_s_ea_d : BedrockISAForm<
-  "base.instructions.EXTZQ.b_ea_s_ea_d", "extzq", "EXTZQ.B <ea>(s), <ea>(d)", "111100001100sssssssddddddd", "long", "base",
+  "s;e", "src;dst", "Rn;EA", "", "">;
+def BRForm_base_EXTZQ_b_ea_s_ea_d : BedrockISAForm<
+  "base.EXTZQ.b_ea_s_ea_d", "extzq", "EXTZQ.B <ea>(s), <ea>(d)", "111100001100sssssssddddddd", "long", "base",
   4, 0, 1, 1, 0,
-  "s;d", "src;dst", "base.field_types.EA;base.field_types.EA", "", "">;
-def BRForm_base_instructions_EXTZQ_w_ea_s_ea_d : BedrockISAForm<
-  "base.instructions.EXTZQ.w_ea_s_ea_d", "extzq", "EXTZQ.W <ea>(s), <ea>(d)", "111100001101sssssssddddddd", "long", "base",
+  "s;d", "src;dst", "EA;EA", "", "">;
+def BRForm_base_EXTZQ_w_ea_s_ea_d : BedrockISAForm<
+  "base.EXTZQ.w_ea_s_ea_d", "extzq", "EXTZQ.W <ea>(s), <ea>(d)", "111100001101sssssssddddddd", "long", "base",
   4, 0, 1, 1, 0,
-  "s;d", "src;dst", "base.field_types.EA;base.field_types.EA", "", "">;
-def BRForm_base_instructions_EXTZQ_l_ea_s_ea_d : BedrockISAForm<
-  "base.instructions.EXTZQ.l_ea_s_ea_d", "extzq", "EXTZQ.L <ea>(s), <ea>(d)", "111100001110sssssssddddddd", "long", "base",
+  "s;d", "src;dst", "EA;EA", "", "">;
+def BRForm_base_EXTZQ_l_ea_s_ea_d : BedrockISAForm<
+  "base.EXTZQ.l_ea_s_ea_d", "extzq", "EXTZQ.L <ea>(s), <ea>(d)", "111100001110sssssssddddddd", "long", "base",
   4, 0, 1, 1, 0,
-  "s;d", "src;dst", "base.field_types.EA;base.field_types.EA", "", "">;
-def BRForm_base_instructions_EXTZW_b_rn_s_ea_e : BedrockISAForm<
-  "base.instructions.EXTZW.b_rn_s_ea_e", "extzw", "EXTZW.B Rn(s), <ea>(e)", "111100110100001sssseeeeeee", "long", "base",
+  "s;d", "src;dst", "EA;EA", "", "">;
+def BRForm_base_EXTZW_b_rn_s_ea_e : BedrockISAForm<
+  "base.EXTZW.b_rn_s_ea_e", "extzw", "EXTZW.B Rn(s), <ea>(e)", "111100110100001sssseeeeeee", "long", "base",
   4, 0, 1, 1, 0,
-  "s;e", "src;dst", "base.field_types.Rn;base.field_types.EA", "", "">;
-def BRForm_base_instructions_EXTZW_b_ea_s_ea_d : BedrockISAForm<
-  "base.instructions.EXTZW.b_ea_s_ea_d", "extzw", "EXTZW.B <ea>(s), <ea>(d)", "111100001111sssssssddddddd", "long", "base",
+  "s;e", "src;dst", "Rn;EA", "", "">;
+def BRForm_base_EXTZW_b_ea_s_ea_d : BedrockISAForm<
+  "base.EXTZW.b_ea_s_ea_d", "extzw", "EXTZW.B <ea>(s), <ea>(d)", "111100001111sssssssddddddd", "long", "base",
   4, 0, 1, 1, 0,
-  "s;d", "src;dst", "base.field_types.EA;base.field_types.EA", "", "">;
-def BRForm_base_instructions_FETCHADD_b_w_l_q_z_order_o_rn_s_ea_e : BedrockISAForm<
-  "base.instructions.FETCHADD.b_w_l_q_z_order_o_rn_s_ea_e", "fetchadd", "FETCHADD.{B|W|L|Q}(z)/order(o) Rn(s), <ea>(e)", "11111100010010zz0000ooosssseeeeeee", "extralong", "base",
+  "s;d", "src;dst", "EA;EA", "", "">;
+def BRForm_base_FETCHADD_b_w_l_q_z_order_o_rn_s_ea_e : BedrockISAForm<
+  "base.FETCHADD.b_w_l_q_z_order_o_rn_s_ea_e", "fetchadd", "FETCHADD.{B|W|L|Q}(z)/order(o) Rn(s), <ea>(e)", "11111100010010zz0000ooosssseeeeeee", "extralong", "base",
   5, 0, 1, 1, 0,
-  "z;o;s;e", "size;order;src;memory", "base.field_types.SIZE_BWLQ;base.field_types.MORDER;base.field_types.Rn;base.field_types.EA", "", "">;
-def BRForm_base_instructions_FETCHAND_b_w_l_q_z_order_o_rn_s_ea_e : BedrockISAForm<
-  "base.instructions.FETCHAND.b_w_l_q_z_order_o_rn_s_ea_e", "fetchand", "FETCHAND.{B|W|L|Q}(z)/order(o) Rn(s), <ea>(e)", "11111100010010zz0001ooosssseeeeeee", "extralong", "base",
+  "z;o;s;e", "size;order;src;memory", "SIZE_BWLQ;MORDER;Rn;EA", "", "">;
+def BRForm_base_FETCHAND_b_w_l_q_z_order_o_rn_s_ea_e : BedrockISAForm<
+  "base.FETCHAND.b_w_l_q_z_order_o_rn_s_ea_e", "fetchand", "FETCHAND.{B|W|L|Q}(z)/order(o) Rn(s), <ea>(e)", "11111100010010zz0001ooosssseeeeeee", "extralong", "base",
   5, 0, 1, 1, 0,
-  "z;o;s;e", "size;order;src;memory", "base.field_types.SIZE_BWLQ;base.field_types.MORDER;base.field_types.Rn;base.field_types.EA", "", "">;
-def BRForm_base_instructions_FETCHOR_b_w_l_q_z_order_o_rn_s_ea_e : BedrockISAForm<
-  "base.instructions.FETCHOR.b_w_l_q_z_order_o_rn_s_ea_e", "fetchor", "FETCHOR.{B|W|L|Q}(z)/order(o) Rn(s), <ea>(e)", "11111100010010zz0010ooosssseeeeeee", "extralong", "base",
+  "z;o;s;e", "size;order;src;memory", "SIZE_BWLQ;MORDER;Rn;EA", "", "">;
+def BRForm_base_FETCHOR_b_w_l_q_z_order_o_rn_s_ea_e : BedrockISAForm<
+  "base.FETCHOR.b_w_l_q_z_order_o_rn_s_ea_e", "fetchor", "FETCHOR.{B|W|L|Q}(z)/order(o) Rn(s), <ea>(e)", "11111100010010zz0010ooosssseeeeeee", "extralong", "base",
   5, 0, 1, 1, 0,
-  "z;o;s;e", "size;order;src;memory", "base.field_types.SIZE_BWLQ;base.field_types.MORDER;base.field_types.Rn;base.field_types.EA", "", "">;
-def BRForm_base_instructions_FETCHSUB_b_w_l_q_z_order_o_rn_s_ea_e : BedrockISAForm<
-  "base.instructions.FETCHSUB.b_w_l_q_z_order_o_rn_s_ea_e", "fetchsub", "FETCHSUB.{B|W|L|Q}(z)/order(o) Rn(s), <ea>(e)", "11111100010010zz0011ooosssseeeeeee", "extralong", "base",
+  "z;o;s;e", "size;order;src;memory", "SIZE_BWLQ;MORDER;Rn;EA", "", "">;
+def BRForm_base_FETCHSUB_b_w_l_q_z_order_o_rn_s_ea_e : BedrockISAForm<
+  "base.FETCHSUB.b_w_l_q_z_order_o_rn_s_ea_e", "fetchsub", "FETCHSUB.{B|W|L|Q}(z)/order(o) Rn(s), <ea>(e)", "11111100010010zz0011ooosssseeeeeee", "extralong", "base",
   5, 0, 1, 1, 0,
-  "z;o;s;e", "size;order;src;memory", "base.field_types.SIZE_BWLQ;base.field_types.MORDER;base.field_types.Rn;base.field_types.EA", "", "">;
-def BRForm_base_instructions_FETCHXOR_b_w_l_q_z_order_o_rn_s_ea_e : BedrockISAForm<
-  "base.instructions.FETCHXOR.b_w_l_q_z_order_o_rn_s_ea_e", "fetchxor", "FETCHXOR.{B|W|L|Q}(z)/order(o) Rn(s), <ea>(e)", "11111100010010zz0100ooosssseeeeeee", "extralong", "base",
+  "z;o;s;e", "size;order;src;memory", "SIZE_BWLQ;MORDER;Rn;EA", "", "">;
+def BRForm_base_FETCHXOR_b_w_l_q_z_order_o_rn_s_ea_e : BedrockISAForm<
+  "base.FETCHXOR.b_w_l_q_z_order_o_rn_s_ea_e", "fetchxor", "FETCHXOR.{B|W|L|Q}(z)/order(o) Rn(s), <ea>(e)", "11111100010010zz0100ooosssseeeeeee", "extralong", "base",
   5, 0, 1, 1, 0,
-  "z;o;s;e", "size;order;src;memory", "base.field_types.SIZE_BWLQ;base.field_types.MORDER;base.field_types.Rn;base.field_types.EA", "", "">;
-def BRForm_base_instructions_FLSHDCACHE_ea_e : BedrockISAForm<
-  "base.instructions.FLSHDCACHE.ea_e", "flshdcache", "FLSHDCACHE <ea>(e)", "11101000011eeeeeee", "medium", "base",
+  "z;o;s;e", "size;order;src;memory", "SIZE_BWLQ;MORDER;Rn;EA", "", "">;
+def BRForm_base_FLSHDCACHE_ea_e : BedrockISAForm<
+  "base.FLSHDCACHE.ea_e", "flshdcache", "FLSHDCACHE <ea>(e)", "11101000011eeeeeee", "medium", "base",
   3, 0, 1, 1, 0,
-  "e", "target", "base.field_types.EA", "", "">;
-def BRForm_base_instructions_HALT_plain : BedrockISAForm<
-  "base.instructions.HALT.plain", "halt", "HALT", "10111000000000", "short", "base",
+  "e", "target", "EA", "", "">;
+def BRForm_base_HALT_plain : BedrockISAForm<
+  "base.HALT.plain", "halt", "HALT", "10111000000000", "short", "base",
   2, 0, 0, 0, 1,
   "", "", "", "", "">;
-def BRForm_base_instructions_IJcc_rn_i_rn_b_ea_e : BedrockISAForm<
-  "base.instructions.IJcc.rn_i_rn_b_ea_e", "ijcc", "IJcc Rn(i), Rn(b), <ea>(e)", "111111000100110cccciiiibbbbeeeeeee", "extralong", "base",
+def BRForm_base_IJcc_rn_i_rn_b_ea_e : BedrockISAForm<
+  "base.IJcc.rn_i_rn_b_ea_e", "ijcc", "IJcc Rn(i), Rn(b), <ea>(e)", "111111000100110cccciiiibbbbeeeeeee", "extralong", "base",
   5, 0, 1, 1, 0,
-  "c;i;b;e", "cc;index;bound;target", "base.field_types.CC;base.field_types.Rn;base.field_types.Rn;base.field_types.EA", "", "">;
-def BRForm_base_instructions_IJcc_rn_i_rn_b_rn_e : BedrockISAForm<
-  "base.instructions.IJcc.rn_i_rn_b_rn_e", "ijcc", "IJcc Rn(i), Rn(b), Rn(e)", "111111000000100000cccciiiibbbbeeee", "extralong", "base",
+  "c;i;b;e", "cc;index;bound;target", "CC;Rn;Rn;EA", "", "">;
+def BRForm_base_IJcc_rn_i_rn_b_rn_e : BedrockISAForm<
+  "base.IJcc.rn_i_rn_b_rn_e", "ijcc", "IJcc Rn(i), Rn(b), Rn(e)", "111111000000100000cccciiiibbbbeeee", "extralong", "base",
   5, 0, 0, 0, 1,
-  "c;i;b;e", "cc;index;bound;target", "base.field_types.CC;base.field_types.Rn;base.field_types.Rn;base.field_types.Rn", "", "">;
-def BRForm_base_instructions_ILLEGAL_plain : BedrockISAForm<
-  "base.instructions.ILLEGAL.plain", "illegal", "ILLEGAL", "0000000", "extrashort", "base",
+  "c;i;b;e", "cc;index;bound;target", "CC;Rn;Rn;Rn", "", "">;
+def BRForm_base_ILLEGAL_plain : BedrockISAForm<
+  "base.ILLEGAL.plain", "illegal", "ILLEGAL", "0000000", "extrashort", "base",
   1, 0, 0, 0, 1,
   "", "", "", "", "">;
-def BRForm_base_instructions_INC_l_q_z_rn_r : BedrockISAForm<
-  "base.instructions.INC.l_q_z_rn_r", "inc", "INC.{L|Q}(z) Rn(r)", "10100z0000rrrr", "short", "base",
+def BRForm_base_INC_l_q_z_rn_r : BedrockISAForm<
+  "base.INC.l_q_z_rn_r", "inc", "INC.{L|Q}(z) Rn(r)", "10100z0000rrrr", "short", "base",
   2, 0, 0, 0, 1,
-  "z;r", "size;dst", "base.field_types.SIZE_LQ;base.field_types.Rn", "", "">;
-def BRForm_base_instructions_INC_b_w_l_q_z_ea_e : BedrockISAForm<
-  "base.instructions.INC.b_w_l_q_z_ea_e", "inc", "INC.{B|W|L|Q}(z) <ea>(e)", "11100zz1001eeeeeee", "medium", "base",
+  "z;r", "size;dst", "SIZE_LQ;Rn", "", "">;
+def BRForm_base_INC_b_w_l_q_z_ea_e : BedrockISAForm<
+  "base.INC.b_w_l_q_z_ea_e", "inc", "INC.{B|W|L|Q}(z) <ea>(e)", "11100zz1001eeeeeee", "medium", "base",
   3, 0, 1, 1, 0,
-  "z;e", "size;dst", "base.field_types.SIZE_BWLQ;base.field_types.EA", "", "">;
-def BRForm_base_instructions_INCF_b_w_l_q_z_rn_r : BedrockISAForm<
-  "base.instructions.INCF.b_w_l_q_z_rn_r", "incf", "INCF.{B|W|L|Q}(z) Rn(r)", "1110110000zz01rrrr", "medium", "base",
+  "z;e", "size;dst", "SIZE_BWLQ;EA", "", "">;
+def BRForm_base_INCF_b_w_l_q_z_rn_r : BedrockISAForm<
+  "base.INCF.b_w_l_q_z_rn_r", "incf", "INCF.{B|W|L|Q}(z) Rn(r)", "1110110000zz01rrrr", "medium", "base",
   3, 0, 0, 0, 1,
-  "z;r", "size;dst", "base.field_types.SIZE_BWLQ;base.field_types.Rn", "", "">;
-def BRForm_base_instructions_INVASID_imm16 : BedrockISAForm<
-  "base.instructions.INVASID.imm16", "invasid", "INVASID <imm16>", "111011110000000100", "medium", "base",
+  "z;r", "size;dst", "SIZE_BWLQ;Rn", "", "">;
+def BRForm_base_INVASID_imm16 : BedrockISAForm<
+  "base.INVASID.imm16", "invasid", "INVASID <imm16>", "111011110000000100", "medium", "base",
   3, 2, 0, 0, 1,
-  "", "", "", "asid", "base.payload_types.IMM16">;
-def BRForm_base_instructions_INVDCACHE_ea_e : BedrockISAForm<
-  "base.instructions.INVDCACHE.ea_e", "invdcache", "INVDCACHE <ea>(e)", "11101000100eeeeeee", "medium", "base",
+  "", "", "", "asid", "IMM16">;
+def BRForm_base_INVDCACHE_ea_e : BedrockISAForm<
+  "base.INVDCACHE.ea_e", "invdcache", "INVDCACHE <ea>(e)", "11101000100eeeeeee", "medium", "base",
   3, 0, 1, 1, 0,
-  "e", "target", "base.field_types.EA", "", "">;
-def BRForm_base_instructions_INVICACHE_ea_e : BedrockISAForm<
-  "base.instructions.INVICACHE.ea_e", "invicache", "INVICACHE <ea>(e)", "11101000101eeeeeee", "medium", "base",
+  "e", "target", "EA", "", "">;
+def BRForm_base_INVICACHE_ea_e : BedrockISAForm<
+  "base.INVICACHE.ea_e", "invicache", "INVICACHE <ea>(e)", "11101000101eeeeeee", "medium", "base",
   3, 0, 1, 1, 0,
-  "e", "target", "base.field_types.EA", "", "">;
-def BRForm_base_instructions_INVPAGE_ea_e : BedrockISAForm<
-  "base.instructions.INVPAGE.ea_e", "invpage", "INVPAGE <ea>(e)", "11101000110eeeeeee", "medium", "base",
+  "e", "target", "EA", "", "">;
+def BRForm_base_INVPAGE_ea_e : BedrockISAForm<
+  "base.INVPAGE.ea_e", "invpage", "INVPAGE <ea>(e)", "11101000110eeeeeee", "medium", "base",
   3, 0, 1, 1, 0,
-  "e", "page", "base.field_types.EA", "", "">;
-def BRForm_base_instructions_INVPAGE_rn_r : BedrockISAForm<
-  "base.instructions.INVPAGE.rn_r", "invpage", "INVPAGE Rn(r)", "11101101000110rrrr", "medium", "base",
+  "e", "page", "EA", "", "">;
+def BRForm_base_INVPAGE_rn_r : BedrockISAForm<
+  "base.INVPAGE.rn_r", "invpage", "INVPAGE Rn(r)", "11101101000110rrrr", "medium", "base",
   3, 0, 0, 0, 1,
-  "r", "page", "base.field_types.Rn", "", "">;
-def BRForm_base_instructions_INVTLB_plain : BedrockISAForm<
-  "base.instructions.INVTLB.plain", "invtlb", "INVTLB", "111011110000000101", "medium", "base",
+  "r", "page", "Rn", "", "">;
+def BRForm_base_INVTLB_plain : BedrockISAForm<
+  "base.INVTLB.plain", "invtlb", "INVTLB", "111011110000000101", "medium", "base",
   3, 0, 0, 0, 1,
   "", "", "", "", "">;
-def BRForm_base_instructions_Jcc_imm8s_i : BedrockISAForm<
-  "base.instructions.Jcc.imm8s_i", "jcc", "Jcc imm8s(i)", "11cccciiiiiiii", "short", "base",
+def BRForm_base_Jcc_imm8s_i : BedrockISAForm<
+  "base.Jcc.imm8s_i", "jcc", "Jcc imm8s(i)", "11cccciiiiiiii", "short", "base",
   2, 0, 0, 0, 1,
-  "c;i", "cc;target", "base.field_types.CC;base.field_types.IMM8S", "", "">;
-def BRForm_base_instructions_Jcc_imm16s : BedrockISAForm<
-  "base.instructions.Jcc.imm16s", "jcc", "Jcc <imm16s>", "11101110000010cccc", "medium", "base",
+  "c;i", "cc;target", "CC;IMM8S", "", "">;
+def BRForm_base_Jcc_imm16s : BedrockISAForm<
+  "base.Jcc.imm16s", "jcc", "Jcc <imm16s>", "11101110000010cccc", "medium", "base",
   3, 2, 0, 0, 1,
-  "c", "cc", "base.field_types.CC", "target", "base.payload_types.DISP16S">;
-def BRForm_base_instructions_Jcc_imm32s : BedrockISAForm<
-  "base.instructions.Jcc.imm32s", "jcc", "Jcc <imm32s>", "11101110000011cccc", "medium", "base",
+  "c", "cc", "CC", "target", "DISP16S">;
+def BRForm_base_Jcc_imm32s : BedrockISAForm<
+  "base.Jcc.imm32s", "jcc", "Jcc <imm32s>", "11101110000011cccc", "medium", "base",
   3, 4, 0, 0, 1,
-  "c", "cc", "base.field_types.CC", "target", "base.payload_types.DISP32S">;
-def BRForm_base_instructions_Jcc_l_q_z_ea_e : BedrockISAForm<
-  "base.instructions.Jcc.l_q_z_ea_e", "jcc", "Jcc.{L|Q}(z) <ea>(e)", "11110110001001zcccceeeeeee", "long", "base",
+  "c", "cc", "CC", "target", "DISP32S">;
+def BRForm_base_Jcc_l_q_z_ea_e : BedrockISAForm<
+  "base.Jcc.l_q_z_ea_e", "jcc", "Jcc.{L|Q}(z) <ea>(e)", "11110110001001zcccceeeeeee", "long", "base",
   4, 0, 1, 1, 0,
-  "z;c;e", "size;cc;target", "base.field_types.SIZE_LQ;base.field_types.CC;base.field_types.EA", "", "">;
-def BRForm_base_instructions_Jcc_l_q_z_rn_r : BedrockISAForm<
-  "base.instructions.Jcc.l_q_z_rn_r", "jcc", "Jcc.{L|Q}(z) Rn(r)", "11110110011000001zccccrrrr", "long", "base",
+  "z;c;e", "size;cc;target", "SIZE_LQ;CC;EA", "", "">;
+def BRForm_base_Jcc_l_q_z_rn_r : BedrockISAForm<
+  "base.Jcc.l_q_z_rn_r", "jcc", "Jcc.{L|Q}(z) Rn(r)", "11110110011000001zccccrrrr", "long", "base",
   4, 0, 0, 0, 1,
-  "z;c;r", "size;cc;target", "base.field_types.SIZE_LQ;base.field_types.CC;base.field_types.Rn", "", "">;
-def BRForm_base_instructions_JMP_imm8s_i : BedrockISAForm<
-  "base.instructions.JMP.imm8s_i", "jmp", "JMP imm8s(i)", "100100iiiiiiii", "short", "base",
+  "z;c;r", "size;cc;target", "SIZE_LQ;CC;Rn", "", "">;
+def BRForm_base_JMP_imm8s_i : BedrockISAForm<
+  "base.JMP.imm8s_i", "jmp", "JMP imm8s(i)", "100100iiiiiiii", "short", "base",
   2, 0, 0, 0, 1,
-  "i", "target", "base.field_types.IMM8S", "", "">;
-def BRForm_base_instructions_JMP_imm16s : BedrockISAForm<
-  "base.instructions.JMP.imm16s", "jmp", "JMP <imm16s>", "111011110000000110", "medium", "base",
+  "i", "target", "IMM8S", "", "">;
+def BRForm_base_JMP_imm16s : BedrockISAForm<
+  "base.JMP.imm16s", "jmp", "JMP <imm16s>", "111011110000000110", "medium", "base",
   3, 2, 0, 0, 1,
-  "", "", "", "target", "base.payload_types.DISP16S">;
-def BRForm_base_instructions_JMP_imm32s : BedrockISAForm<
-  "base.instructions.JMP.imm32s", "jmp", "JMP <imm32s>", "111011110000000111", "medium", "base",
+  "", "", "", "target", "DISP16S">;
+def BRForm_base_JMP_imm32s : BedrockISAForm<
+  "base.JMP.imm32s", "jmp", "JMP <imm32s>", "111011110000000111", "medium", "base",
   3, 4, 0, 0, 1,
-  "", "", "", "target", "base.payload_types.DISP32S">;
-def BRForm_base_instructions_JMP_l_q_z_ea_e : BedrockISAForm<
-  "base.instructions.JMP.l_q_z_ea_e", "jmp", "JMP.{L|Q}(z) <ea>(e)", "111001z1010eeeeeee", "medium", "base",
+  "", "", "", "target", "DISP32S">;
+def BRForm_base_JMP_l_q_z_ea_e : BedrockISAForm<
+  "base.JMP.l_q_z_ea_e", "jmp", "JMP.{L|Q}(z) <ea>(e)", "111001z1010eeeeeee", "medium", "base",
   3, 0, 1, 1, 0,
-  "z;e", "size;target", "base.field_types.SIZE_LQ;base.field_types.EA", "", "">;
-def BRForm_base_instructions_JMP_l_q_z_rn_r : BedrockISAForm<
-  "base.instructions.JMP.l_q_z_rn_r", "jmp", "JMP.{L|Q}(z) Rn(r)", "11101100001z10rrrr", "medium", "base",
+  "z;e", "size;target", "SIZE_LQ;EA", "", "">;
+def BRForm_base_JMP_l_q_z_rn_r : BedrockISAForm<
+  "base.JMP.l_q_z_rn_r", "jmp", "JMP.{L|Q}(z) Rn(r)", "11101100001z10rrrr", "medium", "base",
   3, 0, 0, 0, 1,
-  "z;r", "size;target", "base.field_types.SIZE_LQ;base.field_types.Rn", "", "">;
-def BRForm_base_instructions_LCALL_rn_r_ea_e : BedrockISAForm<
-  "base.instructions.LCALL.rn_r_ea_e", "lcall", "LCALL Rn(r), <ea>(e)", "111100111000010rrrreeeeeee", "long", "base",
+  "z;r", "size;target", "SIZE_LQ;Rn", "", "">;
+def BRForm_base_LCALL_rn_r_ea_e : BedrockISAForm<
+  "base.LCALL.rn_r_ea_e", "lcall", "LCALL Rn(r), <ea>(e)", "111100111000010rrrreeeeeee", "long", "base",
   4, 0, 1, 1, 0,
-  "r;e", "new_cs;target", "base.field_types.Rn;base.field_types.EA", "", "">;
-def BRForm_base_instructions_LCALL_rn_s_rn_d : BedrockISAForm<
-  "base.instructions.LCALL.rn_s_rn_d", "lcall", "LCALL Rn(s), Rn(d)", "1100000001ssssdddd", "medium", "base",
+  "r;e", "new_cs;target", "Rn;EA", "", "">;
+def BRForm_base_LCALL_rn_s_rn_d : BedrockISAForm<
+  "base.LCALL.rn_s_rn_d", "lcall", "LCALL Rn(s), Rn(d)", "1100000001ssssdddd", "medium", "base",
   3, 0, 0, 0, 1,
-  "s;d", "new_cs;target", "base.field_types.Rn;base.field_types.Rn", "", "">;
-def BRForm_base_instructions_LEA_b_w_l_q_z_ea_e_rn_d : BedrockISAForm<
-  "base.instructions.LEA.b_w_l_q_z_ea_e_rn_d", "lea", "LEA.{B|W|L|Q}(z) <ea>(e), Rn(d)", "00111zzddddeeeeeee", "medium", "base",
+  "s;d", "new_cs;target", "Rn;Rn", "", "">;
+def BRForm_base_LEA_b_w_l_q_z_ea_e_rn_d : BedrockISAForm<
+  "base.LEA.b_w_l_q_z_ea_e_rn_d", "lea", "LEA.{B|W|L|Q}(z) <ea>(e), Rn(d)", "00111zzddddeeeeeee", "medium", "base",
   3, 0, 1, 1, 0,
-  "z;d;e", "size;dst;src", "base.field_types.SIZE_BWLQ;base.field_types.Rn;base.field_types.EA", "", "">;
-def BRForm_base_instructions_LEA_b_w_l_q_z_rn_s_rn_d : BedrockISAForm<
-  "base.instructions.LEA.b_w_l_q_z_rn_s_rn_d", "lea", "LEA.{B|W|L|Q}(z) Rn(s), Rn(d)", "10011zz010ssssdddd", "medium", "base",
+  "z;d;e", "size;dst;src", "SIZE_BWLQ;Rn;EA", "", "">;
+def BRForm_base_LEA_b_w_l_q_z_rn_s_rn_d : BedrockISAForm<
+  "base.LEA.b_w_l_q_z_rn_s_rn_d", "lea", "LEA.{B|W|L|Q}(z) Rn(s), Rn(d)", "10011zz010ssssdddd", "medium", "base",
   3, 0, 0, 0, 1,
-  "z;s;d", "size;src;dst", "base.field_types.SIZE_BWLQ;base.field_types.Rn;base.field_types.Rn", "", "">;
-def BRForm_base_instructions_LJMP_rn_r_ea_e : BedrockISAForm<
-  "base.instructions.LJMP.rn_r_ea_e", "ljmp", "LJMP Rn(r), <ea>(e)", "111100111000011rrrreeeeeee", "long", "base",
+  "z;s;d", "size;src;dst", "SIZE_BWLQ;Rn;Rn", "", "">;
+def BRForm_base_LJMP_rn_r_ea_e : BedrockISAForm<
+  "base.LJMP.rn_r_ea_e", "ljmp", "LJMP Rn(r), <ea>(e)", "111100111000011rrrreeeeeee", "long", "base",
   4, 0, 1, 1, 0,
-  "r;e", "new_cs;target", "base.field_types.Rn;base.field_types.EA", "", "">;
-def BRForm_base_instructions_LJMP_rn_s_rn_d : BedrockISAForm<
-  "base.instructions.LJMP.rn_s_rn_d", "ljmp", "LJMP Rn(s), Rn(d)", "1100000010ssssdddd", "medium", "base",
+  "r;e", "new_cs;target", "Rn;EA", "", "">;
+def BRForm_base_LJMP_rn_s_rn_d : BedrockISAForm<
+  "base.LJMP.rn_s_rn_d", "ljmp", "LJMP Rn(s), Rn(d)", "1100000010ssssdddd", "medium", "base",
   3, 0, 0, 0, 1,
-  "s;d", "new_cs;target", "base.field_types.Rn;base.field_types.Rn", "", "">;
-def BRForm_base_instructions_LRET_plain : BedrockISAForm<
-  "base.instructions.LRET.plain", "lret", "LRET", "0000011", "extrashort", "base",
+  "s;d", "new_cs;target", "Rn;Rn", "", "">;
+def BRForm_base_LRET_plain : BedrockISAForm<
+  "base.LRET.plain", "lret", "LRET", "0000011", "extrashort", "base",
   1, 0, 0, 0, 1,
   "", "", "", "", "">;
-def BRForm_base_instructions_MAXS_b_w_l_q_z_ea_e_rn_d : BedrockISAForm<
-  "base.instructions.MAXS.b_w_l_q_z_ea_e_rn_d", "maxs", "MAXS.{B|W|L|Q}(z) <ea>(e), Rn(d)", "1111001001zz010ddddeeeeeee", "long", "base",
+def BRForm_base_MAXS_b_w_l_q_z_ea_e_rn_d : BedrockISAForm<
+  "base.MAXS.b_w_l_q_z_ea_e_rn_d", "maxs", "MAXS.{B|W|L|Q}(z) <ea>(e), Rn(d)", "1111001001zz010ddddeeeeeee", "long", "base",
   4, 0, 1, 1, 0,
-  "z;d;e", "size;dst;src", "base.field_types.SIZE_BWLQ;base.field_types.Rn;base.field_types.EA", "", "">;
-def BRForm_base_instructions_MAXS_b_w_l_q_z_rn_s_ea_e : BedrockISAForm<
-  "base.instructions.MAXS.b_w_l_q_z_rn_s_ea_e", "maxs", "MAXS.{B|W|L|Q}(z) Rn(s), <ea>(e)", "1111001101zz010sssseeeeeee", "long", "base",
+  "z;d;e", "size;dst;src", "SIZE_BWLQ;Rn;EA", "", "">;
+def BRForm_base_MAXS_b_w_l_q_z_rn_s_ea_e : BedrockISAForm<
+  "base.MAXS.b_w_l_q_z_rn_s_ea_e", "maxs", "MAXS.{B|W|L|Q}(z) Rn(s), <ea>(e)", "1111001101zz010sssseeeeeee", "long", "base",
   4, 0, 1, 1, 0,
-  "z;s;e", "size;src;dst", "base.field_types.SIZE_BWLQ;base.field_types.Rn;base.field_types.EA", "", "">;
-def BRForm_base_instructions_MAXS_b_w_l_q_z_rn_s_rn_d : BedrockISAForm<
-  "base.instructions.MAXS.b_w_l_q_z_rn_s_rn_d", "maxs", "MAXS.{B|W|L|Q}(z) Rn(s), Rn(d)", "10001zz010ssssdddd", "medium", "base",
+  "z;s;e", "size;src;dst", "SIZE_BWLQ;Rn;EA", "", "">;
+def BRForm_base_MAXS_b_w_l_q_z_rn_s_rn_d : BedrockISAForm<
+  "base.MAXS.b_w_l_q_z_rn_s_rn_d", "maxs", "MAXS.{B|W|L|Q}(z) Rn(s), Rn(d)", "10001zz010ssssdddd", "medium", "base",
   3, 0, 0, 0, 1,
-  "z;s;d", "size;src;dst", "base.field_types.SIZE_BWLQ;base.field_types.Rn;base.field_types.Rn", "", "">;
-def BRForm_base_instructions_MAXU_b_w_l_q_z_ea_e_rn_d : BedrockISAForm<
-  "base.instructions.MAXU.b_w_l_q_z_ea_e_rn_d", "maxu", "MAXU.{B|W|L|Q}(z) <ea>(e), Rn(d)", "1111001001zz011ddddeeeeeee", "long", "base",
+  "z;s;d", "size;src;dst", "SIZE_BWLQ;Rn;Rn", "", "">;
+def BRForm_base_MAXU_b_w_l_q_z_ea_e_rn_d : BedrockISAForm<
+  "base.MAXU.b_w_l_q_z_ea_e_rn_d", "maxu", "MAXU.{B|W|L|Q}(z) <ea>(e), Rn(d)", "1111001001zz011ddddeeeeeee", "long", "base",
   4, 0, 1, 1, 0,
-  "z;d;e", "size;dst;src", "base.field_types.SIZE_BWLQ;base.field_types.Rn;base.field_types.EA", "", "">;
-def BRForm_base_instructions_MAXU_b_w_l_q_z_rn_s_ea_e : BedrockISAForm<
-  "base.instructions.MAXU.b_w_l_q_z_rn_s_ea_e", "maxu", "MAXU.{B|W|L|Q}(z) Rn(s), <ea>(e)", "1111001101zz011sssseeeeeee", "long", "base",
+  "z;d;e", "size;dst;src", "SIZE_BWLQ;Rn;EA", "", "">;
+def BRForm_base_MAXU_b_w_l_q_z_rn_s_ea_e : BedrockISAForm<
+  "base.MAXU.b_w_l_q_z_rn_s_ea_e", "maxu", "MAXU.{B|W|L|Q}(z) Rn(s), <ea>(e)", "1111001101zz011sssseeeeeee", "long", "base",
   4, 0, 1, 1, 0,
-  "z;s;e", "size;src;dst", "base.field_types.SIZE_BWLQ;base.field_types.Rn;base.field_types.EA", "", "">;
-def BRForm_base_instructions_MAXU_b_w_l_q_z_rn_s_rn_d : BedrockISAForm<
-  "base.instructions.MAXU.b_w_l_q_z_rn_s_rn_d", "maxu", "MAXU.{B|W|L|Q}(z) Rn(s), Rn(d)", "10001zz011ssssdddd", "medium", "base",
+  "z;s;e", "size;src;dst", "SIZE_BWLQ;Rn;EA", "", "">;
+def BRForm_base_MAXU_b_w_l_q_z_rn_s_rn_d : BedrockISAForm<
+  "base.MAXU.b_w_l_q_z_rn_s_rn_d", "maxu", "MAXU.{B|W|L|Q}(z) Rn(s), Rn(d)", "10001zz011ssssdddd", "medium", "base",
   3, 0, 0, 0, 1,
-  "z;s;d", "size;src;dst", "base.field_types.SIZE_BWLQ;base.field_types.Rn;base.field_types.Rn", "", "">;
-def BRForm_base_instructions_MINS_b_w_l_q_z_ea_e_rn_d : BedrockISAForm<
-  "base.instructions.MINS.b_w_l_q_z_ea_e_rn_d", "mins", "MINS.{B|W|L|Q}(z) <ea>(e), Rn(d)", "1111001001zz100ddddeeeeeee", "long", "base",
+  "z;s;d", "size;src;dst", "SIZE_BWLQ;Rn;Rn", "", "">;
+def BRForm_base_MINS_b_w_l_q_z_ea_e_rn_d : BedrockISAForm<
+  "base.MINS.b_w_l_q_z_ea_e_rn_d", "mins", "MINS.{B|W|L|Q}(z) <ea>(e), Rn(d)", "1111001001zz100ddddeeeeeee", "long", "base",
   4, 0, 1, 1, 0,
-  "z;d;e", "size;dst;src", "base.field_types.SIZE_BWLQ;base.field_types.Rn;base.field_types.EA", "", "">;
-def BRForm_base_instructions_MINS_b_w_l_q_z_rn_s_ea_e : BedrockISAForm<
-  "base.instructions.MINS.b_w_l_q_z_rn_s_ea_e", "mins", "MINS.{B|W|L|Q}(z) Rn(s), <ea>(e)", "1111001101zz100sssseeeeeee", "long", "base",
+  "z;d;e", "size;dst;src", "SIZE_BWLQ;Rn;EA", "", "">;
+def BRForm_base_MINS_b_w_l_q_z_rn_s_ea_e : BedrockISAForm<
+  "base.MINS.b_w_l_q_z_rn_s_ea_e", "mins", "MINS.{B|W|L|Q}(z) Rn(s), <ea>(e)", "1111001101zz100sssseeeeeee", "long", "base",
   4, 0, 1, 1, 0,
-  "z;s;e", "size;src;dst", "base.field_types.SIZE_BWLQ;base.field_types.Rn;base.field_types.EA", "", "">;
-def BRForm_base_instructions_MINS_b_w_l_q_z_rn_s_rn_d : BedrockISAForm<
-  "base.instructions.MINS.b_w_l_q_z_rn_s_rn_d", "mins", "MINS.{B|W|L|Q}(z) Rn(s), Rn(d)", "10001zz100ssssdddd", "medium", "base",
+  "z;s;e", "size;src;dst", "SIZE_BWLQ;Rn;EA", "", "">;
+def BRForm_base_MINS_b_w_l_q_z_rn_s_rn_d : BedrockISAForm<
+  "base.MINS.b_w_l_q_z_rn_s_rn_d", "mins", "MINS.{B|W|L|Q}(z) Rn(s), Rn(d)", "10001zz100ssssdddd", "medium", "base",
   3, 0, 0, 0, 1,
-  "z;s;d", "size;src;dst", "base.field_types.SIZE_BWLQ;base.field_types.Rn;base.field_types.Rn", "", "">;
-def BRForm_base_instructions_MINU_b_w_l_q_z_ea_e_rn_d : BedrockISAForm<
-  "base.instructions.MINU.b_w_l_q_z_ea_e_rn_d", "minu", "MINU.{B|W|L|Q}(z) <ea>(e), Rn(d)", "1111001001zz101ddddeeeeeee", "long", "base",
+  "z;s;d", "size;src;dst", "SIZE_BWLQ;Rn;Rn", "", "">;
+def BRForm_base_MINU_b_w_l_q_z_ea_e_rn_d : BedrockISAForm<
+  "base.MINU.b_w_l_q_z_ea_e_rn_d", "minu", "MINU.{B|W|L|Q}(z) <ea>(e), Rn(d)", "1111001001zz101ddddeeeeeee", "long", "base",
   4, 0, 1, 1, 0,
-  "z;d;e", "size;dst;src", "base.field_types.SIZE_BWLQ;base.field_types.Rn;base.field_types.EA", "", "">;
-def BRForm_base_instructions_MINU_b_w_l_q_z_rn_s_ea_e : BedrockISAForm<
-  "base.instructions.MINU.b_w_l_q_z_rn_s_ea_e", "minu", "MINU.{B|W|L|Q}(z) Rn(s), <ea>(e)", "1111001101zz101sssseeeeeee", "long", "base",
+  "z;d;e", "size;dst;src", "SIZE_BWLQ;Rn;EA", "", "">;
+def BRForm_base_MINU_b_w_l_q_z_rn_s_ea_e : BedrockISAForm<
+  "base.MINU.b_w_l_q_z_rn_s_ea_e", "minu", "MINU.{B|W|L|Q}(z) Rn(s), <ea>(e)", "1111001101zz101sssseeeeeee", "long", "base",
   4, 0, 1, 1, 0,
-  "z;s;e", "size;src;dst", "base.field_types.SIZE_BWLQ;base.field_types.Rn;base.field_types.EA", "", "">;
-def BRForm_base_instructions_MINU_b_w_l_q_z_rn_s_rn_d : BedrockISAForm<
-  "base.instructions.MINU.b_w_l_q_z_rn_s_rn_d", "minu", "MINU.{B|W|L|Q}(z) Rn(s), Rn(d)", "10001zz101ssssdddd", "medium", "base",
+  "z;s;e", "size;src;dst", "SIZE_BWLQ;Rn;EA", "", "">;
+def BRForm_base_MINU_b_w_l_q_z_rn_s_rn_d : BedrockISAForm<
+  "base.MINU.b_w_l_q_z_rn_s_rn_d", "minu", "MINU.{B|W|L|Q}(z) Rn(s), Rn(d)", "10001zz101ssssdddd", "medium", "base",
   3, 0, 0, 0, 1,
-  "z;s;d", "size;src;dst", "base.field_types.SIZE_BWLQ;base.field_types.Rn;base.field_types.Rn", "", "">;
-def BRForm_base_instructions_MODS_b_w_l_q_z_ea_e_rn_d : BedrockISAForm<
-  "base.instructions.MODS.b_w_l_q_z_ea_e_rn_d", "mods", "MODS.{B|W|L|Q}(z) <ea>(e), Rn(d)", "1111001011zz011ddddeeeeeee", "long", "base",
+  "z;s;d", "size;src;dst", "SIZE_BWLQ;Rn;Rn", "", "">;
+def BRForm_base_MODS_b_w_l_q_z_ea_e_rn_d : BedrockISAForm<
+  "base.MODS.b_w_l_q_z_ea_e_rn_d", "mods", "MODS.{B|W|L|Q}(z) <ea>(e), Rn(d)", "1111001011zz011ddddeeeeeee", "long", "base",
   4, 0, 1, 1, 0,
-  "z;d;e", "size;dst;src", "base.field_types.SIZE_BWLQ;base.field_types.Rn;base.field_types.EA", "", "">;
-def BRForm_base_instructions_MODS_b_w_l_q_z_rn_s_rn_d : BedrockISAForm<
-  "base.instructions.MODS.b_w_l_q_z_rn_s_rn_d", "mods", "MODS.{B|W|L|Q}(z) Rn(s), Rn(d)", "10011zz011ssssdddd", "medium", "base",
+  "z;d;e", "size;dst;src", "SIZE_BWLQ;Rn;EA", "", "">;
+def BRForm_base_MODS_b_w_l_q_z_rn_s_rn_d : BedrockISAForm<
+  "base.MODS.b_w_l_q_z_rn_s_rn_d", "mods", "MODS.{B|W|L|Q}(z) Rn(s), Rn(d)", "10011zz011ssssdddd", "medium", "base",
   3, 0, 0, 0, 1,
-  "z;s;d", "size;src;dst", "base.field_types.SIZE_BWLQ;base.field_types.Rn;base.field_types.Rn", "", "">;
-def BRForm_base_instructions_MODU_b_w_l_q_z_ea_e_rn_d : BedrockISAForm<
-  "base.instructions.MODU.b_w_l_q_z_ea_e_rn_d", "modu", "MODU.{B|W|L|Q}(z) <ea>(e), Rn(d)", "1111001011zz100ddddeeeeeee", "long", "base",
+  "z;s;d", "size;src;dst", "SIZE_BWLQ;Rn;Rn", "", "">;
+def BRForm_base_MODU_b_w_l_q_z_ea_e_rn_d : BedrockISAForm<
+  "base.MODU.b_w_l_q_z_ea_e_rn_d", "modu", "MODU.{B|W|L|Q}(z) <ea>(e), Rn(d)", "1111001011zz100ddddeeeeeee", "long", "base",
   4, 0, 1, 1, 0,
-  "z;d;e", "size;dst;src", "base.field_types.SIZE_BWLQ;base.field_types.Rn;base.field_types.EA", "", "">;
-def BRForm_base_instructions_MODU_b_w_l_q_z_rn_s_rn_d : BedrockISAForm<
-  "base.instructions.MODU.b_w_l_q_z_rn_s_rn_d", "modu", "MODU.{B|W|L|Q}(z) Rn(s), Rn(d)", "10011zz100ssssdddd", "medium", "base",
+  "z;d;e", "size;dst;src", "SIZE_BWLQ;Rn;EA", "", "">;
+def BRForm_base_MODU_b_w_l_q_z_rn_s_rn_d : BedrockISAForm<
+  "base.MODU.b_w_l_q_z_rn_s_rn_d", "modu", "MODU.{B|W|L|Q}(z) Rn(s), Rn(d)", "10011zz100ssssdddd", "medium", "base",
   3, 0, 0, 0, 1,
-  "z;s;d", "size;src;dst", "base.field_types.SIZE_BWLQ;base.field_types.Rn;base.field_types.Rn", "", "">;
-def BRForm_base_instructions_MOV_q_rn_r_sp : BedrockISAForm<
-  "base.instructions.MOV.q_rn_r_sp", "mov", "MOV.Q Rn(r), SP", "101rrrr", "extrashort", "base",
+  "z;s;d", "size;src;dst", "SIZE_BWLQ;Rn;Rn", "", "">;
+def BRForm_base_MOV_q_rn_r_sp : BedrockISAForm<
+  "base.MOV.q_rn_r_sp", "mov", "MOV.Q Rn(r), SP", "101rrrr", "extrashort", "base",
   1, 0, 0, 0, 1,
-  "r", "src", "base.field_types.Rn", "", "">;
-def BRForm_base_instructions_MOV_q_sp_rn_r : BedrockISAForm<
-  "base.instructions.MOV.q_sp_rn_r", "mov", "MOV.Q SP, Rn(r)", "110rrrr", "extrashort", "base",
+  "r", "src", "Rn", "", "">;
+def BRForm_base_MOV_q_sp_rn_r : BedrockISAForm<
+  "base.MOV.q_sp_rn_r", "mov", "MOV.Q SP, Rn(r)", "110rrrr", "extrashort", "base",
   1, 0, 0, 0, 1,
-  "r", "dst", "base.field_types.Rn", "", "">;
-def BRForm_base_instructions_MOV_l_q_z_rn_s_rn_d : BedrockISAForm<
-  "base.instructions.MOV.l_q_z_rn_s_rn_d", "mov", "MOV.{L|Q}(z) Rn(s), Rn(d)", "00000zssssdddd", "short", "base",
+  "r", "dst", "Rn", "", "">;
+def BRForm_base_MOV_l_q_z_rn_s_rn_d : BedrockISAForm<
+  "base.MOV.l_q_z_rn_s_rn_d", "mov", "MOV.{L|Q}(z) Rn(s), Rn(d)", "00000zssssdddd", "short", "base",
   2, 0, 0, 0, 1,
-  "z;s;d", "size;src;dst", "base.field_types.SIZE_LQ;base.field_types.Rn;base.field_types.Rn", "", "">;
-def BRForm_base_instructions_MOV_b_rn_s_rn_d : BedrockISAForm<
-  "base.instructions.MOV.b_rn_s_rn_d", "mov", "MOV.B Rn(s), Rn(d)", "100110ssssdddd", "short", "base",
+  "z;s;d", "size;src;dst", "SIZE_LQ;Rn;Rn", "", "">;
+def BRForm_base_MOV_b_rn_s_rn_d : BedrockISAForm<
+  "base.MOV.b_rn_s_rn_d", "mov", "MOV.B Rn(s), Rn(d)", "100110ssssdddd", "short", "base",
   2, 0, 0, 0, 1,
-  "s;d", "src;dst", "base.field_types.Rn;base.field_types.Rn", "", "">;
-def BRForm_base_instructions_MOV_w_rn_s_rn_d : BedrockISAForm<
-  "base.instructions.MOV.w_rn_s_rn_d", "mov", "MOV.W Rn(s), Rn(d)", "100111ssssdddd", "short", "base",
+  "s;d", "src;dst", "Rn;Rn", "", "">;
+def BRForm_base_MOV_w_rn_s_rn_d : BedrockISAForm<
+  "base.MOV.w_rn_s_rn_d", "mov", "MOV.W Rn(s), Rn(d)", "100111ssssdddd", "short", "base",
   2, 0, 0, 0, 1,
-  "s;d", "src;dst", "base.field_types.Rn;base.field_types.Rn", "", "">;
-def BRForm_base_instructions_MOV_b_w_l_q_z_rn_s_ea_e : BedrockISAForm<
-  "base.instructions.MOV.b_w_l_q_z_rn_s_ea_e", "mov", "MOV.{B|W|L|Q}(z) Rn(s), <ea>(e)", "00000zzsssseeeeeee", "medium", "base",
+  "s;d", "src;dst", "Rn;Rn", "", "">;
+def BRForm_base_MOV_b_w_l_q_z_rn_s_ea_e : BedrockISAForm<
+  "base.MOV.b_w_l_q_z_rn_s_ea_e", "mov", "MOV.{B|W|L|Q}(z) Rn(s), <ea>(e)", "00000zzsssseeeeeee", "medium", "base",
   3, 0, 1, 1, 0,
-  "z;s;e", "size;src;dst", "base.field_types.SIZE_BWLQ;base.field_types.Rn;base.field_types.EA", "", "">;
-def BRForm_base_instructions_MOV_b_w_l_q_z_ea_e_rn_d : BedrockISAForm<
-  "base.instructions.MOV.b_w_l_q_z_ea_e_rn_d", "mov", "MOV.{B|W|L|Q}(z) <ea>(e), Rn(d)", "01000zzddddeeeeeee", "medium", "base",
+  "z;s;e", "size;src;dst", "SIZE_BWLQ;Rn;EA", "", "">;
+def BRForm_base_MOV_b_w_l_q_z_ea_e_rn_d : BedrockISAForm<
+  "base.MOV.b_w_l_q_z_ea_e_rn_d", "mov", "MOV.{B|W|L|Q}(z) <ea>(e), Rn(d)", "01000zzddddeeeeeee", "medium", "base",
   3, 0, 1, 1, 0,
-  "z;d;e", "size;dst;src", "base.field_types.SIZE_BWLQ;base.field_types.Rn;base.field_types.EA", "", "">;
-def BRForm_base_instructions_MOV_b_w_l_q_z_ea_s_ea_d : BedrockISAForm<
-  "base.instructions.MOV.b_w_l_q_z_ea_s_ea_d", "mov", "MOV.{B|W|L|Q}(z) <ea>(s), <ea>(d)", "1111000100zzsssssssddddddd", "long", "base",
+  "z;d;e", "size;dst;src", "SIZE_BWLQ;Rn;EA", "", "">;
+def BRForm_base_MOV_b_w_l_q_z_ea_s_ea_d : BedrockISAForm<
+  "base.MOV.b_w_l_q_z_ea_s_ea_d", "mov", "MOV.{B|W|L|Q}(z) <ea>(s), <ea>(d)", "1111000100zzsssssssddddddd", "long", "base",
   4, 0, 1, 1, 0,
-  "z;s;d", "size;src;dst", "base.field_types.SIZE_BWLQ;base.field_types.EA;base.field_types.EA", "", "">;
-def BRForm_base_instructions_MOVcc_b_w_l_q_z_rn_s_ea_e : BedrockISAForm<
-  "base.instructions.MOVcc.b_w_l_q_z_rn_s_ea_e", "movcc", "MOVcc.{B|W|L|Q}(z) Rn(s), <ea>(e)", "11111100010001zz011ccccsssseeeeeee", "extralong", "base",
+  "z;s;d", "size;src;dst", "SIZE_BWLQ;EA;EA", "", "">;
+def BRForm_base_MOVcc_b_w_l_q_z_rn_s_ea_e : BedrockISAForm<
+  "base.MOVcc.b_w_l_q_z_rn_s_ea_e", "movcc", "MOVcc.{B|W|L|Q}(z) Rn(s), <ea>(e)", "11111100010001zz011ccccsssseeeeeee", "extralong", "base",
   5, 0, 1, 1, 0,
-  "z;c;s;e", "size;cc;src;dst", "base.field_types.SIZE_BWLQ;base.field_types.CC;base.field_types.Rn;base.field_types.EA", "", "">;
-def BRForm_base_instructions_MOVcc_b_w_l_q_z_ea_e_rn_d : BedrockISAForm<
-  "base.instructions.MOVcc.b_w_l_q_z_ea_e_rn_d", "movcc", "MOVcc.{B|W|L|Q}(z) <ea>(e), Rn(d)", "11111100010001zz010ccccddddeeeeeee", "extralong", "base",
+  "z;c;s;e", "size;cc;src;dst", "SIZE_BWLQ;CC;Rn;EA", "", "">;
+def BRForm_base_MOVcc_b_w_l_q_z_ea_e_rn_d : BedrockISAForm<
+  "base.MOVcc.b_w_l_q_z_ea_e_rn_d", "movcc", "MOVcc.{B|W|L|Q}(z) <ea>(e), Rn(d)", "11111100010001zz010ccccddddeeeeeee", "extralong", "base",
   5, 0, 1, 1, 0,
-  "z;c;d;e", "size;cc;dst;src", "base.field_types.SIZE_BWLQ;base.field_types.CC;base.field_types.Rn;base.field_types.EA", "", "">;
-def BRForm_base_instructions_MOVcc_b_w_l_q_z_rn_s_rn_d : BedrockISAForm<
-  "base.instructions.MOVcc.b_w_l_q_z_rn_s_rn_d", "movcc", "MOVcc.{B|W|L|Q}(z) Rn(s), Rn(d)", "111101000101zzccccssssdddd", "long", "base",
+  "z;c;d;e", "size;cc;dst;src", "SIZE_BWLQ;CC;Rn;EA", "", "">;
+def BRForm_base_MOVcc_b_w_l_q_z_rn_s_rn_d : BedrockISAForm<
+  "base.MOVcc.b_w_l_q_z_rn_s_rn_d", "movcc", "MOVcc.{B|W|L|Q}(z) Rn(s), Rn(d)", "111101000101zzccccssssdddd", "long", "base",
   4, 0, 0, 0, 1,
-  "z;c;s;d", "size;cc;src;dst", "base.field_types.SIZE_BWLQ;base.field_types.CC;base.field_types.Rn;base.field_types.Rn", "", "">;
-def BRForm_base_instructions_MOVCU_b_w_l_q_z_ea_s_ea_d : BedrockISAForm<
-  "base.instructions.MOVCU.b_w_l_q_z_ea_s_ea_d", "movcu", "MOVCU.{B|W|L|Q}(z) <ea>(s), <ea>(d)", "1111000101zzsssssssddddddd", "long", "base",
+  "z;c;s;d", "size;cc;src;dst", "SIZE_BWLQ;CC;Rn;Rn", "", "">;
+def BRForm_base_MOVCU_b_w_l_q_z_ea_s_ea_d : BedrockISAForm<
+  "base.MOVCU.b_w_l_q_z_ea_s_ea_d", "movcu", "MOVCU.{B|W|L|Q}(z) <ea>(s), <ea>(d)", "1111000101zzsssssssddddddd", "long", "base",
   4, 0, 1, 1, 0,
-  "z;s;d", "size;src;dst", "base.field_types.SIZE_BWLQ;base.field_types.EA;base.field_types.EA", "", "">;
-def BRForm_base_instructions_MOVCU_b_w_l_q_z_rn_s_rn_d : BedrockISAForm<
-  "base.instructions.MOVCU.b_w_l_q_z_rn_s_rn_d", "movcu", "MOVCU.{B|W|L|Q}(z) Rn(s), Rn(d)", "10010zz000ssssdddd", "medium", "base",
+  "z;s;d", "size;src;dst", "SIZE_BWLQ;EA;EA", "", "">;
+def BRForm_base_MOVCU_b_w_l_q_z_rn_s_rn_d : BedrockISAForm<
+  "base.MOVCU.b_w_l_q_z_rn_s_rn_d", "movcu", "MOVCU.{B|W|L|Q}(z) Rn(s), Rn(d)", "10010zz000ssssdddd", "medium", "base",
   3, 0, 0, 0, 1,
-  "z;s;d", "size;src;dst", "base.field_types.SIZE_BWLQ;base.field_types.Rn;base.field_types.Rn", "", "">;
-def BRForm_base_instructions_MOVCU_b_w_l_q_z_rn_s_ea_d : BedrockISAForm<
-  "base.instructions.MOVCU.b_w_l_q_z_rn_s_ea_d", "movcu", "MOVCU.{B|W|L|Q}(z) Rn(s), <ea>(d)", "1111001110zz000ssssddddddd", "long", "base",
+  "z;s;d", "size;src;dst", "SIZE_BWLQ;Rn;Rn", "", "">;
+def BRForm_base_MOVCU_b_w_l_q_z_rn_s_ea_d : BedrockISAForm<
+  "base.MOVCU.b_w_l_q_z_rn_s_ea_d", "movcu", "MOVCU.{B|W|L|Q}(z) Rn(s), <ea>(d)", "1111001110zz000ssssddddddd", "long", "base",
   4, 0, 1, 1, 0,
-  "z;s;d", "size;src;dst", "base.field_types.SIZE_BWLQ;base.field_types.Rn;base.field_types.EA", "", "">;
-def BRForm_base_instructions_MOVCU_b_w_l_q_z_ea_s_rn_d : BedrockISAForm<
-  "base.instructions.MOVCU.b_w_l_q_z_ea_s_rn_d", "movcu", "MOVCU.{B|W|L|Q}(z) <ea>(s), Rn(d)", "1111001010zz000ddddsssssss", "long", "base",
+  "z;s;d", "size;src;dst", "SIZE_BWLQ;Rn;EA", "", "">;
+def BRForm_base_MOVCU_b_w_l_q_z_ea_s_rn_d : BedrockISAForm<
+  "base.MOVCU.b_w_l_q_z_ea_s_rn_d", "movcu", "MOVCU.{B|W|L|Q}(z) <ea>(s), Rn(d)", "1111001010zz000ddddsssssss", "long", "base",
   4, 0, 1, 1, 0,
-  "z;d;s", "size;dst;src", "base.field_types.SIZE_BWLQ;base.field_types.Rn;base.field_types.EA", "", "">;
-def BRForm_base_instructions_MOVNT_b_w_l_q_z_rn_s_ea_e : BedrockISAForm<
-  "base.instructions.MOVNT.b_w_l_q_z_rn_s_ea_e", "movnt", "MOVNT.{B|W|L|Q}(z) Rn(s), <ea>(e)", "1111001110zz100sssseeeeeee", "long", "base",
+  "z;d;s", "size;dst;src", "SIZE_BWLQ;Rn;EA", "", "">;
+def BRForm_base_MOVNT_b_w_l_q_z_rn_s_ea_e : BedrockISAForm<
+  "base.MOVNT.b_w_l_q_z_rn_s_ea_e", "movnt", "MOVNT.{B|W|L|Q}(z) Rn(s), <ea>(e)", "1111001110zz100sssseeeeeee", "long", "base",
   4, 0, 1, 1, 0,
-  "z;s;e", "size;src;dst", "base.field_types.SIZE_BWLQ;base.field_types.Rn;base.field_types.EA", "", "">;
-def BRForm_base_instructions_MOVUC_b_w_l_q_z_ea_s_ea_d : BedrockISAForm<
-  "base.instructions.MOVUC.b_w_l_q_z_ea_s_ea_d", "movuc", "MOVUC.{B|W|L|Q}(z) <ea>(s), <ea>(d)", "1111000110zzsssssssddddddd", "long", "base",
+  "z;s;e", "size;src;dst", "SIZE_BWLQ;Rn;EA", "", "">;
+def BRForm_base_MOVUC_b_w_l_q_z_ea_s_ea_d : BedrockISAForm<
+  "base.MOVUC.b_w_l_q_z_ea_s_ea_d", "movuc", "MOVUC.{B|W|L|Q}(z) <ea>(s), <ea>(d)", "1111000110zzsssssssddddddd", "long", "base",
   4, 0, 1, 1, 0,
-  "z;s;d", "size;src;dst", "base.field_types.SIZE_BWLQ;base.field_types.EA;base.field_types.EA", "", "">;
-def BRForm_base_instructions_MOVUC_b_w_l_q_z_rn_s_rn_d : BedrockISAForm<
-  "base.instructions.MOVUC.b_w_l_q_z_rn_s_rn_d", "movuc", "MOVUC.{B|W|L|Q}(z) Rn(s), Rn(d)", "10010zz001ssssdddd", "medium", "base",
+  "z;s;d", "size;src;dst", "SIZE_BWLQ;EA;EA", "", "">;
+def BRForm_base_MOVUC_b_w_l_q_z_rn_s_rn_d : BedrockISAForm<
+  "base.MOVUC.b_w_l_q_z_rn_s_rn_d", "movuc", "MOVUC.{B|W|L|Q}(z) Rn(s), Rn(d)", "10010zz001ssssdddd", "medium", "base",
   3, 0, 0, 0, 1,
-  "z;s;d", "size;src;dst", "base.field_types.SIZE_BWLQ;base.field_types.Rn;base.field_types.Rn", "", "">;
-def BRForm_base_instructions_MOVUC_b_w_l_q_z_rn_s_ea_d : BedrockISAForm<
-  "base.instructions.MOVUC.b_w_l_q_z_rn_s_ea_d", "movuc", "MOVUC.{B|W|L|Q}(z) Rn(s), <ea>(d)", "1111001110zz001ssssddddddd", "long", "base",
+  "z;s;d", "size;src;dst", "SIZE_BWLQ;Rn;Rn", "", "">;
+def BRForm_base_MOVUC_b_w_l_q_z_rn_s_ea_d : BedrockISAForm<
+  "base.MOVUC.b_w_l_q_z_rn_s_ea_d", "movuc", "MOVUC.{B|W|L|Q}(z) Rn(s), <ea>(d)", "1111001110zz001ssssddddddd", "long", "base",
   4, 0, 1, 1, 0,
-  "z;s;d", "size;src;dst", "base.field_types.SIZE_BWLQ;base.field_types.Rn;base.field_types.EA", "", "">;
-def BRForm_base_instructions_MOVUC_b_w_l_q_z_ea_s_rn_d : BedrockISAForm<
-  "base.instructions.MOVUC.b_w_l_q_z_ea_s_rn_d", "movuc", "MOVUC.{B|W|L|Q}(z) <ea>(s), Rn(d)", "1111001010zz001ddddsssssss", "long", "base",
+  "z;s;d", "size;src;dst", "SIZE_BWLQ;Rn;EA", "", "">;
+def BRForm_base_MOVUC_b_w_l_q_z_ea_s_rn_d : BedrockISAForm<
+  "base.MOVUC.b_w_l_q_z_ea_s_rn_d", "movuc", "MOVUC.{B|W|L|Q}(z) <ea>(s), Rn(d)", "1111001010zz001ddddsssssss", "long", "base",
   4, 0, 1, 1, 0,
-  "z;d;s", "size;dst;src", "base.field_types.SIZE_BWLQ;base.field_types.Rn;base.field_types.EA", "", "">;
-def BRForm_base_instructions_MOVUU_b_w_l_q_z_ea_s_ea_d : BedrockISAForm<
-  "base.instructions.MOVUU.b_w_l_q_z_ea_s_ea_d", "movuu", "MOVUU.{B|W|L|Q}(z) <ea>(s), <ea>(d)", "1111000111zzsssssssddddddd", "long", "base",
+  "z;d;s", "size;dst;src", "SIZE_BWLQ;Rn;EA", "", "">;
+def BRForm_base_MOVUU_b_w_l_q_z_ea_s_ea_d : BedrockISAForm<
+  "base.MOVUU.b_w_l_q_z_ea_s_ea_d", "movuu", "MOVUU.{B|W|L|Q}(z) <ea>(s), <ea>(d)", "1111000111zzsssssssddddddd", "long", "base",
   4, 0, 1, 1, 0,
-  "z;s;d", "size;src;dst", "base.field_types.SIZE_BWLQ;base.field_types.EA;base.field_types.EA", "", "">;
-def BRForm_base_instructions_MUL_b_w_l_q_z_ea_e_rn_d : BedrockISAForm<
-  "base.instructions.MUL.b_w_l_q_z_ea_e_rn_d", "mul", "MUL.{B|W|L|Q}(z) <ea>(e), Rn(d)", "1111001011zz101ddddeeeeeee", "long", "base",
+  "z;s;d", "size;src;dst", "SIZE_BWLQ;EA;EA", "", "">;
+def BRForm_base_MUL_b_w_l_q_z_ea_e_rn_d : BedrockISAForm<
+  "base.MUL.b_w_l_q_z_ea_e_rn_d", "mul", "MUL.{B|W|L|Q}(z) <ea>(e), Rn(d)", "1111001011zz101ddddeeeeeee", "long", "base",
   4, 0, 1, 1, 0,
-  "z;d;e", "size;dst;src", "base.field_types.SIZE_BWLQ;base.field_types.Rn;base.field_types.EA", "", "">;
-def BRForm_base_instructions_MUL_b_w_l_q_z_rn_s_rn_d : BedrockISAForm<
-  "base.instructions.MUL.b_w_l_q_z_rn_s_rn_d", "mul", "MUL.{B|W|L|Q}(z) Rn(s), Rn(d)", "10011zz101ssssdddd", "medium", "base",
+  "z;d;e", "size;dst;src", "SIZE_BWLQ;Rn;EA", "", "">;
+def BRForm_base_MUL_b_w_l_q_z_rn_s_rn_d : BedrockISAForm<
+  "base.MUL.b_w_l_q_z_rn_s_rn_d", "mul", "MUL.{B|W|L|Q}(z) Rn(s), Rn(d)", "10011zz101ssssdddd", "medium", "base",
   3, 0, 0, 0, 1,
-  "z;s;d", "size;src;dst", "base.field_types.SIZE_BWLQ;base.field_types.Rn;base.field_types.Rn", "", "">;
-def BRForm_base_instructions_MULHS_q_rn_s_rn_d : BedrockISAForm<
-  "base.instructions.MULHS.q_rn_s_rn_d", "mulhs", "MULHS.Q Rn(s), Rn(d)", "1100011011ssssdddd", "medium", "base",
+  "z;s;d", "size;src;dst", "SIZE_BWLQ;Rn;Rn", "", "">;
+def BRForm_base_MULHS_q_rn_s_rn_d : BedrockISAForm<
+  "base.MULHS.q_rn_s_rn_d", "mulhs", "MULHS.Q Rn(s), Rn(d)", "1100011011ssssdddd", "medium", "base",
   3, 0, 0, 0, 1,
-  "s;d", "src;dst", "base.field_types.Rn;base.field_types.Rn", "", "">;
-def BRForm_base_instructions_MULHSU_q_rn_s_rn_d : BedrockISAForm<
-  "base.instructions.MULHSU.q_rn_s_rn_d", "mulhsu", "MULHSU.Q Rn(s), Rn(d)", "1100011100ssssdddd", "medium", "base",
+  "s;d", "src;dst", "Rn;Rn", "", "">;
+def BRForm_base_MULHSU_q_rn_s_rn_d : BedrockISAForm<
+  "base.MULHSU.q_rn_s_rn_d", "mulhsu", "MULHSU.Q Rn(s), Rn(d)", "1100011100ssssdddd", "medium", "base",
   3, 0, 0, 0, 1,
-  "s;d", "src;dst", "base.field_types.Rn;base.field_types.Rn", "", "">;
-def BRForm_base_instructions_MULHU_q_rn_s_rn_d : BedrockISAForm<
-  "base.instructions.MULHU.q_rn_s_rn_d", "mulhu", "MULHU.Q Rn(s), Rn(d)", "1100011101ssssdddd", "medium", "base",
+  "s;d", "src;dst", "Rn;Rn", "", "">;
+def BRForm_base_MULHU_q_rn_s_rn_d : BedrockISAForm<
+  "base.MULHU.q_rn_s_rn_d", "mulhu", "MULHU.Q Rn(s), Rn(d)", "1100011101ssssdddd", "medium", "base",
   3, 0, 0, 0, 1,
-  "s;d", "src;dst", "base.field_types.Rn;base.field_types.Rn", "", "">;
-def BRForm_base_instructions_NEG_l_q_z_rn_r : BedrockISAForm<
-  "base.instructions.NEG.l_q_z_rn_r", "neg", "NEG.{L|Q}(z) Rn(r)", "10100z0010rrrr", "short", "base",
+  "s;d", "src;dst", "Rn;Rn", "", "">;
+def BRForm_base_NEG_l_q_z_rn_r : BedrockISAForm<
+  "base.NEG.l_q_z_rn_r", "neg", "NEG.{L|Q}(z) Rn(r)", "10100z0010rrrr", "short", "base",
   2, 0, 0, 0, 1,
-  "z;r", "size;dst", "base.field_types.SIZE_LQ;base.field_types.Rn", "", "">;
-def BRForm_base_instructions_NEG_b_w_l_q_z_ea_e : BedrockISAForm<
-  "base.instructions.NEG.b_w_l_q_z_ea_e", "neg", "NEG.{B|W|L|Q}(z) <ea>(e)", "11100zz1011eeeeeee", "medium", "base",
+  "z;r", "size;dst", "SIZE_LQ;Rn", "", "">;
+def BRForm_base_NEG_b_w_l_q_z_ea_e : BedrockISAForm<
+  "base.NEG.b_w_l_q_z_ea_e", "neg", "NEG.{B|W|L|Q}(z) <ea>(e)", "11100zz1011eeeeeee", "medium", "base",
   3, 0, 1, 1, 0,
-  "z;e", "size;dst", "base.field_types.SIZE_BWLQ;base.field_types.EA", "", "">;
-def BRForm_base_instructions_NOP_plain : BedrockISAForm<
-  "base.instructions.NOP.plain", "nop", "NOP", "0000001", "extrashort", "base",
+  "z;e", "size;dst", "SIZE_BWLQ;EA", "", "">;
+def BRForm_base_NOP_plain : BedrockISAForm<
+  "base.NOP.plain", "nop", "NOP", "0000001", "extrashort", "base",
   1, 0, 0, 0, 1,
   "", "", "", "", "">;
-def BRForm_base_instructions_NOT_l_q_z_rn_r : BedrockISAForm<
-  "base.instructions.NOT.l_q_z_rn_r", "not", "NOT.{L|Q}(z) Rn(r)", "10100z0101rrrr", "short", "base",
+def BRForm_base_NOT_l_q_z_rn_r : BedrockISAForm<
+  "base.NOT.l_q_z_rn_r", "not", "NOT.{L|Q}(z) Rn(r)", "10100z0101rrrr", "short", "base",
   2, 0, 0, 0, 1,
-  "z;r", "size;dst", "base.field_types.SIZE_LQ;base.field_types.Rn", "", "">;
-def BRForm_base_instructions_NOT_b_w_l_q_z_ea_e : BedrockISAForm<
-  "base.instructions.NOT.b_w_l_q_z_ea_e", "not", "NOT.{B|W|L|Q}(z) <ea>(e)", "11100zz1100eeeeeee", "medium", "base",
+  "z;r", "size;dst", "SIZE_LQ;Rn", "", "">;
+def BRForm_base_NOT_b_w_l_q_z_ea_e : BedrockISAForm<
+  "base.NOT.b_w_l_q_z_ea_e", "not", "NOT.{B|W|L|Q}(z) <ea>(e)", "11100zz1100eeeeeee", "medium", "base",
   3, 0, 1, 1, 0,
-  "z;e", "size;dst", "base.field_types.SIZE_BWLQ;base.field_types.EA", "", "">;
-def BRForm_base_instructions_OR_l_q_z_rn_s_rn_d : BedrockISAForm<
-  "base.instructions.OR.l_q_z_rn_s_rn_d", "or", "OR.{L|Q}(z) Rn(s), Rn(d)", "00101zssssdddd", "short", "base",
+  "z;e", "size;dst", "SIZE_BWLQ;EA", "", "">;
+def BRForm_base_OR_l_q_z_rn_s_rn_d : BedrockISAForm<
+  "base.OR.l_q_z_rn_s_rn_d", "or", "OR.{L|Q}(z) Rn(s), Rn(d)", "00101zssssdddd", "short", "base",
   2, 0, 0, 0, 1,
-  "z;s;d", "size;src;dst", "base.field_types.SIZE_LQ;base.field_types.Rn;base.field_types.Rn", "", "">;
-def BRForm_base_instructions_OR_b_w_l_q_z_rn_s_ea_e : BedrockISAForm<
-  "base.instructions.OR.b_w_l_q_z_rn_s_ea_e", "or", "OR.{B|W|L|Q}(z) Rn(s), <ea>(e)", "00101zzsssseeeeeee", "medium", "base",
+  "z;s;d", "size;src;dst", "SIZE_LQ;Rn;Rn", "", "">;
+def BRForm_base_OR_b_w_l_q_z_rn_s_ea_e : BedrockISAForm<
+  "base.OR.b_w_l_q_z_rn_s_ea_e", "or", "OR.{B|W|L|Q}(z) Rn(s), <ea>(e)", "00101zzsssseeeeeee", "medium", "base",
   3, 0, 1, 1, 0,
-  "z;s;e", "size;src;dst", "base.field_types.SIZE_BWLQ;base.field_types.Rn;base.field_types.EA", "", "">;
-def BRForm_base_instructions_OR_b_w_l_q_z_ea_e_rn_d : BedrockISAForm<
-  "base.instructions.OR.b_w_l_q_z_ea_e_rn_d", "or", "OR.{B|W|L|Q}(z) <ea>(e), Rn(d)", "01101zzddddeeeeeee", "medium", "base",
+  "z;s;e", "size;src;dst", "SIZE_BWLQ;Rn;EA", "", "">;
+def BRForm_base_OR_b_w_l_q_z_ea_e_rn_d : BedrockISAForm<
+  "base.OR.b_w_l_q_z_ea_e_rn_d", "or", "OR.{B|W|L|Q}(z) <ea>(e), Rn(d)", "01101zzddddeeeeeee", "medium", "base",
   3, 0, 1, 1, 0,
-  "z;d;e", "size;dst;src", "base.field_types.SIZE_BWLQ;base.field_types.Rn;base.field_types.EA", "", "">;
-def BRForm_base_instructions_OR_b_w_l_q_z_imm8s_ea_e : BedrockISAForm<
-  "base.instructions.OR.b_w_l_q_z_imm8s_ea_e", "or", "OR.{B|W|L|Q}(z) <imm8s>, <ea>(e)", "11100zz1101eeeeeee", "medium", "base",
+  "z;d;e", "size;dst;src", "SIZE_BWLQ;Rn;EA", "", "">;
+def BRForm_base_OR_b_w_l_q_z_imm8s_ea_e : BedrockISAForm<
+  "base.OR.b_w_l_q_z_imm8s_ea_e", "or", "OR.{B|W|L|Q}(z) <imm8s>, <ea>(e)", "11100zz1101eeeeeee", "medium", "base",
   3, 1, 1, 1, 0,
-  "z;e", "size;dst", "base.field_types.SIZE_BWLQ;base.field_types.EA", "src", "base.payload_types.IMM8S">;
-def BRForm_base_instructions_OR_w_l_q_z_imm16s_ea_e : BedrockISAForm<
-  "base.instructions.OR.w_l_q_z_imm16s_ea_e", "or", "OR.{W|L|Q}(z) <imm16s>, <ea>(e)", "11100zz1110eeeeeee", "medium", "base",
+  "z;e", "size;dst", "SIZE_BWLQ;EA", "src", "IMM8S">;
+def BRForm_base_OR_w_l_q_z_imm16s_ea_e : BedrockISAForm<
+  "base.OR.w_l_q_z_imm16s_ea_e", "or", "OR.{W|L|Q}(z) <imm16s>, <ea>(e)", "11100zz1110eeeeeee", "medium", "base",
   3, 2, 1, 1, 0,
-  "z;e", "size;dst", "base.field_types.SIZE_WLQ;base.field_types.EA", "src", "base.payload_types.IMM16S">;
-def BRForm_base_instructions_OR_l_q_z_imm32s_ea_e : BedrockISAForm<
-  "base.instructions.OR.l_q_z_imm32s_ea_e", "or", "OR.{L|Q}(z) <imm32s>, <ea>(e)", "111001z1111eeeeeee", "medium", "base",
+  "z;e", "size;dst", "SIZE_WLQ;EA", "src", "IMM16S">;
+def BRForm_base_OR_l_q_z_imm32s_ea_e : BedrockISAForm<
+  "base.OR.l_q_z_imm32s_ea_e", "or", "OR.{L|Q}(z) <imm32s>, <ea>(e)", "111001z1111eeeeeee", "medium", "base",
   3, 4, 1, 1, 0,
-  "z;e", "size;dst", "base.field_types.SIZE_LQ;base.field_types.EA", "src", "base.payload_types.IMM32S">;
-def BRForm_base_instructions_OR_q_imm64_ea_e : BedrockISAForm<
-  "base.instructions.OR.q_imm64_ea_e", "or", "OR.Q <imm64>, <ea>(e)", "11101000111eeeeeee", "medium", "base",
+  "z;e", "size;dst", "SIZE_LQ;EA", "src", "IMM32S">;
+def BRForm_base_OR_q_imm64_ea_e : BedrockISAForm<
+  "base.OR.q_imm64_ea_e", "or", "OR.Q <imm64>, <ea>(e)", "11101000111eeeeeee", "medium", "base",
   3, 8, 1, 1, 0,
-  "e", "dst", "base.field_types.EA", "src", "base.payload_types.IMM64">;
-def BRForm_base_instructions_PARITY_b_w_l_q_z_ea_e_rn_d : BedrockISAForm<
-  "base.instructions.PARITY.b_w_l_q_z_ea_e_rn_d", "parity", "PARITY.{B|W|L|Q}(z) <ea>(e), Rn(d)", "1111001011zz110ddddeeeeeee", "long", "base",
+  "e", "dst", "EA", "src", "IMM64">;
+def BRForm_base_PARITY_b_w_l_q_z_ea_e_rn_d : BedrockISAForm<
+  "base.PARITY.b_w_l_q_z_ea_e_rn_d", "parity", "PARITY.{B|W|L|Q}(z) <ea>(e), Rn(d)", "1111001011zz110ddddeeeeeee", "long", "base",
   4, 0, 1, 1, 0,
-  "z;d;e", "size;dst;src", "base.field_types.SIZE_BWLQ;base.field_types.Rn;base.field_types.EA", "", "">;
-def BRForm_base_instructions_PARITY_b_w_l_q_z_rn_s_rn_d : BedrockISAForm<
-  "base.instructions.PARITY.b_w_l_q_z_rn_s_rn_d", "parity", "PARITY.{B|W|L|Q}(z) Rn(s), Rn(d)", "10011zz110ssssdddd", "medium", "base",
+  "z;d;e", "size;dst;src", "SIZE_BWLQ;Rn;EA", "", "">;
+def BRForm_base_PARITY_b_w_l_q_z_rn_s_rn_d : BedrockISAForm<
+  "base.PARITY.b_w_l_q_z_rn_s_rn_d", "parity", "PARITY.{B|W|L|Q}(z) Rn(s), Rn(d)", "10011zz110ssssdddd", "medium", "base",
   3, 0, 0, 0, 1,
-  "z;s;d", "size;src;dst", "base.field_types.SIZE_BWLQ;base.field_types.Rn;base.field_types.Rn", "", "">;
-def BRForm_base_instructions_POP_rn_r : BedrockISAForm<
-  "base.instructions.POP.rn_r", "pop", "POP Rn(r)", "100rrrr", "extrashort", "base",
+  "z;s;d", "size;src;dst", "SIZE_BWLQ;Rn;Rn", "", "">;
+def BRForm_base_POP_rn_r : BedrockISAForm<
+  "base.POP.rn_r", "pop", "POP Rn(r)", "100rrrr", "extrashort", "base",
   1, 0, 0, 0, 1,
-  "r", "reg", "base.field_types.Rn", "", "">;
-def BRForm_base_instructions_POP_sreg_s : BedrockISAForm<
-  "base.instructions.POP.sreg_s", "pop", "POP SREG(s)", "10111000010sss", "short", "base",
+  "r", "reg", "Rn", "", "">;
+def BRForm_base_POP_sreg_s : BedrockISAForm<
+  "base.POP.sreg_s", "pop", "POP SREG(s)", "10111000010sss", "short", "base",
   2, 0, 0, 0, 1,
-  "s", "reg", "base.field_types.SREG", "", "">;
-def BRForm_base_instructions_POPCNT_b_w_l_q_z_ea_e_rn_d : BedrockISAForm<
-  "base.instructions.POPCNT.b_w_l_q_z_ea_e_rn_d", "popcnt", "POPCNT.{B|W|L|Q}(z) <ea>(e), Rn(d)", "1111001011zz111ddddeeeeeee", "long", "base",
+  "s", "reg", "SREG", "", "">;
+def BRForm_base_POPCNT_b_w_l_q_z_ea_e_rn_d : BedrockISAForm<
+  "base.POPCNT.b_w_l_q_z_ea_e_rn_d", "popcnt", "POPCNT.{B|W|L|Q}(z) <ea>(e), Rn(d)", "1111001011zz111ddddeeeeeee", "long", "base",
   4, 0, 1, 1, 0,
-  "z;d;e", "size;dst;src", "base.field_types.SIZE_BWLQ;base.field_types.Rn;base.field_types.EA", "", "">;
-def BRForm_base_instructions_POPCNT_b_w_l_q_z_rn_s_rn_d : BedrockISAForm<
-  "base.instructions.POPCNT.b_w_l_q_z_rn_s_rn_d", "popcnt", "POPCNT.{B|W|L|Q}(z) Rn(s), Rn(d)", "10011zz111ssssdddd", "medium", "base",
+  "z;d;e", "size;dst;src", "SIZE_BWLQ;Rn;EA", "", "">;
+def BRForm_base_POPCNT_b_w_l_q_z_rn_s_rn_d : BedrockISAForm<
+  "base.POPCNT.b_w_l_q_z_rn_s_rn_d", "popcnt", "POPCNT.{B|W|L|Q}(z) Rn(s), Rn(d)", "10011zz111ssssdddd", "medium", "base",
   3, 0, 0, 0, 1,
-  "z;s;d", "size;src;dst", "base.field_types.SIZE_BWLQ;base.field_types.Rn;base.field_types.Rn", "", "">;
-def BRForm_base_instructions_POPP_pairn_i : BedrockISAForm<
-  "base.instructions.POPP.pairn_i", "popp", "POPP PAIRn(i)", "0011iii", "extrashort", "base",
+  "z;s;d", "size;src;dst", "SIZE_BWLQ;Rn;Rn", "", "">;
+def BRForm_base_POPP_pairn_i : BedrockISAForm<
+  "base.POPP.pairn_i", "popp", "POPP PAIRn(i)", "0011iii", "extrashort", "base",
   1, 0, 0, 0, 1,
-  "i", "pair_id", "base.field_types.PAIRn", "", "">;
-def BRForm_base_instructions_PREFETCH_ea_e : BedrockISAForm<
-  "base.instructions.PREFETCH.ea_e", "prefetch", "PREFETCH <ea>(e)", "11101001000eeeeeee", "medium", "base",
+  "i", "pair_id", "PAIRn", "", "">;
+def BRForm_base_PREFETCH_ea_e : BedrockISAForm<
+  "base.PREFETCH.ea_e", "prefetch", "PREFETCH <ea>(e)", "11101001000eeeeeee", "medium", "base",
   3, 0, 1, 1, 0,
-  "e", "src", "base.field_types.EA", "", "">;
-def BRForm_base_instructions_PREFETCHNT_ea_e : BedrockISAForm<
-  "base.instructions.PREFETCHNT.ea_e", "prefetchnt", "PREFETCHNT <ea>(e)", "11101001001eeeeeee", "medium", "base",
+  "e", "src", "EA", "", "">;
+def BRForm_base_PREFETCHNT_ea_e : BedrockISAForm<
+  "base.PREFETCHNT.ea_e", "prefetchnt", "PREFETCHNT <ea>(e)", "11101001001eeeeeee", "medium", "base",
   3, 0, 1, 1, 0,
-  "e", "src", "base.field_types.EA", "", "">;
-def BRForm_base_instructions_PTQUERY_pt_level_i_ea_e_rn_d : BedrockISAForm<
-  "base.instructions.PTQUERY.pt_level_i_ea_e_rn_d", "ptquery", "PTQUERY pt_level(i), <ea>(e), Rn(d)", "111101101100iiiddddeeeeeee", "long", "base",
+  "e", "src", "EA", "", "">;
+def BRForm_base_PTQUERY_pt_level_i_ea_e_rn_d : BedrockISAForm<
+  "base.PTQUERY.pt_level_i_ea_e_rn_d", "ptquery", "PTQUERY pt_level(i), <ea>(e), Rn(d)", "111101101100iiiddddeeeeeee", "long", "base",
   4, 0, 1, 1, 0,
-  "i;d;e", "level;dst;src", "base.field_types.PTLVL;base.field_types.Rn;base.field_types.EA", "", "">;
-def BRForm_base_instructions_PTQUERY_pt_level_i_rn_s_rn_d : BedrockISAForm<
-  "base.instructions.PTQUERY.pt_level_i_rn_s_rn_d", "ptquery", "PTQUERY pt_level(i), Rn(s), Rn(d)", "111101100111000iiissssdddd", "long", "base",
+  "i;d;e", "level;dst;src", "PTLVL;Rn;EA", "", "">;
+def BRForm_base_PTQUERY_pt_level_i_rn_s_rn_d : BedrockISAForm<
+  "base.PTQUERY.pt_level_i_rn_s_rn_d", "ptquery", "PTQUERY pt_level(i), Rn(s), Rn(d)", "111101100111000iiissssdddd", "long", "base",
   4, 0, 0, 0, 1,
-  "i;s;d", "level;src;dst", "base.field_types.PTLVL;base.field_types.Rn;base.field_types.Rn", "", "">;
-def BRForm_base_instructions_PUSH_cs : BedrockISAForm<
-  "base.instructions.PUSH.cs", "push", "PUSH CS", "0001101", "extrashort", "base",
+  "i;s;d", "level;src;dst", "PTLVL;Rn;Rn", "", "">;
+def BRForm_base_PUSH_cs : BedrockISAForm<
+  "base.PUSH.cs", "push", "PUSH CS", "0001101", "extrashort", "base",
   1, 0, 0, 0, 1,
   "", "", "", "", "">;
-def BRForm_base_instructions_PUSH_rn_r : BedrockISAForm<
-  "base.instructions.PUSH.rn_r", "push", "PUSH Rn(r)", "011rrrr", "extrashort", "base",
+def BRForm_base_PUSH_rn_r : BedrockISAForm<
+  "base.PUSH.rn_r", "push", "PUSH Rn(r)", "011rrrr", "extrashort", "base",
   1, 0, 0, 0, 1,
-  "r", "reg", "base.field_types.Rn", "", "">;
-def BRForm_base_instructions_PUSH_sreg_s : BedrockISAForm<
-  "base.instructions.PUSH.sreg_s", "push", "PUSH SREG(s)", "10111000001sss", "short", "base",
+  "r", "reg", "Rn", "", "">;
+def BRForm_base_PUSH_sreg_s : BedrockISAForm<
+  "base.PUSH.sreg_s", "push", "PUSH SREG(s)", "10111000001sss", "short", "base",
   2, 0, 0, 0, 1,
-  "s", "reg", "base.field_types.SREG", "", "">;
-def BRForm_base_instructions_PUSHP_pairn_i : BedrockISAForm<
-  "base.instructions.PUSHP.pairn_i", "pushp", "PUSHP PAIRn(i)", "0010iii", "extrashort", "base",
+  "s", "reg", "SREG", "", "">;
+def BRForm_base_PUSHP_pairn_i : BedrockISAForm<
+  "base.PUSHP.pairn_i", "pushp", "PUSHP PAIRn(i)", "0010iii", "extrashort", "base",
   1, 0, 0, 0, 1,
-  "i", "pair_id", "base.field_types.PAIRn", "", "">;
-def BRForm_base_instructions_RDCR_imm16_rn_d : BedrockISAForm<
-  "base.instructions.RDCR.imm16_rn_d", "rdcr", "RDCR <imm16>, Rn(d)", "11101101000001dddd", "medium", "base",
+  "i", "pair_id", "PAIRn", "", "">;
+def BRForm_base_RDCR_imm16_rn_d : BedrockISAForm<
+  "base.RDCR.imm16_rn_d", "rdcr", "RDCR <imm16>, Rn(d)", "11101101000001dddd", "medium", "base",
   3, 2, 0, 0, 1,
-  "d", "dst", "base.field_types.Rn", "cr", "base.payload_types.CR">;
-def BRForm_base_instructions_RDFLAGS_rn_d : BedrockISAForm<
-  "base.instructions.RDFLAGS.rn_d", "rdflags", "RDFLAGS Rn(d)", "11101101000011dddd", "medium", "base",
+  "d", "dst", "Rn", "cr", "CR">;
+def BRForm_base_RDFLAGS_rn_d : BedrockISAForm<
+  "base.RDFLAGS.rn_d", "rdflags", "RDFLAGS Rn(d)", "11101101000011dddd", "medium", "base",
   3, 0, 0, 0, 1,
-  "d", "dst", "base.field_types.Rn", "", "">;
-def BRForm_base_instructions_RDPMC_imm16_rn_d : BedrockISAForm<
-  "base.instructions.RDPMC.imm16_rn_d", "rdpmc", "RDPMC <imm16>, Rn(d)", "11101101000101dddd", "medium", "base",
+  "d", "dst", "Rn", "", "">;
+def BRForm_base_RDPMC_imm16_rn_d : BedrockISAForm<
+  "base.RDPMC.imm16_rn_d", "rdpmc", "RDPMC <imm16>, Rn(d)", "11101101000101dddd", "medium", "base",
   3, 2, 0, 0, 1,
-  "d", "dst", "base.field_types.Rn", "counter_id", "base.payload_types.PMC">;
-def BRForm_base_instructions_RDSEG_sreg_s_rn_d : BedrockISAForm<
-  "base.instructions.RDSEG.sreg_s_rn_d", "rdseg", "RDSEG SREG(s), Rn(d)", "11101111111sssdddd", "medium", "base",
+  "d", "dst", "Rn", "counter_id", "PMC">;
+def BRForm_base_RDSEG_sreg_s_rn_d : BedrockISAForm<
+  "base.RDSEG.sreg_s_rn_d", "rdseg", "RDSEG SREG(s), Rn(d)", "11101111111sssdddd", "medium", "base",
   3, 0, 0, 0, 1,
-  "s;d", "seg;dst", "base.field_types.SREG;base.field_types.Rn", "", "">;
-def BRForm_base_instructions_RDSEG_cs_rn_d : BedrockISAForm<
-  "base.instructions.RDSEG.cs_rn_d", "rdseg", "RDSEG CS, Rn(d)", "11101101010000dddd", "medium", "base",
+  "s;d", "seg;dst", "SREG;Rn", "", "">;
+def BRForm_base_RDSEG_cs_rn_d : BedrockISAForm<
+  "base.RDSEG.cs_rn_d", "rdseg", "RDSEG CS, Rn(d)", "11101101010000dddd", "medium", "base",
   3, 0, 0, 0, 1,
-  "d", "dst", "base.field_types.Rn", "", "">;
-def BRForm_base_instructions_RDSTATUS_rn_d : BedrockISAForm<
-  "base.instructions.RDSTATUS.rn_d", "rdstatus", "RDSTATUS Rn(d)", "11101101000111dddd", "medium", "base",
+  "d", "dst", "Rn", "", "">;
+def BRForm_base_RDSTATUS_rn_d : BedrockISAForm<
+  "base.RDSTATUS.rn_d", "rdstatus", "RDSTATUS Rn(d)", "11101101000111dddd", "medium", "base",
   3, 0, 0, 0, 1,
-  "d", "dst", "base.field_types.Rn", "", "">;
-def BRForm_base_instructions_REPcc_rn_r_instruction : BedrockISAForm<
-  "base.instructions.REPcc.rn_r_instruction", "repcc", "REPcc Rn(r), (<instruction>)", "1110111110ccccrrrr", "medium", "base",
+  "d", "dst", "Rn", "", "">;
+def BRForm_base_REPcc_rn_r_instruction : BedrockISAForm<
+  "base.REPcc.rn_r_instruction", "repcc", "REPcc Rn(r), (<instruction>)", "1110111110ccccrrrr", "medium", "base",
   3, 0, 0, 0, 1,
-  "c;r", "cc;counter", "base.field_types.CC;base.field_types.Rn", "", "">;
-def BRForm_base_instructions_RESET_plain : BedrockISAForm<
-  "base.instructions.RESET.plain", "reset", "RESET", "10111000000001", "short", "base",
+  "c;r", "cc;counter", "CC;Rn", "", "">;
+def BRForm_base_RESET_plain : BedrockISAForm<
+  "base.RESET.plain", "reset", "RESET", "10111000000001", "short", "base",
   2, 0, 0, 0, 1,
   "", "", "", "", "">;
-def BRForm_base_instructions_RESTORE_ea_e : BedrockISAForm<
-  "base.instructions.RESTORE.ea_e", "restore", "RESTORE <ea>(e)", "11101001010eeeeeee", "medium", "base",
+def BRForm_base_RESTORE_ea_e : BedrockISAForm<
+  "base.RESTORE.ea_e", "restore", "RESTORE <ea>(e)", "11101001010eeeeeee", "medium", "base",
   3, 0, 1, 1, 0,
-  "e", "memory", "base.field_types.EA", "", "">;
-def BRForm_base_instructions_RESTORE_rn_r : BedrockISAForm<
-  "base.instructions.RESTORE.rn_r", "restore", "RESTORE Rn(r)", "11101101001010rrrr", "medium", "base",
+  "e", "memory", "EA", "", "">;
+def BRForm_base_RESTORE_rn_r : BedrockISAForm<
+  "base.RESTORE.rn_r", "restore", "RESTORE Rn(r)", "11101101001010rrrr", "medium", "base",
   3, 0, 0, 0, 1,
-  "r", "memory", "base.field_types.Rn", "", "">;
-def BRForm_base_instructions_RET_plain : BedrockISAForm<
-  "base.instructions.RET.plain", "ret", "RET", "0000010", "extrashort", "base",
+  "r", "memory", "Rn", "", "">;
+def BRForm_base_RET_plain : BedrockISAForm<
+  "base.RET.plain", "ret", "RET", "0000010", "extrashort", "base",
   1, 0, 0, 0, 1,
   "", "", "", "", "">;
-def BRForm_base_instructions_REVBYTE_w_rn_r : BedrockISAForm<
-  "base.instructions.REVBYTE.w_rn_r", "revbyte", "REVBYTE.W Rn(r)", "1011000001rrrr", "short", "base",
+def BRForm_base_REVBYTE_w_rn_r : BedrockISAForm<
+  "base.REVBYTE.w_rn_r", "revbyte", "REVBYTE.W Rn(r)", "1011000001rrrr", "short", "base",
   2, 0, 0, 0, 1,
-  "r", "dst", "base.field_types.Rn", "", "">;
-def BRForm_base_instructions_REVBYTE_l_rn_r : BedrockISAForm<
-  "base.instructions.REVBYTE.l_rn_r", "revbyte", "REVBYTE.L Rn(r)", "1011000010rrrr", "short", "base",
+  "r", "dst", "Rn", "", "">;
+def BRForm_base_REVBYTE_l_rn_r : BedrockISAForm<
+  "base.REVBYTE.l_rn_r", "revbyte", "REVBYTE.L Rn(r)", "1011000010rrrr", "short", "base",
   2, 0, 0, 0, 1,
-  "r", "dst", "base.field_types.Rn", "", "">;
-def BRForm_base_instructions_REVBYTE_q_rn_r : BedrockISAForm<
-  "base.instructions.REVBYTE.q_rn_r", "revbyte", "REVBYTE.Q Rn(r)", "1011000011rrrr", "short", "base",
+  "r", "dst", "Rn", "", "">;
+def BRForm_base_REVBYTE_q_rn_r : BedrockISAForm<
+  "base.REVBYTE.q_rn_r", "revbyte", "REVBYTE.Q Rn(r)", "1011000011rrrr", "short", "base",
   2, 0, 0, 0, 1,
-  "r", "dst", "base.field_types.Rn", "", "">;
-def BRForm_base_instructions_REVBYTE_w_ea_e : BedrockISAForm<
-  "base.instructions.REVBYTE.w_ea_e", "revbyte", "REVBYTE.W <ea>(e)", "11101001011eeeeeee", "medium", "base",
+  "r", "dst", "Rn", "", "">;
+def BRForm_base_REVBYTE_w_ea_e : BedrockISAForm<
+  "base.REVBYTE.w_ea_e", "revbyte", "REVBYTE.W <ea>(e)", "11101001011eeeeeee", "medium", "base",
   3, 0, 1, 1, 0,
-  "e", "dst", "base.field_types.EA", "", "">;
-def BRForm_base_instructions_REVBYTE_l_ea_e : BedrockISAForm<
-  "base.instructions.REVBYTE.l_ea_e", "revbyte", "REVBYTE.L <ea>(e)", "11101001100eeeeeee", "medium", "base",
+  "e", "dst", "EA", "", "">;
+def BRForm_base_REVBYTE_l_ea_e : BedrockISAForm<
+  "base.REVBYTE.l_ea_e", "revbyte", "REVBYTE.L <ea>(e)", "11101001100eeeeeee", "medium", "base",
   3, 0, 1, 1, 0,
-  "e", "dst", "base.field_types.EA", "", "">;
-def BRForm_base_instructions_REVBYTE_q_ea_e : BedrockISAForm<
-  "base.instructions.REVBYTE.q_ea_e", "revbyte", "REVBYTE.Q <ea>(e)", "11101001101eeeeeee", "medium", "base",
+  "e", "dst", "EA", "", "">;
+def BRForm_base_REVBYTE_q_ea_e : BedrockISAForm<
+  "base.REVBYTE.q_ea_e", "revbyte", "REVBYTE.Q <ea>(e)", "11101001101eeeeeee", "medium", "base",
   3, 0, 1, 1, 0,
-  "e", "dst", "base.field_types.EA", "", "">;
-def BRForm_base_instructions_RFENCE_plain : BedrockISAForm<
-  "base.instructions.RFENCE.plain", "rfence", "RFENCE", "0001010", "extrashort", "base",
+  "e", "dst", "EA", "", "">;
+def BRForm_base_RFENCE_plain : BedrockISAForm<
+  "base.RFENCE.plain", "rfence", "RFENCE", "0001010", "extrashort", "base",
   1, 0, 0, 0, 1,
   "", "", "", "", "">;
-def BRForm_base_instructions_ROL_l_q_z_rn_s_rn_d : BedrockISAForm<
-  "base.instructions.ROL.l_q_z_rn_s_rn_d", "rol", "ROL.{L|Q}(z) Rn(s), Rn(d)", "01100zssssdddd", "short", "base",
+def BRForm_base_ROL_l_q_z_rn_s_rn_d : BedrockISAForm<
+  "base.ROL.l_q_z_rn_s_rn_d", "rol", "ROL.{L|Q}(z) Rn(s), Rn(d)", "01100zssssdddd", "short", "base",
   2, 0, 0, 0, 1,
-  "z;s;d", "size;count;dst", "base.field_types.SIZE_LQ;base.field_types.Rn;base.field_types.Rn", "", "">;
-def BRForm_base_instructions_ROL_b_w_l_q_z_rn_s_ea_e : BedrockISAForm<
-  "base.instructions.ROL.b_w_l_q_z_rn_s_ea_e", "rol", "ROL.{B|W|L|Q}(z) Rn(s), <ea>(e)", "1111001110zz101sssseeeeeee", "long", "base",
+  "z;s;d", "size;count;dst", "SIZE_LQ;Rn;Rn", "", "">;
+def BRForm_base_ROL_b_w_l_q_z_rn_s_ea_e : BedrockISAForm<
+  "base.ROL.b_w_l_q_z_rn_s_ea_e", "rol", "ROL.{B|W|L|Q}(z) Rn(s), <ea>(e)", "1111001110zz101sssseeeeeee", "long", "base",
   4, 0, 1, 1, 0,
-  "z;s;e", "size;count;dst", "base.field_types.SIZE_BWLQ;base.field_types.Rn;base.field_types.EA", "", "">;
-def BRForm_base_instructions_ROL_b_w_l_q_z_imm6_i_ea_e : BedrockISAForm<
-  "base.instructions.ROL.b_w_l_q_z_imm6_i_ea_e", "rol", "ROL.{B|W|L|Q}(z) imm6(i), <ea>(e)", "1111010100zz0iiiiiieeeeeee", "long", "base",
+  "z;s;e", "size;count;dst", "SIZE_BWLQ;Rn;EA", "", "">;
+def BRForm_base_ROL_b_w_l_q_z_imm6_i_ea_e : BedrockISAForm<
+  "base.ROL.b_w_l_q_z_imm6_i_ea_e", "rol", "ROL.{B|W|L|Q}(z) imm6(i), <ea>(e)", "1111010100zz0iiiiiieeeeeee", "long", "base",
   4, 0, 1, 1, 0,
-  "z;i;e", "size;count;dst", "base.field_types.SIZE_BWLQ;base.field_types.IMM6;base.field_types.EA", "", "">;
-def BRForm_base_instructions_ROR_l_q_z_rn_s_rn_d : BedrockISAForm<
-  "base.instructions.ROR.l_q_z_rn_s_rn_d", "ror", "ROR.{L|Q}(z) Rn(s), Rn(d)", "01011zssssdddd", "short", "base",
+  "z;i;e", "size;count;dst", "SIZE_BWLQ;IMM6;EA", "", "">;
+def BRForm_base_ROR_l_q_z_rn_s_rn_d : BedrockISAForm<
+  "base.ROR.l_q_z_rn_s_rn_d", "ror", "ROR.{L|Q}(z) Rn(s), Rn(d)", "01011zssssdddd", "short", "base",
   2, 0, 0, 0, 1,
-  "z;s;d", "size;count;dst", "base.field_types.SIZE_LQ;base.field_types.Rn;base.field_types.Rn", "", "">;
-def BRForm_base_instructions_ROR_b_w_l_q_z_rn_s_ea_e : BedrockISAForm<
-  "base.instructions.ROR.b_w_l_q_z_rn_s_ea_e", "ror", "ROR.{B|W|L|Q}(z) Rn(s), <ea>(e)", "1111001110zz110sssseeeeeee", "long", "base",
+  "z;s;d", "size;count;dst", "SIZE_LQ;Rn;Rn", "", "">;
+def BRForm_base_ROR_b_w_l_q_z_rn_s_ea_e : BedrockISAForm<
+  "base.ROR.b_w_l_q_z_rn_s_ea_e", "ror", "ROR.{B|W|L|Q}(z) Rn(s), <ea>(e)", "1111001110zz110sssseeeeeee", "long", "base",
   4, 0, 1, 1, 0,
-  "z;s;e", "size;count;dst", "base.field_types.SIZE_BWLQ;base.field_types.Rn;base.field_types.EA", "", "">;
-def BRForm_base_instructions_ROR_b_w_l_q_z_imm6_i_ea_e : BedrockISAForm<
-  "base.instructions.ROR.b_w_l_q_z_imm6_i_ea_e", "ror", "ROR.{B|W|L|Q}(z) imm6(i), <ea>(e)", "1111010100zz1iiiiiieeeeeee", "long", "base",
+  "z;s;e", "size;count;dst", "SIZE_BWLQ;Rn;EA", "", "">;
+def BRForm_base_ROR_b_w_l_q_z_imm6_i_ea_e : BedrockISAForm<
+  "base.ROR.b_w_l_q_z_imm6_i_ea_e", "ror", "ROR.{B|W|L|Q}(z) imm6(i), <ea>(e)", "1111010100zz1iiiiiieeeeeee", "long", "base",
   4, 0, 1, 1, 0,
-  "z;i;e", "size;count;dst", "base.field_types.SIZE_BWLQ;base.field_types.IMM6;base.field_types.EA", "", "">;
-def BRForm_base_instructions_SAR_l_q_z_rn_s_rn_d : BedrockISAForm<
-  "base.instructions.SAR.l_q_z_rn_s_rn_d", "sar", "SAR.{L|Q}(z) Rn(s), Rn(d)", "01101zssssdddd", "short", "base",
+  "z;i;e", "size;count;dst", "SIZE_BWLQ;IMM6;EA", "", "">;
+def BRForm_base_SAR_l_q_z_rn_s_rn_d : BedrockISAForm<
+  "base.SAR.l_q_z_rn_s_rn_d", "sar", "SAR.{L|Q}(z) Rn(s), Rn(d)", "01101zssssdddd", "short", "base",
   2, 0, 0, 0, 1,
-  "z;s;d", "size;count;dst", "base.field_types.SIZE_LQ;base.field_types.Rn;base.field_types.Rn", "", "">;
-def BRForm_base_instructions_SAR_b_w_l_q_z_rn_s_ea_e : BedrockISAForm<
-  "base.instructions.SAR.b_w_l_q_z_rn_s_ea_e", "sar", "SAR.{B|W|L|Q}(z) Rn(s), <ea>(e)", "1111001110zz111sssseeeeeee", "long", "base",
+  "z;s;d", "size;count;dst", "SIZE_LQ;Rn;Rn", "", "">;
+def BRForm_base_SAR_b_w_l_q_z_rn_s_ea_e : BedrockISAForm<
+  "base.SAR.b_w_l_q_z_rn_s_ea_e", "sar", "SAR.{B|W|L|Q}(z) Rn(s), <ea>(e)", "1111001110zz111sssseeeeeee", "long", "base",
   4, 0, 1, 1, 0,
-  "z;s;e", "size;count;dst", "base.field_types.SIZE_BWLQ;base.field_types.Rn;base.field_types.EA", "", "">;
-def BRForm_base_instructions_SAR_b_w_l_q_z_imm6_i_ea_e : BedrockISAForm<
-  "base.instructions.SAR.b_w_l_q_z_imm6_i_ea_e", "sar", "SAR.{B|W|L|Q}(z) imm6(i), <ea>(e)", "1111010101zz0iiiiiieeeeeee", "long", "base",
+  "z;s;e", "size;count;dst", "SIZE_BWLQ;Rn;EA", "", "">;
+def BRForm_base_SAR_b_w_l_q_z_imm6_i_ea_e : BedrockISAForm<
+  "base.SAR.b_w_l_q_z_imm6_i_ea_e", "sar", "SAR.{B|W|L|Q}(z) imm6(i), <ea>(e)", "1111010101zz0iiiiiieeeeeee", "long", "base",
   4, 0, 1, 1, 0,
-  "z;i;e", "size;count;dst", "base.field_types.SIZE_BWLQ;base.field_types.IMM6;base.field_types.EA", "", "">;
-def BRForm_base_instructions_SAVE_ea_e : BedrockISAForm<
-  "base.instructions.SAVE.ea_e", "save", "SAVE <ea>(e)", "11101001110eeeeeee", "medium", "base",
+  "z;i;e", "size;count;dst", "SIZE_BWLQ;IMM6;EA", "", "">;
+def BRForm_base_SAVE_ea_e : BedrockISAForm<
+  "base.SAVE.ea_e", "save", "SAVE <ea>(e)", "11101001110eeeeeee", "medium", "base",
   3, 0, 1, 1, 0,
-  "e", "memory", "base.field_types.EA", "", "">;
-def BRForm_base_instructions_SAVE_rn_r : BedrockISAForm<
-  "base.instructions.SAVE.rn_r", "save", "SAVE Rn(r)", "11101101001110rrrr", "medium", "base",
+  "e", "memory", "EA", "", "">;
+def BRForm_base_SAVE_rn_r : BedrockISAForm<
+  "base.SAVE.rn_r", "save", "SAVE Rn(r)", "11101101001110rrrr", "medium", "base",
   3, 0, 0, 0, 1,
-  "r", "memory", "base.field_types.Rn", "", "">;
-def BRForm_base_instructions_SBB_b_w_l_q_z_rn_s_rn_d : BedrockISAForm<
-  "base.instructions.SBB.b_w_l_q_z_rn_s_rn_d", "sbb", "SBB.{B|W|L|Q}(z) Rn(s), Rn(d)", "10000zz101ssssdddd", "medium", "base",
+  "r", "memory", "Rn", "", "">;
+def BRForm_base_SBB_b_w_l_q_z_rn_s_rn_d : BedrockISAForm<
+  "base.SBB.b_w_l_q_z_rn_s_rn_d", "sbb", "SBB.{B|W|L|Q}(z) Rn(s), Rn(d)", "10000zz101ssssdddd", "medium", "base",
   3, 0, 0, 0, 1,
-  "z;s;d", "size;src;dst", "base.field_types.SIZE_BWLQ;base.field_types.Rn;base.field_types.Rn", "", "">;
-def BRForm_base_instructions_SBB_b_w_l_q_z_rn_s_ea_e : BedrockISAForm<
-  "base.instructions.SBB.b_w_l_q_z_rn_s_ea_e", "sbb", "SBB.{B|W|L|Q}(z) Rn(s), <ea>(e)", "1111001100zz101sssseeeeeee", "long", "base",
+  "z;s;d", "size;src;dst", "SIZE_BWLQ;Rn;Rn", "", "">;
+def BRForm_base_SBB_b_w_l_q_z_rn_s_ea_e : BedrockISAForm<
+  "base.SBB.b_w_l_q_z_rn_s_ea_e", "sbb", "SBB.{B|W|L|Q}(z) Rn(s), <ea>(e)", "1111001100zz101sssseeeeeee", "long", "base",
   4, 0, 1, 1, 0,
-  "z;s;e", "size;src;dst", "base.field_types.SIZE_BWLQ;base.field_types.Rn;base.field_types.EA", "", "">;
-def BRForm_base_instructions_SBB_b_w_l_q_z_ea_e_rn_d : BedrockISAForm<
-  "base.instructions.SBB.b_w_l_q_z_ea_e_rn_d", "sbb", "SBB.{B|W|L|Q}(z) <ea>(e), Rn(d)", "1111001000zz101ddddeeeeeee", "long", "base",
+  "z;s;e", "size;src;dst", "SIZE_BWLQ;Rn;EA", "", "">;
+def BRForm_base_SBB_b_w_l_q_z_ea_e_rn_d : BedrockISAForm<
+  "base.SBB.b_w_l_q_z_ea_e_rn_d", "sbb", "SBB.{B|W|L|Q}(z) <ea>(e), Rn(d)", "1111001000zz101ddddeeeeeee", "long", "base",
   4, 0, 1, 1, 0,
-  "z;d;e", "size;dst;src", "base.field_types.SIZE_BWLQ;base.field_types.Rn;base.field_types.EA", "", "">;
-def BRForm_base_instructions_SEGLEA_b_w_l_q_z_ea_e_rn_d : BedrockISAForm<
-  "base.instructions.SEGLEA.b_w_l_q_z_ea_e_rn_d", "seglea", "SEGLEA.{B|W|L|Q}(z) <ea>(e), Rn(d)", "1111001000zz000ddddeeeeeee", "long", "base",
+  "z;d;e", "size;dst;src", "SIZE_BWLQ;Rn;EA", "", "">;
+def BRForm_base_SEGLEA_b_w_l_q_z_ea_e_rn_d : BedrockISAForm<
+  "base.SEGLEA.b_w_l_q_z_ea_e_rn_d", "seglea", "SEGLEA.{B|W|L|Q}(z) <ea>(e), Rn(d)", "1111001000zz000ddddeeeeeee", "long", "base",
   4, 0, 1, 1, 0,
-  "z;d;e", "size;dst;src", "base.field_types.SIZE_BWLQ;base.field_types.Rn;base.field_types.EA", "", "">;
-def BRForm_base_instructions_SEGLEA_b_w_l_q_z_rn_s_rn_d : BedrockISAForm<
-  "base.instructions.SEGLEA.b_w_l_q_z_rn_s_rn_d", "seglea", "SEGLEA.{B|W|L|Q}(z) Rn(s), Rn(d)", "11000zz000ssssdddd", "medium", "base",
+  "z;d;e", "size;dst;src", "SIZE_BWLQ;Rn;EA", "", "">;
+def BRForm_base_SEGLEA_b_w_l_q_z_rn_s_rn_d : BedrockISAForm<
+  "base.SEGLEA.b_w_l_q_z_rn_s_rn_d", "seglea", "SEGLEA.{B|W|L|Q}(z) Rn(s), Rn(d)", "11000zz000ssssdddd", "medium", "base",
   3, 0, 0, 0, 1,
-  "z;s;d", "size;src;dst", "base.field_types.SIZE_BWLQ;base.field_types.Rn;base.field_types.Rn", "", "">;
-def BRForm_base_instructions_SET_rn_r : BedrockISAForm<
-  "base.instructions.SET.rn_r", "set", "SET Rn(r)", "1000000000rrrr", "short", "base",
+  "z;s;d", "size;src;dst", "SIZE_BWLQ;Rn;Rn", "", "">;
+def BRForm_base_SET_rn_r : BedrockISAForm<
+  "base.SET.rn_r", "set", "SET Rn(r)", "1000000000rrrr", "short", "base",
   2, 0, 0, 0, 1,
-  "r", "dst", "base.field_types.Rn", "", "">;
-def BRForm_base_instructions_SETcc_rn_r : BedrockISAForm<
-  "base.instructions.SETcc.rn_r", "setcc", "SETcc Rn(r)", "100000ccccrrrr", "short", "base",
+  "r", "dst", "Rn", "", "">;
+def BRForm_base_SETcc_rn_r : BedrockISAForm<
+  "base.SETcc.rn_r", "setcc", "SETcc Rn(r)", "100000ccccrrrr", "short", "base",
   2, 0, 0, 0, 1,
-  "c;r", "cc;dst", "base.field_types.CC;base.field_types.Rn", "", "">;
-def BRForm_base_instructions_SETF_flags_bitmap_m : BedrockISAForm<
-  "base.instructions.SETF.flags_bitmap_m", "setf", "SETF flags_bitmap(m)", "11101110010001mmmm", "medium", "base",
+  "c;r", "cc;dst", "CC;Rn", "", "">;
+def BRForm_base_SETF_flags_bitmap_m : BedrockISAForm<
+  "base.SETF.flags_bitmap_m", "setf", "SETF flags_bitmap(m)", "11101110010001mmmm", "medium", "base",
   3, 0, 0, 0, 1,
-  "m", "mask", "base.field_types.FLBMP", "", "">;
-def BRForm_base_instructions_SHL_l_q_z_rn_s_rn_d : BedrockISAForm<
-  "base.instructions.SHL.l_q_z_rn_s_rn_d", "shl", "SHL.{L|Q}(z) Rn(s), Rn(d)", "01010zssssdddd", "short", "base",
+  "m", "mask", "FLBMP", "", "">;
+def BRForm_base_SHL_l_q_z_rn_s_rn_d : BedrockISAForm<
+  "base.SHL.l_q_z_rn_s_rn_d", "shl", "SHL.{L|Q}(z) Rn(s), Rn(d)", "01010zssssdddd", "short", "base",
   2, 0, 0, 0, 1,
-  "z;s;d", "size;count;dst", "base.field_types.SIZE_LQ;base.field_types.Rn;base.field_types.Rn", "", "">;
-def BRForm_base_instructions_SHL_b_w_l_q_z_rn_s_ea_e : BedrockISAForm<
-  "base.instructions.SHL.b_w_l_q_z_rn_s_ea_e", "shl", "SHL.{B|W|L|Q}(z) Rn(s), <ea>(e)", "1111001111zz000sssseeeeeee", "long", "base",
+  "z;s;d", "size;count;dst", "SIZE_LQ;Rn;Rn", "", "">;
+def BRForm_base_SHL_b_w_l_q_z_rn_s_ea_e : BedrockISAForm<
+  "base.SHL.b_w_l_q_z_rn_s_ea_e", "shl", "SHL.{B|W|L|Q}(z) Rn(s), <ea>(e)", "1111001111zz000sssseeeeeee", "long", "base",
   4, 0, 1, 1, 0,
-  "z;s;e", "size;count;dst", "base.field_types.SIZE_BWLQ;base.field_types.Rn;base.field_types.EA", "", "">;
-def BRForm_base_instructions_SHL_b_w_l_q_z_imm6_i_ea_e : BedrockISAForm<
-  "base.instructions.SHL.b_w_l_q_z_imm6_i_ea_e", "shl", "SHL.{B|W|L|Q}(z) imm6(i), <ea>(e)", "1111010101zz1iiiiiieeeeeee", "long", "base",
+  "z;s;e", "size;count;dst", "SIZE_BWLQ;Rn;EA", "", "">;
+def BRForm_base_SHL_b_w_l_q_z_imm6_i_ea_e : BedrockISAForm<
+  "base.SHL.b_w_l_q_z_imm6_i_ea_e", "shl", "SHL.{B|W|L|Q}(z) imm6(i), <ea>(e)", "1111010101zz1iiiiiieeeeeee", "long", "base",
   4, 0, 1, 1, 0,
-  "z;i;e", "size;count;dst", "base.field_types.SIZE_BWLQ;base.field_types.IMM6;base.field_types.EA", "", "">;
-def BRForm_base_instructions_SHR_l_q_z_rn_s_rn_d : BedrockISAForm<
-  "base.instructions.SHR.l_q_z_rn_s_rn_d", "shr", "SHR.{L|Q}(z) Rn(s), Rn(d)", "01001zssssdddd", "short", "base",
+  "z;i;e", "size;count;dst", "SIZE_BWLQ;IMM6;EA", "", "">;
+def BRForm_base_SHR_l_q_z_rn_s_rn_d : BedrockISAForm<
+  "base.SHR.l_q_z_rn_s_rn_d", "shr", "SHR.{L|Q}(z) Rn(s), Rn(d)", "01001zssssdddd", "short", "base",
   2, 0, 0, 0, 1,
-  "z;s;d", "size;count;dst", "base.field_types.SIZE_LQ;base.field_types.Rn;base.field_types.Rn", "", "">;
-def BRForm_base_instructions_SHR_b_w_l_q_z_rn_s_ea_e : BedrockISAForm<
-  "base.instructions.SHR.b_w_l_q_z_rn_s_ea_e", "shr", "SHR.{B|W|L|Q}(z) Rn(s), <ea>(e)", "1111001111zz001sssseeeeeee", "long", "base",
+  "z;s;d", "size;count;dst", "SIZE_LQ;Rn;Rn", "", "">;
+def BRForm_base_SHR_b_w_l_q_z_rn_s_ea_e : BedrockISAForm<
+  "base.SHR.b_w_l_q_z_rn_s_ea_e", "shr", "SHR.{B|W|L|Q}(z) Rn(s), <ea>(e)", "1111001111zz001sssseeeeeee", "long", "base",
   4, 0, 1, 1, 0,
-  "z;s;e", "size;count;dst", "base.field_types.SIZE_BWLQ;base.field_types.Rn;base.field_types.EA", "", "">;
-def BRForm_base_instructions_SHR_b_w_l_q_z_imm6_i_ea_e : BedrockISAForm<
-  "base.instructions.SHR.b_w_l_q_z_imm6_i_ea_e", "shr", "SHR.{B|W|L|Q}(z) imm6(i), <ea>(e)", "1111010110zz0iiiiiieeeeeee", "long", "base",
+  "z;s;e", "size;count;dst", "SIZE_BWLQ;Rn;EA", "", "">;
+def BRForm_base_SHR_b_w_l_q_z_imm6_i_ea_e : BedrockISAForm<
+  "base.SHR.b_w_l_q_z_imm6_i_ea_e", "shr", "SHR.{B|W|L|Q}(z) imm6(i), <ea>(e)", "1111010110zz0iiiiiieeeeeee", "long", "base",
   4, 0, 1, 1, 0,
-  "z;i;e", "size;count;dst", "base.field_types.SIZE_BWLQ;base.field_types.IMM6;base.field_types.EA", "", "">;
-def BRForm_base_instructions_SUB_q_8_sp : BedrockISAForm<
-  "base.instructions.SUB.q_8_sp", "sub", "SUB.Q 8, SP", "0001111", "extrashort", "base",
+  "z;i;e", "size;count;dst", "SIZE_BWLQ;IMM6;EA", "", "">;
+def BRForm_base_SUB_q_8_sp : BedrockISAForm<
+  "base.SUB.q_8_sp", "sub", "SUB.Q 8, SP", "0001111", "extrashort", "base",
   1, 0, 0, 0, 1,
   "", "", "", "", "">;
-def BRForm_base_instructions_SUB_l_q_z_rn_s_rn_d : BedrockISAForm<
-  "base.instructions.SUB.l_q_z_rn_s_rn_d", "sub", "SUB.{L|Q}(z) Rn(s), Rn(d)", "00010zssssdddd", "short", "base",
+def BRForm_base_SUB_l_q_z_rn_s_rn_d : BedrockISAForm<
+  "base.SUB.l_q_z_rn_s_rn_d", "sub", "SUB.{L|Q}(z) Rn(s), Rn(d)", "00010zssssdddd", "short", "base",
   2, 0, 0, 0, 1,
-  "z;s;d", "size;src;dst", "base.field_types.SIZE_LQ;base.field_types.Rn;base.field_types.Rn", "", "">;
-def BRForm_base_instructions_SUB_q_imm8_i_sp : BedrockISAForm<
-  "base.instructions.SUB.q_imm8_i_sp", "sub", "SUB.Q imm8(i), SP", "100101iiiiiiii", "short", "base",
+  "z;s;d", "size;src;dst", "SIZE_LQ;Rn;Rn", "", "">;
+def BRForm_base_SUB_q_imm8_i_sp : BedrockISAForm<
+  "base.SUB.q_imm8_i_sp", "sub", "SUB.Q imm8(i), SP", "100101iiiiiiii", "short", "base",
   2, 0, 0, 0, 1,
-  "i", "imm", "base.field_types.IMM8", "", "">;
-def BRForm_base_instructions_SUB_q_imm16s_sp : BedrockISAForm<
-  "base.instructions.SUB.q_imm16s_sp", "sub", "SUB.Q <imm16s>, SP", "111011110000001000", "medium", "base",
+  "i", "imm", "IMM8", "", "">;
+def BRForm_base_SUB_q_imm16s_sp : BedrockISAForm<
+  "base.SUB.q_imm16s_sp", "sub", "SUB.Q <imm16s>, SP", "111011110000001000", "medium", "base",
   3, 2, 0, 0, 1,
-  "", "", "", "imm", "base.payload_types.IMM16S">;
-def BRForm_base_instructions_SUB_q_imm32s_sp : BedrockISAForm<
-  "base.instructions.SUB.q_imm32s_sp", "sub", "SUB.Q <imm32s>, SP", "111011110000001001", "medium", "base",
+  "", "", "", "imm", "IMM16S">;
+def BRForm_base_SUB_q_imm32s_sp : BedrockISAForm<
+  "base.SUB.q_imm32s_sp", "sub", "SUB.Q <imm32s>, SP", "111011110000001001", "medium", "base",
   3, 4, 0, 0, 1,
-  "", "", "", "imm", "base.payload_types.IMM32S">;
-def BRForm_base_instructions_SUB_b_w_l_q_z_rn_s_ea_e : BedrockISAForm<
-  "base.instructions.SUB.b_w_l_q_z_rn_s_ea_e", "sub", "SUB.{B|W|L|Q}(z) Rn(s), <ea>(e)", "00010zzsssseeeeeee", "medium", "base",
+  "", "", "", "imm", "IMM32S">;
+def BRForm_base_SUB_b_w_l_q_z_rn_s_ea_e : BedrockISAForm<
+  "base.SUB.b_w_l_q_z_rn_s_ea_e", "sub", "SUB.{B|W|L|Q}(z) Rn(s), <ea>(e)", "00010zzsssseeeeeee", "medium", "base",
   3, 0, 1, 1, 0,
-  "z;s;e", "size;src;dst", "base.field_types.SIZE_BWLQ;base.field_types.Rn;base.field_types.EA", "", "">;
-def BRForm_base_instructions_SUB_b_w_l_q_z_ea_e_rn_d : BedrockISAForm<
-  "base.instructions.SUB.b_w_l_q_z_ea_e_rn_d", "sub", "SUB.{B|W|L|Q}(z) <ea>(e), Rn(d)", "01010zzddddeeeeeee", "medium", "base",
+  "z;s;e", "size;src;dst", "SIZE_BWLQ;Rn;EA", "", "">;
+def BRForm_base_SUB_b_w_l_q_z_ea_e_rn_d : BedrockISAForm<
+  "base.SUB.b_w_l_q_z_ea_e_rn_d", "sub", "SUB.{B|W|L|Q}(z) <ea>(e), Rn(d)", "01010zzddddeeeeeee", "medium", "base",
   3, 0, 1, 1, 0,
-  "z;d;e", "size;dst;src", "base.field_types.SIZE_BWLQ;base.field_types.Rn;base.field_types.EA", "", "">;
-def BRForm_base_instructions_SUB_b_w_l_q_z_imm8s_ea_e : BedrockISAForm<
-  "base.instructions.SUB.b_w_l_q_z_imm8s_ea_e", "sub", "SUB.{B|W|L|Q}(z) <imm8s>, <ea>(e)", "11110110000000001zzeeeeeee", "long", "base",
+  "z;d;e", "size;dst;src", "SIZE_BWLQ;Rn;EA", "", "">;
+def BRForm_base_SUB_b_w_l_q_z_imm8s_ea_e : BedrockISAForm<
+  "base.SUB.b_w_l_q_z_imm8s_ea_e", "sub", "SUB.{B|W|L|Q}(z) <imm8s>, <ea>(e)", "11110110000000001zzeeeeeee", "long", "base",
   4, 1, 1, 1, 0,
-  "z;e", "size;dst", "base.field_types.SIZE_BWLQ;base.field_types.EA", "src", "base.payload_types.IMM8S">;
-def BRForm_base_instructions_SUB_w_l_q_z_imm16s_ea_e : BedrockISAForm<
-  "base.instructions.SUB.w_l_q_z_imm16s_ea_e", "sub", "SUB.{W|L|Q}(z) <imm16s>, <ea>(e)", "11110110000000010zzeeeeeee", "long", "base",
+  "z;e", "size;dst", "SIZE_BWLQ;EA", "src", "IMM8S">;
+def BRForm_base_SUB_w_l_q_z_imm16s_ea_e : BedrockISAForm<
+  "base.SUB.w_l_q_z_imm16s_ea_e", "sub", "SUB.{W|L|Q}(z) <imm16s>, <ea>(e)", "11110110000000010zzeeeeeee", "long", "base",
   4, 2, 1, 1, 0,
-  "z;e", "size;dst", "base.field_types.SIZE_WLQ;base.field_types.EA", "src", "base.payload_types.IMM16S">;
-def BRForm_base_instructions_SUB_l_q_z_imm32s_ea_e : BedrockISAForm<
-  "base.instructions.SUB.l_q_z_imm32s_ea_e", "sub", "SUB.{L|Q}(z) <imm32s>, <ea>(e)", "111101100000000110zeeeeeee", "long", "base",
+  "z;e", "size;dst", "SIZE_WLQ;EA", "src", "IMM16S">;
+def BRForm_base_SUB_l_q_z_imm32s_ea_e : BedrockISAForm<
+  "base.SUB.l_q_z_imm32s_ea_e", "sub", "SUB.{L|Q}(z) <imm32s>, <ea>(e)", "111101100000000110zeeeeeee", "long", "base",
   4, 4, 1, 1, 0,
-  "z;e", "size;dst", "base.field_types.SIZE_LQ;base.field_types.EA", "src", "base.payload_types.IMM32S">;
-def BRForm_base_instructions_SUB_q_imm64_ea_e : BedrockISAForm<
-  "base.instructions.SUB.q_imm64_ea_e", "sub", "SUB.Q <imm64>, <ea>(e)", "11101001111eeeeeee", "medium", "base",
+  "z;e", "size;dst", "SIZE_LQ;EA", "src", "IMM32S">;
+def BRForm_base_SUB_q_imm64_ea_e : BedrockISAForm<
+  "base.SUB.q_imm64_ea_e", "sub", "SUB.Q <imm64>, <ea>(e)", "11101001111eeeeeee", "medium", "base",
   3, 8, 1, 1, 0,
-  "e", "dst", "base.field_types.EA", "src", "base.payload_types.IMM64">;
-def BRForm_base_instructions_SWPT_rn_p : BedrockISAForm<
-  "base.instructions.SWPT.rn_p", "swpt", "SWPT Rn(p)", "11101101001001pppp", "medium", "base",
+  "e", "dst", "EA", "src", "IMM64">;
+def BRForm_base_SWPT_rn_p : BedrockISAForm<
+  "base.SWPT.rn_p", "swpt", "SWPT Rn(p)", "11101101001001pppp", "medium", "base",
   3, 0, 0, 0, 1,
-  "p", "new_ptcr", "base.field_types.Rn", "", "">;
-def BRForm_base_instructions_SWPTA_rn_p_rn_a : BedrockISAForm<
-  "base.instructions.SWPTA.rn_p_rn_a", "swpta", "SWPTA Rn(p), Rn(a)", "1100000110ppppaaaa", "medium", "base",
+  "p", "new_ptcr", "Rn", "", "">;
+def BRForm_base_SWPTA_rn_p_rn_a : BedrockISAForm<
+  "base.SWPTA.rn_p_rn_a", "swpta", "SWPTA Rn(p), Rn(a)", "1100000110ppppaaaa", "medium", "base",
   3, 0, 0, 0, 1,
-  "p;a", "new_ptcr;asid", "base.field_types.Rn;base.field_types.Rn", "", "">;
-def BRForm_base_instructions_SYNCCACHE_ea_e : BedrockISAForm<
-  "base.instructions.SYNCCACHE.ea_e", "synccache", "SYNCCACHE <ea>(e)", "11101010000eeeeeee", "medium", "base",
+  "p;a", "new_ptcr;asid", "Rn;Rn", "", "">;
+def BRForm_base_SYNCCACHE_ea_e : BedrockISAForm<
+  "base.SYNCCACHE.ea_e", "synccache", "SYNCCACHE <ea>(e)", "11101010000eeeeeee", "medium", "base",
   3, 0, 1, 1, 0,
-  "e", "target", "base.field_types.EA", "", "">;
-def BRForm_base_instructions_SYSCALL_plain : BedrockISAForm<
-  "base.instructions.SYSCALL.plain", "syscall", "SYSCALL", "0000101", "extrashort", "base",
+  "e", "target", "EA", "", "">;
+def BRForm_base_SYSCALL_plain : BedrockISAForm<
+  "base.SYSCALL.plain", "syscall", "SYSCALL", "0000101", "extrashort", "base",
   1, 0, 0, 0, 1,
   "", "", "", "", "">;
-def BRForm_base_instructions_TEST_l_q_z_rn_s_rn_d : BedrockISAForm<
-  "base.instructions.TEST.l_q_z_rn_s_rn_d", "test", "TEST.{L|Q}(z) Rn(s), Rn(d)", "00111zssssdddd", "short", "base",
+def BRForm_base_TEST_l_q_z_rn_s_rn_d : BedrockISAForm<
+  "base.TEST.l_q_z_rn_s_rn_d", "test", "TEST.{L|Q}(z) Rn(s), Rn(d)", "00111zssssdddd", "short", "base",
   2, 0, 0, 0, 1,
-  "z;s;d", "size;src;dst", "base.field_types.SIZE_LQ;base.field_types.Rn;base.field_types.Rn", "", "">;
-def BRForm_base_instructions_TEST_b_w_l_q_z_rn_s_ea_e : BedrockISAForm<
-  "base.instructions.TEST.b_w_l_q_z_rn_s_ea_e", "test", "TEST.{B|W|L|Q}(z) Rn(s), <ea>(e)", "1111001111zz010sssseeeeeee", "long", "base",
+  "z;s;d", "size;src;dst", "SIZE_LQ;Rn;Rn", "", "">;
+def BRForm_base_TEST_b_w_l_q_z_rn_s_ea_e : BedrockISAForm<
+  "base.TEST.b_w_l_q_z_rn_s_ea_e", "test", "TEST.{B|W|L|Q}(z) Rn(s), <ea>(e)", "1111001111zz010sssseeeeeee", "long", "base",
   4, 0, 1, 1, 0,
-  "z;s;e", "size;lhs;rhs", "base.field_types.SIZE_BWLQ;base.field_types.Rn;base.field_types.EA", "", "">;
-def BRForm_base_instructions_TEST_b_w_l_q_z_ea_e_rn_d : BedrockISAForm<
-  "base.instructions.TEST.b_w_l_q_z_ea_e_rn_d", "test", "TEST.{B|W|L|Q}(z) <ea>(e), Rn(d)", "01111zzddddeeeeeee", "medium", "base",
+  "z;s;e", "size;lhs;rhs", "SIZE_BWLQ;Rn;EA", "", "">;
+def BRForm_base_TEST_b_w_l_q_z_ea_e_rn_d : BedrockISAForm<
+  "base.TEST.b_w_l_q_z_ea_e_rn_d", "test", "TEST.{B|W|L|Q}(z) <ea>(e), Rn(d)", "01111zzddddeeeeeee", "medium", "base",
   3, 0, 1, 1, 0,
-  "z;d;e", "size;rhs;lhs", "base.field_types.SIZE_BWLQ;base.field_types.Rn;base.field_types.EA", "", "">;
-def BRForm_base_instructions_TESTJcc_b_w_l_q_z_rn_s_rn_d_imm8s : BedrockISAForm<
-  "base.instructions.TESTJcc.b_w_l_q_z_rn_s_rn_d_imm8s", "testjcc", "TESTJcc.{B|W|L|Q}(z) Rn(s), Rn(d), <imm8s>", "111101000010zzccccssssdddd", "long", "base",
+  "z;d;e", "size;rhs;lhs", "SIZE_BWLQ;Rn;EA", "", "">;
+def BRForm_base_TESTJcc_b_w_l_q_z_rn_s_rn_d_imm8s : BedrockISAForm<
+  "base.TESTJcc.b_w_l_q_z_rn_s_rn_d_imm8s", "testjcc", "TESTJcc.{B|W|L|Q}(z) Rn(s), Rn(d), <imm8s>", "111101000010zzccccssssdddd", "long", "base",
   4, 1, 0, 0, 1,
-  "z;c;s;d", "size;cc;src;dst", "base.field_types.SIZE_BWLQ;base.field_types.CC;base.field_types.Rn;base.field_types.Rn", "target", "base.payload_types.DISP8S">;
-def BRForm_base_instructions_TESTJcc_b_w_l_q_z_rn_s_rn_d_imm16s : BedrockISAForm<
-  "base.instructions.TESTJcc.b_w_l_q_z_rn_s_rn_d_imm16s", "testjcc", "TESTJcc.{B|W|L|Q}(z) Rn(s), Rn(d), <imm16s>", "111101000011zzccccssssdddd", "long", "base",
+  "z;c;s;d", "size;cc;src;dst", "SIZE_BWLQ;CC;Rn;Rn", "target", "DISP8S">;
+def BRForm_base_TESTJcc_b_w_l_q_z_rn_s_rn_d_imm16s : BedrockISAForm<
+  "base.TESTJcc.b_w_l_q_z_rn_s_rn_d_imm16s", "testjcc", "TESTJcc.{B|W|L|Q}(z) Rn(s), Rn(d), <imm16s>", "111101000011zzccccssssdddd", "long", "base",
   4, 2, 0, 0, 1,
-  "z;c;s;d", "size;cc;src;dst", "base.field_types.SIZE_BWLQ;base.field_types.CC;base.field_types.Rn;base.field_types.Rn", "target", "base.payload_types.DISP16S">;
-def BRForm_base_instructions_TRACE_imm16 : BedrockISAForm<
-  "base.instructions.TRACE.imm16", "trace", "TRACE <imm16>", "111011110000001010", "medium", "base",
+  "z;c;s;d", "size;cc;src;dst", "SIZE_BWLQ;CC;Rn;Rn", "target", "DISP16S">;
+def BRForm_base_TRACE_imm16 : BedrockISAForm<
+  "base.TRACE.imm16", "trace", "TRACE <imm16>", "111011110000001010", "medium", "base",
   3, 2, 0, 0, 1,
-  "", "", "", "marker", "base.payload_types.IMM16">;
-def BRForm_base_instructions_VTOP_rn_v_rn_p : BedrockISAForm<
-  "base.instructions.VTOP.rn_v_rn_p", "vtop", "VTOP Rn(v), Rn(p)", "1100000111vvvvpppp", "medium", "base",
+  "", "", "", "marker", "IMM16">;
+def BRForm_base_VTOP_rn_v_rn_p : BedrockISAForm<
+  "base.VTOP.rn_v_rn_p", "vtop", "VTOP Rn(v), Rn(p)", "1100000111vvvvpppp", "medium", "base",
   3, 0, 0, 0, 1,
-  "v;p", "virt;phys", "base.field_types.Rn;base.field_types.Rn", "", "">;
-def BRForm_base_instructions_WAIT_plain : BedrockISAForm<
-  "base.instructions.WAIT.plain", "wait", "WAIT", "0001000", "extrashort", "base",
+  "v;p", "virt;phys", "Rn;Rn", "", "">;
+def BRForm_base_RELAX_plain : BedrockISAForm<
+  "base.RELAX.plain", "relax", "RELAX", "0001000", "extrashort", "base",
   1, 0, 0, 0, 1,
   "", "", "", "", "">;
-def BRForm_base_instructions_WFENCE_plain : BedrockISAForm<
-  "base.instructions.WFENCE.plain", "wfence", "WFENCE", "0001011", "extrashort", "base",
+def BRForm_base_WFENCE_plain : BedrockISAForm<
+  "base.WFENCE.plain", "wfence", "WFENCE", "0001011", "extrashort", "base",
   1, 0, 0, 0, 1,
   "", "", "", "", "">;
-def BRForm_base_instructions_WRBKDCACHE_ea_e : BedrockISAForm<
-  "base.instructions.WRBKDCACHE.ea_e", "wrbkdcache", "WRBKDCACHE <ea>(e)", "11101010001eeeeeee", "medium", "base",
+def BRForm_base_WRBKDCACHE_ea_e : BedrockISAForm<
+  "base.WRBKDCACHE.ea_e", "wrbkdcache", "WRBKDCACHE <ea>(e)", "11101010001eeeeeee", "medium", "base",
   3, 0, 1, 1, 0,
-  "e", "target", "base.field_types.EA", "", "">;
-def BRForm_base_instructions_WRCR_rn_s_imm16 : BedrockISAForm<
-  "base.instructions.WRCR.rn_s_imm16", "wrcr", "WRCR Rn(s), <imm16>", "11101101010001ssss", "medium", "base",
+  "e", "target", "EA", "", "">;
+def BRForm_base_WRCR_rn_s_imm16 : BedrockISAForm<
+  "base.WRCR.rn_s_imm16", "wrcr", "WRCR Rn(s), <imm16>", "11101101010001ssss", "medium", "base",
   3, 2, 0, 0, 1,
-  "s", "src", "base.field_types.Rn", "cr", "base.payload_types.CR">;
-def BRForm_base_instructions_WRFLAGS_rn_s : BedrockISAForm<
-  "base.instructions.WRFLAGS.rn_s", "wrflags", "WRFLAGS Rn(s)", "11101101001100ssss", "medium", "base",
+  "s", "src", "Rn", "cr", "CR">;
+def BRForm_base_WRFLAGS_rn_s : BedrockISAForm<
+  "base.WRFLAGS.rn_s", "wrflags", "WRFLAGS Rn(s)", "11101101001100ssss", "medium", "base",
   3, 0, 0, 0, 1,
-  "s", "src", "base.field_types.Rn", "", "">;
-def BRForm_base_instructions_WRSEG_rn_d_sreg_s : BedrockISAForm<
-  "base.instructions.WRSEG.rn_d_sreg_s", "wrseg", "WRSEG Rn(d), SREG(s)", "11101111110sssdddd", "medium", "base",
+  "s", "src", "Rn", "", "">;
+def BRForm_base_WRSEG_rn_d_sreg_s : BedrockISAForm<
+  "base.WRSEG.rn_d_sreg_s", "wrseg", "WRSEG Rn(d), SREG(s)", "11101111110sssdddd", "medium", "base",
   3, 0, 0, 0, 1,
-  "s;d", "seg;src", "base.field_types.SREG;base.field_types.Rn", "", "">;
-def BRForm_base_instructions_WRSTATUS_rn_s : BedrockISAForm<
-  "base.instructions.WRSTATUS.rn_s", "wrstatus", "WRSTATUS Rn(s)", "11101101010010ssss", "medium", "base",
+  "s;d", "seg;src", "SREG;Rn", "", "">;
+def BRForm_base_WRSTATUS_rn_s : BedrockISAForm<
+  "base.WRSTATUS.rn_s", "wrstatus", "WRSTATUS Rn(s)", "11101101010010ssss", "medium", "base",
   3, 0, 0, 0, 1,
-  "s", "src", "base.field_types.Rn", "", "">;
-def BRForm_base_instructions_XCHG_l_q_z_rn_s_rn_d : BedrockISAForm<
-  "base.instructions.XCHG.l_q_z_rn_s_rn_d", "xchg", "XCHG.{L|Q}(z) Rn(s), Rn(d)", "01000zssssdddd", "short", "base",
+  "s", "src", "Rn", "", "">;
+def BRForm_base_XCHG_l_q_z_rn_s_rn_d : BedrockISAForm<
+  "base.XCHG.l_q_z_rn_s_rn_d", "xchg", "XCHG.{L|Q}(z) Rn(s), Rn(d)", "01000zssssdddd", "short", "base",
   2, 0, 0, 0, 1,
-  "z;s;d", "size;lhs;rhs", "base.field_types.SIZE_LQ;base.field_types.Rn;base.field_types.Rn", "", "">;
-def BRForm_base_instructions_XCHG_b_w_l_q_z_rn_s_ea_e : BedrockISAForm<
-  "base.instructions.XCHG.b_w_l_q_z_rn_s_ea_e", "xchg", "XCHG.{B|W|L|Q}(z) Rn(s), <ea>(e)", "1111001111zz011sssseeeeeee", "long", "base",
+  "z;s;d", "size;lhs;rhs", "SIZE_LQ;Rn;Rn", "", "">;
+def BRForm_base_XCHG_b_w_l_q_z_rn_s_ea_e : BedrockISAForm<
+  "base.XCHG.b_w_l_q_z_rn_s_ea_e", "xchg", "XCHG.{B|W|L|Q}(z) Rn(s), <ea>(e)", "1111001111zz011sssseeeeeee", "long", "base",
   4, 0, 1, 1, 0,
-  "z;s;e", "size;lhs;rhs", "base.field_types.SIZE_BWLQ;base.field_types.Rn;base.field_types.EA", "", "">;
-def BRForm_base_instructions_XCHG_b_w_l_q_z_ea_e_rn_d : BedrockISAForm<
-  "base.instructions.XCHG.b_w_l_q_z_ea_e_rn_d", "xchg", "XCHG.{B|W|L|Q}(z) <ea>(e), Rn(d)", "1111001000zz001ddddeeeeeee", "long", "base",
+  "z;s;e", "size;lhs;rhs", "SIZE_BWLQ;Rn;EA", "", "">;
+def BRForm_base_XCHG_b_w_l_q_z_ea_e_rn_d : BedrockISAForm<
+  "base.XCHG.b_w_l_q_z_ea_e_rn_d", "xchg", "XCHG.{B|W|L|Q}(z) <ea>(e), Rn(d)", "1111001000zz001ddddeeeeeee", "long", "base",
   4, 0, 1, 1, 0,
-  "z;d;e", "size;rhs;lhs", "base.field_types.SIZE_BWLQ;base.field_types.Rn;base.field_types.EA", "", "">;
-def BRForm_base_instructions_XOR_l_q_z_rn_s_rn_d : BedrockISAForm<
-  "base.instructions.XOR.l_q_z_rn_s_rn_d", "xor", "XOR.{L|Q}(z) Rn(s), Rn(d)", "00110zssssdddd", "short", "base",
+  "z;d;e", "size;rhs;lhs", "SIZE_BWLQ;Rn;EA", "", "">;
+def BRForm_base_XOR_l_q_z_rn_s_rn_d : BedrockISAForm<
+  "base.XOR.l_q_z_rn_s_rn_d", "xor", "XOR.{L|Q}(z) Rn(s), Rn(d)", "00110zssssdddd", "short", "base",
   2, 0, 0, 0, 1,
-  "z;s;d", "size;src;dst", "base.field_types.SIZE_LQ;base.field_types.Rn;base.field_types.Rn", "", "">;
-def BRForm_base_instructions_XOR_b_w_l_q_z_rn_s_ea_e : BedrockISAForm<
-  "base.instructions.XOR.b_w_l_q_z_rn_s_ea_e", "xor", "XOR.{B|W|L|Q}(z) Rn(s), <ea>(e)", "00110zzsssseeeeeee", "medium", "base",
+  "z;s;d", "size;src;dst", "SIZE_LQ;Rn;Rn", "", "">;
+def BRForm_base_XOR_b_w_l_q_z_rn_s_ea_e : BedrockISAForm<
+  "base.XOR.b_w_l_q_z_rn_s_ea_e", "xor", "XOR.{B|W|L|Q}(z) Rn(s), <ea>(e)", "00110zzsssseeeeeee", "medium", "base",
   3, 0, 1, 1, 0,
-  "z;s;e", "size;src;dst", "base.field_types.SIZE_BWLQ;base.field_types.Rn;base.field_types.EA", "", "">;
-def BRForm_base_instructions_XOR_b_w_l_q_z_ea_e_rn_d : BedrockISAForm<
-  "base.instructions.XOR.b_w_l_q_z_ea_e_rn_d", "xor", "XOR.{B|W|L|Q}(z) <ea>(e), Rn(d)", "01110zzddddeeeeeee", "medium", "base",
+  "z;s;e", "size;src;dst", "SIZE_BWLQ;Rn;EA", "", "">;
+def BRForm_base_XOR_b_w_l_q_z_ea_e_rn_d : BedrockISAForm<
+  "base.XOR.b_w_l_q_z_ea_e_rn_d", "xor", "XOR.{B|W|L|Q}(z) <ea>(e), Rn(d)", "01110zzddddeeeeeee", "medium", "base",
   3, 0, 1, 1, 0,
-  "z;d;e", "size;dst;src", "base.field_types.SIZE_BWLQ;base.field_types.Rn;base.field_types.EA", "", "">;
-def BRForm_base_instructions_XOR_b_w_l_q_z_imm8s_ea_e : BedrockISAForm<
-  "base.instructions.XOR.b_w_l_q_z_imm8s_ea_e", "xor", "XOR.{B|W|L|Q}(z) <imm8s>, <ea>(e)", "11110110000000100zzeeeeeee", "long", "base",
+  "z;d;e", "size;dst;src", "SIZE_BWLQ;Rn;EA", "", "">;
+def BRForm_base_XOR_b_w_l_q_z_imm8s_ea_e : BedrockISAForm<
+  "base.XOR.b_w_l_q_z_imm8s_ea_e", "xor", "XOR.{B|W|L|Q}(z) <imm8s>, <ea>(e)", "11110110000000100zzeeeeeee", "long", "base",
   4, 1, 1, 1, 0,
-  "z;e", "size;dst", "base.field_types.SIZE_BWLQ;base.field_types.EA", "src", "base.payload_types.IMM8S">;
-def BRForm_base_instructions_XOR_w_l_q_z_imm16s_ea_e : BedrockISAForm<
-  "base.instructions.XOR.w_l_q_z_imm16s_ea_e", "xor", "XOR.{W|L|Q}(z) <imm16s>, <ea>(e)", "11110110000000101zzeeeeeee", "long", "base",
+  "z;e", "size;dst", "SIZE_BWLQ;EA", "src", "IMM8S">;
+def BRForm_base_XOR_w_l_q_z_imm16s_ea_e : BedrockISAForm<
+  "base.XOR.w_l_q_z_imm16s_ea_e", "xor", "XOR.{W|L|Q}(z) <imm16s>, <ea>(e)", "11110110000000101zzeeeeeee", "long", "base",
   4, 2, 1, 1, 0,
-  "z;e", "size;dst", "base.field_types.SIZE_WLQ;base.field_types.EA", "src", "base.payload_types.IMM16S">;
-def BRForm_base_instructions_XOR_l_q_z_imm32s_ea_e : BedrockISAForm<
-  "base.instructions.XOR.l_q_z_imm32s_ea_e", "xor", "XOR.{L|Q}(z) <imm32s>, <ea>(e)", "111101100000001100zeeeeeee", "long", "base",
+  "z;e", "size;dst", "SIZE_WLQ;EA", "src", "IMM16S">;
+def BRForm_base_XOR_l_q_z_imm32s_ea_e : BedrockISAForm<
+  "base.XOR.l_q_z_imm32s_ea_e", "xor", "XOR.{L|Q}(z) <imm32s>, <ea>(e)", "111101100000001100zeeeeeee", "long", "base",
   4, 4, 1, 1, 0,
-  "z;e", "size;dst", "base.field_types.SIZE_LQ;base.field_types.EA", "src", "base.payload_types.IMM32S">;
-def BRForm_base_instructions_XOR_q_imm64_ea_e : BedrockISAForm<
-  "base.instructions.XOR.q_imm64_ea_e", "xor", "XOR.Q <imm64>, <ea>(e)", "11101010010eeeeeee", "medium", "base",
+  "z;e", "size;dst", "SIZE_LQ;EA", "src", "IMM32S">;
+def BRForm_base_XOR_q_imm64_ea_e : BedrockISAForm<
+  "base.XOR.q_imm64_ea_e", "xor", "XOR.Q <imm64>, <ea>(e)", "11101010010eeeeeee", "medium", "base",
   3, 8, 1, 1, 0,
-  "e", "dst", "base.field_types.EA", "src", "base.payload_types.IMM64">;
-def BRForm_base_instructions_YIELD_plain : BedrockISAForm<
-  "base.instructions.YIELD.plain", "yield", "YIELD", "0001001", "extrashort", "base",
+  "e", "dst", "EA", "src", "IMM64">;
+def BRForm_base_YIELD_plain : BedrockISAForm<
+  "base.YIELD.plain", "yield", "YIELD", "0001001", "extrashort", "base",
   1, 0, 0, 0, 1,
   "", "", "", "", "">;
-def BRForm_FP_instructions_FABS_s_d_z_fn_s_fn_d : BedrockISAForm<
-  "FP.instructions.FABS.s_d_z_fn_s_fn_d", "fabs", "FABS.{S|D}(z) Fn(s), Fn(d)", "101000z000ssssdddd", "medium", "FP",
+def BRForm_FP_FABS_s_d_z_fn_s_fn_d : BedrockISAForm<
+  "FP.FABS.s_d_z_fn_s_fn_d", "fabs", "FABS.{S|D}(z) Fn(s), Fn(d)", "101000z000ssssdddd", "medium", "FP",
   3, 0, 0, 0, 1,
-  "z;s;d", "size;src;dst", "FP.field_types.SIZE_SD;FP.field_types.Fn;FP.field_types.Fn", "", "">;
-def BRForm_FP_instructions_FABS_s_d_z_ea_e_fn_d : BedrockISAForm<
-  "FP.instructions.FABS.s_d_z_ea_e_fn_d", "fabs", "FABS.{S|D}(z) <ea>(e), Fn(d)", "1111100100z0000ddddeeeeeee", "long", "FP",
+  "z;s;d", "size;src;dst", "SIZE_SD;Fn;Fn", "", "">;
+def BRForm_FP_FABS_s_d_z_ea_e_fn_d : BedrockISAForm<
+  "FP.FABS.s_d_z_ea_e_fn_d", "fabs", "FABS.{S|D}(z) <ea>(e), Fn(d)", "1111100100z0000ddddeeeeeee", "long", "FP",
   4, 0, 1, 1, 0,
-  "z;d;e", "size;dst;src", "FP.field_types.SIZE_SD;FP.field_types.Fn;FP.field_types.FEA", "", "">;
-def BRForm_FP_instructions_FABS_s_d_z_fn_s_ea_e : BedrockISAForm<
-  "FP.instructions.FABS.s_d_z_fn_s_ea_e", "fabs", "FABS.{S|D}(z) Fn(s), <ea>(e)", "1111100100z1000sssseeeeeee", "long", "FP",
+  "z;d;e", "size;dst;src", "SIZE_SD;Fn;FEA", "", "">;
+def BRForm_FP_FABS_s_d_z_fn_s_ea_e : BedrockISAForm<
+  "FP.FABS.s_d_z_fn_s_ea_e", "fabs", "FABS.{S|D}(z) Fn(s), <ea>(e)", "1111100100z1000sssseeeeeee", "long", "FP",
   4, 0, 1, 1, 0,
-  "z;s;e", "size;src;dst", "FP.field_types.SIZE_SD;FP.field_types.Fn;FP.field_types.FEA", "", "">;
-def BRForm_FP_instructions_FADD_s_d_z_fn_s_fn_d : BedrockISAForm<
-  "FP.instructions.FADD.s_d_z_fn_s_fn_d", "fadd", "FADD.{S|D}(z) Fn(s), Fn(d)", "101000z010ssssdddd", "medium", "FP",
+  "z;s;e", "size;src;dst", "SIZE_SD;Fn;FEA", "", "">;
+def BRForm_FP_FADD_s_d_z_fn_s_fn_d : BedrockISAForm<
+  "FP.FADD.s_d_z_fn_s_fn_d", "fadd", "FADD.{S|D}(z) Fn(s), Fn(d)", "101000z010ssssdddd", "medium", "FP",
   3, 0, 0, 0, 1,
-  "z;s;d", "size;src;dst", "FP.field_types.SIZE_SD;FP.field_types.Fn;FP.field_types.Fn", "", "">;
-def BRForm_FP_instructions_FADD_s_d_z_ea_e_fn_d : BedrockISAForm<
-  "FP.instructions.FADD.s_d_z_ea_e_fn_d", "fadd", "FADD.{S|D}(z) <ea>(e), Fn(d)", "1111100100z0010ddddeeeeeee", "long", "FP",
+  "z;s;d", "size;src;dst", "SIZE_SD;Fn;Fn", "", "">;
+def BRForm_FP_FADD_s_d_z_ea_e_fn_d : BedrockISAForm<
+  "FP.FADD.s_d_z_ea_e_fn_d", "fadd", "FADD.{S|D}(z) <ea>(e), Fn(d)", "1111100100z0010ddddeeeeeee", "long", "FP",
   4, 0, 1, 1, 0,
-  "z;d;e", "size;dst;src", "FP.field_types.SIZE_SD;FP.field_types.Fn;FP.field_types.FEA", "", "">;
-def BRForm_FP_instructions_FBNDII_s_d_z_fn_l_fn_v_fn_h : BedrockISAForm<
-  "FP.instructions.FBNDII.s_d_z_fn_l_fn_v_fn_h", "fbndii", "FBNDII.{S|D}(z) Fn(l), Fn(v), Fn(h)", "111111001100101000000zllllvvvvhhhh", "extralong", "FP",
+  "z;d;e", "size;dst;src", "SIZE_SD;Fn;FEA", "", "">;
+def BRForm_FP_FBNDII_s_d_z_fn_l_fn_v_fn_h : BedrockISAForm<
+  "FP.FBNDII.s_d_z_fn_l_fn_v_fn_h", "fbndii", "FBNDII.{S|D}(z) Fn(l), Fn(v), Fn(h)", "111111001100101000000zllllvvvvhhhh", "extralong", "FP",
   5, 0, 0, 0, 1,
-  "z;l;v;h", "size;lo;value;hi", "FP.field_types.SIZE_SD;FP.field_types.Fn;FP.field_types.Fn;FP.field_types.Fn", "", "">;
-def BRForm_FP_instructions_FBNDII_s_d_z_fn_l_ea_v_fn_h : BedrockISAForm<
-  "FP.instructions.FBNDII.s_d_z_fn_l_ea_v_fn_h", "fbndii", "FBNDII.{S|D}(z) Fn(l), <ea>(v), Fn(h)", "111111001100100000zllllhhhhvvvvvvv", "extralong", "FP",
+  "z;l;v;h", "size;lo;value;hi", "SIZE_SD;Fn;Fn;Fn", "", "">;
+def BRForm_FP_FBNDII_s_d_z_fn_l_ea_v_fn_h : BedrockISAForm<
+  "FP.FBNDII.s_d_z_fn_l_ea_v_fn_h", "fbndii", "FBNDII.{S|D}(z) Fn(l), <ea>(v), Fn(h)", "111111001100100000zllllhhhhvvvvvvv", "extralong", "FP",
   5, 0, 1, 1, 0,
-  "z;l;h;v", "size;lo;hi;value", "FP.field_types.SIZE_SD;FP.field_types.Fn;FP.field_types.Fn;FP.field_types.FEA", "", "">;
-def BRForm_FP_instructions_FBNDII_s_d_z_ea_l_fn_v_ea_h : BedrockISAForm<
-  "FP.instructions.FBNDII.s_d_z_ea_l_fn_v_ea_h", "fbndii", "FBNDII.{S|D}(z) <ea>(l), Fn(v), <ea>(h)", "111111001100000zvvvvlllllllhhhhhhh", "extralong", "FP",
+  "z;l;h;v", "size;lo;hi;value", "SIZE_SD;Fn;Fn;FEA", "", "">;
+def BRForm_FP_FBNDII_s_d_z_ea_l_fn_v_ea_h : BedrockISAForm<
+  "FP.FBNDII.s_d_z_ea_l_fn_v_ea_h", "fbndii", "FBNDII.{S|D}(z) <ea>(l), Fn(v), <ea>(h)", "111111001100000zvvvvlllllllhhhhhhh", "extralong", "FP",
   5, 0, 1, 1, 0,
-  "z;v;l;h", "size;value;lo;hi", "FP.field_types.SIZE_SD;FP.field_types.Fn;FP.field_types.FEA;FP.field_types.FEA", "", "">;
-def BRForm_FP_instructions_FBNDIX_s_d_z_fn_l_fn_v_fn_h : BedrockISAForm<
-  "FP.instructions.FBNDIX.s_d_z_fn_l_fn_v_fn_h", "fbndix", "FBNDIX.{S|D}(z) Fn(l), Fn(v), Fn(h)", "111111001100101000001zllllvvvvhhhh", "extralong", "FP",
+  "z;v;l;h", "size;value;lo;hi", "SIZE_SD;Fn;FEA;FEA", "", "">;
+def BRForm_FP_FBNDIX_s_d_z_fn_l_fn_v_fn_h : BedrockISAForm<
+  "FP.FBNDIX.s_d_z_fn_l_fn_v_fn_h", "fbndix", "FBNDIX.{S|D}(z) Fn(l), Fn(v), Fn(h)", "111111001100101000001zllllvvvvhhhh", "extralong", "FP",
   5, 0, 0, 0, 1,
-  "z;l;v;h", "size;lo;value;hi", "FP.field_types.SIZE_SD;FP.field_types.Fn;FP.field_types.Fn;FP.field_types.Fn", "", "">;
-def BRForm_FP_instructions_FBNDIX_s_d_z_fn_l_ea_v_fn_h : BedrockISAForm<
-  "FP.instructions.FBNDIX.s_d_z_fn_l_ea_v_fn_h", "fbndix", "FBNDIX.{S|D}(z) Fn(l), <ea>(v), Fn(h)", "111111001100100001zllllhhhhvvvvvvv", "extralong", "FP",
+  "z;l;v;h", "size;lo;value;hi", "SIZE_SD;Fn;Fn;Fn", "", "">;
+def BRForm_FP_FBNDIX_s_d_z_fn_l_ea_v_fn_h : BedrockISAForm<
+  "FP.FBNDIX.s_d_z_fn_l_ea_v_fn_h", "fbndix", "FBNDIX.{S|D}(z) Fn(l), <ea>(v), Fn(h)", "111111001100100001zllllhhhhvvvvvvv", "extralong", "FP",
   5, 0, 1, 1, 0,
-  "z;l;h;v", "size;lo;hi;value", "FP.field_types.SIZE_SD;FP.field_types.Fn;FP.field_types.Fn;FP.field_types.FEA", "", "">;
-def BRForm_FP_instructions_FBNDIX_s_d_z_ea_l_fn_v_ea_h : BedrockISAForm<
-  "FP.instructions.FBNDIX.s_d_z_ea_l_fn_v_ea_h", "fbndix", "FBNDIX.{S|D}(z) <ea>(l), Fn(v), <ea>(h)", "111111001100001zvvvvlllllllhhhhhhh", "extralong", "FP",
+  "z;l;h;v", "size;lo;hi;value", "SIZE_SD;Fn;Fn;FEA", "", "">;
+def BRForm_FP_FBNDIX_s_d_z_ea_l_fn_v_ea_h : BedrockISAForm<
+  "FP.FBNDIX.s_d_z_ea_l_fn_v_ea_h", "fbndix", "FBNDIX.{S|D}(z) <ea>(l), Fn(v), <ea>(h)", "111111001100001zvvvvlllllllhhhhhhh", "extralong", "FP",
   5, 0, 1, 1, 0,
-  "z;v;l;h", "size;value;lo;hi", "FP.field_types.SIZE_SD;FP.field_types.Fn;FP.field_types.FEA;FP.field_types.FEA", "", "">;
-def BRForm_FP_instructions_FBNDXI_s_d_z_fn_l_fn_v_fn_h : BedrockISAForm<
-  "FP.instructions.FBNDXI.s_d_z_fn_l_fn_v_fn_h", "fbndxi", "FBNDXI.{S|D}(z) Fn(l), Fn(v), Fn(h)", "111111001100101000010zllllvvvvhhhh", "extralong", "FP",
+  "z;v;l;h", "size;value;lo;hi", "SIZE_SD;Fn;FEA;FEA", "", "">;
+def BRForm_FP_FBNDXI_s_d_z_fn_l_fn_v_fn_h : BedrockISAForm<
+  "FP.FBNDXI.s_d_z_fn_l_fn_v_fn_h", "fbndxi", "FBNDXI.{S|D}(z) Fn(l), Fn(v), Fn(h)", "111111001100101000010zllllvvvvhhhh", "extralong", "FP",
   5, 0, 0, 0, 1,
-  "z;l;v;h", "size;lo;value;hi", "FP.field_types.SIZE_SD;FP.field_types.Fn;FP.field_types.Fn;FP.field_types.Fn", "", "">;
-def BRForm_FP_instructions_FBNDXI_s_d_z_fn_l_ea_v_fn_h : BedrockISAForm<
-  "FP.instructions.FBNDXI.s_d_z_fn_l_ea_v_fn_h", "fbndxi", "FBNDXI.{S|D}(z) Fn(l), <ea>(v), Fn(h)", "111111001100100010zllllhhhhvvvvvvv", "extralong", "FP",
+  "z;l;v;h", "size;lo;value;hi", "SIZE_SD;Fn;Fn;Fn", "", "">;
+def BRForm_FP_FBNDXI_s_d_z_fn_l_ea_v_fn_h : BedrockISAForm<
+  "FP.FBNDXI.s_d_z_fn_l_ea_v_fn_h", "fbndxi", "FBNDXI.{S|D}(z) Fn(l), <ea>(v), Fn(h)", "111111001100100010zllllhhhhvvvvvvv", "extralong", "FP",
   5, 0, 1, 1, 0,
-  "z;l;h;v", "size;lo;hi;value", "FP.field_types.SIZE_SD;FP.field_types.Fn;FP.field_types.Fn;FP.field_types.FEA", "", "">;
-def BRForm_FP_instructions_FBNDXI_s_d_z_ea_l_fn_v_ea_h : BedrockISAForm<
-  "FP.instructions.FBNDXI.s_d_z_ea_l_fn_v_ea_h", "fbndxi", "FBNDXI.{S|D}(z) <ea>(l), Fn(v), <ea>(h)", "111111001100010zvvvvlllllllhhhhhhh", "extralong", "FP",
+  "z;l;h;v", "size;lo;hi;value", "SIZE_SD;Fn;Fn;FEA", "", "">;
+def BRForm_FP_FBNDXI_s_d_z_ea_l_fn_v_ea_h : BedrockISAForm<
+  "FP.FBNDXI.s_d_z_ea_l_fn_v_ea_h", "fbndxi", "FBNDXI.{S|D}(z) <ea>(l), Fn(v), <ea>(h)", "111111001100010zvvvvlllllllhhhhhhh", "extralong", "FP",
   5, 0, 1, 1, 0,
-  "z;v;l;h", "size;value;lo;hi", "FP.field_types.SIZE_SD;FP.field_types.Fn;FP.field_types.FEA;FP.field_types.FEA", "", "">;
-def BRForm_FP_instructions_FBNDXX_s_d_z_fn_l_fn_v_fn_h : BedrockISAForm<
-  "FP.instructions.FBNDXX.s_d_z_fn_l_fn_v_fn_h", "fbndxx", "FBNDXX.{S|D}(z) Fn(l), Fn(v), Fn(h)", "111111001100101000011zllllvvvvhhhh", "extralong", "FP",
+  "z;v;l;h", "size;value;lo;hi", "SIZE_SD;Fn;FEA;FEA", "", "">;
+def BRForm_FP_FBNDXX_s_d_z_fn_l_fn_v_fn_h : BedrockISAForm<
+  "FP.FBNDXX.s_d_z_fn_l_fn_v_fn_h", "fbndxx", "FBNDXX.{S|D}(z) Fn(l), Fn(v), Fn(h)", "111111001100101000011zllllvvvvhhhh", "extralong", "FP",
   5, 0, 0, 0, 1,
-  "z;l;v;h", "size;lo;value;hi", "FP.field_types.SIZE_SD;FP.field_types.Fn;FP.field_types.Fn;FP.field_types.Fn", "", "">;
-def BRForm_FP_instructions_FBNDXX_s_d_z_fn_l_ea_v_fn_h : BedrockISAForm<
-  "FP.instructions.FBNDXX.s_d_z_fn_l_ea_v_fn_h", "fbndxx", "FBNDXX.{S|D}(z) Fn(l), <ea>(v), Fn(h)", "111111001100100011zllllhhhhvvvvvvv", "extralong", "FP",
+  "z;l;v;h", "size;lo;value;hi", "SIZE_SD;Fn;Fn;Fn", "", "">;
+def BRForm_FP_FBNDXX_s_d_z_fn_l_ea_v_fn_h : BedrockISAForm<
+  "FP.FBNDXX.s_d_z_fn_l_ea_v_fn_h", "fbndxx", "FBNDXX.{S|D}(z) Fn(l), <ea>(v), Fn(h)", "111111001100100011zllllhhhhvvvvvvv", "extralong", "FP",
   5, 0, 1, 1, 0,
-  "z;l;h;v", "size;lo;hi;value", "FP.field_types.SIZE_SD;FP.field_types.Fn;FP.field_types.Fn;FP.field_types.FEA", "", "">;
-def BRForm_FP_instructions_FBNDXX_s_d_z_ea_l_fn_v_ea_h : BedrockISAForm<
-  "FP.instructions.FBNDXX.s_d_z_ea_l_fn_v_ea_h", "fbndxx", "FBNDXX.{S|D}(z) <ea>(l), Fn(v), <ea>(h)", "111111001100011zvvvvlllllllhhhhhhh", "extralong", "FP",
+  "z;l;h;v", "size;lo;hi;value", "SIZE_SD;Fn;Fn;FEA", "", "">;
+def BRForm_FP_FBNDXX_s_d_z_ea_l_fn_v_ea_h : BedrockISAForm<
+  "FP.FBNDXX.s_d_z_ea_l_fn_v_ea_h", "fbndxx", "FBNDXX.{S|D}(z) <ea>(l), Fn(v), <ea>(h)", "111111001100011zvvvvlllllllhhhhhhh", "extralong", "FP",
   5, 0, 1, 1, 0,
-  "z;v;l;h", "size;value;lo;hi", "FP.field_types.SIZE_SD;FP.field_types.Fn;FP.field_types.FEA;FP.field_types.FEA", "", "">;
-def BRForm_FP_instructions_FCEIL_s_d_z_fn_s_fn_d : BedrockISAForm<
-  "FP.instructions.FCEIL.s_d_z_fn_s_fn_d", "fceil", "FCEIL.{S|D}(z) Fn(s), Fn(d)", "101000z110ssssdddd", "medium", "FP",
+  "z;v;l;h", "size;value;lo;hi", "SIZE_SD;Fn;FEA;FEA", "", "">;
+def BRForm_FP_FCEIL_s_d_z_fn_s_fn_d : BedrockISAForm<
+  "FP.FCEIL.s_d_z_fn_s_fn_d", "fceil", "FCEIL.{S|D}(z) Fn(s), Fn(d)", "101000z110ssssdddd", "medium", "FP",
   3, 0, 0, 0, 1,
-  "z;s;d", "size;src;dst", "FP.field_types.SIZE_SD;FP.field_types.Fn;FP.field_types.Fn", "", "">;
-def BRForm_FP_instructions_FCEIL_s_d_z_ea_e_fn_d : BedrockISAForm<
-  "FP.instructions.FCEIL.s_d_z_ea_e_fn_d", "fceil", "FCEIL.{S|D}(z) <ea>(e), Fn(d)", "1111100100z0110ddddeeeeeee", "long", "FP",
+  "z;s;d", "size;src;dst", "SIZE_SD;Fn;Fn", "", "">;
+def BRForm_FP_FCEIL_s_d_z_ea_e_fn_d : BedrockISAForm<
+  "FP.FCEIL.s_d_z_ea_e_fn_d", "fceil", "FCEIL.{S|D}(z) <ea>(e), Fn(d)", "1111100100z0110ddddeeeeeee", "long", "FP",
   4, 0, 1, 1, 0,
-  "z;d;e", "size;dst;src", "FP.field_types.SIZE_SD;FP.field_types.Fn;FP.field_types.FEA", "", "">;
-def BRForm_FP_instructions_FCEIL_s_d_z_fn_s_ea_e : BedrockISAForm<
-  "FP.instructions.FCEIL.s_d_z_fn_s_ea_e", "fceil", "FCEIL.{S|D}(z) Fn(s), <ea>(e)", "1111100100z1001sssseeeeeee", "long", "FP",
+  "z;d;e", "size;dst;src", "SIZE_SD;Fn;FEA", "", "">;
+def BRForm_FP_FCEIL_s_d_z_fn_s_ea_e : BedrockISAForm<
+  "FP.FCEIL.s_d_z_fn_s_ea_e", "fceil", "FCEIL.{S|D}(z) Fn(s), <ea>(e)", "1111100100z1001sssseeeeeee", "long", "FP",
   4, 0, 1, 1, 0,
-  "z;s;e", "size;src;dst", "FP.field_types.SIZE_SD;FP.field_types.Fn;FP.field_types.FEA", "", "">;
-def BRForm_FP_instructions_FCLASS_s_d_z_fn_s_rn_d : BedrockISAForm<
-  "FP.instructions.FCLASS.s_d_z_fn_s_rn_d", "fclass", "FCLASS.{S|D}(z) Fn(s), Rn(d)", "11111000111z000000ssssdddd", "long", "FP",
+  "z;s;e", "size;src;dst", "SIZE_SD;Fn;FEA", "", "">;
+def BRForm_FP_FCLASS_s_d_z_fn_s_rn_d : BedrockISAForm<
+  "FP.FCLASS.s_d_z_fn_s_rn_d", "fclass", "FCLASS.{S|D}(z) Fn(s), Rn(d)", "11111000111z000000ssssdddd", "long", "FP",
   4, 0, 0, 0, 1,
-  "z;s;d", "size;src;dst", "FP.field_types.SIZE_SD;FP.field_types.Fn;base.field_types.Rn", "", "">;
-def BRForm_FP_instructions_FCLR_fn_d : BedrockISAForm<
-  "FP.instructions.FCLR.fn_d", "fclr", "FCLR Fn(d)", "11101101100000dddd", "medium", "FP",
+  "z;s;d", "size;src;dst", "SIZE_SD;Fn;Rn", "", "">;
+def BRForm_FP_FCLR_fn_d : BedrockISAForm<
+  "FP.FCLR.fn_d", "fclr", "FCLR Fn(d)", "11101101100000dddd", "medium", "FP",
   3, 0, 0, 0, 1,
-  "d", "dst", "FP.field_types.Fn", "", "">;
-def BRForm_FP_instructions_FCMP_s_d_z_fn_s_fn_d : BedrockISAForm<
-  "FP.instructions.FCMP.s_d_z_fn_s_fn_d", "fcmp", "FCMP.{S|D}(z) Fn(s), Fn(d)", "101000z111ssssdddd", "medium", "FP",
+  "d", "dst", "Fn", "", "">;
+def BRForm_FP_FCMP_s_d_z_fn_s_fn_d : BedrockISAForm<
+  "FP.FCMP.s_d_z_fn_s_fn_d", "fcmp", "FCMP.{S|D}(z) Fn(s), Fn(d)", "101000z111ssssdddd", "medium", "FP",
   3, 0, 0, 0, 1,
-  "z;s;d", "size;src;dst", "FP.field_types.SIZE_SD;FP.field_types.Fn;FP.field_types.Fn", "", "">;
-def BRForm_FP_instructions_FCMP_s_d_z_ea_e_fn_d : BedrockISAForm<
-  "FP.instructions.FCMP.s_d_z_ea_e_fn_d", "fcmp", "FCMP.{S|D}(z) <ea>(e), Fn(d)", "1111100100z0111ddddeeeeeee", "long", "FP",
+  "z;s;d", "size;src;dst", "SIZE_SD;Fn;Fn", "", "">;
+def BRForm_FP_FCMP_s_d_z_ea_e_fn_d : BedrockISAForm<
+  "FP.FCMP.s_d_z_ea_e_fn_d", "fcmp", "FCMP.{S|D}(z) <ea>(e), Fn(d)", "1111100100z0111ddddeeeeeee", "long", "FP",
   4, 0, 1, 1, 0,
-  "z;d;e", "size;dst;src", "FP.field_types.SIZE_SD;FP.field_types.Fn;FP.field_types.FEA", "", "">;
-def BRForm_FP_instructions_FCOPYSIGN_s_d_z_fn_s_fn_m_fn_d : BedrockISAForm<
-  "FP.instructions.FCOPYSIGN.s_d_z_fn_s_fn_m_fn_d", "fcopysign", "FCOPYSIGN.{S|D}(z) Fn(s), Fn(m), Fn(d)", "1111100110z100ssssmmmmdddd", "long", "FP",
+  "z;d;e", "size;dst;src", "SIZE_SD;Fn;FEA", "", "">;
+def BRForm_FP_FCOPYSIGN_s_d_z_fn_s_fn_m_fn_d : BedrockISAForm<
+  "FP.FCOPYSIGN.s_d_z_fn_s_fn_m_fn_d", "fcopysign", "FCOPYSIGN.{S|D}(z) Fn(s), Fn(m), Fn(d)", "1111100110z100ssssmmmmdddd", "long", "FP",
   4, 0, 0, 0, 1,
-  "z;s;m;d", "size;sign_src;magnitude_src;dst", "FP.field_types.SIZE_SD;FP.field_types.Fn;FP.field_types.Fn;FP.field_types.Fn", "", "">;
-def BRForm_FP_instructions_FCVT_s_d_z_fn_s_fn_d : BedrockISAForm<
-  "FP.instructions.FCVT.s_d_z_fn_s_fn_d", "fcvt", "FCVT.{S|D}(z) Fn(s), Fn(d)", "101010z010ssssdddd", "medium", "FP",
+  "z;s;m;d", "size;sign_src;magnitude_src;dst", "SIZE_SD;Fn;Fn;Fn", "", "">;
+def BRForm_FP_FCVT_s_d_z_fn_s_fn_d : BedrockISAForm<
+  "FP.FCVT.s_d_z_fn_s_fn_d", "fcvt", "FCVT.{S|D}(z) Fn(s), Fn(d)", "101010z010ssssdddd", "medium", "FP",
   3, 0, 0, 0, 1,
-  "z;s;d", "size;src;dst", "FP.field_types.SIZE_SD;FP.field_types.Fn;FP.field_types.Fn", "", "">;
-def BRForm_FP_instructions_FCVT_s_d_z_fn_s_rn_d : BedrockISAForm<
-  "FP.instructions.FCVT.s_d_z_fn_s_rn_d", "fcvt", "FCVT.{S|D}(z) Fn(s), Rn(d)", "11111000111z001010ssssdddd", "long", "FP",
+  "z;s;d", "size;src;dst", "SIZE_SD;Fn;Fn", "", "">;
+def BRForm_FP_FCVT_s_d_z_fn_s_rn_d : BedrockISAForm<
+  "FP.FCVT.s_d_z_fn_s_rn_d", "fcvt", "FCVT.{S|D}(z) Fn(s), Rn(d)", "11111000111z001010ssssdddd", "long", "FP",
   4, 0, 0, 0, 1,
-  "z;s;d", "size;src;dst", "FP.field_types.SIZE_SD;FP.field_types.Fn;base.field_types.Rn", "", "">;
-def BRForm_FP_instructions_FCVT_s_d_z_rn_s_fn_d : BedrockISAForm<
-  "FP.instructions.FCVT.s_d_z_rn_s_fn_d", "fcvt", "FCVT.{S|D}(z) Rn(s), Fn(d)", "11111000100z001010ssssdddd", "long", "FP",
+  "z;s;d", "size;src;dst", "SIZE_SD;Fn;Rn", "", "">;
+def BRForm_FP_FCVT_s_d_z_rn_s_fn_d : BedrockISAForm<
+  "FP.FCVT.s_d_z_rn_s_fn_d", "fcvt", "FCVT.{S|D}(z) Rn(s), Fn(d)", "11111000100z001010ssssdddd", "long", "FP",
   4, 0, 0, 0, 1,
-  "z;s;d", "size;src;dst", "FP.field_types.SIZE_SD;base.field_types.Rn;FP.field_types.Fn", "", "">;
-def BRForm_FP_instructions_FCVTU_s_d_z_fn_s_fn_d : BedrockISAForm<
-  "FP.instructions.FCVTU.s_d_z_fn_s_fn_d", "fcvtu", "FCVTU.{S|D}(z) Fn(s), Fn(d)", "101010z011ssssdddd", "medium", "FP",
+  "z;s;d", "size;src;dst", "SIZE_SD;Rn;Fn", "", "">;
+def BRForm_FP_FCVTU_s_d_z_fn_s_fn_d : BedrockISAForm<
+  "FP.FCVTU.s_d_z_fn_s_fn_d", "fcvtu", "FCVTU.{S|D}(z) Fn(s), Fn(d)", "101010z011ssssdddd", "medium", "FP",
   3, 0, 0, 0, 1,
-  "z;s;d", "size;src;dst", "FP.field_types.SIZE_SD;FP.field_types.Fn;FP.field_types.Fn", "", "">;
-def BRForm_FP_instructions_FCVTU_s_d_z_fn_s_rn_d : BedrockISAForm<
-  "FP.instructions.FCVTU.s_d_z_fn_s_rn_d", "fcvtu", "FCVTU.{S|D}(z) Fn(s), Rn(d)", "11111000111z001011ssssdddd", "long", "FP",
+  "z;s;d", "size;src;dst", "SIZE_SD;Fn;Fn", "", "">;
+def BRForm_FP_FCVTU_s_d_z_fn_s_rn_d : BedrockISAForm<
+  "FP.FCVTU.s_d_z_fn_s_rn_d", "fcvtu", "FCVTU.{S|D}(z) Fn(s), Rn(d)", "11111000111z001011ssssdddd", "long", "FP",
   4, 0, 0, 0, 1,
-  "z;s;d", "size;src;dst", "FP.field_types.SIZE_SD;FP.field_types.Fn;base.field_types.Rn", "", "">;
-def BRForm_FP_instructions_FCVTU_s_d_z_rn_s_fn_d : BedrockISAForm<
-  "FP.instructions.FCVTU.s_d_z_rn_s_fn_d", "fcvtu", "FCVTU.{S|D}(z) Rn(s), Fn(d)", "11111000100z001011ssssdddd", "long", "FP",
+  "z;s;d", "size;src;dst", "SIZE_SD;Fn;Rn", "", "">;
+def BRForm_FP_FCVTU_s_d_z_rn_s_fn_d : BedrockISAForm<
+  "FP.FCVTU.s_d_z_rn_s_fn_d", "fcvtu", "FCVTU.{S|D}(z) Rn(s), Fn(d)", "11111000100z001011ssssdddd", "long", "FP",
   4, 0, 0, 0, 1,
-  "z;s;d", "size;src;dst", "FP.field_types.SIZE_SD;base.field_types.Rn;FP.field_types.Fn", "", "">;
-def BRForm_FP_instructions_FDIV_s_d_z_fn_s_fn_d : BedrockISAForm<
-  "FP.instructions.FDIV.s_d_z_fn_s_fn_d", "fdiv", "FDIV.{S|D}(z) Fn(s), Fn(d)", "101010z100ssssdddd", "medium", "FP",
+  "z;s;d", "size;src;dst", "SIZE_SD;Rn;Fn", "", "">;
+def BRForm_FP_FDIV_s_d_z_fn_s_fn_d : BedrockISAForm<
+  "FP.FDIV.s_d_z_fn_s_fn_d", "fdiv", "FDIV.{S|D}(z) Fn(s), Fn(d)", "101010z100ssssdddd", "medium", "FP",
   3, 0, 0, 0, 1,
-  "z;s;d", "size;src;dst", "FP.field_types.SIZE_SD;FP.field_types.Fn;FP.field_types.Fn", "", "">;
-def BRForm_FP_instructions_FDIV_s_d_z_ea_e_fn_d : BedrockISAForm<
-  "FP.instructions.FDIV.s_d_z_ea_e_fn_d", "fdiv", "FDIV.{S|D}(z) <ea>(e), Fn(d)", "1111100100z1100ddddeeeeeee", "long", "FP",
+  "z;s;d", "size;src;dst", "SIZE_SD;Fn;Fn", "", "">;
+def BRForm_FP_FDIV_s_d_z_ea_e_fn_d : BedrockISAForm<
+  "FP.FDIV.s_d_z_ea_e_fn_d", "fdiv", "FDIV.{S|D}(z) <ea>(e), Fn(d)", "1111100100z1100ddddeeeeeee", "long", "FP",
   4, 0, 1, 1, 0,
-  "z;d;e", "size;dst;src", "FP.field_types.SIZE_SD;FP.field_types.Fn;FP.field_types.FEA", "", "">;
-def BRForm_FP_instructions_FFLOOR_s_d_z_fn_s_fn_d : BedrockISAForm<
-  "FP.instructions.FFLOOR.s_d_z_fn_s_fn_d", "ffloor", "FFLOOR.{S|D}(z) Fn(s), Fn(d)", "101010z111ssssdddd", "medium", "FP",
+  "z;d;e", "size;dst;src", "SIZE_SD;Fn;FEA", "", "">;
+def BRForm_FP_FFLOOR_s_d_z_fn_s_fn_d : BedrockISAForm<
+  "FP.FFLOOR.s_d_z_fn_s_fn_d", "ffloor", "FFLOOR.{S|D}(z) Fn(s), Fn(d)", "101010z111ssssdddd", "medium", "FP",
   3, 0, 0, 0, 1,
-  "z;s;d", "size;src;dst", "FP.field_types.SIZE_SD;FP.field_types.Fn;FP.field_types.Fn", "", "">;
-def BRForm_FP_instructions_FFLOOR_s_d_z_ea_e_fn_d : BedrockISAForm<
-  "FP.instructions.FFLOOR.s_d_z_ea_e_fn_d", "ffloor", "FFLOOR.{S|D}(z) <ea>(e), Fn(d)", "1111100100z1111ddddeeeeeee", "long", "FP",
+  "z;s;d", "size;src;dst", "SIZE_SD;Fn;Fn", "", "">;
+def BRForm_FP_FFLOOR_s_d_z_ea_e_fn_d : BedrockISAForm<
+  "FP.FFLOOR.s_d_z_ea_e_fn_d", "ffloor", "FFLOOR.{S|D}(z) <ea>(e), Fn(d)", "1111100100z1111ddddeeeeeee", "long", "FP",
   4, 0, 1, 1, 0,
-  "z;d;e", "size;dst;src", "FP.field_types.SIZE_SD;FP.field_types.Fn;FP.field_types.FEA", "", "">;
-def BRForm_FP_instructions_FFLOOR_s_d_z_fn_s_ea_e : BedrockISAForm<
-  "FP.instructions.FFLOOR.s_d_z_fn_s_ea_e", "ffloor", "FFLOOR.{S|D}(z) Fn(s), <ea>(e)", "1111100100z1010sssseeeeeee", "long", "FP",
+  "z;d;e", "size;dst;src", "SIZE_SD;Fn;FEA", "", "">;
+def BRForm_FP_FFLOOR_s_d_z_fn_s_ea_e : BedrockISAForm<
+  "FP.FFLOOR.s_d_z_fn_s_ea_e", "ffloor", "FFLOOR.{S|D}(z) Fn(s), <ea>(e)", "1111100100z1010sssseeeeeee", "long", "FP",
   4, 0, 1, 1, 0,
-  "z;s;e", "size;src;dst", "FP.field_types.SIZE_SD;FP.field_types.Fn;FP.field_types.FEA", "", "">;
-def BRForm_FP_instructions_FGETEXP_s_d_z_ea_e_fn_d : BedrockISAForm<
-  "FP.instructions.FGETEXP.s_d_z_ea_e_fn_d", "fgetexp", "FGETEXP.{S|D}(z) <ea>(e), Fn(d)", "1111100101z0000ddddeeeeeee", "long", "FP",
+  "z;s;e", "size;src;dst", "SIZE_SD;Fn;FEA", "", "">;
+def BRForm_FP_FGETEXP_s_d_z_ea_e_fn_d : BedrockISAForm<
+  "FP.FGETEXP.s_d_z_ea_e_fn_d", "fgetexp", "FGETEXP.{S|D}(z) <ea>(e), Fn(d)", "1111100101z0000ddddeeeeeee", "long", "FP",
   4, 0, 1, 1, 0,
-  "z;d;e", "size;dst;src", "FP.field_types.SIZE_SD;FP.field_types.Fn;FP.field_types.FEA", "", "">;
-def BRForm_FP_instructions_FGETEXP_s_d_z_fn_s_fn_d : BedrockISAForm<
-  "FP.instructions.FGETEXP.s_d_z_fn_s_fn_d", "fgetexp", "FGETEXP.{S|D}(z) Fn(s), Fn(d)", "101100z000ssssdddd", "medium", "FP",
+  "z;d;e", "size;dst;src", "SIZE_SD;Fn;FEA", "", "">;
+def BRForm_FP_FGETEXP_s_d_z_fn_s_fn_d : BedrockISAForm<
+  "FP.FGETEXP.s_d_z_fn_s_fn_d", "fgetexp", "FGETEXP.{S|D}(z) Fn(s), Fn(d)", "101100z000ssssdddd", "medium", "FP",
   3, 0, 0, 0, 1,
-  "z;s;d", "size;src;dst", "FP.field_types.SIZE_SD;FP.field_types.Fn;FP.field_types.Fn", "", "">;
-def BRForm_FP_instructions_FGETMAN_s_d_z_ea_e_fn_d : BedrockISAForm<
-  "FP.instructions.FGETMAN.s_d_z_ea_e_fn_d", "fgetman", "FGETMAN.{S|D}(z) <ea>(e), Fn(d)", "1111100101z0001ddddeeeeeee", "long", "FP",
+  "z;s;d", "size;src;dst", "SIZE_SD;Fn;Fn", "", "">;
+def BRForm_FP_FGETMAN_s_d_z_ea_e_fn_d : BedrockISAForm<
+  "FP.FGETMAN.s_d_z_ea_e_fn_d", "fgetman", "FGETMAN.{S|D}(z) <ea>(e), Fn(d)", "1111100101z0001ddddeeeeeee", "long", "FP",
   4, 0, 1, 1, 0,
-  "z;d;e", "size;dst;src", "FP.field_types.SIZE_SD;FP.field_types.Fn;FP.field_types.FEA", "", "">;
-def BRForm_FP_instructions_FGETMAN_s_d_z_fn_s_fn_d : BedrockISAForm<
-  "FP.instructions.FGETMAN.s_d_z_fn_s_fn_d", "fgetman", "FGETMAN.{S|D}(z) Fn(s), Fn(d)", "101100z001ssssdddd", "medium", "FP",
+  "z;d;e", "size;dst;src", "SIZE_SD;Fn;FEA", "", "">;
+def BRForm_FP_FGETMAN_s_d_z_fn_s_fn_d : BedrockISAForm<
+  "FP.FGETMAN.s_d_z_fn_s_fn_d", "fgetman", "FGETMAN.{S|D}(z) Fn(s), Fn(d)", "101100z001ssssdddd", "medium", "FP",
   3, 0, 0, 0, 1,
-  "z;s;d", "size;src;dst", "FP.field_types.SIZE_SD;FP.field_types.Fn;FP.field_types.Fn", "", "">;
-def BRForm_FP_instructions_FINT_s_d_z_ea_e_fn_d : BedrockISAForm<
-  "FP.instructions.FINT.s_d_z_ea_e_fn_d", "fint", "FINT.{S|D}(z) <ea>(e), Fn(d)", "1111100101z0010ddddeeeeeee", "long", "FP",
+  "z;s;d", "size;src;dst", "SIZE_SD;Fn;Fn", "", "">;
+def BRForm_FP_FINT_s_d_z_ea_e_fn_d : BedrockISAForm<
+  "FP.FINT.s_d_z_ea_e_fn_d", "fint", "FINT.{S|D}(z) <ea>(e), Fn(d)", "1111100101z0010ddddeeeeeee", "long", "FP",
   4, 0, 1, 1, 0,
-  "z;d;e", "size;dst;src", "FP.field_types.SIZE_SD;FP.field_types.Fn;FP.field_types.FEA", "", "">;
-def BRForm_FP_instructions_FINT_s_d_z_fn_s_fn_d : BedrockISAForm<
-  "FP.instructions.FINT.s_d_z_fn_s_fn_d", "fint", "FINT.{S|D}(z) Fn(s), Fn(d)", "101100z010ssssdddd", "medium", "FP",
+  "z;d;e", "size;dst;src", "SIZE_SD;Fn;FEA", "", "">;
+def BRForm_FP_FINT_s_d_z_fn_s_fn_d : BedrockISAForm<
+  "FP.FINT.s_d_z_fn_s_fn_d", "fint", "FINT.{S|D}(z) Fn(s), Fn(d)", "101100z010ssssdddd", "medium", "FP",
   3, 0, 0, 0, 1,
-  "z;s;d", "size;src;dst", "FP.field_types.SIZE_SD;FP.field_types.Fn;FP.field_types.Fn", "", "">;
-def BRForm_FP_instructions_FINT_s_d_z_fn_s_ea_e : BedrockISAForm<
-  "FP.instructions.FINT.s_d_z_fn_s_ea_e", "fint", "FINT.{S|D}(z) Fn(s), <ea>(e)", "1111100100z1011sssseeeeeee", "long", "FP",
+  "z;s;d", "size;src;dst", "SIZE_SD;Fn;Fn", "", "">;
+def BRForm_FP_FINT_s_d_z_fn_s_ea_e : BedrockISAForm<
+  "FP.FINT.s_d_z_fn_s_ea_e", "fint", "FINT.{S|D}(z) Fn(s), <ea>(e)", "1111100100z1011sssseeeeeee", "long", "FP",
   4, 0, 1, 1, 0,
-  "z;s;e", "size;src;dst", "FP.field_types.SIZE_SD;FP.field_types.Fn;FP.field_types.FEA", "", "">;
-def BRForm_FP_instructions_FINTRZ_s_d_z_ea_e_fn_d : BedrockISAForm<
-  "FP.instructions.FINTRZ.s_d_z_ea_e_fn_d", "fintrz", "FINTRZ.{S|D}(z) <ea>(e), Fn(d)", "1111100101z0011ddddeeeeeee", "long", "FP",
+  "z;s;e", "size;src;dst", "SIZE_SD;Fn;FEA", "", "">;
+def BRForm_FP_FINTRZ_s_d_z_ea_e_fn_d : BedrockISAForm<
+  "FP.FINTRZ.s_d_z_ea_e_fn_d", "fintrz", "FINTRZ.{S|D}(z) <ea>(e), Fn(d)", "1111100101z0011ddddeeeeeee", "long", "FP",
   4, 0, 1, 1, 0,
-  "z;d;e", "size;dst;src", "FP.field_types.SIZE_SD;FP.field_types.Fn;FP.field_types.FEA", "", "">;
-def BRForm_FP_instructions_FINTRZ_s_d_z_fn_s_fn_d : BedrockISAForm<
-  "FP.instructions.FINTRZ.s_d_z_fn_s_fn_d", "fintrz", "FINTRZ.{S|D}(z) Fn(s), Fn(d)", "101100z011ssssdddd", "medium", "FP",
+  "z;d;e", "size;dst;src", "SIZE_SD;Fn;FEA", "", "">;
+def BRForm_FP_FINTRZ_s_d_z_fn_s_fn_d : BedrockISAForm<
+  "FP.FINTRZ.s_d_z_fn_s_fn_d", "fintrz", "FINTRZ.{S|D}(z) Fn(s), Fn(d)", "101100z011ssssdddd", "medium", "FP",
   3, 0, 0, 0, 1,
-  "z;s;d", "size;src;dst", "FP.field_types.SIZE_SD;FP.field_types.Fn;FP.field_types.Fn", "", "">;
-def BRForm_FP_instructions_FINTRZ_s_d_z_fn_s_ea_e : BedrockISAForm<
-  "FP.instructions.FINTRZ.s_d_z_fn_s_ea_e", "fintrz", "FINTRZ.{S|D}(z) Fn(s), <ea>(e)", "1111100100z1101sssseeeeeee", "long", "FP",
+  "z;s;d", "size;src;dst", "SIZE_SD;Fn;Fn", "", "">;
+def BRForm_FP_FINTRZ_s_d_z_fn_s_ea_e : BedrockISAForm<
+  "FP.FINTRZ.s_d_z_fn_s_ea_e", "fintrz", "FINTRZ.{S|D}(z) Fn(s), <ea>(e)", "1111100100z1101sssseeeeeee", "long", "FP",
   4, 0, 1, 1, 0,
-  "z;s;e", "size;src;dst", "FP.field_types.SIZE_SD;FP.field_types.Fn;FP.field_types.FEA", "", "">;
-def BRForm_FP_instructions_FMADD_s_d_z_fn_l_fn_r_fn_d : BedrockISAForm<
-  "FP.instructions.FMADD.s_d_z_fn_l_fn_r_fn_d", "fmadd", "FMADD.{S|D}(z) Fn(l), Fn(r), Fn(d)", "1111100110z101llllrrrrdddd", "long", "FP",
+  "z;s;e", "size;src;dst", "SIZE_SD;Fn;FEA", "", "">;
+def BRForm_FP_FMADD_s_d_z_fn_l_fn_r_fn_d : BedrockISAForm<
+  "FP.FMADD.s_d_z_fn_l_fn_r_fn_d", "fmadd", "FMADD.{S|D}(z) Fn(l), Fn(r), Fn(d)", "1111100110z101llllrrrrdddd", "long", "FP",
   4, 0, 0, 0, 1,
-  "z;l;r;d", "size;lhs;rhs;dst", "FP.field_types.SIZE_SD;FP.field_types.Fn;FP.field_types.Fn;FP.field_types.Fn", "", "">;
-def BRForm_FP_instructions_FMADD_s_d_z_ea_l_fn_r_fn_d : BedrockISAForm<
-  "FP.instructions.FMADD.s_d_z_ea_l_fn_r_fn_d", "fmadd", "FMADD.{S|D}(z) <ea>(l), Fn(r), Fn(d)", "111111001000000z000rrrrddddlllllll", "extralong", "FP",
+  "z;l;r;d", "size;lhs;rhs;dst", "SIZE_SD;Fn;Fn;Fn", "", "">;
+def BRForm_FP_FMADD_s_d_z_ea_l_fn_r_fn_d : BedrockISAForm<
+  "FP.FMADD.s_d_z_ea_l_fn_r_fn_d", "fmadd", "FMADD.{S|D}(z) <ea>(l), Fn(r), Fn(d)", "111111001000000z000rrrrddddlllllll", "extralong", "FP",
   5, 0, 1, 1, 0,
-  "z;r;d;l", "size;rhs;dst;lhs", "FP.field_types.SIZE_SD;FP.field_types.Fn;FP.field_types.Fn;FP.field_types.FEA", "", "">;
-def BRForm_FP_instructions_FMADD_s_d_z_fn_l_ea_r_fn_d : BedrockISAForm<
-  "FP.instructions.FMADD.s_d_z_fn_l_ea_r_fn_d", "fmadd", "FMADD.{S|D}(z) Fn(l), <ea>(r), Fn(d)", "111111001000000z100llllddddrrrrrrr", "extralong", "FP",
+  "z;r;d;l", "size;rhs;dst;lhs", "SIZE_SD;Fn;Fn;FEA", "", "">;
+def BRForm_FP_FMADD_s_d_z_fn_l_ea_r_fn_d : BedrockISAForm<
+  "FP.FMADD.s_d_z_fn_l_ea_r_fn_d", "fmadd", "FMADD.{S|D}(z) Fn(l), <ea>(r), Fn(d)", "111111001000000z100llllddddrrrrrrr", "extralong", "FP",
   5, 0, 1, 1, 0,
-  "z;l;d;r", "size;lhs;dst;rhs", "FP.field_types.SIZE_SD;FP.field_types.Fn;FP.field_types.Fn;FP.field_types.FEA", "", "">;
-def BRForm_FP_instructions_FMAX_s_d_z_fn_s_fn_d : BedrockISAForm<
-  "FP.instructions.FMAX.s_d_z_fn_s_fn_d", "fmax", "FMAX.{S|D}(z) Fn(s), Fn(d)", "101110z000ssssdddd", "medium", "FP",
+  "z;l;d;r", "size;lhs;dst;rhs", "SIZE_SD;Fn;Fn;FEA", "", "">;
+def BRForm_FP_FMAX_s_d_z_fn_s_fn_d : BedrockISAForm<
+  "FP.FMAX.s_d_z_fn_s_fn_d", "fmax", "FMAX.{S|D}(z) Fn(s), Fn(d)", "101110z000ssssdddd", "medium", "FP",
   3, 0, 0, 0, 1,
-  "z;s;d", "size;src;dst", "FP.field_types.SIZE_SD;FP.field_types.Fn;FP.field_types.Fn", "", "">;
-def BRForm_FP_instructions_FMAX_s_d_z_ea_e_fn_d : BedrockISAForm<
-  "FP.instructions.FMAX.s_d_z_ea_e_fn_d", "fmax", "FMAX.{S|D}(z) <ea>(e), Fn(d)", "1111100101z1000ddddeeeeeee", "long", "FP",
+  "z;s;d", "size;src;dst", "SIZE_SD;Fn;Fn", "", "">;
+def BRForm_FP_FMAX_s_d_z_ea_e_fn_d : BedrockISAForm<
+  "FP.FMAX.s_d_z_ea_e_fn_d", "fmax", "FMAX.{S|D}(z) <ea>(e), Fn(d)", "1111100101z1000ddddeeeeeee", "long", "FP",
   4, 0, 1, 1, 0,
-  "z;d;e", "size;dst;src", "FP.field_types.SIZE_SD;FP.field_types.Fn;FP.field_types.FEA", "", "">;
-def BRForm_FP_instructions_FMIN_s_d_z_fn_s_fn_d : BedrockISAForm<
-  "FP.instructions.FMIN.s_d_z_fn_s_fn_d", "fmin", "FMIN.{S|D}(z) Fn(s), Fn(d)", "101110z001ssssdddd", "medium", "FP",
+  "z;d;e", "size;dst;src", "SIZE_SD;Fn;FEA", "", "">;
+def BRForm_FP_FMIN_s_d_z_fn_s_fn_d : BedrockISAForm<
+  "FP.FMIN.s_d_z_fn_s_fn_d", "fmin", "FMIN.{S|D}(z) Fn(s), Fn(d)", "101110z001ssssdddd", "medium", "FP",
   3, 0, 0, 0, 1,
-  "z;s;d", "size;src;dst", "FP.field_types.SIZE_SD;FP.field_types.Fn;FP.field_types.Fn", "", "">;
-def BRForm_FP_instructions_FMIN_s_d_z_ea_e_fn_d : BedrockISAForm<
-  "FP.instructions.FMIN.s_d_z_ea_e_fn_d", "fmin", "FMIN.{S|D}(z) <ea>(e), Fn(d)", "1111100101z1001ddddeeeeeee", "long", "FP",
+  "z;s;d", "size;src;dst", "SIZE_SD;Fn;Fn", "", "">;
+def BRForm_FP_FMIN_s_d_z_ea_e_fn_d : BedrockISAForm<
+  "FP.FMIN.s_d_z_ea_e_fn_d", "fmin", "FMIN.{S|D}(z) <ea>(e), Fn(d)", "1111100101z1001ddddeeeeeee", "long", "FP",
   4, 0, 1, 1, 0,
-  "z;d;e", "size;dst;src", "FP.field_types.SIZE_SD;FP.field_types.Fn;FP.field_types.FEA", "", "">;
-def BRForm_FP_instructions_FMOD_s_d_z_ea_e_fn_d : BedrockISAForm<
-  "FP.instructions.FMOD.s_d_z_ea_e_fn_d", "fmod", "FMOD.{S|D}(z) <ea>(e), Fn(d)", "1111100101z1010ddddeeeeeee", "long", "FP",
+  "z;d;e", "size;dst;src", "SIZE_SD;Fn;FEA", "", "">;
+def BRForm_FP_FMOD_s_d_z_ea_e_fn_d : BedrockISAForm<
+  "FP.FMOD.s_d_z_ea_e_fn_d", "fmod", "FMOD.{S|D}(z) <ea>(e), Fn(d)", "1111100101z1010ddddeeeeeee", "long", "FP",
   4, 0, 1, 1, 0,
-  "z;d;e", "size;dst;src", "FP.field_types.SIZE_SD;FP.field_types.Fn;FP.field_types.FEA", "", "">;
-def BRForm_FP_instructions_FMOD_s_d_z_fn_s_fn_d : BedrockISAForm<
-  "FP.instructions.FMOD.s_d_z_fn_s_fn_d", "fmod", "FMOD.{S|D}(z) Fn(s), Fn(d)", "101110z010ssssdddd", "medium", "FP",
+  "z;d;e", "size;dst;src", "SIZE_SD;Fn;FEA", "", "">;
+def BRForm_FP_FMOD_s_d_z_fn_s_fn_d : BedrockISAForm<
+  "FP.FMOD.s_d_z_fn_s_fn_d", "fmod", "FMOD.{S|D}(z) Fn(s), Fn(d)", "101110z010ssssdddd", "medium", "FP",
   3, 0, 0, 0, 1,
-  "z;s;d", "size;src;dst", "FP.field_types.SIZE_SD;FP.field_types.Fn;FP.field_types.Fn", "", "">;
-def BRForm_FP_instructions_FMOV_s_d_z_fn_s_fn_d : BedrockISAForm<
-  "FP.instructions.FMOV.s_d_z_fn_s_fn_d", "fmov", "FMOV.{S|D}(z) Fn(s), Fn(d)", "101110z011ssssdddd", "medium", "FP",
+  "z;s;d", "size;src;dst", "SIZE_SD;Fn;Fn", "", "">;
+def BRForm_FP_FMOV_s_d_z_fn_s_fn_d : BedrockISAForm<
+  "FP.FMOV.s_d_z_fn_s_fn_d", "fmov", "FMOV.{S|D}(z) Fn(s), Fn(d)", "101110z011ssssdddd", "medium", "FP",
   3, 0, 0, 0, 1,
-  "z;s;d", "size;src;dst", "FP.field_types.SIZE_SD;FP.field_types.Fn;FP.field_types.Fn", "", "">;
-def BRForm_FP_instructions_FMOV_s_d_z_ea_e_fn_d : BedrockISAForm<
-  "FP.instructions.FMOV.s_d_z_ea_e_fn_d", "fmov", "FMOV.{S|D}(z) <ea>(e), Fn(d)", "1111100101z1011ddddeeeeeee", "long", "FP",
+  "z;s;d", "size;src;dst", "SIZE_SD;Fn;Fn", "", "">;
+def BRForm_FP_FMOV_s_d_z_ea_e_fn_d : BedrockISAForm<
+  "FP.FMOV.s_d_z_ea_e_fn_d", "fmov", "FMOV.{S|D}(z) <ea>(e), Fn(d)", "1111100101z1011ddddeeeeeee", "long", "FP",
   4, 0, 1, 1, 0,
-  "z;d;e", "size;dst;src", "FP.field_types.SIZE_SD;FP.field_types.Fn;FP.field_types.FEA", "", "">;
-def BRForm_FP_instructions_FMOV_s_d_z_fn_s_ea_e : BedrockISAForm<
-  "FP.instructions.FMOV.s_d_z_fn_s_ea_e", "fmov", "FMOV.{S|D}(z) Fn(s), <ea>(e)", "1111100100z1110sssseeeeeee", "long", "FP",
+  "z;d;e", "size;dst;src", "SIZE_SD;Fn;FEA", "", "">;
+def BRForm_FP_FMOV_s_d_z_fn_s_ea_e : BedrockISAForm<
+  "FP.FMOV.s_d_z_fn_s_ea_e", "fmov", "FMOV.{S|D}(z) Fn(s), <ea>(e)", "1111100100z1110sssseeeeeee", "long", "FP",
   4, 0, 1, 1, 0,
-  "z;s;e", "size;src;dst", "FP.field_types.SIZE_SD;FP.field_types.Fn;FP.field_types.FEA", "", "">;
-def BRForm_FP_instructions_FMOVcc_fn_s_fn_d : BedrockISAForm<
-  "FP.instructions.FMOVcc.fn_s_fn_d", "fmovcc", "FMOVcc Fn(s), Fn(d)", "11111000101000ccccssssdddd", "long", "FP",
+  "z;s;e", "size;src;dst", "SIZE_SD;Fn;FEA", "", "">;
+def BRForm_FP_FMOVcc_fn_s_fn_d : BedrockISAForm<
+  "FP.FMOVcc.fn_s_fn_d", "fmovcc", "FMOVcc Fn(s), Fn(d)", "11111000101000ccccssssdddd", "long", "FP",
   4, 0, 0, 0, 1,
-  "c;s;d", "cc;src;dst", "base.field_types.CC;FP.field_types.Fn;FP.field_types.Fn", "", "">;
-def BRForm_FP_instructions_FMOVcc_s_d_z_ea_e_fn_d : BedrockISAForm<
-  "FP.instructions.FMOVcc.s_d_z_ea_e_fn_d", "fmovcc", "FMOVcc.{S|D}(z) <ea>(e), Fn(d)", "1111100000zccccddddeeeeeee", "long", "FP",
+  "c;s;d", "cc;src;dst", "CC;Fn;Fn", "", "">;
+def BRForm_FP_FMOVcc_s_d_z_ea_e_fn_d : BedrockISAForm<
+  "FP.FMOVcc.s_d_z_ea_e_fn_d", "fmovcc", "FMOVcc.{S|D}(z) <ea>(e), Fn(d)", "1111100000zccccddddeeeeeee", "long", "FP",
   4, 0, 1, 1, 0,
-  "z;c;d;e", "size;cc;dst;src", "FP.field_types.SIZE_SD;base.field_types.CC;FP.field_types.Fn;FP.field_types.FEA", "", "">;
-def BRForm_FP_instructions_FMOVcc_s_d_z_fn_s_ea_e : BedrockISAForm<
-  "FP.instructions.FMOVcc.s_d_z_fn_s_ea_e", "fmovcc", "FMOVcc.{S|D}(z) Fn(s), <ea>(e)", "1111100001zccccsssseeeeeee", "long", "FP",
+  "z;c;d;e", "size;cc;dst;src", "SIZE_SD;CC;Fn;FEA", "", "">;
+def BRForm_FP_FMOVcc_s_d_z_fn_s_ea_e : BedrockISAForm<
+  "FP.FMOVcc.s_d_z_fn_s_ea_e", "fmovcc", "FMOVcc.{S|D}(z) Fn(s), <ea>(e)", "1111100001zccccsssseeeeeee", "long", "FP",
   4, 0, 1, 1, 0,
-  "z;c;s;e", "size;cc;src;dst", "FP.field_types.SIZE_SD;base.field_types.CC;FP.field_types.Fn;FP.field_types.FEA", "", "">;
-def BRForm_FP_instructions_FMOVCR_s_d_z_fconst_id_fn_d : BedrockISAForm<
-  "FP.instructions.FMOVCR.s_d_z_fconst_id_fn_d", "fmovcr", "FMOVCR.{S|D}(z) <fconst_id>, Fn(d)", "11101100100z00dddd", "medium", "FP",
+  "z;c;s;e", "size;cc;src;dst", "SIZE_SD;CC;Fn;FEA", "", "">;
+def BRForm_FP_FMOVCR_s_d_z_fconst_id_fn_d : BedrockISAForm<
+  "FP.FMOVCR.s_d_z_fconst_id_fn_d", "fmovcr", "FMOVCR.{S|D}(z) <fconst_id>, Fn(d)", "11101100100z00dddd", "medium", "FP",
   3, 2, 0, 0, 1,
-  "z;d", "size;dst", "FP.field_types.SIZE_SD;FP.field_types.Fn", "constant_id", "FP.payload_types.FCONSTID">;
-def BRForm_FP_instructions_FMSUB_s_d_z_fn_l_fn_r_fn_d : BedrockISAForm<
-  "FP.instructions.FMSUB.s_d_z_fn_l_fn_r_fn_d", "fmsub", "FMSUB.{S|D}(z) Fn(l), Fn(r), Fn(d)", "1111100110z110llllrrrrdddd", "long", "FP",
+  "z;d", "size;dst", "SIZE_SD;Fn", "constant_id", "FCONSTID">;
+def BRForm_FP_FMSUB_s_d_z_fn_l_fn_r_fn_d : BedrockISAForm<
+  "FP.FMSUB.s_d_z_fn_l_fn_r_fn_d", "fmsub", "FMSUB.{S|D}(z) Fn(l), Fn(r), Fn(d)", "1111100110z110llllrrrrdddd", "long", "FP",
   4, 0, 0, 0, 1,
-  "z;l;r;d", "size;lhs;rhs;dst", "FP.field_types.SIZE_SD;FP.field_types.Fn;FP.field_types.Fn;FP.field_types.Fn", "", "">;
-def BRForm_FP_instructions_FMSUB_s_d_z_ea_l_fn_r_fn_d : BedrockISAForm<
-  "FP.instructions.FMSUB.s_d_z_ea_l_fn_r_fn_d", "fmsub", "FMSUB.{S|D}(z) <ea>(l), Fn(r), Fn(d)", "111111001000000z001rrrrddddlllllll", "extralong", "FP",
+  "z;l;r;d", "size;lhs;rhs;dst", "SIZE_SD;Fn;Fn;Fn", "", "">;
+def BRForm_FP_FMSUB_s_d_z_ea_l_fn_r_fn_d : BedrockISAForm<
+  "FP.FMSUB.s_d_z_ea_l_fn_r_fn_d", "fmsub", "FMSUB.{S|D}(z) <ea>(l), Fn(r), Fn(d)", "111111001000000z001rrrrddddlllllll", "extralong", "FP",
   5, 0, 1, 1, 0,
-  "z;r;d;l", "size;rhs;dst;lhs", "FP.field_types.SIZE_SD;FP.field_types.Fn;FP.field_types.Fn;FP.field_types.FEA", "", "">;
-def BRForm_FP_instructions_FMSUB_s_d_z_fn_l_ea_r_fn_d : BedrockISAForm<
-  "FP.instructions.FMSUB.s_d_z_fn_l_ea_r_fn_d", "fmsub", "FMSUB.{S|D}(z) Fn(l), <ea>(r), Fn(d)", "111111001000000z101llllddddrrrrrrr", "extralong", "FP",
+  "z;r;d;l", "size;rhs;dst;lhs", "SIZE_SD;Fn;Fn;FEA", "", "">;
+def BRForm_FP_FMSUB_s_d_z_fn_l_ea_r_fn_d : BedrockISAForm<
+  "FP.FMSUB.s_d_z_fn_l_ea_r_fn_d", "fmsub", "FMSUB.{S|D}(z) Fn(l), <ea>(r), Fn(d)", "111111001000000z101llllddddrrrrrrr", "extralong", "FP",
   5, 0, 1, 1, 0,
-  "z;l;d;r", "size;lhs;dst;rhs", "FP.field_types.SIZE_SD;FP.field_types.Fn;FP.field_types.Fn;FP.field_types.FEA", "", "">;
-def BRForm_FP_instructions_FMUL_s_d_z_fn_s_fn_d : BedrockISAForm<
-  "FP.instructions.FMUL.s_d_z_fn_s_fn_d", "fmul", "FMUL.{S|D}(z) Fn(s), Fn(d)", "101110z100ssssdddd", "medium", "FP",
+  "z;l;d;r", "size;lhs;dst;rhs", "SIZE_SD;Fn;Fn;FEA", "", "">;
+def BRForm_FP_FMUL_s_d_z_fn_s_fn_d : BedrockISAForm<
+  "FP.FMUL.s_d_z_fn_s_fn_d", "fmul", "FMUL.{S|D}(z) Fn(s), Fn(d)", "101110z100ssssdddd", "medium", "FP",
   3, 0, 0, 0, 1,
-  "z;s;d", "size;src;dst", "FP.field_types.SIZE_SD;FP.field_types.Fn;FP.field_types.Fn", "", "">;
-def BRForm_FP_instructions_FMUL_s_d_z_ea_e_fn_d : BedrockISAForm<
-  "FP.instructions.FMUL.s_d_z_ea_e_fn_d", "fmul", "FMUL.{S|D}(z) <ea>(e), Fn(d)", "1111100101z1100ddddeeeeeee", "long", "FP",
+  "z;s;d", "size;src;dst", "SIZE_SD;Fn;Fn", "", "">;
+def BRForm_FP_FMUL_s_d_z_ea_e_fn_d : BedrockISAForm<
+  "FP.FMUL.s_d_z_ea_e_fn_d", "fmul", "FMUL.{S|D}(z) <ea>(e), Fn(d)", "1111100101z1100ddddeeeeeee", "long", "FP",
   4, 0, 1, 1, 0,
-  "z;d;e", "size;dst;src", "FP.field_types.SIZE_SD;FP.field_types.Fn;FP.field_types.FEA", "", "">;
-def BRForm_FP_instructions_FNEG_s_d_z_fn_s_fn_d : BedrockISAForm<
-  "FP.instructions.FNEG.s_d_z_fn_s_fn_d", "fneg", "FNEG.{S|D}(z) Fn(s), Fn(d)", "101110z101ssssdddd", "medium", "FP",
+  "z;d;e", "size;dst;src", "SIZE_SD;Fn;FEA", "", "">;
+def BRForm_FP_FNEG_s_d_z_fn_s_fn_d : BedrockISAForm<
+  "FP.FNEG.s_d_z_fn_s_fn_d", "fneg", "FNEG.{S|D}(z) Fn(s), Fn(d)", "101110z101ssssdddd", "medium", "FP",
   3, 0, 0, 0, 1,
-  "z;s;d", "size;src;dst", "FP.field_types.SIZE_SD;FP.field_types.Fn;FP.field_types.Fn", "", "">;
-def BRForm_FP_instructions_FNEG_s_d_z_ea_e_fn_d : BedrockISAForm<
-  "FP.instructions.FNEG.s_d_z_ea_e_fn_d", "fneg", "FNEG.{S|D}(z) <ea>(e), Fn(d)", "1111100101z1101ddddeeeeeee", "long", "FP",
+  "z;s;d", "size;src;dst", "SIZE_SD;Fn;Fn", "", "">;
+def BRForm_FP_FNEG_s_d_z_ea_e_fn_d : BedrockISAForm<
+  "FP.FNEG.s_d_z_ea_e_fn_d", "fneg", "FNEG.{S|D}(z) <ea>(e), Fn(d)", "1111100101z1101ddddeeeeeee", "long", "FP",
   4, 0, 1, 1, 0,
-  "z;d;e", "size;dst;src", "FP.field_types.SIZE_SD;FP.field_types.Fn;FP.field_types.FEA", "", "">;
-def BRForm_FP_instructions_FNEG_s_d_z_fn_s_ea_e : BedrockISAForm<
-  "FP.instructions.FNEG.s_d_z_fn_s_ea_e", "fneg", "FNEG.{S|D}(z) Fn(s), <ea>(e)", "1111100101z0100sssseeeeeee", "long", "FP",
+  "z;d;e", "size;dst;src", "SIZE_SD;Fn;FEA", "", "">;
+def BRForm_FP_FNEG_s_d_z_fn_s_ea_e : BedrockISAForm<
+  "FP.FNEG.s_d_z_fn_s_ea_e", "fneg", "FNEG.{S|D}(z) Fn(s), <ea>(e)", "1111100101z0100sssseeeeeee", "long", "FP",
   4, 0, 1, 1, 0,
-  "z;s;e", "size;src;dst", "FP.field_types.SIZE_SD;FP.field_types.Fn;FP.field_types.FEA", "", "">;
-def BRForm_FP_instructions_FNMADD_s_d_z_fn_l_fn_r_fn_d : BedrockISAForm<
-  "FP.instructions.FNMADD.s_d_z_fn_l_fn_r_fn_d", "fnmadd", "FNMADD.{S|D}(z) Fn(l), Fn(r), Fn(d)", "1111100110z111llllrrrrdddd", "long", "FP",
+  "z;s;e", "size;src;dst", "SIZE_SD;Fn;FEA", "", "">;
+def BRForm_FP_FNMADD_s_d_z_fn_l_fn_r_fn_d : BedrockISAForm<
+  "FP.FNMADD.s_d_z_fn_l_fn_r_fn_d", "fnmadd", "FNMADD.{S|D}(z) Fn(l), Fn(r), Fn(d)", "1111100110z111llllrrrrdddd", "long", "FP",
   4, 0, 0, 0, 1,
-  "z;l;r;d", "size;lhs;rhs;dst", "FP.field_types.SIZE_SD;FP.field_types.Fn;FP.field_types.Fn;FP.field_types.Fn", "", "">;
-def BRForm_FP_instructions_FNMADD_s_d_z_ea_l_fn_r_fn_d : BedrockISAForm<
-  "FP.instructions.FNMADD.s_d_z_ea_l_fn_r_fn_d", "fnmadd", "FNMADD.{S|D}(z) <ea>(l), Fn(r), Fn(d)", "111111001000000z010rrrrddddlllllll", "extralong", "FP",
+  "z;l;r;d", "size;lhs;rhs;dst", "SIZE_SD;Fn;Fn;Fn", "", "">;
+def BRForm_FP_FNMADD_s_d_z_ea_l_fn_r_fn_d : BedrockISAForm<
+  "FP.FNMADD.s_d_z_ea_l_fn_r_fn_d", "fnmadd", "FNMADD.{S|D}(z) <ea>(l), Fn(r), Fn(d)", "111111001000000z010rrrrddddlllllll", "extralong", "FP",
   5, 0, 1, 1, 0,
-  "z;r;d;l", "size;rhs;dst;lhs", "FP.field_types.SIZE_SD;FP.field_types.Fn;FP.field_types.Fn;FP.field_types.FEA", "", "">;
-def BRForm_FP_instructions_FNMADD_s_d_z_fn_l_ea_r_fn_d : BedrockISAForm<
-  "FP.instructions.FNMADD.s_d_z_fn_l_ea_r_fn_d", "fnmadd", "FNMADD.{S|D}(z) Fn(l), <ea>(r), Fn(d)", "111111001000000z110llllddddrrrrrrr", "extralong", "FP",
+  "z;r;d;l", "size;rhs;dst;lhs", "SIZE_SD;Fn;Fn;FEA", "", "">;
+def BRForm_FP_FNMADD_s_d_z_fn_l_ea_r_fn_d : BedrockISAForm<
+  "FP.FNMADD.s_d_z_fn_l_ea_r_fn_d", "fnmadd", "FNMADD.{S|D}(z) Fn(l), <ea>(r), Fn(d)", "111111001000000z110llllddddrrrrrrr", "extralong", "FP",
   5, 0, 1, 1, 0,
-  "z;l;d;r", "size;lhs;dst;rhs", "FP.field_types.SIZE_SD;FP.field_types.Fn;FP.field_types.Fn;FP.field_types.FEA", "", "">;
-def BRForm_FP_instructions_FNMSUB_s_d_z_fn_l_fn_r_fn_d : BedrockISAForm<
-  "FP.instructions.FNMSUB.s_d_z_fn_l_fn_r_fn_d", "fnmsub", "FNMSUB.{S|D}(z) Fn(l), Fn(r), Fn(d)", "1111100111z000llllrrrrdddd", "long", "FP",
+  "z;l;d;r", "size;lhs;dst;rhs", "SIZE_SD;Fn;Fn;FEA", "", "">;
+def BRForm_FP_FNMSUB_s_d_z_fn_l_fn_r_fn_d : BedrockISAForm<
+  "FP.FNMSUB.s_d_z_fn_l_fn_r_fn_d", "fnmsub", "FNMSUB.{S|D}(z) Fn(l), Fn(r), Fn(d)", "1111100111z000llllrrrrdddd", "long", "FP",
   4, 0, 0, 0, 1,
-  "z;l;r;d", "size;lhs;rhs;dst", "FP.field_types.SIZE_SD;FP.field_types.Fn;FP.field_types.Fn;FP.field_types.Fn", "", "">;
-def BRForm_FP_instructions_FNMSUB_s_d_z_ea_l_fn_r_fn_d : BedrockISAForm<
-  "FP.instructions.FNMSUB.s_d_z_ea_l_fn_r_fn_d", "fnmsub", "FNMSUB.{S|D}(z) <ea>(l), Fn(r), Fn(d)", "111111001000000z011rrrrddddlllllll", "extralong", "FP",
+  "z;l;r;d", "size;lhs;rhs;dst", "SIZE_SD;Fn;Fn;Fn", "", "">;
+def BRForm_FP_FNMSUB_s_d_z_ea_l_fn_r_fn_d : BedrockISAForm<
+  "FP.FNMSUB.s_d_z_ea_l_fn_r_fn_d", "fnmsub", "FNMSUB.{S|D}(z) <ea>(l), Fn(r), Fn(d)", "111111001000000z011rrrrddddlllllll", "extralong", "FP",
   5, 0, 1, 1, 0,
-  "z;r;d;l", "size;rhs;dst;lhs", "FP.field_types.SIZE_SD;FP.field_types.Fn;FP.field_types.Fn;FP.field_types.FEA", "", "">;
-def BRForm_FP_instructions_FNMSUB_s_d_z_fn_l_ea_r_fn_d : BedrockISAForm<
-  "FP.instructions.FNMSUB.s_d_z_fn_l_ea_r_fn_d", "fnmsub", "FNMSUB.{S|D}(z) Fn(l), <ea>(r), Fn(d)", "111111001000000z111llllddddrrrrrrr", "extralong", "FP",
+  "z;r;d;l", "size;rhs;dst;lhs", "SIZE_SD;Fn;Fn;FEA", "", "">;
+def BRForm_FP_FNMSUB_s_d_z_fn_l_ea_r_fn_d : BedrockISAForm<
+  "FP.FNMSUB.s_d_z_fn_l_ea_r_fn_d", "fnmsub", "FNMSUB.{S|D}(z) Fn(l), <ea>(r), Fn(d)", "111111001000000z111llllddddrrrrrrr", "extralong", "FP",
   5, 0, 1, 1, 0,
-  "z;l;d;r", "size;lhs;dst;rhs", "FP.field_types.SIZE_SD;FP.field_types.Fn;FP.field_types.Fn;FP.field_types.FEA", "", "">;
-def BRForm_FP_instructions_FPOPP_fpairn_i : BedrockISAForm<
-  "FP.instructions.FPOPP.fpairn_i", "fpopp", "FPOPP FPAIRn(i)", "0101iii", "extrashort", "FP",
+  "z;l;d;r", "size;lhs;dst;rhs", "SIZE_SD;Fn;Fn;FEA", "", "">;
+def BRForm_FP_FPOPP_fpairn_i : BedrockISAForm<
+  "FP.FPOPP.fpairn_i", "fpopp", "FPOPP FPAIRn(i)", "0101iii", "extrashort", "FP",
   1, 0, 0, 0, 1,
-  "i", "pair_id", "FP.field_types.FPAIRn", "", "">;
-def BRForm_FP_instructions_FPUSHP_fpairn_i : BedrockISAForm<
-  "FP.instructions.FPUSHP.fpairn_i", "fpushp", "FPUSHP FPAIRn(i)", "0100iii", "extrashort", "FP",
+  "i", "pair_id", "FPAIRn", "", "">;
+def BRForm_FP_FPUSHP_fpairn_i : BedrockISAForm<
+  "FP.FPUSHP.fpairn_i", "fpushp", "FPUSHP FPAIRn(i)", "0100iii", "extrashort", "FP",
   1, 0, 0, 0, 1,
-  "i", "pair_id", "FP.field_types.FPAIRn", "", "">;
-def BRForm_FP_instructions_FREM_s_d_z_ea_e_fn_d : BedrockISAForm<
-  "FP.instructions.FREM.s_d_z_ea_e_fn_d", "frem", "FREM.{S|D}(z) <ea>(e), Fn(d)", "1111100101z1110ddddeeeeeee", "long", "FP",
+  "i", "pair_id", "FPAIRn", "", "">;
+def BRForm_FP_FREM_s_d_z_ea_e_fn_d : BedrockISAForm<
+  "FP.FREM.s_d_z_ea_e_fn_d", "frem", "FREM.{S|D}(z) <ea>(e), Fn(d)", "1111100101z1110ddddeeeeeee", "long", "FP",
   4, 0, 1, 1, 0,
-  "z;d;e", "size;dst;src", "FP.field_types.SIZE_SD;FP.field_types.Fn;FP.field_types.FEA", "", "">;
-def BRForm_FP_instructions_FREM_s_d_z_fn_s_fn_d : BedrockISAForm<
-  "FP.instructions.FREM.s_d_z_fn_s_fn_d", "frem", "FREM.{S|D}(z) Fn(s), Fn(d)", "101110z110ssssdddd", "medium", "FP",
+  "z;d;e", "size;dst;src", "SIZE_SD;Fn;FEA", "", "">;
+def BRForm_FP_FREM_s_d_z_fn_s_fn_d : BedrockISAForm<
+  "FP.FREM.s_d_z_fn_s_fn_d", "frem", "FREM.{S|D}(z) Fn(s), Fn(d)", "101110z110ssssdddd", "medium", "FP",
   3, 0, 0, 0, 1,
-  "z;s;d", "size;src;dst", "FP.field_types.SIZE_SD;FP.field_types.Fn;FP.field_types.Fn", "", "">;
-def BRForm_FP_instructions_FROUND_s_d_z_fn_s_fn_d : BedrockISAForm<
-  "FP.instructions.FROUND.s_d_z_fn_s_fn_d", "fround", "FROUND.{S|D}(z) Fn(s), Fn(d)", "101110z111ssssdddd", "medium", "FP",
+  "z;s;d", "size;src;dst", "SIZE_SD;Fn;Fn", "", "">;
+def BRForm_FP_FROUND_s_d_z_fn_s_fn_d : BedrockISAForm<
+  "FP.FROUND.s_d_z_fn_s_fn_d", "fround", "FROUND.{S|D}(z) Fn(s), Fn(d)", "101110z111ssssdddd", "medium", "FP",
   3, 0, 0, 0, 1,
-  "z;s;d", "size;src;dst", "FP.field_types.SIZE_SD;FP.field_types.Fn;FP.field_types.Fn", "", "">;
-def BRForm_FP_instructions_FROUND_s_d_z_ea_e_fn_d : BedrockISAForm<
-  "FP.instructions.FROUND.s_d_z_ea_e_fn_d", "fround", "FROUND.{S|D}(z) <ea>(e), Fn(d)", "1111100101z1111ddddeeeeeee", "long", "FP",
+  "z;s;d", "size;src;dst", "SIZE_SD;Fn;Fn", "", "">;
+def BRForm_FP_FROUND_s_d_z_ea_e_fn_d : BedrockISAForm<
+  "FP.FROUND.s_d_z_ea_e_fn_d", "fround", "FROUND.{S|D}(z) <ea>(e), Fn(d)", "1111100101z1111ddddeeeeeee", "long", "FP",
   4, 0, 1, 1, 0,
-  "z;d;e", "size;dst;src", "FP.field_types.SIZE_SD;FP.field_types.Fn;FP.field_types.FEA", "", "">;
-def BRForm_FP_instructions_FROUND_s_d_z_fn_s_ea_e : BedrockISAForm<
-  "FP.instructions.FROUND.s_d_z_fn_s_ea_e", "fround", "FROUND.{S|D}(z) Fn(s), <ea>(e)", "1111100101z0101sssseeeeeee", "long", "FP",
+  "z;d;e", "size;dst;src", "SIZE_SD;Fn;FEA", "", "">;
+def BRForm_FP_FROUND_s_d_z_fn_s_ea_e : BedrockISAForm<
+  "FP.FROUND.s_d_z_fn_s_ea_e", "fround", "FROUND.{S|D}(z) Fn(s), <ea>(e)", "1111100101z0101sssseeeeeee", "long", "FP",
   4, 0, 1, 1, 0,
-  "z;s;e", "size;src;dst", "FP.field_types.SIZE_SD;FP.field_types.Fn;FP.field_types.FEA", "", "">;
-def BRForm_FP_instructions_FSCALE_s_d_z_ea_e_fn_d : BedrockISAForm<
-  "FP.instructions.FSCALE.s_d_z_ea_e_fn_d", "fscale", "FSCALE.{S|D}(z) <ea>(e), Fn(d)", "1111100100z0001ddddeeeeeee", "long", "FP",
+  "z;s;e", "size;src;dst", "SIZE_SD;Fn;FEA", "", "">;
+def BRForm_FP_FSCALE_s_d_z_ea_e_fn_d : BedrockISAForm<
+  "FP.FSCALE.s_d_z_ea_e_fn_d", "fscale", "FSCALE.{S|D}(z) <ea>(e), Fn(d)", "1111100100z0001ddddeeeeeee", "long", "FP",
   4, 0, 1, 1, 0,
-  "z;d;e", "size;dst;src", "FP.field_types.SIZE_SD;FP.field_types.Fn;FP.field_types.FEA", "", "">;
-def BRForm_FP_instructions_FSCALE_s_d_z_fn_s_fn_d : BedrockISAForm<
-  "FP.instructions.FSCALE.s_d_z_fn_s_fn_d", "fscale", "FSCALE.{S|D}(z) Fn(s), Fn(d)", "101000z001ssssdddd", "medium", "FP",
+  "z;d;e", "size;dst;src", "SIZE_SD;Fn;FEA", "", "">;
+def BRForm_FP_FSCALE_s_d_z_fn_s_fn_d : BedrockISAForm<
+  "FP.FSCALE.s_d_z_fn_s_fn_d", "fscale", "FSCALE.{S|D}(z) Fn(s), Fn(d)", "101000z001ssssdddd", "medium", "FP",
   3, 0, 0, 0, 1,
-  "z;s;d", "size;src;dst", "FP.field_types.SIZE_SD;FP.field_types.Fn;FP.field_types.Fn", "", "">;
-def BRForm_FP_instructions_FSQRT_s_d_z_fn_s_fn_d : BedrockISAForm<
-  "FP.instructions.FSQRT.s_d_z_fn_s_fn_d", "fsqrt", "FSQRT.{S|D}(z) Fn(s), Fn(d)", "101000z011ssssdddd", "medium", "FP",
+  "z;s;d", "size;src;dst", "SIZE_SD;Fn;Fn", "", "">;
+def BRForm_FP_FSQRT_s_d_z_fn_s_fn_d : BedrockISAForm<
+  "FP.FSQRT.s_d_z_fn_s_fn_d", "fsqrt", "FSQRT.{S|D}(z) Fn(s), Fn(d)", "101000z011ssssdddd", "medium", "FP",
   3, 0, 0, 0, 1,
-  "z;s;d", "size;src;dst", "FP.field_types.SIZE_SD;FP.field_types.Fn;FP.field_types.Fn", "", "">;
-def BRForm_FP_instructions_FSQRT_s_d_z_ea_e_fn_d : BedrockISAForm<
-  "FP.instructions.FSQRT.s_d_z_ea_e_fn_d", "fsqrt", "FSQRT.{S|D}(z) <ea>(e), Fn(d)", "1111100100z0011ddddeeeeeee", "long", "FP",
+  "z;s;d", "size;src;dst", "SIZE_SD;Fn;Fn", "", "">;
+def BRForm_FP_FSQRT_s_d_z_ea_e_fn_d : BedrockISAForm<
+  "FP.FSQRT.s_d_z_ea_e_fn_d", "fsqrt", "FSQRT.{S|D}(z) <ea>(e), Fn(d)", "1111100100z0011ddddeeeeeee", "long", "FP",
   4, 0, 1, 1, 0,
-  "z;d;e", "size;dst;src", "FP.field_types.SIZE_SD;FP.field_types.Fn;FP.field_types.FEA", "", "">;
-def BRForm_FP_instructions_FSQRT_s_d_z_fn_s_ea_e : BedrockISAForm<
-  "FP.instructions.FSQRT.s_d_z_fn_s_ea_e", "fsqrt", "FSQRT.{S|D}(z) Fn(s), <ea>(e)", "1111100101z0110sssseeeeeee", "long", "FP",
+  "z;d;e", "size;dst;src", "SIZE_SD;Fn;FEA", "", "">;
+def BRForm_FP_FSQRT_s_d_z_fn_s_ea_e : BedrockISAForm<
+  "FP.FSQRT.s_d_z_fn_s_ea_e", "fsqrt", "FSQRT.{S|D}(z) Fn(s), <ea>(e)", "1111100101z0110sssseeeeeee", "long", "FP",
   4, 0, 1, 1, 0,
-  "z;s;e", "size;src;dst", "FP.field_types.SIZE_SD;FP.field_types.Fn;FP.field_types.FEA", "", "">;
-def BRForm_FP_instructions_FSUB_s_d_z_fn_s_fn_d : BedrockISAForm<
-  "FP.instructions.FSUB.s_d_z_fn_s_fn_d", "fsub", "FSUB.{S|D}(z) Fn(s), Fn(d)", "101000z100ssssdddd", "medium", "FP",
+  "z;s;e", "size;src;dst", "SIZE_SD;Fn;FEA", "", "">;
+def BRForm_FP_FSUB_s_d_z_fn_s_fn_d : BedrockISAForm<
+  "FP.FSUB.s_d_z_fn_s_fn_d", "fsub", "FSUB.{S|D}(z) Fn(s), Fn(d)", "101000z100ssssdddd", "medium", "FP",
   3, 0, 0, 0, 1,
-  "z;s;d", "size;src;dst", "FP.field_types.SIZE_SD;FP.field_types.Fn;FP.field_types.Fn", "", "">;
-def BRForm_FP_instructions_FSUB_s_d_z_ea_e_fn_d : BedrockISAForm<
-  "FP.instructions.FSUB.s_d_z_ea_e_fn_d", "fsub", "FSUB.{S|D}(z) <ea>(e), Fn(d)", "1111100100z0100ddddeeeeeee", "long", "FP",
+  "z;s;d", "size;src;dst", "SIZE_SD;Fn;Fn", "", "">;
+def BRForm_FP_FSUB_s_d_z_ea_e_fn_d : BedrockISAForm<
+  "FP.FSUB.s_d_z_ea_e_fn_d", "fsub", "FSUB.{S|D}(z) <ea>(e), Fn(d)", "1111100100z0100ddddeeeeeee", "long", "FP",
   4, 0, 1, 1, 0,
-  "z;d;e", "size;dst;src", "FP.field_types.SIZE_SD;FP.field_types.Fn;FP.field_types.FEA", "", "">;
-def BRForm_FP_instructions_FTEST_s_d_z_ea_e : BedrockISAForm<
-  "FP.instructions.FTEST.s_d_z_ea_e", "ftest", "FTEST.{S|D}(z) <ea>(e)", "111101100000000000zeeeeeee", "long", "FP",
+  "z;d;e", "size;dst;src", "SIZE_SD;Fn;FEA", "", "">;
+def BRForm_FP_FTEST_s_d_z_ea_e : BedrockISAForm<
+  "FP.FTEST.s_d_z_ea_e", "ftest", "FTEST.{S|D}(z) <ea>(e)", "111101100000000000zeeeeeee", "long", "FP",
   4, 0, 1, 1, 0,
-  "z;e", "size;src", "FP.field_types.SIZE_SD;FP.field_types.FEA", "", "">;
-def BRForm_FP_instructions_FTEST_s_d_z_fn_s : BedrockISAForm<
-  "FP.instructions.FTEST.s_d_z_fn_s", "ftest", "FTEST.{S|D}(z) Fn(s)", "11101100100z01ssss", "medium", "FP",
+  "z;e", "size;src", "SIZE_SD;FEA", "", "">;
+def BRForm_FP_FTEST_s_d_z_fn_s : BedrockISAForm<
+  "FP.FTEST.s_d_z_fn_s", "ftest", "FTEST.{S|D}(z) Fn(s)", "11101100100z01ssss", "medium", "FP",
   3, 0, 0, 0, 1,
-  "z;s", "size;src", "FP.field_types.SIZE_SD;FP.field_types.Fn", "", "">;
-def BRForm_FP_instructions_FTRUNC_s_d_z_fn_s_fn_d : BedrockISAForm<
-  "FP.instructions.FTRUNC.s_d_z_fn_s_fn_d", "ftrunc", "FTRUNC.{S|D}(z) Fn(s), Fn(d)", "101000z101ssssdddd", "medium", "FP",
+  "z;s", "size;src", "SIZE_SD;Fn", "", "">;
+def BRForm_FP_FTRUNC_s_d_z_fn_s_fn_d : BedrockISAForm<
+  "FP.FTRUNC.s_d_z_fn_s_fn_d", "ftrunc", "FTRUNC.{S|D}(z) Fn(s), Fn(d)", "101000z101ssssdddd", "medium", "FP",
   3, 0, 0, 0, 1,
-  "z;s;d", "size;src;dst", "FP.field_types.SIZE_SD;FP.field_types.Fn;FP.field_types.Fn", "", "">;
-def BRForm_FP_instructions_FTRUNC_s_d_z_ea_e_fn_d : BedrockISAForm<
-  "FP.instructions.FTRUNC.s_d_z_ea_e_fn_d", "ftrunc", "FTRUNC.{S|D}(z) <ea>(e), Fn(d)", "1111100100z0101ddddeeeeeee", "long", "FP",
+  "z;s;d", "size;src;dst", "SIZE_SD;Fn;Fn", "", "">;
+def BRForm_FP_FTRUNC_s_d_z_ea_e_fn_d : BedrockISAForm<
+  "FP.FTRUNC.s_d_z_ea_e_fn_d", "ftrunc", "FTRUNC.{S|D}(z) <ea>(e), Fn(d)", "1111100100z0101ddddeeeeeee", "long", "FP",
   4, 0, 1, 1, 0,
-  "z;d;e", "size;dst;src", "FP.field_types.SIZE_SD;FP.field_types.Fn;FP.field_types.FEA", "", "">;
-def BRForm_FP_instructions_FTRUNC_s_d_z_fn_s_ea_e : BedrockISAForm<
-  "FP.instructions.FTRUNC.s_d_z_fn_s_ea_e", "ftrunc", "FTRUNC.{S|D}(z) Fn(s), <ea>(e)", "1111100101z0111sssseeeeeee", "long", "FP",
+  "z;d;e", "size;dst;src", "SIZE_SD;Fn;FEA", "", "">;
+def BRForm_FP_FTRUNC_s_d_z_fn_s_ea_e : BedrockISAForm<
+  "FP.FTRUNC.s_d_z_fn_s_ea_e", "ftrunc", "FTRUNC.{S|D}(z) Fn(s), <ea>(e)", "1111100101z0111sssseeeeeee", "long", "FP",
   4, 0, 1, 1, 0,
-  "z;s;e", "size;src;dst", "FP.field_types.SIZE_SD;FP.field_types.Fn;FP.field_types.FEA", "", "">;
-def BRForm_FP_instructions_FXCHG_fn_l_fn_r : BedrockISAForm<
-  "FP.instructions.FXCHG.fn_l_fn_r", "fxchg", "FXCHG Fn(l), Fn(r)", "1010100000llllrrrr", "medium", "FP",
+  "z;s;e", "size;src;dst", "SIZE_SD;Fn;FEA", "", "">;
+def BRForm_FP_FXCHG_fn_l_fn_r : BedrockISAForm<
+  "FP.FXCHG.fn_l_fn_r", "fxchg", "FXCHG Fn(l), Fn(r)", "1010100000llllrrrr", "medium", "FP",
   3, 0, 0, 0, 1,
-  "l;r", "lhs;rhs", "FP.field_types.Fn;FP.field_types.Fn", "", "">;
-def BRForm_FP_instructions_RDFFLAGS_rn_d : BedrockISAForm<
-  "FP.instructions.RDFFLAGS.rn_d", "rdfflags", "RDFFLAGS Rn(d)", "11101101001111dddd", "medium", "FP",
+  "l;r", "lhs;rhs", "Fn;Fn", "", "">;
+def BRForm_FP_RDFFLAGS_rn_d : BedrockISAForm<
+  "FP.RDFFLAGS.rn_d", "rdfflags", "RDFFLAGS Rn(d)", "11101101001111dddd", "medium", "FP",
   3, 0, 0, 0, 1,
-  "d", "dst", "base.field_types.Rn", "", "">;
-def BRForm_FP_instructions_RDFSTATUS_rn_d : BedrockISAForm<
-  "FP.instructions.RDFSTATUS.rn_d", "rdfstatus", "RDFSTATUS Rn(d)", "11101101000100dddd", "medium", "FP",
+  "d", "dst", "Rn", "", "">;
+def BRForm_FP_RDFSTATUS_rn_d : BedrockISAForm<
+  "FP.RDFSTATUS.rn_d", "rdfstatus", "RDFSTATUS Rn(d)", "11101101000100dddd", "medium", "FP",
   3, 0, 0, 0, 1,
-  "d", "dst", "base.field_types.Rn", "", "">;
-def BRForm_FP_instructions_WRFFLAGS_rn_s : BedrockISAForm<
-  "FP.instructions.WRFFLAGS.rn_s", "wrfflags", "WRFFLAGS Rn(s)", "11101101001011ssss", "medium", "FP",
+  "d", "dst", "Rn", "", "">;
+def BRForm_FP_WRFFLAGS_rn_s : BedrockISAForm<
+  "FP.WRFFLAGS.rn_s", "wrfflags", "WRFFLAGS Rn(s)", "11101101001011ssss", "medium", "FP",
   3, 0, 0, 0, 1,
-  "s", "src", "base.field_types.Rn", "", "">;
-def BRForm_FP_instructions_WRFSTATUS_rn_s : BedrockISAForm<
-  "FP.instructions.WRFSTATUS.rn_s", "wrfstatus", "WRFSTATUS Rn(s)", "11101101001101ssss", "medium", "FP",
+  "s", "src", "Rn", "", "">;
+def BRForm_FP_WRFSTATUS_rn_s : BedrockISAForm<
+  "FP.WRFSTATUS.rn_s", "wrfstatus", "WRFSTATUS Rn(s)", "11101101001101ssss", "medium", "FP",
   3, 0, 0, 0, 1,
-  "s", "src", "base.field_types.Rn", "", "">;
-def BRForm_FPTRANSA_instructions_FACOSA_s_d_z_fn_s_fn_d : BedrockISAForm<
-  "FPTRANSA.instructions.FACOSA.s_d_z_fn_s_fn_d", "facosa", "FACOSA.{S|D}(z) Fn(s), Fn(d)", "1111100111z0101000ssssdddd", "long", "FPTRANSA",
+  "s", "src", "Rn", "", "">;
+def BRForm_FPTRANSA_FACOSA_s_d_z_fn_s_fn_d : BedrockISAForm<
+  "FPTRANSA.FACOSA.s_d_z_fn_s_fn_d", "facosa", "FACOSA.{S|D}(z) Fn(s), Fn(d)", "1111100111z0101000ssssdddd", "long", "FPTRANSA",
   4, 0, 0, 0, 1,
-  "z;s;d", "size;src;dst", "FP.field_types.SIZE_SD;FP.field_types.Fn;FP.field_types.Fn", "", "">;
-def BRForm_FPTRANSA_instructions_FASINA_s_d_z_fn_s_fn_d : BedrockISAForm<
-  "FPTRANSA.instructions.FASINA.s_d_z_fn_s_fn_d", "fasina", "FASINA.{S|D}(z) Fn(s), Fn(d)", "1111100111z0101011ssssdddd", "long", "FPTRANSA",
+  "z;s;d", "size;src;dst", "SIZE_SD;Fn;Fn", "", "">;
+def BRForm_FPTRANSA_FASINA_s_d_z_fn_s_fn_d : BedrockISAForm<
+  "FPTRANSA.FASINA.s_d_z_fn_s_fn_d", "fasina", "FASINA.{S|D}(z) Fn(s), Fn(d)", "1111100111z0101011ssssdddd", "long", "FPTRANSA",
   4, 0, 0, 0, 1,
-  "z;s;d", "size;src;dst", "FP.field_types.SIZE_SD;FP.field_types.Fn;FP.field_types.Fn", "", "">;
-def BRForm_FPTRANSA_instructions_FATANA_s_d_z_fn_s_fn_d : BedrockISAForm<
-  "FPTRANSA.instructions.FATANA.s_d_z_fn_s_fn_d", "fatana", "FATANA.{S|D}(z) Fn(s), Fn(d)", "1111100111z0101100ssssdddd", "long", "FPTRANSA",
+  "z;s;d", "size;src;dst", "SIZE_SD;Fn;Fn", "", "">;
+def BRForm_FPTRANSA_FATANA_s_d_z_fn_s_fn_d : BedrockISAForm<
+  "FPTRANSA.FATANA.s_d_z_fn_s_fn_d", "fatana", "FATANA.{S|D}(z) Fn(s), Fn(d)", "1111100111z0101100ssssdddd", "long", "FPTRANSA",
   4, 0, 0, 0, 1,
-  "z;s;d", "size;src;dst", "FP.field_types.SIZE_SD;FP.field_types.Fn;FP.field_types.Fn", "", "">;
-def BRForm_FPTRANSA_instructions_FATANHA_s_d_z_fn_s_fn_d : BedrockISAForm<
-  "FPTRANSA.instructions.FATANHA.s_d_z_fn_s_fn_d", "fatanha", "FATANHA.{S|D}(z) Fn(s), Fn(d)", "1111100111z0110000ssssdddd", "long", "FPTRANSA",
+  "z;s;d", "size;src;dst", "SIZE_SD;Fn;Fn", "", "">;
+def BRForm_FPTRANSA_FATANHA_s_d_z_fn_s_fn_d : BedrockISAForm<
+  "FPTRANSA.FATANHA.s_d_z_fn_s_fn_d", "fatanha", "FATANHA.{S|D}(z) Fn(s), Fn(d)", "1111100111z0110000ssssdddd", "long", "FPTRANSA",
   4, 0, 0, 0, 1,
-  "z;s;d", "size;src;dst", "FP.field_types.SIZE_SD;FP.field_types.Fn;FP.field_types.Fn", "", "">;
-def BRForm_FPTRANSA_instructions_FCOSA_s_d_z_fn_s_fn_d : BedrockISAForm<
-  "FPTRANSA.instructions.FCOSA.s_d_z_fn_s_fn_d", "fcosa", "FCOSA.{S|D}(z) Fn(s), Fn(d)", "1111100111z0100000ssssdddd", "long", "FPTRANSA",
+  "z;s;d", "size;src;dst", "SIZE_SD;Fn;Fn", "", "">;
+def BRForm_FPTRANSA_FCOSA_s_d_z_fn_s_fn_d : BedrockISAForm<
+  "FPTRANSA.FCOSA.s_d_z_fn_s_fn_d", "fcosa", "FCOSA.{S|D}(z) Fn(s), Fn(d)", "1111100111z0100000ssssdddd", "long", "FPTRANSA",
   4, 0, 0, 0, 1,
-  "z;s;d", "size;src;dst", "FP.field_types.SIZE_SD;FP.field_types.Fn;FP.field_types.Fn", "", "">;
-def BRForm_FPTRANSA_instructions_FCOSHA_s_d_z_fn_s_fn_d : BedrockISAForm<
-  "FPTRANSA.instructions.FCOSHA.s_d_z_fn_s_fn_d", "fcosha", "FCOSHA.{S|D}(z) Fn(s), Fn(d)", "1111100111z0100001ssssdddd", "long", "FPTRANSA",
+  "z;s;d", "size;src;dst", "SIZE_SD;Fn;Fn", "", "">;
+def BRForm_FPTRANSA_FCOSHA_s_d_z_fn_s_fn_d : BedrockISAForm<
+  "FPTRANSA.FCOSHA.s_d_z_fn_s_fn_d", "fcosha", "FCOSHA.{S|D}(z) Fn(s), Fn(d)", "1111100111z0100001ssssdddd", "long", "FPTRANSA",
   4, 0, 0, 0, 1,
-  "z;s;d", "size;src;dst", "FP.field_types.SIZE_SD;FP.field_types.Fn;FP.field_types.Fn", "", "">;
-def BRForm_FPTRANSA_instructions_FETOXA_s_d_z_fn_s_fn_d : BedrockISAForm<
-  "FPTRANSA.instructions.FETOXA.s_d_z_fn_s_fn_d", "fetoxa", "FETOXA.{S|D}(z) Fn(s), Fn(d)", "1111100111z0100010ssssdddd", "long", "FPTRANSA",
+  "z;s;d", "size;src;dst", "SIZE_SD;Fn;Fn", "", "">;
+def BRForm_FPTRANSA_FETOXA_s_d_z_fn_s_fn_d : BedrockISAForm<
+  "FPTRANSA.FETOXA.s_d_z_fn_s_fn_d", "fetoxa", "FETOXA.{S|D}(z) Fn(s), Fn(d)", "1111100111z0100010ssssdddd", "long", "FPTRANSA",
   4, 0, 0, 0, 1,
-  "z;s;d", "size;src;dst", "FP.field_types.SIZE_SD;FP.field_types.Fn;FP.field_types.Fn", "", "">;
-def BRForm_FPTRANSA_instructions_FETOXM1A_s_d_z_fn_s_fn_d : BedrockISAForm<
-  "FPTRANSA.instructions.FETOXM1A.s_d_z_fn_s_fn_d", "fetoxm1a", "FETOXM1A.{S|D}(z) Fn(s), Fn(d)", "1111100111z0100011ssssdddd", "long", "FPTRANSA",
+  "z;s;d", "size;src;dst", "SIZE_SD;Fn;Fn", "", "">;
+def BRForm_FPTRANSA_FETOXM1A_s_d_z_fn_s_fn_d : BedrockISAForm<
+  "FPTRANSA.FETOXM1A.s_d_z_fn_s_fn_d", "fetoxm1a", "FETOXM1A.{S|D}(z) Fn(s), Fn(d)", "1111100111z0100011ssssdddd", "long", "FPTRANSA",
   4, 0, 0, 0, 1,
-  "z;s;d", "size;src;dst", "FP.field_types.SIZE_SD;FP.field_types.Fn;FP.field_types.Fn", "", "">;
-def BRForm_FPTRANSA_instructions_FLOG10A_s_d_z_fn_s_fn_d : BedrockISAForm<
-  "FPTRANSA.instructions.FLOG10A.s_d_z_fn_s_fn_d", "flog10a", "FLOG10A.{S|D}(z) Fn(s), Fn(d)", "1111100111z0100100ssssdddd", "long", "FPTRANSA",
+  "z;s;d", "size;src;dst", "SIZE_SD;Fn;Fn", "", "">;
+def BRForm_FPTRANSA_FLOG10A_s_d_z_fn_s_fn_d : BedrockISAForm<
+  "FPTRANSA.FLOG10A.s_d_z_fn_s_fn_d", "flog10a", "FLOG10A.{S|D}(z) Fn(s), Fn(d)", "1111100111z0100100ssssdddd", "long", "FPTRANSA",
   4, 0, 0, 0, 1,
-  "z;s;d", "size;src;dst", "FP.field_types.SIZE_SD;FP.field_types.Fn;FP.field_types.Fn", "", "">;
-def BRForm_FPTRANSA_instructions_FLOG2A_s_d_z_fn_s_fn_d : BedrockISAForm<
-  "FPTRANSA.instructions.FLOG2A.s_d_z_fn_s_fn_d", "flog2a", "FLOG2A.{S|D}(z) Fn(s), Fn(d)", "1111100111z0100101ssssdddd", "long", "FPTRANSA",
+  "z;s;d", "size;src;dst", "SIZE_SD;Fn;Fn", "", "">;
+def BRForm_FPTRANSA_FLOG2A_s_d_z_fn_s_fn_d : BedrockISAForm<
+  "FPTRANSA.FLOG2A.s_d_z_fn_s_fn_d", "flog2a", "FLOG2A.{S|D}(z) Fn(s), Fn(d)", "1111100111z0100101ssssdddd", "long", "FPTRANSA",
   4, 0, 0, 0, 1,
-  "z;s;d", "size;src;dst", "FP.field_types.SIZE_SD;FP.field_types.Fn;FP.field_types.Fn", "", "">;
-def BRForm_FPTRANSA_instructions_FLOGNA_s_d_z_fn_s_fn_d : BedrockISAForm<
-  "FPTRANSA.instructions.FLOGNA.s_d_z_fn_s_fn_d", "flogna", "FLOGNA.{S|D}(z) Fn(s), Fn(d)", "1111100111z0100110ssssdddd", "long", "FPTRANSA",
+  "z;s;d", "size;src;dst", "SIZE_SD;Fn;Fn", "", "">;
+def BRForm_FPTRANSA_FLOGNA_s_d_z_fn_s_fn_d : BedrockISAForm<
+  "FPTRANSA.FLOGNA.s_d_z_fn_s_fn_d", "flogna", "FLOGNA.{S|D}(z) Fn(s), Fn(d)", "1111100111z0100110ssssdddd", "long", "FPTRANSA",
   4, 0, 0, 0, 1,
-  "z;s;d", "size;src;dst", "FP.field_types.SIZE_SD;FP.field_types.Fn;FP.field_types.Fn", "", "">;
-def BRForm_FPTRANSA_instructions_FLOGNP1A_s_d_z_fn_s_fn_d : BedrockISAForm<
-  "FPTRANSA.instructions.FLOGNP1A.s_d_z_fn_s_fn_d", "flognp1a", "FLOGNP1A.{S|D}(z) Fn(s), Fn(d)", "1111100111z0100111ssssdddd", "long", "FPTRANSA",
+  "z;s;d", "size;src;dst", "SIZE_SD;Fn;Fn", "", "">;
+def BRForm_FPTRANSA_FLOGNP1A_s_d_z_fn_s_fn_d : BedrockISAForm<
+  "FPTRANSA.FLOGNP1A.s_d_z_fn_s_fn_d", "flognp1a", "FLOGNP1A.{S|D}(z) Fn(s), Fn(d)", "1111100111z0100111ssssdddd", "long", "FPTRANSA",
   4, 0, 0, 0, 1,
-  "z;s;d", "size;src;dst", "FP.field_types.SIZE_SD;FP.field_types.Fn;FP.field_types.Fn", "", "">;
-def BRForm_FPTRANSA_instructions_FSINA_s_d_z_fn_s_fn_d : BedrockISAForm<
-  "FPTRANSA.instructions.FSINA.s_d_z_fn_s_fn_d", "fsina", "FSINA.{S|D}(z) Fn(s), Fn(d)", "1111100111z0101001ssssdddd", "long", "FPTRANSA",
+  "z;s;d", "size;src;dst", "SIZE_SD;Fn;Fn", "", "">;
+def BRForm_FPTRANSA_FSINA_s_d_z_fn_s_fn_d : BedrockISAForm<
+  "FPTRANSA.FSINA.s_d_z_fn_s_fn_d", "fsina", "FSINA.{S|D}(z) Fn(s), Fn(d)", "1111100111z0101001ssssdddd", "long", "FPTRANSA",
   4, 0, 0, 0, 1,
-  "z;s;d", "size;src;dst", "FP.field_types.SIZE_SD;FP.field_types.Fn;FP.field_types.Fn", "", "">;
-def BRForm_FPTRANSA_instructions_FSINCOSA_s_d_z_fn_s_fn_d_fn_c : BedrockISAForm<
-  "FPTRANSA.instructions.FSINCOSA.s_d_z_fn_s_fn_d_fn_c", "fsincosa", "FSINCOSA.{S|D}(z) Fn(s), Fn(d), Fn(c)", "1111100111z001ssssddddcccc", "long", "FPTRANSA",
+  "z;s;d", "size;src;dst", "SIZE_SD;Fn;Fn", "", "">;
+def BRForm_FPTRANSA_FSINCOSA_s_d_z_fn_s_fn_d_fn_c : BedrockISAForm<
+  "FPTRANSA.FSINCOSA.s_d_z_fn_s_fn_d_fn_c", "fsincosa", "FSINCOSA.{S|D}(z) Fn(s), Fn(d), Fn(c)", "1111100111z001ssssddddcccc", "long", "FPTRANSA",
   4, 0, 0, 0, 1,
-  "z;s;d;c", "size;src;sin_dst;cos_dst", "FP.field_types.SIZE_SD;FP.field_types.Fn;FP.field_types.Fn;FP.field_types.Fn", "", "">;
-def BRForm_FPTRANSA_instructions_FSINHA_s_d_z_fn_s_fn_d : BedrockISAForm<
-  "FPTRANSA.instructions.FSINHA.s_d_z_fn_s_fn_d", "fsinha", "FSINHA.{S|D}(z) Fn(s), Fn(d)", "1111100111z0101010ssssdddd", "long", "FPTRANSA",
+  "z;s;d;c", "size;src;sin_dst;cos_dst", "SIZE_SD;Fn;Fn;Fn", "", "">;
+def BRForm_FPTRANSA_FSINHA_s_d_z_fn_s_fn_d : BedrockISAForm<
+  "FPTRANSA.FSINHA.s_d_z_fn_s_fn_d", "fsinha", "FSINHA.{S|D}(z) Fn(s), Fn(d)", "1111100111z0101010ssssdddd", "long", "FPTRANSA",
   4, 0, 0, 0, 1,
-  "z;s;d", "size;src;dst", "FP.field_types.SIZE_SD;FP.field_types.Fn;FP.field_types.Fn", "", "">;
-def BRForm_FPTRANSA_instructions_FTANA_s_d_z_fn_s_fn_d : BedrockISAForm<
-  "FPTRANSA.instructions.FTANA.s_d_z_fn_s_fn_d", "ftana", "FTANA.{S|D}(z) Fn(s), Fn(d)", "1111100111z0101101ssssdddd", "long", "FPTRANSA",
+  "z;s;d", "size;src;dst", "SIZE_SD;Fn;Fn", "", "">;
+def BRForm_FPTRANSA_FTANA_s_d_z_fn_s_fn_d : BedrockISAForm<
+  "FPTRANSA.FTANA.s_d_z_fn_s_fn_d", "ftana", "FTANA.{S|D}(z) Fn(s), Fn(d)", "1111100111z0101101ssssdddd", "long", "FPTRANSA",
   4, 0, 0, 0, 1,
-  "z;s;d", "size;src;dst", "FP.field_types.SIZE_SD;FP.field_types.Fn;FP.field_types.Fn", "", "">;
-def BRForm_FPTRANSA_instructions_FTANHA_s_d_z_fn_s_fn_d : BedrockISAForm<
-  "FPTRANSA.instructions.FTANHA.s_d_z_fn_s_fn_d", "ftanha", "FTANHA.{S|D}(z) Fn(s), Fn(d)", "1111100111z0101110ssssdddd", "long", "FPTRANSA",
+  "z;s;d", "size;src;dst", "SIZE_SD;Fn;Fn", "", "">;
+def BRForm_FPTRANSA_FTANHA_s_d_z_fn_s_fn_d : BedrockISAForm<
+  "FPTRANSA.FTANHA.s_d_z_fn_s_fn_d", "ftanha", "FTANHA.{S|D}(z) Fn(s), Fn(d)", "1111100111z0101110ssssdddd", "long", "FPTRANSA",
   4, 0, 0, 0, 1,
-  "z;s;d", "size;src;dst", "FP.field_types.SIZE_SD;FP.field_types.Fn;FP.field_types.Fn", "", "">;
-def BRForm_FPTRANSA_instructions_FTENTOXA_s_d_z_fn_s_fn_d : BedrockISAForm<
-  "FPTRANSA.instructions.FTENTOXA.s_d_z_fn_s_fn_d", "ftentoxa", "FTENTOXA.{S|D}(z) Fn(s), Fn(d)", "1111100111z0101111ssssdddd", "long", "FPTRANSA",
+  "z;s;d", "size;src;dst", "SIZE_SD;Fn;Fn", "", "">;
+def BRForm_FPTRANSA_FTENTOXA_s_d_z_fn_s_fn_d : BedrockISAForm<
+  "FPTRANSA.FTENTOXA.s_d_z_fn_s_fn_d", "ftentoxa", "FTENTOXA.{S|D}(z) Fn(s), Fn(d)", "1111100111z0101111ssssdddd", "long", "FPTRANSA",
   4, 0, 0, 0, 1,
-  "z;s;d", "size;src;dst", "FP.field_types.SIZE_SD;FP.field_types.Fn;FP.field_types.Fn", "", "">;
-def BRForm_FPTRANSA_instructions_FTWOTOXA_s_d_z_fn_s_fn_d : BedrockISAForm<
-  "FPTRANSA.instructions.FTWOTOXA.s_d_z_fn_s_fn_d", "ftwotoxa", "FTWOTOXA.{S|D}(z) Fn(s), Fn(d)", "1111100111z0110001ssssdddd", "long", "FPTRANSA",
+  "z;s;d", "size;src;dst", "SIZE_SD;Fn;Fn", "", "">;
+def BRForm_FPTRANSA_FTWOTOXA_s_d_z_fn_s_fn_d : BedrockISAForm<
+  "FPTRANSA.FTWOTOXA.s_d_z_fn_s_fn_d", "ftwotoxa", "FTWOTOXA.{S|D}(z) Fn(s), Fn(d)", "1111100111z0110001ssssdddd", "long", "FPTRANSA",
   4, 0, 0, 0, 1,
-  "z;s;d", "size;src;dst", "FP.field_types.SIZE_SD;FP.field_types.Fn;FP.field_types.Fn", "", "">;
-def BRForm_VECTOR_instructions_VDUP_b_w_l_q_z_rn_r_vn_v : BedrockISAForm<
-  "VECTOR.instructions.VDUP.b_w_l_q_z_rn_r_vn_v", "vdup", "VDUP.{B|W|L|Q}(z) Rn(r), Vn(v)", "11111010010010zz0rrrrvvvvv", "long", "VECTOR",
+  "z;s;d", "size;src;dst", "SIZE_SD;Fn;Fn", "", "">;
+def BRForm_VECTOR_VDUP_b_w_l_q_z_rn_r_vn_v : BedrockISAForm<
+  "VECTOR.VDUP.b_w_l_q_z_rn_r_vn_v", "vdup", "VDUP.{B|W|L|Q}(z) Rn(r), Vn(v)", "11111010010010zz0rrrrvvvvv", "long", "VECTOR",
   4, 0, 0, 0, 1,
-  "z;r;v", "size;src;dst", "base.field_types.SIZE_BWLQ;base.field_types.Rn;VECTOR.field_types.Vn", "", "">;
-def BRForm_VECTOR_instructions_VDUP_h_s_d_z_fn_r_vn_v : BedrockISAForm<
-  "VECTOR.instructions.VDUP.h_s_d_z_fn_r_vn_v", "vdup", "VDUP.{H|S|D}(z) Fn(r), Vn(v)", "11111010010010zz1rrrrvvvvv", "long", "VECTOR",
-  4, 0, 0, 0, 1,
-  "z;r;v", "size;src;dst", "VECTOR.field_types.SIZE_HSD;FP.field_types.Fn;VECTOR.field_types.Vn", "", "">;
-def BRForm_VECTOR_instructions_VDUP_b_imm8_vn_v : BedrockISAForm<
-  "VECTOR.instructions.VDUP.b_imm8_vn_v", "vdup", "VDUP.B <imm8>, Vn(v)", "111110100110100000010vvvvv", "long", "VECTOR",
+  "z;r;v", "size;src;dst", "SIZE_BWLQ;Rn;Vn", "", "">;
+def BRForm_VECTOR_VDUP_b_imm8_vn_v : BedrockISAForm<
+  "VECTOR.VDUP.b_imm8_vn_v", "vdup", "VDUP.B <imm8>, Vn(v)", "111110100110100000010vvvvv", "long", "VECTOR",
   4, 1, 0, 0, 1,
-  "v", "dst", "VECTOR.field_types.Vn", "immediate", "base.payload_types.IMM8">;
-def BRForm_VECTOR_instructions_VDUP_w_imm16_vn_v : BedrockISAForm<
-  "VECTOR.instructions.VDUP.w_imm16_vn_v", "vdup", "VDUP.W <imm16>, Vn(v)", "111110100110100100010vvvvv", "long", "VECTOR",
+  "v", "dst", "Vn", "immediate", "IMM8">;
+def BRForm_VECTOR_VDUP_w_imm16_vn_v : BedrockISAForm<
+  "VECTOR.VDUP.w_imm16_vn_v", "vdup", "VDUP.W <imm16>, Vn(v)", "111110100110100100010vvvvv", "long", "VECTOR",
   4, 2, 0, 0, 1,
-  "v", "dst", "VECTOR.field_types.Vn", "immediate", "base.payload_types.IMM16">;
-def BRForm_VECTOR_instructions_VDUP_l_imm32_vn_v : BedrockISAForm<
-  "VECTOR.instructions.VDUP.l_imm32_vn_v", "vdup", "VDUP.L <imm32>, Vn(v)", "111110100110101000010vvvvv", "long", "VECTOR",
+  "v", "dst", "Vn", "immediate", "IMM16">;
+def BRForm_VECTOR_VDUP_l_imm32_vn_v : BedrockISAForm<
+  "VECTOR.VDUP.l_imm32_vn_v", "vdup", "VDUP.L <imm32>, Vn(v)", "111110100110101000010vvvvv", "long", "VECTOR",
   4, 4, 0, 0, 1,
-  "v", "dst", "VECTOR.field_types.Vn", "immediate", "base.payload_types.IMM32">;
-def BRForm_VECTOR_instructions_VDUP_q_imm64_vn_v : BedrockISAForm<
-  "VECTOR.instructions.VDUP.q_imm64_vn_v", "vdup", "VDUP.Q <imm64>, Vn(v)", "111110100110101100010vvvvv", "long", "VECTOR",
+  "v", "dst", "Vn", "immediate", "IMM32">;
+def BRForm_VECTOR_VDUP_q_imm64_vn_v : BedrockISAForm<
+  "VECTOR.VDUP.q_imm64_vn_v", "vdup", "VDUP.Q <imm64>, Vn(v)", "111110100110101100010vvvvv", "long", "VECTOR",
   4, 8, 0, 0, 0,
-  "v", "dst", "VECTOR.field_types.Vn", "immediate", "base.payload_types.IMM64">;
-def BRForm_VECTOR_instructions_VMOV_vn_v_vn_w : BedrockISAForm<
-  "VECTOR.instructions.VMOV.vn_v_vn_w", "vmov", "VMOV Vn(v), Vn(w)", "1111101001000000vvvvvwwwww", "long", "VECTOR",
+  "v", "dst", "Vn", "immediate", "IMM64">;
+def BRForm_VECTOR_VMOV_vn_v_vn_w : BedrockISAForm<
+  "VECTOR.VMOV.vn_v_vn_w", "vmov", "VMOV Vn(v), Vn(w)", "1111101001000000vvvvvwwwww", "long", "VECTOR",
   4, 0, 0, 0, 1,
-  "v;w", "src;dst", "VECTOR.field_types.Vn;VECTOR.field_types.Vn", "", "">;
-def BRForm_VECTOR_instructions_VMOV_b_w_l_q_z_pn_p_vn_v_vn_w : BedrockISAForm<
-  "VECTOR.instructions.VMOV.b_w_l_q_z_pn_p_vn_v_vn_w", "vmov", "VMOV.{B|W|L|Q}(z) Pn(p), Vn(v), Vn(w)", "11111101111010110zz0ppppvvvvvwwwww", "extralong", "VECTOR",
+  "v;w", "src;dst", "Vn;Vn", "", "">;
+def BRForm_VECTOR_VMOV_b_w_l_q_z_pn_p_vn_v_vn_w : BedrockISAForm<
+  "VECTOR.VMOV.b_w_l_q_z_pn_p_vn_v_vn_w", "vmov", "VMOV.{B|W|L|Q}(z) Pn(p), Vn(v), Vn(w)", "11111101111010110zz0ppppvvvvvwwwww", "extralong", "VECTOR",
   5, 0, 0, 0, 1,
-  "z;p;v;w", "size;govern;src;dst", "base.field_types.SIZE_BWLQ;VECTOR.field_types.Pn;VECTOR.field_types.Vn;VECTOR.field_types.Vn", "", "">;
-def BRForm_VECTOR_instructions_VMOV_b_w_l_q_z_pn_p_ea_e_vn_v : BedrockISAForm<
-  "VECTOR.instructions.VMOV.b_w_l_q_z_pn_p_ea_e_vn_v", "vmov", "VMOV.{B|W|L|Q}(z) Pn(p), <ea>(e), Vn(v)", "11111111000000100000zz0000ppppvvvvveeeeeee", "xxlong", "VECTOR",
+  "z;p;v;w", "size;govern;src;dst", "SIZE_BWLQ;Pn;Vn;Vn", "", "">;
+def BRForm_VECTOR_VMOV_b_w_l_q_z_pn_p_ea_e_vn_v : BedrockISAForm<
+  "VECTOR.VMOV.b_w_l_q_z_pn_p_ea_e_vn_v", "vmov", "VMOV.{B|W|L|Q}(z) Pn(p), <ea>(e), Vn(v)", "11111111000000100000zz0000ppppvvvvveeeeeee", "xxlong", "VECTOR",
   6, 0, 1, 1, 0,
-  "z;p;v;e", "size;govern;dst;src", "base.field_types.SIZE_BWLQ;VECTOR.field_types.Pn;VECTOR.field_types.Vn;VECTOR.field_types.VEA", "", "">;
-def BRForm_VECTOR_instructions_VMOV_b_w_l_q_z_pn_p_vn_v_ea_e : BedrockISAForm<
-  "VECTOR.instructions.VMOV.b_w_l_q_z_pn_p_vn_v_ea_e", "vmov", "VMOV.{B|W|L|Q}(z) Pn(p), Vn(v), <ea>(e)", "11111111000000100000zz0001ppppvvvvveeeeeee", "xxlong", "VECTOR",
+  "z;p;v;e", "size;govern;dst;src", "SIZE_BWLQ;Pn;Vn;VEA", "", "">;
+def BRForm_VECTOR_VMOV_b_w_l_q_z_pn_p_vn_v_ea_e : BedrockISAForm<
+  "VECTOR.VMOV.b_w_l_q_z_pn_p_vn_v_ea_e", "vmov", "VMOV.{B|W|L|Q}(z) Pn(p), Vn(v), <ea>(e)", "11111111000000100000zz0001ppppvvvvveeeeeee", "xxlong", "VECTOR",
   6, 0, 1, 1, 0,
-  "z;p;v;e", "size;govern;src;dst", "base.field_types.SIZE_BWLQ;VECTOR.field_types.Pn;VECTOR.field_types.Vn;VECTOR.field_types.VEA", "", "">;
-def BRForm_VECTOR_instructions_PHEAD_b_w_l_q_z_rn_r_pn_p : BedrockISAForm<
-  "VECTOR.instructions.PHEAD.b_w_l_q_z_rn_r_pn_p", "phead", "PHEAD.{B|W|L|Q}(z) Rn(r), Pn(p)", "11111010010100zz00rrrrpppp", "long", "VECTOR",
+  "z;p;v;e", "size;govern;src;dst", "SIZE_BWLQ;Pn;Vn;VEA", "", "">;
+def BRForm_VECTOR_PHEAD_b_w_l_q_z_rn_r_pn_p : BedrockISAForm<
+  "VECTOR.PHEAD.b_w_l_q_z_rn_r_pn_p", "phead", "PHEAD.{B|W|L|Q}(z) Rn(r), Pn(p)", "11111010010100zz00rrrrpppp", "long", "VECTOR",
   4, 0, 0, 0, 1,
-  "z;r;p", "size;count;dst", "base.field_types.SIZE_BWLQ;base.field_types.Rn;VECTOR.field_types.Pn", "", "">;
-def BRForm_VECTOR_instructions_PTAIL_b_w_l_q_z_rn_r_pn_p : BedrockISAForm<
-  "VECTOR.instructions.PTAIL.b_w_l_q_z_rn_r_pn_p", "ptail", "PTAIL.{B|W|L|Q}(z) Rn(r), Pn(p)", "11111010010100zz01rrrrpppp", "long", "VECTOR",
+  "z;r;p", "size;count;dst", "SIZE_BWLQ;Rn;Pn", "", "">;
+def BRForm_VECTOR_PTAIL_b_w_l_q_z_rn_r_pn_p : BedrockISAForm<
+  "VECTOR.PTAIL.b_w_l_q_z_rn_r_pn_p", "ptail", "PTAIL.{B|W|L|Q}(z) Rn(r), Pn(p)", "11111010010100zz01rrrrpppp", "long", "VECTOR",
   4, 0, 0, 0, 1,
-  "z;r;p", "size;count;dst", "base.field_types.SIZE_BWLQ;base.field_types.Rn;VECTOR.field_types.Pn", "", "">;
-def BRForm_VECTOR_instructions_PFIRST_b_w_l_q_z_pn_p_rn_r : BedrockISAForm<
-  "VECTOR.instructions.PFIRST.b_w_l_q_z_pn_p_rn_r", "pfirst", "PFIRST.{B|W|L|Q}(z) Pn(p), Rn(r)", "11111010010100zz10rrrrpppp", "long", "VECTOR",
+  "z;r;p", "size;count;dst", "SIZE_BWLQ;Rn;Pn", "", "">;
+def BRForm_VECTOR_PFIRST_b_w_l_q_z_pn_p_rn_r : BedrockISAForm<
+  "VECTOR.PFIRST.b_w_l_q_z_pn_p_rn_r", "pfirst", "PFIRST.{B|W|L|Q}(z) Pn(p), Rn(r)", "11111010010100zz10rrrrpppp", "long", "VECTOR",
   4, 0, 0, 0, 1,
-  "z;r;p", "size;dst;predicate", "base.field_types.SIZE_BWLQ;base.field_types.Rn;VECTOR.field_types.Pn", "", "">;
-def BRForm_VECTOR_instructions_PLAST_b_w_l_q_z_pn_p_rn_r : BedrockISAForm<
-  "VECTOR.instructions.PLAST.b_w_l_q_z_pn_p_rn_r", "plast", "PLAST.{B|W|L|Q}(z) Pn(p), Rn(r)", "11111010010100zz11rrrrpppp", "long", "VECTOR",
+  "z;r;p", "size;dst;predicate", "SIZE_BWLQ;Rn;Pn", "", "">;
+def BRForm_VECTOR_PLAST_b_w_l_q_z_pn_p_rn_r : BedrockISAForm<
+  "VECTOR.PLAST.b_w_l_q_z_pn_p_rn_r", "plast", "PLAST.{B|W|L|Q}(z) Pn(p), Rn(r)", "11111010010100zz11rrrrpppp", "long", "VECTOR",
   4, 0, 0, 0, 1,
-  "z;r;p", "size;dst;predicate", "base.field_types.SIZE_BWLQ;base.field_types.Rn;VECTOR.field_types.Pn", "", "">;
-def BRForm_VECTOR_instructions_PCOUNT_b_w_l_q_z_pn_p_rn_r : BedrockISAForm<
-  "VECTOR.instructions.PCOUNT.b_w_l_q_z_pn_p_rn_r", "pcount", "PCOUNT.{B|W|L|Q}(z) Pn(p), Rn(r)", "11111010010101zz00rrrrpppp", "long", "VECTOR",
+  "z;r;p", "size;dst;predicate", "SIZE_BWLQ;Rn;Pn", "", "">;
+def BRForm_VECTOR_PCOUNT_b_w_l_q_z_pn_p_rn_r : BedrockISAForm<
+  "VECTOR.PCOUNT.b_w_l_q_z_pn_p_rn_r", "pcount", "PCOUNT.{B|W|L|Q}(z) Pn(p), Rn(r)", "11111010010101zz00rrrrpppp", "long", "VECTOR",
   4, 0, 0, 0, 1,
-  "z;r;p", "size;dst;predicate", "base.field_types.SIZE_BWLQ;base.field_types.Rn;VECTOR.field_types.Pn", "", "">;
-def BRForm_VECTOR_instructions_PAND_pn_p_pn_q : BedrockISAForm<
-  "VECTOR.instructions.PAND.pn_p_pn_q", "pand", "PAND Pn(p), Pn(q)", "111110100101100000ppppqqqq", "long", "VECTOR",
+  "z;r;p", "size;dst;predicate", "SIZE_BWLQ;Rn;Pn", "", "">;
+def BRForm_VECTOR_PAND_pn_p_pn_q : BedrockISAForm<
+  "VECTOR.PAND.pn_p_pn_q", "pand", "PAND Pn(p), Pn(q)", "111110100101100000ppppqqqq", "long", "VECTOR",
   4, 0, 0, 0, 1,
-  "p;q", "src;dst", "VECTOR.field_types.Pn;VECTOR.field_types.Pn", "", "">;
-def BRForm_VECTOR_instructions_POR_pn_p_pn_q : BedrockISAForm<
-  "VECTOR.instructions.POR.pn_p_pn_q", "por", "POR Pn(p), Pn(q)", "111110100101100001ppppqqqq", "long", "VECTOR",
+  "p;q", "src;dst", "Pn;Pn", "", "">;
+def BRForm_VECTOR_POR_pn_p_pn_q : BedrockISAForm<
+  "VECTOR.POR.pn_p_pn_q", "por", "POR Pn(p), Pn(q)", "111110100101100001ppppqqqq", "long", "VECTOR",
   4, 0, 0, 0, 1,
-  "p;q", "src;dst", "VECTOR.field_types.Pn;VECTOR.field_types.Pn", "", "">;
-def BRForm_VECTOR_instructions_PXOR_pn_p_pn_q : BedrockISAForm<
-  "VECTOR.instructions.PXOR.pn_p_pn_q", "pxor", "PXOR Pn(p), Pn(q)", "111110100101100010ppppqqqq", "long", "VECTOR",
+  "p;q", "src;dst", "Pn;Pn", "", "">;
+def BRForm_VECTOR_PXOR_pn_p_pn_q : BedrockISAForm<
+  "VECTOR.PXOR.pn_p_pn_q", "pxor", "PXOR Pn(p), Pn(q)", "111110100101100010ppppqqqq", "long", "VECTOR",
   4, 0, 0, 0, 1,
-  "p;q", "src;dst", "VECTOR.field_types.Pn;VECTOR.field_types.Pn", "", "">;
-def BRForm_VECTOR_instructions_PUNPKLO_b_w_l_z_pn_p_pn_q : BedrockISAForm<
-  "VECTOR.instructions.PUNPKLO.b_w_l_z_pn_p_pn_q", "punpklo", "PUNPKLO.{B|W|L}(z) Pn(p), Pn(q)", "11111010010110zz11ppppqqqq", "long", "VECTOR",
+  "p;q", "src;dst", "Pn;Pn", "", "">;
+def BRForm_VECTOR_PUNPKLO_b_w_l_z_pn_p_pn_q : BedrockISAForm<
+  "VECTOR.PUNPKLO.b_w_l_z_pn_p_pn_q", "punpklo", "PUNPKLO.{B|W|L}(z) Pn(p), Pn(q)", "11111010010110zz11ppppqqqq", "long", "VECTOR",
   4, 0, 0, 0, 1,
-  "z;p;q", "size;src;dst", "VECTOR.field_types.SIZE_BWL;VECTOR.field_types.Pn;VECTOR.field_types.Pn", "", "">;
-def BRForm_VECTOR_instructions_PUNPKHI_b_w_l_z_pn_p_pn_q : BedrockISAForm<
-  "VECTOR.instructions.PUNPKHI.b_w_l_z_pn_p_pn_q", "punpkhi", "PUNPKHI.{B|W|L}(z) Pn(p), Pn(q)", "11111010010111zz00ppppqqqq", "long", "VECTOR",
+  "z;p;q", "size;src;dst", "SIZE_BWL;Pn;Pn", "", "">;
+def BRForm_VECTOR_PUNPKHI_b_w_l_z_pn_p_pn_q : BedrockISAForm<
+  "VECTOR.PUNPKHI.b_w_l_z_pn_p_pn_q", "punpkhi", "PUNPKHI.{B|W|L}(z) Pn(p), Pn(q)", "11111010010111zz00ppppqqqq", "long", "VECTOR",
   4, 0, 0, 0, 1,
-  "z;p;q", "size;src;dst", "VECTOR.field_types.SIZE_BWL;VECTOR.field_types.Pn;VECTOR.field_types.Pn", "", "">;
-def BRForm_VECTOR_instructions_PPACKLO_w_l_q_z_pn_p_pn_q : BedrockISAForm<
-  "VECTOR.instructions.PPACKLO.w_l_q_z_pn_p_pn_q", "ppacklo", "PPACKLO.{W|L|Q}(z) Pn(p), Pn(q)", "11111010010111zz01ppppqqqq", "long", "VECTOR",
+  "z;p;q", "size;src;dst", "SIZE_BWL;Pn;Pn", "", "">;
+def BRForm_VECTOR_PPACKLO_w_l_q_z_pn_p_pn_q : BedrockISAForm<
+  "VECTOR.PPACKLO.w_l_q_z_pn_p_pn_q", "ppacklo", "PPACKLO.{W|L|Q}(z) Pn(p), Pn(q)", "11111010010111zz01ppppqqqq", "long", "VECTOR",
   4, 0, 0, 0, 1,
-  "z;p;q", "size;src;dst", "base.field_types.SIZE_WLQ;VECTOR.field_types.Pn;VECTOR.field_types.Pn", "", "">;
-def BRForm_VECTOR_instructions_PPACKHI_w_l_q_z_pn_p_pn_q : BedrockISAForm<
-  "VECTOR.instructions.PPACKHI.w_l_q_z_pn_p_pn_q", "ppackhi", "PPACKHI.{W|L|Q}(z) Pn(p), Pn(q)", "11111010010111zz10ppppqqqq", "long", "VECTOR",
+  "z;p;q", "size;src;dst", "SIZE_WLQ;Pn;Pn", "", "">;
+def BRForm_VECTOR_PPACKHI_w_l_q_z_pn_p_pn_q : BedrockISAForm<
+  "VECTOR.PPACKHI.w_l_q_z_pn_p_pn_q", "ppackhi", "PPACKHI.{W|L|Q}(z) Pn(p), Pn(q)", "11111010010111zz10ppppqqqq", "long", "VECTOR",
   4, 0, 0, 0, 1,
-  "z;p;q", "size;src;dst", "base.field_types.SIZE_WLQ;VECTOR.field_types.Pn;VECTOR.field_types.Pn", "", "">;
-def BRForm_VECTOR_instructions_VCLR_vn_v : BedrockISAForm<
-  "VECTOR.instructions.VCLR.vn_v", "vclr", "VCLR Vn(v)", "111110100110100000000vvvvv", "long", "VECTOR",
+  "z;p;q", "size;src;dst", "SIZE_WLQ;Pn;Pn", "", "">;
+def BRForm_VECTOR_VCLR_vn_v : BedrockISAForm<
+  "VECTOR.VCLR.vn_v", "vclr", "VCLR Vn(v)", "111110100110100000000vvvvv", "long", "VECTOR",
   4, 0, 0, 0, 1,
-  "v", "dst", "VECTOR.field_types.Vn", "", "">;
-def BRForm_VECTOR_instructions_VINDEX_b_w_l_q_z_vn_v : BedrockISAForm<
-  "VECTOR.instructions.VINDEX.b_w_l_q_z_vn_v", "vindex", "VINDEX.{B|W|L|Q}(z) Vn(v)", "11111010011010zz00001vvvvv", "long", "VECTOR",
+  "v", "dst", "Vn", "", "">;
+def BRForm_VECTOR_VINDEX_b_w_l_q_z_vn_v : BedrockISAForm<
+  "VECTOR.VINDEX.b_w_l_q_z_vn_v", "vindex", "VINDEX.{B|W|L|Q}(z) Vn(v)", "11111010011010zz00001vvvvv", "long", "VECTOR",
   4, 0, 0, 0, 1,
-  "z;v", "size;dst", "base.field_types.SIZE_BWLQ;VECTOR.field_types.Vn", "", "">;
-def BRForm_VECTOR_instructions_VLCNT_b_w_l_q_z_rn_r : BedrockISAForm<
-  "VECTOR.instructions.VLCNT.b_w_l_q_z_rn_r", "vlcnt", "VLCNT.{B|W|L|Q}(z) Rn(r)", "11111010011000zz000001rrrr", "long", "VECTOR",
+  "z;v", "size;dst", "SIZE_BWLQ;Vn", "", "">;
+def BRForm_VECTOR_VLCNT_b_w_l_q_z_rn_r : BedrockISAForm<
+  "VECTOR.VLCNT.b_w_l_q_z_rn_r", "vlcnt", "VLCNT.{B|W|L|Q}(z) Rn(r)", "11111010011000zz000001rrrr", "long", "VECTOR",
   4, 0, 0, 0, 1,
-  "z;r", "size;dst", "base.field_types.SIZE_BWLQ;base.field_types.Rn", "", "">;
-def BRForm_VECTOR_instructions_VLCADD_b_w_l_q_z_imm8s_rn_r : BedrockISAForm<
-  "VECTOR.instructions.VLCADD.b_w_l_q_z_imm8s_rn_r", "vlcadd", "VLCADD.{B|W|L|Q}(z) <imm8s>, Rn(r)", "11111010011000zz000010rrrr", "long", "VECTOR",
+  "z;r", "size;dst", "SIZE_BWLQ;Rn", "", "">;
+def BRForm_VECTOR_VLCADD_b_w_l_q_z_imm8s_rn_r : BedrockISAForm<
+  "VECTOR.VLCADD.b_w_l_q_z_imm8s_rn_r", "vlcadd", "VLCADD.{B|W|L|Q}(z) <imm8s>, Rn(r)", "11111010011000zz000010rrrr", "long", "VECTOR",
   4, 1, 0, 0, 1,
-  "z;r", "size;dst", "base.field_types.SIZE_BWLQ;base.field_types.Rn", "offset", "base.payload_types.IMM8S">;
-def BRForm_VECTOR_instructions_VGATHER1_b_w_l_q_z_pn_p_rn_b_add_rn_i_mul_rn_s_vn_v : BedrockISAForm<
-  "VECTOR.instructions.VGATHER1.b_w_l_q_z_pn_p_rn_b_add_rn_i_mul_rn_s_vn_v", "vgather1", "VGATHER1.{B|W|L|Q}(z) Pn(p), [Rn(b) + Rn(i) * Rn(s)], Vn(v)", "111111110000010000zz0bbbbppppiiiissssvvvvv", "xxlong", "VECTOR",
+  "z;r", "size;dst", "SIZE_BWLQ;Rn", "offset", "IMM8S">;
+def BRForm_VECTOR_VGATHER_b_w_l_q_z_pn_p_pn_c_rn_b_add_rn_s_vn_v : BedrockISAForm<
+  "VECTOR.VGATHER.b_w_l_q_z_pn_p_pn_c_rn_b_add_rn_s_vn_v", "vgather", "VGATHER.{B|W|L|Q}(z) Pn(p), Pn(c), [Rn(b) + Rn(s)], Vn(v)", "111111110000010000zz0bbbbppppccccssssvvvvv", "xxlong", "VECTOR",
   6, 0, 0, 0, 1,
-  "z;b;p;i;s;v", "size;base;govern;cursor;stride;dst", "base.field_types.SIZE_BWLQ;base.field_types.Rn;VECTOR.field_types.Pn;base.field_types.Rn;base.field_types.Rn;VECTOR.field_types.Vn", "", "">;
-def BRForm_VECTOR_instructions_VGATHER1_l_pn_p_vn_x_rn_i_vn_v : BedrockISAForm<
-  "VECTOR.instructions.VGATHER1.l_pn_p_vn_x_rn_i_vn_v", "vgather1", "VGATHER1.L Pn(p), [Vn(x)[Rn(i)]], Vn(v)", "111111110000010001000000ppppiiiivvvvvxxxxx", "xxlong", "VECTOR",
+  "z;b;p;c;s;v", "size;base;govern;completion;stride;dst", "SIZE_BWLQ;Rn;Pn;Pn;Rn;Vn", "", "">;
+def BRForm_VECTOR_VGATHER_l_pn_p_pn_c_vn_x_vn_v : BedrockISAForm<
+  "VECTOR.VGATHER.l_pn_p_pn_c_vn_x_vn_v", "vgather", "VGATHER.L Pn(p), Pn(c), [Vn(x)], Vn(v)", "111111110000010001000000ppppccccvvvvvxxxxx", "xxlong", "VECTOR",
   6, 0, 0, 0, 1,
-  "p;i;v;x", "govern;cursor;dst;address", "VECTOR.field_types.Pn;base.field_types.Rn;VECTOR.field_types.Vn;VECTOR.field_types.Vn", "", "">;
-def BRForm_VECTOR_instructions_VGATHER1_q_pn_p_vn_x_rn_i_vn_v : BedrockISAForm<
-  "VECTOR.instructions.VGATHER1.q_pn_p_vn_x_rn_i_vn_v", "vgather1", "VGATHER1.Q Pn(p), [Vn(x)[Rn(i)]], Vn(v)", "111111110000010001000001ppppiiiivvvvvxxxxx", "xxlong", "VECTOR",
+  "p;c;v;x", "govern;completion;dst;address", "Pn;Pn;Vn;Vn", "", "">;
+def BRForm_VECTOR_VGATHER_q_pn_p_pn_c_vn_x_vn_v : BedrockISAForm<
+  "VECTOR.VGATHER.q_pn_p_pn_c_vn_x_vn_v", "vgather", "VGATHER.Q Pn(p), Pn(c), [Vn(x)], Vn(v)", "111111110000010001000001ppppccccvvvvvxxxxx", "xxlong", "VECTOR",
   6, 0, 0, 0, 1,
-  "p;i;v;x", "govern;cursor;dst;address", "VECTOR.field_types.Pn;base.field_types.Rn;VECTOR.field_types.Vn;VECTOR.field_types.Vn", "", "">;
-def BRForm_VECTOR_instructions_VGATHER1_b_w_l_q_z_pn_p_rn_b_add_vn_x_rn_i_vn_v : BedrockISAForm<
-  "VECTOR.instructions.VGATHER1.b_w_l_q_z_pn_p_rn_b_add_vn_x_rn_i_vn_v", "vgather1", "VGATHER1.{B|W|L|Q}(z) Pn(p), [Rn(b) + Vn(x)[Rn(i)]], Vn(v)", "111111110000010010zzbbbbppppiiiivvvvvxxxxx", "xxlong", "VECTOR",
+  "p;c;v;x", "govern;completion;dst;address", "Pn;Pn;Vn;Vn", "", "">;
+def BRForm_VECTOR_VGATHER_b_w_l_q_z_pn_p_pn_c_rn_b_add_vn_x_vn_v : BedrockISAForm<
+  "VECTOR.VGATHER.b_w_l_q_z_pn_p_pn_c_rn_b_add_vn_x_vn_v", "vgather", "VGATHER.{B|W|L|Q}(z) Pn(p), Pn(c), [Rn(b) + Vn(x)], Vn(v)", "111111110000010010zzbbbbppppccccvvvvvxxxxx", "xxlong", "VECTOR",
   6, 0, 0, 0, 1,
-  "z;b;p;i;v;x", "size;base;govern;cursor;dst;address", "base.field_types.SIZE_BWLQ;base.field_types.Rn;VECTOR.field_types.Pn;base.field_types.Rn;VECTOR.field_types.Vn;VECTOR.field_types.Vn", "", "">;
-def BRForm_VECTOR_instructions_VGATHER1_b_w_l_q_z_pn_p_rn_b_add_vn_x_rn_i_mul_scale_vn_v : BedrockISAForm<
-  "VECTOR.instructions.VGATHER1.b_w_l_q_z_pn_p_rn_b_add_vn_x_rn_i_mul_scale_vn_v", "vgather1", "VGATHER1.{B|W|L|Q}(z) Pn(p), [Rn(b) + Vn(x)[Rn(i)] * <scale>], Vn(v)", "111111110000010011zzbbbbppppiiiivvvvvxxxxx", "xxlong", "VECTOR",
+  "z;b;p;c;v;x", "size;base;govern;completion;dst;address", "SIZE_BWLQ;Rn;Pn;Pn;Vn;Vn", "", "">;
+def BRForm_VECTOR_VGATHER_b_w_l_q_z_pn_p_pn_c_rn_b_add_vn_x_mul_scale_vn_v : BedrockISAForm<
+  "VECTOR.VGATHER.b_w_l_q_z_pn_p_pn_c_rn_b_add_vn_x_mul_scale_vn_v", "vgather", "VGATHER.{B|W|L|Q}(z) Pn(p), Pn(c), [Rn(b) + Vn(x) * <scale>], Vn(v)", "111111110000010011zzbbbbppppccccvvvvvxxxxx", "xxlong", "VECTOR",
   6, 0, 0, 0, 1,
-  "z;b;p;i;v;x", "size;base;govern;cursor;dst;address", "base.field_types.SIZE_BWLQ;base.field_types.Rn;VECTOR.field_types.Pn;base.field_types.Rn;VECTOR.field_types.Vn;VECTOR.field_types.Vn", "", "">;
-def BRForm_VECTOR_instructions_VGATHER1_b_w_l_q_z_pn_p_rn_b_add_vn_x_rn_i_mul_scale_add_disp8s_vn_v : BedrockISAForm<
-  "VECTOR.instructions.VGATHER1.b_w_l_q_z_pn_p_rn_b_add_vn_x_rn_i_mul_scale_add_disp8s_vn_v", "vgather1", "VGATHER1.{B|W|L|Q}(z) Pn(p), [Rn(b) + Vn(x)[Rn(i)] * <scale> + <disp8s>], Vn(v)", "111111110000010100zzbbbbppppiiiivvvvvxxxxx", "xxlong", "VECTOR",
+  "z;b;p;c;v;x", "size;base;govern;completion;dst;address", "SIZE_BWLQ;Rn;Pn;Pn;Vn;Vn", "", "">;
+def BRForm_VECTOR_VGATHER_b_w_l_q_z_pn_p_pn_c_rn_b_add_vn_x_mul_scale_add_disp8s_vn_v : BedrockISAForm<
+  "VECTOR.VGATHER.b_w_l_q_z_pn_p_pn_c_rn_b_add_vn_x_mul_scale_add_disp8s_vn_v", "vgather", "VGATHER.{B|W|L|Q}(z) Pn(p), Pn(c), [Rn(b) + Vn(x) * <scale> + <disp8s>], Vn(v)", "111111110000010100zzbbbbppppccccvvvvvxxxxx", "xxlong", "VECTOR",
   6, 1, 0, 0, 1,
-  "z;b;p;i;v;x", "size;base;govern;cursor;dst;address", "base.field_types.SIZE_BWLQ;base.field_types.Rn;VECTOR.field_types.Pn;base.field_types.Rn;VECTOR.field_types.Vn;VECTOR.field_types.Vn", "disp8s", "base.payload_types.DISP8S">;
-def BRForm_VECTOR_instructions_VGATHER1_b_w_l_q_z_pn_p_rn_b_add_vn_x_rn_i_mul_scale_add_disp16s_vn_v : BedrockISAForm<
-  "VECTOR.instructions.VGATHER1.b_w_l_q_z_pn_p_rn_b_add_vn_x_rn_i_mul_scale_add_disp16s_vn_v", "vgather1", "VGATHER1.{B|W|L|Q}(z) Pn(p), [Rn(b) + Vn(x)[Rn(i)] * <scale> + <disp16s>], Vn(v)", "111111110000010101zzbbbbppppiiiivvvvvxxxxx", "xxlong", "VECTOR",
+  "z;b;p;c;v;x", "size;base;govern;completion;dst;address", "SIZE_BWLQ;Rn;Pn;Pn;Vn;Vn", "disp8s", "DISP8S">;
+def BRForm_VECTOR_VGATHER_b_w_l_q_z_pn_p_pn_c_rn_b_add_vn_x_mul_scale_add_disp16s_vn_v : BedrockISAForm<
+  "VECTOR.VGATHER.b_w_l_q_z_pn_p_pn_c_rn_b_add_vn_x_mul_scale_add_disp16s_vn_v", "vgather", "VGATHER.{B|W|L|Q}(z) Pn(p), Pn(c), [Rn(b) + Vn(x) * <scale> + <disp16s>], Vn(v)", "111111110000010101zzbbbbppppccccvvvvvxxxxx", "xxlong", "VECTOR",
   6, 2, 0, 0, 1,
-  "z;b;p;i;v;x", "size;base;govern;cursor;dst;address", "base.field_types.SIZE_BWLQ;base.field_types.Rn;VECTOR.field_types.Pn;base.field_types.Rn;VECTOR.field_types.Vn;VECTOR.field_types.Vn", "disp16s", "base.payload_types.DISP16S">;
-def BRForm_VECTOR_instructions_VGATHER1_b_w_l_q_z_pn_p_rn_b_add_vn_x_rn_i_mul_scale_add_disp32s_vn_v : BedrockISAForm<
-  "VECTOR.instructions.VGATHER1.b_w_l_q_z_pn_p_rn_b_add_vn_x_rn_i_mul_scale_add_disp32s_vn_v", "vgather1", "VGATHER1.{B|W|L|Q}(z) Pn(p), [Rn(b) + Vn(x)[Rn(i)] * <scale> + <disp32s>], Vn(v)", "111111110000010110zzbbbbppppiiiivvvvvxxxxx", "xxlong", "VECTOR",
+  "z;b;p;c;v;x", "size;base;govern;completion;dst;address", "SIZE_BWLQ;Rn;Pn;Pn;Vn;Vn", "disp16s", "DISP16S">;
+def BRForm_VECTOR_VGATHER_b_w_l_q_z_pn_p_pn_c_rn_b_add_vn_x_mul_scale_add_disp32s_vn_v : BedrockISAForm<
+  "VECTOR.VGATHER.b_w_l_q_z_pn_p_pn_c_rn_b_add_vn_x_mul_scale_add_disp32s_vn_v", "vgather", "VGATHER.{B|W|L|Q}(z) Pn(p), Pn(c), [Rn(b) + Vn(x) * <scale> + <disp32s>], Vn(v)", "111111110000010110zzbbbbppppccccvvvvvxxxxx", "xxlong", "VECTOR",
   6, 4, 0, 0, 0,
-  "z;b;p;i;v;x", "size;base;govern;cursor;dst;address", "base.field_types.SIZE_BWLQ;base.field_types.Rn;VECTOR.field_types.Pn;base.field_types.Rn;VECTOR.field_types.Vn;VECTOR.field_types.Vn", "disp32s", "base.payload_types.DISP32S">;
-def BRForm_VECTOR_instructions_VGATHER1_b_w_l_q_z_pn_p_rn_b_add_vn_x_rn_i_mul_scale_add_disp64_vn_v : BedrockISAForm<
-  "VECTOR.instructions.VGATHER1.b_w_l_q_z_pn_p_rn_b_add_vn_x_rn_i_mul_scale_add_disp64_vn_v", "vgather1", "VGATHER1.{B|W|L|Q}(z) Pn(p), [Rn(b) + Vn(x)[Rn(i)] * <scale> + <disp64>], Vn(v)", "111111110000010111zzbbbbppppiiiivvvvvxxxxx", "xxlong", "VECTOR",
+  "z;b;p;c;v;x", "size;base;govern;completion;dst;address", "SIZE_BWLQ;Rn;Pn;Pn;Vn;Vn", "disp32s", "DISP32S">;
+def BRForm_VECTOR_VGATHER_b_w_l_q_z_pn_p_pn_c_rn_b_add_vn_x_mul_scale_add_disp64_vn_v : BedrockISAForm<
+  "VECTOR.VGATHER.b_w_l_q_z_pn_p_pn_c_rn_b_add_vn_x_mul_scale_add_disp64_vn_v", "vgather", "VGATHER.{B|W|L|Q}(z) Pn(p), Pn(c), [Rn(b) + Vn(x) * <scale> + <disp64>], Vn(v)", "111111110000010111zzbbbbppppccccvvvvvxxxxx", "xxlong", "VECTOR",
   6, 8, 0, 0, 0,
-  "z;b;p;i;v;x", "size;base;govern;cursor;dst;address", "base.field_types.SIZE_BWLQ;base.field_types.Rn;VECTOR.field_types.Pn;base.field_types.Rn;VECTOR.field_types.Vn;VECTOR.field_types.Vn", "disp64", "base.payload_types.DISP64">;
-def BRForm_VECTOR_instructions_VSCATTER1_b_w_l_q_z_pn_p_vn_v_rn_b_add_rn_i_mul_rn_s : BedrockISAForm<
-  "VECTOR.instructions.VSCATTER1.b_w_l_q_z_pn_p_vn_v_rn_b_add_rn_i_mul_rn_s", "vscatter1", "VSCATTER1.{B|W|L|Q}(z) Pn(p), Vn(v), [Rn(b) + Rn(i) * Rn(s)]", "111111110000011000zz0bbbbppppiiiissssvvvvv", "xxlong", "VECTOR",
+  "z;b;p;c;v;x", "size;base;govern;completion;dst;address", "SIZE_BWLQ;Rn;Pn;Pn;Vn;Vn", "disp64", "DISP64">;
+def BRForm_VECTOR_VSCATTER_b_w_l_q_z_pn_p_pn_c_vn_v_rn_b_add_rn_s : BedrockISAForm<
+  "VECTOR.VSCATTER.b_w_l_q_z_pn_p_pn_c_vn_v_rn_b_add_rn_s", "vscatter", "VSCATTER.{B|W|L|Q}(z) Pn(p), Pn(c), Vn(v), [Rn(b) + Rn(s)]", "111111110000011000zz0bbbbppppccccssssvvvvv", "xxlong", "VECTOR",
   6, 0, 0, 0, 1,
-  "z;b;p;i;s;v", "size;base;govern;cursor;stride;src", "base.field_types.SIZE_BWLQ;base.field_types.Rn;VECTOR.field_types.Pn;base.field_types.Rn;base.field_types.Rn;VECTOR.field_types.Vn", "", "">;
-def BRForm_VECTOR_instructions_VSCATTER1_l_pn_p_vn_v_vn_x_rn_i : BedrockISAForm<
-  "VECTOR.instructions.VSCATTER1.l_pn_p_vn_v_vn_x_rn_i", "vscatter1", "VSCATTER1.L Pn(p), Vn(v), [Vn(x)[Rn(i)]]", "111111110000011001000000ppppiiiivvvvvxxxxx", "xxlong", "VECTOR",
+  "z;b;p;c;s;v", "size;base;govern;completion;stride;src", "SIZE_BWLQ;Rn;Pn;Pn;Rn;Vn", "", "">;
+def BRForm_VECTOR_VSCATTER_l_pn_p_pn_c_vn_v_vn_x : BedrockISAForm<
+  "VECTOR.VSCATTER.l_pn_p_pn_c_vn_v_vn_x", "vscatter", "VSCATTER.L Pn(p), Pn(c), Vn(v), [Vn(x)]", "111111110000011001000000ppppccccvvvvvxxxxx", "xxlong", "VECTOR",
   6, 0, 0, 0, 1,
-  "p;i;v;x", "govern;cursor;src;address", "VECTOR.field_types.Pn;base.field_types.Rn;VECTOR.field_types.Vn;VECTOR.field_types.Vn", "", "">;
-def BRForm_VECTOR_instructions_VSCATTER1_q_pn_p_vn_v_vn_x_rn_i : BedrockISAForm<
-  "VECTOR.instructions.VSCATTER1.q_pn_p_vn_v_vn_x_rn_i", "vscatter1", "VSCATTER1.Q Pn(p), Vn(v), [Vn(x)[Rn(i)]]", "111111110000011001000001ppppiiiivvvvvxxxxx", "xxlong", "VECTOR",
+  "p;c;v;x", "govern;completion;src;address", "Pn;Pn;Vn;Vn", "", "">;
+def BRForm_VECTOR_VSCATTER_q_pn_p_pn_c_vn_v_vn_x : BedrockISAForm<
+  "VECTOR.VSCATTER.q_pn_p_pn_c_vn_v_vn_x", "vscatter", "VSCATTER.Q Pn(p), Pn(c), Vn(v), [Vn(x)]", "111111110000011001000001ppppccccvvvvvxxxxx", "xxlong", "VECTOR",
   6, 0, 0, 0, 1,
-  "p;i;v;x", "govern;cursor;src;address", "VECTOR.field_types.Pn;base.field_types.Rn;VECTOR.field_types.Vn;VECTOR.field_types.Vn", "", "">;
-def BRForm_VECTOR_instructions_VSCATTER1_b_w_l_q_z_pn_p_vn_v_rn_b_add_vn_x_rn_i : BedrockISAForm<
-  "VECTOR.instructions.VSCATTER1.b_w_l_q_z_pn_p_vn_v_rn_b_add_vn_x_rn_i", "vscatter1", "VSCATTER1.{B|W|L|Q}(z) Pn(p), Vn(v), [Rn(b) + Vn(x)[Rn(i)]]", "111111110000011010zzbbbbppppiiiivvvvvxxxxx", "xxlong", "VECTOR",
+  "p;c;v;x", "govern;completion;src;address", "Pn;Pn;Vn;Vn", "", "">;
+def BRForm_VECTOR_VSCATTER_b_w_l_q_z_pn_p_pn_c_vn_v_rn_b_add_vn_x : BedrockISAForm<
+  "VECTOR.VSCATTER.b_w_l_q_z_pn_p_pn_c_vn_v_rn_b_add_vn_x", "vscatter", "VSCATTER.{B|W|L|Q}(z) Pn(p), Pn(c), Vn(v), [Rn(b) + Vn(x)]", "111111110000011010zzbbbbppppccccvvvvvxxxxx", "xxlong", "VECTOR",
   6, 0, 0, 0, 1,
-  "z;b;p;i;v;x", "size;base;govern;cursor;src;address", "base.field_types.SIZE_BWLQ;base.field_types.Rn;VECTOR.field_types.Pn;base.field_types.Rn;VECTOR.field_types.Vn;VECTOR.field_types.Vn", "", "">;
-def BRForm_VECTOR_instructions_VSCATTER1_b_w_l_q_z_pn_p_vn_v_rn_b_add_vn_x_rn_i_mul_scale : BedrockISAForm<
-  "VECTOR.instructions.VSCATTER1.b_w_l_q_z_pn_p_vn_v_rn_b_add_vn_x_rn_i_mul_scale", "vscatter1", "VSCATTER1.{B|W|L|Q}(z) Pn(p), Vn(v), [Rn(b) + Vn(x)[Rn(i)] * <scale>]", "111111110000011011zzbbbbppppiiiivvvvvxxxxx", "xxlong", "VECTOR",
+  "z;b;p;c;v;x", "size;base;govern;completion;src;address", "SIZE_BWLQ;Rn;Pn;Pn;Vn;Vn", "", "">;
+def BRForm_VECTOR_VSCATTER_b_w_l_q_z_pn_p_pn_c_vn_v_rn_b_add_vn_x_mul_scale : BedrockISAForm<
+  "VECTOR.VSCATTER.b_w_l_q_z_pn_p_pn_c_vn_v_rn_b_add_vn_x_mul_scale", "vscatter", "VSCATTER.{B|W|L|Q}(z) Pn(p), Pn(c), Vn(v), [Rn(b) + Vn(x) * <scale>]", "111111110000011011zzbbbbppppccccvvvvvxxxxx", "xxlong", "VECTOR",
   6, 0, 0, 0, 1,
-  "z;b;p;i;v;x", "size;base;govern;cursor;src;address", "base.field_types.SIZE_BWLQ;base.field_types.Rn;VECTOR.field_types.Pn;base.field_types.Rn;VECTOR.field_types.Vn;VECTOR.field_types.Vn", "", "">;
-def BRForm_VECTOR_instructions_VSCATTER1_b_w_l_q_z_pn_p_vn_v_rn_b_add_vn_x_rn_i_mul_scale_add_disp8s : BedrockISAForm<
-  "VECTOR.instructions.VSCATTER1.b_w_l_q_z_pn_p_vn_v_rn_b_add_vn_x_rn_i_mul_scale_add_disp8s", "vscatter1", "VSCATTER1.{B|W|L|Q}(z) Pn(p), Vn(v), [Rn(b) + Vn(x)[Rn(i)] * <scale> + <disp8s>]", "111111110000011100zzbbbbppppiiiivvvvvxxxxx", "xxlong", "VECTOR",
+  "z;b;p;c;v;x", "size;base;govern;completion;src;address", "SIZE_BWLQ;Rn;Pn;Pn;Vn;Vn", "", "">;
+def BRForm_VECTOR_VSCATTER_b_w_l_q_z_pn_p_pn_c_vn_v_rn_b_add_vn_x_mul_scale_add_disp8s : BedrockISAForm<
+  "VECTOR.VSCATTER.b_w_l_q_z_pn_p_pn_c_vn_v_rn_b_add_vn_x_mul_scale_add_disp8s", "vscatter", "VSCATTER.{B|W|L|Q}(z) Pn(p), Pn(c), Vn(v), [Rn(b) + Vn(x) * <scale> + <disp8s>]", "111111110000011100zzbbbbppppccccvvvvvxxxxx", "xxlong", "VECTOR",
   6, 1, 0, 0, 1,
-  "z;b;p;i;v;x", "size;base;govern;cursor;src;address", "base.field_types.SIZE_BWLQ;base.field_types.Rn;VECTOR.field_types.Pn;base.field_types.Rn;VECTOR.field_types.Vn;VECTOR.field_types.Vn", "disp8s", "base.payload_types.DISP8S">;
-def BRForm_VECTOR_instructions_VSCATTER1_b_w_l_q_z_pn_p_vn_v_rn_b_add_vn_x_rn_i_mul_scale_add_disp16s : BedrockISAForm<
-  "VECTOR.instructions.VSCATTER1.b_w_l_q_z_pn_p_vn_v_rn_b_add_vn_x_rn_i_mul_scale_add_disp16s", "vscatter1", "VSCATTER1.{B|W|L|Q}(z) Pn(p), Vn(v), [Rn(b) + Vn(x)[Rn(i)] * <scale> + <disp16s>]", "111111110000011101zzbbbbppppiiiivvvvvxxxxx", "xxlong", "VECTOR",
+  "z;b;p;c;v;x", "size;base;govern;completion;src;address", "SIZE_BWLQ;Rn;Pn;Pn;Vn;Vn", "disp8s", "DISP8S">;
+def BRForm_VECTOR_VSCATTER_b_w_l_q_z_pn_p_pn_c_vn_v_rn_b_add_vn_x_mul_scale_add_disp16s : BedrockISAForm<
+  "VECTOR.VSCATTER.b_w_l_q_z_pn_p_pn_c_vn_v_rn_b_add_vn_x_mul_scale_add_disp16s", "vscatter", "VSCATTER.{B|W|L|Q}(z) Pn(p), Pn(c), Vn(v), [Rn(b) + Vn(x) * <scale> + <disp16s>]", "111111110000011101zzbbbbppppccccvvvvvxxxxx", "xxlong", "VECTOR",
   6, 2, 0, 0, 1,
-  "z;b;p;i;v;x", "size;base;govern;cursor;src;address", "base.field_types.SIZE_BWLQ;base.field_types.Rn;VECTOR.field_types.Pn;base.field_types.Rn;VECTOR.field_types.Vn;VECTOR.field_types.Vn", "disp16s", "base.payload_types.DISP16S">;
-def BRForm_VECTOR_instructions_VSCATTER1_b_w_l_q_z_pn_p_vn_v_rn_b_add_vn_x_rn_i_mul_scale_add_disp32s : BedrockISAForm<
-  "VECTOR.instructions.VSCATTER1.b_w_l_q_z_pn_p_vn_v_rn_b_add_vn_x_rn_i_mul_scale_add_disp32s", "vscatter1", "VSCATTER1.{B|W|L|Q}(z) Pn(p), Vn(v), [Rn(b) + Vn(x)[Rn(i)] * <scale> + <disp32s>]", "111111110000011110zzbbbbppppiiiivvvvvxxxxx", "xxlong", "VECTOR",
+  "z;b;p;c;v;x", "size;base;govern;completion;src;address", "SIZE_BWLQ;Rn;Pn;Pn;Vn;Vn", "disp16s", "DISP16S">;
+def BRForm_VECTOR_VSCATTER_b_w_l_q_z_pn_p_pn_c_vn_v_rn_b_add_vn_x_mul_scale_add_disp32s : BedrockISAForm<
+  "VECTOR.VSCATTER.b_w_l_q_z_pn_p_pn_c_vn_v_rn_b_add_vn_x_mul_scale_add_disp32s", "vscatter", "VSCATTER.{B|W|L|Q}(z) Pn(p), Pn(c), Vn(v), [Rn(b) + Vn(x) * <scale> + <disp32s>]", "111111110000011110zzbbbbppppccccvvvvvxxxxx", "xxlong", "VECTOR",
   6, 4, 0, 0, 0,
-  "z;b;p;i;v;x", "size;base;govern;cursor;src;address", "base.field_types.SIZE_BWLQ;base.field_types.Rn;VECTOR.field_types.Pn;base.field_types.Rn;VECTOR.field_types.Vn;VECTOR.field_types.Vn", "disp32s", "base.payload_types.DISP32S">;
-def BRForm_VECTOR_instructions_VSCATTER1_b_w_l_q_z_pn_p_vn_v_rn_b_add_vn_x_rn_i_mul_scale_add_disp64 : BedrockISAForm<
-  "VECTOR.instructions.VSCATTER1.b_w_l_q_z_pn_p_vn_v_rn_b_add_vn_x_rn_i_mul_scale_add_disp64", "vscatter1", "VSCATTER1.{B|W|L|Q}(z) Pn(p), Vn(v), [Rn(b) + Vn(x)[Rn(i)] * <scale> + <disp64>]", "111111110000011111zzbbbbppppiiiivvvvvxxxxx", "xxlong", "VECTOR",
+  "z;b;p;c;v;x", "size;base;govern;completion;src;address", "SIZE_BWLQ;Rn;Pn;Pn;Vn;Vn", "disp32s", "DISP32S">;
+def BRForm_VECTOR_VSCATTER_b_w_l_q_z_pn_p_pn_c_vn_v_rn_b_add_vn_x_mul_scale_add_disp64 : BedrockISAForm<
+  "VECTOR.VSCATTER.b_w_l_q_z_pn_p_pn_c_vn_v_rn_b_add_vn_x_mul_scale_add_disp64", "vscatter", "VSCATTER.{B|W|L|Q}(z) Pn(p), Pn(c), Vn(v), [Rn(b) + Vn(x) * <scale> + <disp64>]", "111111110000011111zzbbbbppppccccvvvvvxxxxx", "xxlong", "VECTOR",
   6, 8, 0, 0, 0,
-  "z;b;p;i;v;x", "size;base;govern;cursor;src;address", "base.field_types.SIZE_BWLQ;base.field_types.Rn;VECTOR.field_types.Pn;base.field_types.Rn;VECTOR.field_types.Vn;VECTOR.field_types.Vn", "disp64", "base.payload_types.DISP64">;
-def BRForm_VECTOR_instructions_PTRUE_b_w_l_q_z_pn_p : BedrockISAForm<
-  "VECTOR.instructions.PTRUE.b_w_l_q_z_pn_p", "ptrue", "PTRUE.{B|W|L|Q}(z) Pn(p)", "11111010011100zz000000pppp", "long", "VECTOR",
+  "z;b;p;c;v;x", "size;base;govern;completion;src;address", "SIZE_BWLQ;Rn;Pn;Pn;Vn;Vn", "disp64", "DISP64">;
+def BRForm_VECTOR_PTRUE_b_w_l_q_z_pn_p : BedrockISAForm<
+  "VECTOR.PTRUE.b_w_l_q_z_pn_p", "ptrue", "PTRUE.{B|W|L|Q}(z) Pn(p)", "11111010011100zz000000pppp", "long", "VECTOR",
   4, 0, 0, 0, 1,
-  "z;p", "size;dst", "base.field_types.SIZE_BWLQ;VECTOR.field_types.Pn", "", "">;
-def BRForm_VECTOR_instructions_PFALSE_pn_p : BedrockISAForm<
-  "VECTOR.instructions.PFALSE.pn_p", "pfalse", "PFALSE Pn(p)", "1111101001110000000001pppp", "long", "VECTOR",
+  "z;p", "size;dst", "SIZE_BWLQ;Pn", "", "">;
+def BRForm_VECTOR_PFALSE_pn_p : BedrockISAForm<
+  "VECTOR.PFALSE.pn_p", "pfalse", "PFALSE Pn(p)", "1111101001110000000001pppp", "long", "VECTOR",
   4, 0, 0, 0, 1,
-  "p", "dst", "VECTOR.field_types.Pn", "", "">;
-def BRForm_VECTOR_instructions_PNOT_pn_p : BedrockISAForm<
-  "VECTOR.instructions.PNOT.pn_p", "pnot", "PNOT Pn(p)", "1111101001110000000010pppp", "long", "VECTOR",
+  "p", "dst", "Pn", "", "">;
+def BRForm_VECTOR_PNOT_pn_p : BedrockISAForm<
+  "VECTOR.PNOT.pn_p", "pnot", "PNOT Pn(p)", "1111101001110000000010pppp", "long", "VECTOR",
   4, 0, 0, 0, 1,
-  "p", "dst", "VECTOR.field_types.Pn", "", "">;
-def BRForm_VECTOR_instructions_BPANY_pn_p_imm32s : BedrockISAForm<
-  "VECTOR.instructions.BPANY.pn_p_imm32s", "bpany", "BPANY Pn(p), <imm32s>", "1111101001110000000011pppp", "long", "VECTOR",
+  "p", "dst", "Pn", "", "">;
+def BRForm_VECTOR_BPANY_pn_p_imm32s : BedrockISAForm<
+  "VECTOR.BPANY.pn_p_imm32s", "bpany", "BPANY Pn(p), <imm32s>", "1111101001110000000011pppp", "long", "VECTOR",
   4, 4, 0, 0, 1,
-  "p", "predicate", "VECTOR.field_types.Pn", "target", "base.payload_types.DISP32S">;
-def BRForm_VECTOR_instructions_BPANY_pn_p_ea_e : BedrockISAForm<
-  "VECTOR.instructions.BPANY.pn_p_ea_e", "bpany", "BPANY Pn(p), <ea>(e)", "1111111100000011000000000000010ppppeeeeeee", "xxlong", "VECTOR",
+  "p", "predicate", "Pn", "target", "DISP32S">;
+def BRForm_VECTOR_BPANY_pn_p_ea_e : BedrockISAForm<
+  "VECTOR.BPANY.pn_p_ea_e", "bpany", "BPANY Pn(p), <ea>(e)", "1111111100000011000000000000010ppppeeeeeee", "xxlong", "VECTOR",
   6, 0, 1, 1, 0,
-  "p;e", "predicate;target", "VECTOR.field_types.Pn;base.field_types.EA", "", "">;
-def BRForm_VECTOR_instructions_BPNONE_pn_p_imm32s : BedrockISAForm<
-  "VECTOR.instructions.BPNONE.pn_p_imm32s", "bpnone", "BPNONE Pn(p), <imm32s>", "1111101001110000000100pppp", "long", "VECTOR",
+  "p;e", "predicate;target", "Pn;EA", "", "">;
+def BRForm_VECTOR_BPNONE_pn_p_imm32s : BedrockISAForm<
+  "VECTOR.BPNONE.pn_p_imm32s", "bpnone", "BPNONE Pn(p), <imm32s>", "1111101001110000000100pppp", "long", "VECTOR",
   4, 4, 0, 0, 1,
-  "p", "predicate", "VECTOR.field_types.Pn", "target", "base.payload_types.DISP32S">;
-def BRForm_VECTOR_instructions_BPNONE_pn_p_ea_e : BedrockISAForm<
-  "VECTOR.instructions.BPNONE.pn_p_ea_e", "bpnone", "BPNONE Pn(p), <ea>(e)", "1111111100000011000000000000011ppppeeeeeee", "xxlong", "VECTOR",
+  "p", "predicate", "Pn", "target", "DISP32S">;
+def BRForm_VECTOR_BPNONE_pn_p_ea_e : BedrockISAForm<
+  "VECTOR.BPNONE.pn_p_ea_e", "bpnone", "BPNONE Pn(p), <ea>(e)", "1111111100000011000000000000011ppppeeeeeee", "xxlong", "VECTOR",
   6, 0, 1, 1, 0,
-  "p;e", "predicate;target", "VECTOR.field_types.Pn;base.field_types.EA", "", "">;
-def BRForm_VECTOR_instructions_BPALL_b_w_l_q_z_pn_p_imm32s : BedrockISAForm<
-  "VECTOR.instructions.BPALL.b_w_l_q_z_pn_p_imm32s", "bpall", "BPALL.{B|W|L|Q}(z) Pn(p), <imm32s>", "11111010011100zz000101pppp", "long", "VECTOR",
+  "p;e", "predicate;target", "Pn;EA", "", "">;
+def BRForm_VECTOR_BPALL_b_w_l_q_z_pn_p_imm32s : BedrockISAForm<
+  "VECTOR.BPALL.b_w_l_q_z_pn_p_imm32s", "bpall", "BPALL.{B|W|L|Q}(z) Pn(p), <imm32s>", "11111010011100zz000101pppp", "long", "VECTOR",
   4, 4, 0, 0, 1,
-  "z;p", "size;predicate", "base.field_types.SIZE_BWLQ;VECTOR.field_types.Pn", "target", "base.payload_types.DISP32S">;
-def BRForm_VECTOR_instructions_BPALL_b_w_l_q_z_pn_p_ea_e : BedrockISAForm<
-  "VECTOR.instructions.BPALL.b_w_l_q_z_pn_p_ea_e", "bpall", "BPALL.{B|W|L|Q}(z) Pn(p), <ea>(e)", "11111111000000110000zz000000100ppppeeeeeee", "xxlong", "VECTOR",
+  "z;p", "size;predicate", "SIZE_BWLQ;Pn", "target", "DISP32S">;
+def BRForm_VECTOR_BPALL_b_w_l_q_z_pn_p_ea_e : BedrockISAForm<
+  "VECTOR.BPALL.b_w_l_q_z_pn_p_ea_e", "bpall", "BPALL.{B|W|L|Q}(z) Pn(p), <ea>(e)", "11111111000000110000zz000000100ppppeeeeeee", "xxlong", "VECTOR",
   6, 0, 1, 1, 0,
-  "z;p;e", "size;predicate;target", "base.field_types.SIZE_BWLQ;VECTOR.field_types.Pn;base.field_types.EA", "", "">;
-def BRForm_VECTOR_instructions_VNEG_b_w_l_q_h_s_d_x_pn_p_vn_v : BedrockISAForm<
-  "VECTOR.instructions.VNEG.b_w_l_q_h_s_d_x_pn_p_vn_v", "vneg", "VNEG.{B|W|L|Q|H|S|D}(x) Pn(p), Vn(v)", "1111101000000xxx0ppppvvvvv", "long", "VECTOR",
+  "z;p;e", "size;predicate;target", "SIZE_BWLQ;Pn;EA", "", "">;
+def BRForm_VECTOR_VNEG_b_w_l_q_x_pn_p_vn_v : BedrockISAForm<
+  "VECTOR.VNEG.b_w_l_q_x_pn_p_vn_v", "vneg", "VNEG.{B|W|L|Q}(x) Pn(p), Vn(v)", "1111101000000xxx0ppppvvvvv", "long", "VECTOR",
   4, 0, 0, 0, 1,
-  "x;p;v", "size;govern;dst", "VECTOR.field_types.SIZE_VTYPE;VECTOR.field_types.Pn;VECTOR.field_types.Vn", "", "">;
-def BRForm_VECTOR_instructions_VNEG_b_w_l_q_h_s_d_x_pn_p_ea_e_vn_v : BedrockISAForm<
-  "VECTOR.instructions.VNEG.b_w_l_q_h_s_d_x_pn_p_ea_e_vn_v", "vneg", "VNEG.{B|W|L|Q|H|S|D}(x) Pn(p), <ea>(e), Vn(v)", "1111111100000010010xxx0000ppppvvvvveeeeeee", "xxlong", "VECTOR",
+  "x;p;v", "size;govern;dst", "SIZE_VTYPE;Pn;Vn", "", "">;
+def BRForm_VECTOR_VNEG_b_w_l_q_x_pn_p_ea_e_vn_v : BedrockISAForm<
+  "VECTOR.VNEG.b_w_l_q_x_pn_p_ea_e_vn_v", "vneg", "VNEG.{B|W|L|Q}(x) Pn(p), <ea>(e), Vn(v)", "1111111100000010010xxx0000ppppvvvvveeeeeee", "xxlong", "VECTOR",
   6, 0, 1, 1, 0,
-  "x;p;v;e", "size;govern;dst;src", "VECTOR.field_types.SIZE_VTYPE;VECTOR.field_types.Pn;VECTOR.field_types.Vn;VECTOR.field_types.VEA", "", "">;
-def BRForm_VECTOR_instructions_VNEG_b_w_l_q_h_s_d_x_pn_p_vn_v_ea_e : BedrockISAForm<
-  "VECTOR.instructions.VNEG.b_w_l_q_h_s_d_x_pn_p_vn_v_ea_e", "vneg", "VNEG.{B|W|L|Q|H|S|D}(x) Pn(p), Vn(v), <ea>(e)", "1111111100000010010xxx0001ppppvvvvveeeeeee", "xxlong", "VECTOR",
+  "x;p;v;e", "size;govern;dst;src", "SIZE_VTYPE;Pn;Vn;VEA", "", "">;
+def BRForm_VECTOR_VNEG_b_w_l_q_x_pn_p_vn_v_ea_e : BedrockISAForm<
+  "VECTOR.VNEG.b_w_l_q_x_pn_p_vn_v_ea_e", "vneg", "VNEG.{B|W|L|Q}(x) Pn(p), Vn(v), <ea>(e)", "1111111100000010010xxx0001ppppvvvvveeeeeee", "xxlong", "VECTOR",
   6, 0, 1, 1, 0,
-  "x;p;v;e", "size;govern;src;dst", "VECTOR.field_types.SIZE_VTYPE;VECTOR.field_types.Pn;VECTOR.field_types.Vn;VECTOR.field_types.VEA", "", "">;
-def BRForm_VECTOR_instructions_VABS_b_w_l_q_h_s_d_x_pn_p_vn_v : BedrockISAForm<
-  "VECTOR.instructions.VABS.b_w_l_q_h_s_d_x_pn_p_vn_v", "vabs", "VABS.{B|W|L|Q|H|S|D}(x) Pn(p), Vn(v)", "1111101000000xxx1ppppvvvvv", "long", "VECTOR",
+  "x;p;v;e", "size;govern;src;dst", "SIZE_VTYPE;Pn;Vn;VEA", "", "">;
+def BRForm_VECTOR_VABS_b_w_l_q_x_pn_p_vn_v : BedrockISAForm<
+  "VECTOR.VABS.b_w_l_q_x_pn_p_vn_v", "vabs", "VABS.{B|W|L|Q}(x) Pn(p), Vn(v)", "1111101000000xxx1ppppvvvvv", "long", "VECTOR",
   4, 0, 0, 0, 1,
-  "x;p;v", "size;govern;dst", "VECTOR.field_types.SIZE_VTYPE;VECTOR.field_types.Pn;VECTOR.field_types.Vn", "", "">;
-def BRForm_VECTOR_instructions_VABS_b_w_l_q_h_s_d_x_pn_p_ea_e_vn_v : BedrockISAForm<
-  "VECTOR.instructions.VABS.b_w_l_q_h_s_d_x_pn_p_ea_e_vn_v", "vabs", "VABS.{B|W|L|Q|H|S|D}(x) Pn(p), <ea>(e), Vn(v)", "1111111100000010010xxx0010ppppvvvvveeeeeee", "xxlong", "VECTOR",
+  "x;p;v", "size;govern;dst", "SIZE_VTYPE;Pn;Vn", "", "">;
+def BRForm_VECTOR_VABS_b_w_l_q_x_pn_p_ea_e_vn_v : BedrockISAForm<
+  "VECTOR.VABS.b_w_l_q_x_pn_p_ea_e_vn_v", "vabs", "VABS.{B|W|L|Q}(x) Pn(p), <ea>(e), Vn(v)", "1111111100000010010xxx0010ppppvvvvveeeeeee", "xxlong", "VECTOR",
   6, 0, 1, 1, 0,
-  "x;p;v;e", "size;govern;dst;src", "VECTOR.field_types.SIZE_VTYPE;VECTOR.field_types.Pn;VECTOR.field_types.Vn;VECTOR.field_types.VEA", "", "">;
-def BRForm_VECTOR_instructions_VABS_b_w_l_q_h_s_d_x_pn_p_vn_v_ea_e : BedrockISAForm<
-  "VECTOR.instructions.VABS.b_w_l_q_h_s_d_x_pn_p_vn_v_ea_e", "vabs", "VABS.{B|W|L|Q|H|S|D}(x) Pn(p), Vn(v), <ea>(e)", "1111111100000010010xxx0011ppppvvvvveeeeeee", "xxlong", "VECTOR",
+  "x;p;v;e", "size;govern;dst;src", "SIZE_VTYPE;Pn;Vn;VEA", "", "">;
+def BRForm_VECTOR_VABS_b_w_l_q_x_pn_p_vn_v_ea_e : BedrockISAForm<
+  "VECTOR.VABS.b_w_l_q_x_pn_p_vn_v_ea_e", "vabs", "VABS.{B|W|L|Q}(x) Pn(p), Vn(v), <ea>(e)", "1111111100000010010xxx0011ppppvvvvveeeeeee", "xxlong", "VECTOR",
   6, 0, 1, 1, 0,
-  "x;p;v;e", "size;govern;src;dst", "VECTOR.field_types.SIZE_VTYPE;VECTOR.field_types.Pn;VECTOR.field_types.Vn;VECTOR.field_types.VEA", "", "">;
-def BRForm_VECTOR_instructions_VNOT_b_w_l_q_z_pn_p_vn_v : BedrockISAForm<
-  "VECTOR.instructions.VNOT.b_w_l_q_z_pn_p_vn_v", "vnot", "VNOT.{B|W|L|Q}(z) Pn(p), Vn(v)", "11111010000010zz0ppppvvvvv", "long", "VECTOR",
+  "x;p;v;e", "size;govern;src;dst", "SIZE_VTYPE;Pn;Vn;VEA", "", "">;
+def BRForm_VECTOR_VNOT_b_w_l_q_z_pn_p_vn_v : BedrockISAForm<
+  "VECTOR.VNOT.b_w_l_q_z_pn_p_vn_v", "vnot", "VNOT.{B|W|L|Q}(z) Pn(p), Vn(v)", "11111010000010zz0ppppvvvvv", "long", "VECTOR",
   4, 0, 0, 0, 1,
-  "z;p;v", "size;govern;dst", "base.field_types.SIZE_BWLQ;VECTOR.field_types.Pn;VECTOR.field_types.Vn", "", "">;
-def BRForm_VECTOR_instructions_VNOT_b_w_l_q_z_pn_p_ea_e_vn_v : BedrockISAForm<
-  "VECTOR.instructions.VNOT.b_w_l_q_z_pn_p_ea_e_vn_v", "vnot", "VNOT.{B|W|L|Q}(z) Pn(p), <ea>(e), Vn(v)", "11111111000000100011zz0101ppppvvvvveeeeeee", "xxlong", "VECTOR",
+  "z;p;v", "size;govern;dst", "SIZE_BWLQ;Pn;Vn", "", "">;
+def BRForm_VECTOR_VNOT_b_w_l_q_z_pn_p_ea_e_vn_v : BedrockISAForm<
+  "VECTOR.VNOT.b_w_l_q_z_pn_p_ea_e_vn_v", "vnot", "VNOT.{B|W|L|Q}(z) Pn(p), <ea>(e), Vn(v)", "11111111000000100011zz0101ppppvvvvveeeeeee", "xxlong", "VECTOR",
   6, 0, 1, 1, 0,
-  "z;p;v;e", "size;govern;dst;src", "base.field_types.SIZE_BWLQ;VECTOR.field_types.Pn;VECTOR.field_types.Vn;VECTOR.field_types.VEA", "", "">;
-def BRForm_VECTOR_instructions_VNOT_b_w_l_q_z_pn_p_vn_v_ea_e : BedrockISAForm<
-  "VECTOR.instructions.VNOT.b_w_l_q_z_pn_p_vn_v_ea_e", "vnot", "VNOT.{B|W|L|Q}(z) Pn(p), Vn(v), <ea>(e)", "11111111000000100011zz0110ppppvvvvveeeeeee", "xxlong", "VECTOR",
+  "z;p;v;e", "size;govern;dst;src", "SIZE_BWLQ;Pn;Vn;VEA", "", "">;
+def BRForm_VECTOR_VNOT_b_w_l_q_z_pn_p_vn_v_ea_e : BedrockISAForm<
+  "VECTOR.VNOT.b_w_l_q_z_pn_p_vn_v_ea_e", "vnot", "VNOT.{B|W|L|Q}(z) Pn(p), Vn(v), <ea>(e)", "11111111000000100011zz0110ppppvvvvveeeeeee", "xxlong", "VECTOR",
   6, 0, 1, 1, 0,
-  "z;p;v;e", "size;govern;src;dst", "base.field_types.SIZE_BWLQ;VECTOR.field_types.Pn;VECTOR.field_types.Vn;VECTOR.field_types.VEA", "", "">;
-def BRForm_VECTOR_instructions_VCLZ_b_w_l_q_z_pn_p_vn_v : BedrockISAForm<
-  "VECTOR.instructions.VCLZ.b_w_l_q_z_pn_p_vn_v", "vclz", "VCLZ.{B|W|L|Q}(z) Pn(p), Vn(v)", "11111010000010zz1ppppvvvvv", "long", "VECTOR",
+  "z;p;v;e", "size;govern;src;dst", "SIZE_BWLQ;Pn;Vn;VEA", "", "">;
+def BRForm_VECTOR_VCLZ_b_w_l_q_z_pn_p_vn_v : BedrockISAForm<
+  "VECTOR.VCLZ.b_w_l_q_z_pn_p_vn_v", "vclz", "VCLZ.{B|W|L|Q}(z) Pn(p), Vn(v)", "11111010000010zz1ppppvvvvv", "long", "VECTOR",
   4, 0, 0, 0, 1,
-  "z;p;v", "size;govern;dst", "base.field_types.SIZE_BWLQ;VECTOR.field_types.Pn;VECTOR.field_types.Vn", "", "">;
-def BRForm_VECTOR_instructions_VCLZ_b_w_l_q_z_pn_p_ea_e_vn_v : BedrockISAForm<
-  "VECTOR.instructions.VCLZ.b_w_l_q_z_pn_p_ea_e_vn_v", "vclz", "VCLZ.{B|W|L|Q}(z) Pn(p), <ea>(e), Vn(v)", "11111111000000100011zz0111ppppvvvvveeeeeee", "xxlong", "VECTOR",
+  "z;p;v", "size;govern;dst", "SIZE_BWLQ;Pn;Vn", "", "">;
+def BRForm_VECTOR_VCLZ_b_w_l_q_z_pn_p_ea_e_vn_v : BedrockISAForm<
+  "VECTOR.VCLZ.b_w_l_q_z_pn_p_ea_e_vn_v", "vclz", "VCLZ.{B|W|L|Q}(z) Pn(p), <ea>(e), Vn(v)", "11111111000000100011zz0111ppppvvvvveeeeeee", "xxlong", "VECTOR",
   6, 0, 1, 1, 0,
-  "z;p;v;e", "size;govern;dst;src", "base.field_types.SIZE_BWLQ;VECTOR.field_types.Pn;VECTOR.field_types.Vn;VECTOR.field_types.VEA", "", "">;
-def BRForm_VECTOR_instructions_VCLZ_b_w_l_q_z_pn_p_vn_v_ea_e : BedrockISAForm<
-  "VECTOR.instructions.VCLZ.b_w_l_q_z_pn_p_vn_v_ea_e", "vclz", "VCLZ.{B|W|L|Q}(z) Pn(p), Vn(v), <ea>(e)", "11111111000000100011zz1000ppppvvvvveeeeeee", "xxlong", "VECTOR",
+  "z;p;v;e", "size;govern;dst;src", "SIZE_BWLQ;Pn;Vn;VEA", "", "">;
+def BRForm_VECTOR_VCLZ_b_w_l_q_z_pn_p_vn_v_ea_e : BedrockISAForm<
+  "VECTOR.VCLZ.b_w_l_q_z_pn_p_vn_v_ea_e", "vclz", "VCLZ.{B|W|L|Q}(z) Pn(p), Vn(v), <ea>(e)", "11111111000000100011zz1000ppppvvvvveeeeeee", "xxlong", "VECTOR",
   6, 0, 1, 1, 0,
-  "z;p;v;e", "size;govern;src;dst", "base.field_types.SIZE_BWLQ;VECTOR.field_types.Pn;VECTOR.field_types.Vn;VECTOR.field_types.VEA", "", "">;
-def BRForm_VECTOR_instructions_VCTZ_b_w_l_q_z_pn_p_vn_v : BedrockISAForm<
-  "VECTOR.instructions.VCTZ.b_w_l_q_z_pn_p_vn_v", "vctz", "VCTZ.{B|W|L|Q}(z) Pn(p), Vn(v)", "11111010000011zz0ppppvvvvv", "long", "VECTOR",
+  "z;p;v;e", "size;govern;src;dst", "SIZE_BWLQ;Pn;Vn;VEA", "", "">;
+def BRForm_VECTOR_VCTZ_b_w_l_q_z_pn_p_vn_v : BedrockISAForm<
+  "VECTOR.VCTZ.b_w_l_q_z_pn_p_vn_v", "vctz", "VCTZ.{B|W|L|Q}(z) Pn(p), Vn(v)", "11111010000011zz0ppppvvvvv", "long", "VECTOR",
   4, 0, 0, 0, 1,
-  "z;p;v", "size;govern;dst", "base.field_types.SIZE_BWLQ;VECTOR.field_types.Pn;VECTOR.field_types.Vn", "", "">;
-def BRForm_VECTOR_instructions_VCTZ_b_w_l_q_z_pn_p_ea_e_vn_v : BedrockISAForm<
-  "VECTOR.instructions.VCTZ.b_w_l_q_z_pn_p_ea_e_vn_v", "vctz", "VCTZ.{B|W|L|Q}(z) Pn(p), <ea>(e), Vn(v)", "11111111000000100011zz1001ppppvvvvveeeeeee", "xxlong", "VECTOR",
+  "z;p;v", "size;govern;dst", "SIZE_BWLQ;Pn;Vn", "", "">;
+def BRForm_VECTOR_VCTZ_b_w_l_q_z_pn_p_ea_e_vn_v : BedrockISAForm<
+  "VECTOR.VCTZ.b_w_l_q_z_pn_p_ea_e_vn_v", "vctz", "VCTZ.{B|W|L|Q}(z) Pn(p), <ea>(e), Vn(v)", "11111111000000100011zz1001ppppvvvvveeeeeee", "xxlong", "VECTOR",
   6, 0, 1, 1, 0,
-  "z;p;v;e", "size;govern;dst;src", "base.field_types.SIZE_BWLQ;VECTOR.field_types.Pn;VECTOR.field_types.Vn;VECTOR.field_types.VEA", "", "">;
-def BRForm_VECTOR_instructions_VCTZ_b_w_l_q_z_pn_p_vn_v_ea_e : BedrockISAForm<
-  "VECTOR.instructions.VCTZ.b_w_l_q_z_pn_p_vn_v_ea_e", "vctz", "VCTZ.{B|W|L|Q}(z) Pn(p), Vn(v), <ea>(e)", "11111111000000100011zz1010ppppvvvvveeeeeee", "xxlong", "VECTOR",
+  "z;p;v;e", "size;govern;dst;src", "SIZE_BWLQ;Pn;Vn;VEA", "", "">;
+def BRForm_VECTOR_VCTZ_b_w_l_q_z_pn_p_vn_v_ea_e : BedrockISAForm<
+  "VECTOR.VCTZ.b_w_l_q_z_pn_p_vn_v_ea_e", "vctz", "VCTZ.{B|W|L|Q}(z) Pn(p), Vn(v), <ea>(e)", "11111111000000100011zz1010ppppvvvvveeeeeee", "xxlong", "VECTOR",
   6, 0, 1, 1, 0,
-  "z;p;v;e", "size;govern;src;dst", "base.field_types.SIZE_BWLQ;VECTOR.field_types.Pn;VECTOR.field_types.Vn;VECTOR.field_types.VEA", "", "">;
-def BRForm_VECTOR_instructions_VCLS_b_w_l_q_z_pn_p_vn_v : BedrockISAForm<
-  "VECTOR.instructions.VCLS.b_w_l_q_z_pn_p_vn_v", "vcls", "VCLS.{B|W|L|Q}(z) Pn(p), Vn(v)", "11111010000011zz1ppppvvvvv", "long", "VECTOR",
+  "z;p;v;e", "size;govern;src;dst", "SIZE_BWLQ;Pn;Vn;VEA", "", "">;
+def BRForm_VECTOR_VCLS_b_w_l_q_z_pn_p_vn_v : BedrockISAForm<
+  "VECTOR.VCLS.b_w_l_q_z_pn_p_vn_v", "vcls", "VCLS.{B|W|L|Q}(z) Pn(p), Vn(v)", "11111010000011zz1ppppvvvvv", "long", "VECTOR",
   4, 0, 0, 0, 1,
-  "z;p;v", "size;govern;dst", "base.field_types.SIZE_BWLQ;VECTOR.field_types.Pn;VECTOR.field_types.Vn", "", "">;
-def BRForm_VECTOR_instructions_VCLS_b_w_l_q_z_pn_p_ea_e_vn_v : BedrockISAForm<
-  "VECTOR.instructions.VCLS.b_w_l_q_z_pn_p_ea_e_vn_v", "vcls", "VCLS.{B|W|L|Q}(z) Pn(p), <ea>(e), Vn(v)", "11111111000000100011zz1011ppppvvvvveeeeeee", "xxlong", "VECTOR",
+  "z;p;v", "size;govern;dst", "SIZE_BWLQ;Pn;Vn", "", "">;
+def BRForm_VECTOR_VCLS_b_w_l_q_z_pn_p_ea_e_vn_v : BedrockISAForm<
+  "VECTOR.VCLS.b_w_l_q_z_pn_p_ea_e_vn_v", "vcls", "VCLS.{B|W|L|Q}(z) Pn(p), <ea>(e), Vn(v)", "11111111000000100011zz1011ppppvvvvveeeeeee", "xxlong", "VECTOR",
   6, 0, 1, 1, 0,
-  "z;p;v;e", "size;govern;dst;src", "base.field_types.SIZE_BWLQ;VECTOR.field_types.Pn;VECTOR.field_types.Vn;VECTOR.field_types.VEA", "", "">;
-def BRForm_VECTOR_instructions_VCLS_b_w_l_q_z_pn_p_vn_v_ea_e : BedrockISAForm<
-  "VECTOR.instructions.VCLS.b_w_l_q_z_pn_p_vn_v_ea_e", "vcls", "VCLS.{B|W|L|Q}(z) Pn(p), Vn(v), <ea>(e)", "11111111000000100011zz1100ppppvvvvveeeeeee", "xxlong", "VECTOR",
+  "z;p;v;e", "size;govern;dst;src", "SIZE_BWLQ;Pn;Vn;VEA", "", "">;
+def BRForm_VECTOR_VCLS_b_w_l_q_z_pn_p_vn_v_ea_e : BedrockISAForm<
+  "VECTOR.VCLS.b_w_l_q_z_pn_p_vn_v_ea_e", "vcls", "VCLS.{B|W|L|Q}(z) Pn(p), Vn(v), <ea>(e)", "11111111000000100011zz1100ppppvvvvveeeeeee", "xxlong", "VECTOR",
   6, 0, 1, 1, 0,
-  "z;p;v;e", "size;govern;src;dst", "base.field_types.SIZE_BWLQ;VECTOR.field_types.Pn;VECTOR.field_types.Vn;VECTOR.field_types.VEA", "", "">;
-def BRForm_VECTOR_instructions_VCTS_b_w_l_q_z_pn_p_vn_v : BedrockISAForm<
-  "VECTOR.instructions.VCTS.b_w_l_q_z_pn_p_vn_v", "vcts", "VCTS.{B|W|L|Q}(z) Pn(p), Vn(v)", "11111010000100zz0ppppvvvvv", "long", "VECTOR",
+  "z;p;v;e", "size;govern;src;dst", "SIZE_BWLQ;Pn;Vn;VEA", "", "">;
+def BRForm_VECTOR_VCTS_b_w_l_q_z_pn_p_vn_v : BedrockISAForm<
+  "VECTOR.VCTS.b_w_l_q_z_pn_p_vn_v", "vcts", "VCTS.{B|W|L|Q}(z) Pn(p), Vn(v)", "11111010000100zz0ppppvvvvv", "long", "VECTOR",
   4, 0, 0, 0, 1,
-  "z;p;v", "size;govern;dst", "base.field_types.SIZE_BWLQ;VECTOR.field_types.Pn;VECTOR.field_types.Vn", "", "">;
-def BRForm_VECTOR_instructions_VCTS_b_w_l_q_z_pn_p_ea_e_vn_v : BedrockISAForm<
-  "VECTOR.instructions.VCTS.b_w_l_q_z_pn_p_ea_e_vn_v", "vcts", "VCTS.{B|W|L|Q}(z) Pn(p), <ea>(e), Vn(v)", "11111111000000100011zz1101ppppvvvvveeeeeee", "xxlong", "VECTOR",
+  "z;p;v", "size;govern;dst", "SIZE_BWLQ;Pn;Vn", "", "">;
+def BRForm_VECTOR_VCTS_b_w_l_q_z_pn_p_ea_e_vn_v : BedrockISAForm<
+  "VECTOR.VCTS.b_w_l_q_z_pn_p_ea_e_vn_v", "vcts", "VCTS.{B|W|L|Q}(z) Pn(p), <ea>(e), Vn(v)", "11111111000000100011zz1101ppppvvvvveeeeeee", "xxlong", "VECTOR",
   6, 0, 1, 1, 0,
-  "z;p;v;e", "size;govern;dst;src", "base.field_types.SIZE_BWLQ;VECTOR.field_types.Pn;VECTOR.field_types.Vn;VECTOR.field_types.VEA", "", "">;
-def BRForm_VECTOR_instructions_VCTS_b_w_l_q_z_pn_p_vn_v_ea_e : BedrockISAForm<
-  "VECTOR.instructions.VCTS.b_w_l_q_z_pn_p_vn_v_ea_e", "vcts", "VCTS.{B|W|L|Q}(z) Pn(p), Vn(v), <ea>(e)", "11111111000000100011zz1110ppppvvvvveeeeeee", "xxlong", "VECTOR",
+  "z;p;v;e", "size;govern;dst;src", "SIZE_BWLQ;Pn;Vn;VEA", "", "">;
+def BRForm_VECTOR_VCTS_b_w_l_q_z_pn_p_vn_v_ea_e : BedrockISAForm<
+  "VECTOR.VCTS.b_w_l_q_z_pn_p_vn_v_ea_e", "vcts", "VCTS.{B|W|L|Q}(z) Pn(p), Vn(v), <ea>(e)", "11111111000000100011zz1110ppppvvvvveeeeeee", "xxlong", "VECTOR",
   6, 0, 1, 1, 0,
-  "z;p;v;e", "size;govern;src;dst", "base.field_types.SIZE_BWLQ;VECTOR.field_types.Pn;VECTOR.field_types.Vn;VECTOR.field_types.VEA", "", "">;
-def BRForm_VECTOR_instructions_VPOPCNT_b_w_l_q_z_pn_p_vn_v : BedrockISAForm<
-  "VECTOR.instructions.VPOPCNT.b_w_l_q_z_pn_p_vn_v", "vpopcnt", "VPOPCNT.{B|W|L|Q}(z) Pn(p), Vn(v)", "11111010000100zz1ppppvvvvv", "long", "VECTOR",
+  "z;p;v;e", "size;govern;src;dst", "SIZE_BWLQ;Pn;Vn;VEA", "", "">;
+def BRForm_VECTOR_VPOPCNT_b_w_l_q_z_pn_p_vn_v : BedrockISAForm<
+  "VECTOR.VPOPCNT.b_w_l_q_z_pn_p_vn_v", "vpopcnt", "VPOPCNT.{B|W|L|Q}(z) Pn(p), Vn(v)", "11111010000100zz1ppppvvvvv", "long", "VECTOR",
   4, 0, 0, 0, 1,
-  "z;p;v", "size;govern;dst", "base.field_types.SIZE_BWLQ;VECTOR.field_types.Pn;VECTOR.field_types.Vn", "", "">;
-def BRForm_VECTOR_instructions_VPOPCNT_b_w_l_q_z_pn_p_ea_e_vn_v : BedrockISAForm<
-  "VECTOR.instructions.VPOPCNT.b_w_l_q_z_pn_p_ea_e_vn_v", "vpopcnt", "VPOPCNT.{B|W|L|Q}(z) Pn(p), <ea>(e), Vn(v)", "11111111000000100011zz1111ppppvvvvveeeeeee", "xxlong", "VECTOR",
+  "z;p;v", "size;govern;dst", "SIZE_BWLQ;Pn;Vn", "", "">;
+def BRForm_VECTOR_VPOPCNT_b_w_l_q_z_pn_p_ea_e_vn_v : BedrockISAForm<
+  "VECTOR.VPOPCNT.b_w_l_q_z_pn_p_ea_e_vn_v", "vpopcnt", "VPOPCNT.{B|W|L|Q}(z) Pn(p), <ea>(e), Vn(v)", "11111111000000100011zz1111ppppvvvvveeeeeee", "xxlong", "VECTOR",
   6, 0, 1, 1, 0,
-  "z;p;v;e", "size;govern;dst;src", "base.field_types.SIZE_BWLQ;VECTOR.field_types.Pn;VECTOR.field_types.Vn;VECTOR.field_types.VEA", "", "">;
-def BRForm_VECTOR_instructions_VPOPCNT_b_w_l_q_z_pn_p_vn_v_ea_e : BedrockISAForm<
-  "VECTOR.instructions.VPOPCNT.b_w_l_q_z_pn_p_vn_v_ea_e", "vpopcnt", "VPOPCNT.{B|W|L|Q}(z) Pn(p), Vn(v), <ea>(e)", "11111111000000100100zz0100ppppvvvvveeeeeee", "xxlong", "VECTOR",
+  "z;p;v;e", "size;govern;dst;src", "SIZE_BWLQ;Pn;Vn;VEA", "", "">;
+def BRForm_VECTOR_VPOPCNT_b_w_l_q_z_pn_p_vn_v_ea_e : BedrockISAForm<
+  "VECTOR.VPOPCNT.b_w_l_q_z_pn_p_vn_v_ea_e", "vpopcnt", "VPOPCNT.{B|W|L|Q}(z) Pn(p), Vn(v), <ea>(e)", "11111111000000100100zz0100ppppvvvvveeeeeee", "xxlong", "VECTOR",
   6, 0, 1, 1, 0,
-  "z;p;v;e", "size;govern;src;dst", "base.field_types.SIZE_BWLQ;VECTOR.field_types.Pn;VECTOR.field_types.Vn;VECTOR.field_types.VEA", "", "">;
-def BRForm_VECTOR_instructions_VREVBYTE_w_l_q_z_pn_p_vn_v : BedrockISAForm<
-  "VECTOR.instructions.VREVBYTE.w_l_q_z_pn_p_vn_v", "vrevbyte", "VREVBYTE.{W|L|Q}(z) Pn(p), Vn(v)", "11111010000101zz0ppppvvvvv", "long", "VECTOR",
+  "z;p;v;e", "size;govern;src;dst", "SIZE_BWLQ;Pn;Vn;VEA", "", "">;
+def BRForm_VECTOR_VREVBYTE_w_l_q_z_pn_p_vn_v : BedrockISAForm<
+  "VECTOR.VREVBYTE.w_l_q_z_pn_p_vn_v", "vrevbyte", "VREVBYTE.{W|L|Q}(z) Pn(p), Vn(v)", "11111010000101zz0ppppvvvvv", "long", "VECTOR",
   4, 0, 0, 0, 1,
-  "z;p;v", "size;govern;dst", "base.field_types.SIZE_WLQ;VECTOR.field_types.Pn;VECTOR.field_types.Vn", "", "">;
-def BRForm_VECTOR_instructions_VREVBYTE_w_l_q_z_pn_p_ea_e_vn_v : BedrockISAForm<
-  "VECTOR.instructions.VREVBYTE.w_l_q_z_pn_p_ea_e_vn_v", "vrevbyte", "VREVBYTE.{W|L|Q}(z) Pn(p), <ea>(e), Vn(v)", "11111111000000100100zz0101ppppvvvvveeeeeee", "xxlong", "VECTOR",
+  "z;p;v", "size;govern;dst", "SIZE_WLQ;Pn;Vn", "", "">;
+def BRForm_VECTOR_VREVBYTE_w_l_q_z_pn_p_ea_e_vn_v : BedrockISAForm<
+  "VECTOR.VREVBYTE.w_l_q_z_pn_p_ea_e_vn_v", "vrevbyte", "VREVBYTE.{W|L|Q}(z) Pn(p), <ea>(e), Vn(v)", "11111111000000100100zz0101ppppvvvvveeeeeee", "xxlong", "VECTOR",
   6, 0, 1, 1, 0,
-  "z;p;v;e", "size;govern;dst;src", "base.field_types.SIZE_WLQ;VECTOR.field_types.Pn;VECTOR.field_types.Vn;VECTOR.field_types.VEA", "", "">;
-def BRForm_VECTOR_instructions_VREVBYTE_w_l_q_z_pn_p_vn_v_ea_e : BedrockISAForm<
-  "VECTOR.instructions.VREVBYTE.w_l_q_z_pn_p_vn_v_ea_e", "vrevbyte", "VREVBYTE.{W|L|Q}(z) Pn(p), Vn(v), <ea>(e)", "11111111000000100100zz0110ppppvvvvveeeeeee", "xxlong", "VECTOR",
+  "z;p;v;e", "size;govern;dst;src", "SIZE_WLQ;Pn;Vn;VEA", "", "">;
+def BRForm_VECTOR_VREVBYTE_w_l_q_z_pn_p_vn_v_ea_e : BedrockISAForm<
+  "VECTOR.VREVBYTE.w_l_q_z_pn_p_vn_v_ea_e", "vrevbyte", "VREVBYTE.{W|L|Q}(z) Pn(p), Vn(v), <ea>(e)", "11111111000000100100zz0110ppppvvvvveeeeeee", "xxlong", "VECTOR",
   6, 0, 1, 1, 0,
-  "z;p;v;e", "size;govern;src;dst", "base.field_types.SIZE_WLQ;VECTOR.field_types.Pn;VECTOR.field_types.Vn;VECTOR.field_types.VEA", "", "">;
-def BRForm_VECTOR_instructions_VSQRT_h_s_d_z_pn_p_vn_v : BedrockISAForm<
-  "VECTOR.instructions.VSQRT.h_s_d_z_pn_p_vn_v", "vsqrt", "VSQRT.{H|S|D}(z) Pn(p), Vn(v)", "11111010000101zz1ppppvvvvv", "long", "VECTOR",
+  "z;p;v;e", "size;govern;src;dst", "SIZE_WLQ;Pn;Vn;VEA", "", "">;
+def BRForm_VECTOR_PPERM_b_w_l_q_z_vn_v_pn_p : BedrockISAForm<
+  "VECTOR.PPERM.b_w_l_q_z_vn_v_pn_p", "pperm", "PPERM.{B|W|L|Q}(z) Vn(v), Pn(p)", "11111010001000zz1ppppvvvvv", "long", "VECTOR",
   4, 0, 0, 0, 1,
-  "z;p;v", "size;govern;dst", "VECTOR.field_types.SIZE_HSD;VECTOR.field_types.Pn;VECTOR.field_types.Vn", "", "">;
-def BRForm_VECTOR_instructions_VSQRT_h_s_d_z_pn_p_ea_e_vn_v : BedrockISAForm<
-  "VECTOR.instructions.VSQRT.h_s_d_z_pn_p_ea_e_vn_v", "vsqrt", "VSQRT.{H|S|D}(z) Pn(p), <ea>(e), Vn(v)", "11111111000000100100zz0111ppppvvvvveeeeeee", "xxlong", "VECTOR",
-  6, 0, 1, 1, 0,
-  "z;p;v;e", "size;govern;dst;src", "VECTOR.field_types.SIZE_HSD;VECTOR.field_types.Pn;VECTOR.field_types.Vn;VECTOR.field_types.VEA", "", "">;
-def BRForm_VECTOR_instructions_VSQRT_h_s_d_z_pn_p_vn_v_ea_e : BedrockISAForm<
-  "VECTOR.instructions.VSQRT.h_s_d_z_pn_p_vn_v_ea_e", "vsqrt", "VSQRT.{H|S|D}(z) Pn(p), Vn(v), <ea>(e)", "11111111000000100100zz1000ppppvvvvveeeeeee", "xxlong", "VECTOR",
-  6, 0, 1, 1, 0,
-  "z;p;v;e", "size;govern;src;dst", "VECTOR.field_types.SIZE_HSD;VECTOR.field_types.Pn;VECTOR.field_types.Vn;VECTOR.field_types.VEA", "", "">;
-def BRForm_VECTOR_instructions_VROUND_h_s_d_z_pn_p_vn_v : BedrockISAForm<
-  "VECTOR.instructions.VROUND.h_s_d_z_pn_p_vn_v", "vround", "VROUND.{H|S|D}(z) Pn(p), Vn(v)", "11111010000110zz0ppppvvvvv", "long", "VECTOR",
+  "z;p;v", "size;dst;index", "SIZE_BWLQ;Pn;Vn", "", "">;
+def BRForm_VECTOR_PSLIDEUP_b_w_l_q_z_imm6_i_pn_p : BedrockISAForm<
+  "VECTOR.PSLIDEUP.b_w_l_q_z_imm6_i_pn_p", "pslideup", "PSLIDEUP.{B|W|L|Q}(z) imm6(i), Pn(p)", "11111010011110zzppppiiiiii", "long", "VECTOR",
   4, 0, 0, 0, 1,
-  "z;p;v", "size;govern;dst", "VECTOR.field_types.SIZE_HSD;VECTOR.field_types.Pn;VECTOR.field_types.Vn", "", "">;
-def BRForm_VECTOR_instructions_VROUND_h_s_d_z_pn_p_ea_e_vn_v : BedrockISAForm<
-  "VECTOR.instructions.VROUND.h_s_d_z_pn_p_ea_e_vn_v", "vround", "VROUND.{H|S|D}(z) Pn(p), <ea>(e), Vn(v)", "11111111000000100100zz1001ppppvvvvveeeeeee", "xxlong", "VECTOR",
-  6, 0, 1, 1, 0,
-  "z;p;v;e", "size;govern;dst;src", "VECTOR.field_types.SIZE_HSD;VECTOR.field_types.Pn;VECTOR.field_types.Vn;VECTOR.field_types.VEA", "", "">;
-def BRForm_VECTOR_instructions_VROUND_h_s_d_z_pn_p_vn_v_ea_e : BedrockISAForm<
-  "VECTOR.instructions.VROUND.h_s_d_z_pn_p_vn_v_ea_e", "vround", "VROUND.{H|S|D}(z) Pn(p), Vn(v), <ea>(e)", "11111111000000100100zz1010ppppvvvvveeeeeee", "xxlong", "VECTOR",
-  6, 0, 1, 1, 0,
-  "z;p;v;e", "size;govern;src;dst", "VECTOR.field_types.SIZE_HSD;VECTOR.field_types.Pn;VECTOR.field_types.Vn;VECTOR.field_types.VEA", "", "">;
-def BRForm_VECTOR_instructions_VTRUNC_h_s_d_z_pn_p_vn_v : BedrockISAForm<
-  "VECTOR.instructions.VTRUNC.h_s_d_z_pn_p_vn_v", "vtrunc", "VTRUNC.{H|S|D}(z) Pn(p), Vn(v)", "11111010000110zz1ppppvvvvv", "long", "VECTOR",
+  "z;p;i", "size;dst;count", "SIZE_BWLQ;Pn;IMM6", "", "">;
+def BRForm_VECTOR_PSLIDEDN_b_w_l_q_z_imm6_i_pn_p : BedrockISAForm<
+  "VECTOR.PSLIDEDN.b_w_l_q_z_imm6_i_pn_p", "pslidedn", "PSLIDEDN.{B|W|L|Q}(z) imm6(i), Pn(p)", "11111010011111zzppppiiiiii", "long", "VECTOR",
   4, 0, 0, 0, 1,
-  "z;p;v", "size;govern;dst", "VECTOR.field_types.SIZE_HSD;VECTOR.field_types.Pn;VECTOR.field_types.Vn", "", "">;
-def BRForm_VECTOR_instructions_VTRUNC_h_s_d_z_pn_p_ea_e_vn_v : BedrockISAForm<
-  "VECTOR.instructions.VTRUNC.h_s_d_z_pn_p_ea_e_vn_v", "vtrunc", "VTRUNC.{H|S|D}(z) Pn(p), <ea>(e), Vn(v)", "11111111000000100100zz1011ppppvvvvveeeeeee", "xxlong", "VECTOR",
+  "z;p;i", "size;dst;count", "SIZE_BWLQ;Pn;IMM6", "", "">;
+def BRForm_VECTOR_VCMPcc_b_w_l_q_x_pn_p_vn_v_vn_w_pn_q : BedrockISAForm<
+  "VECTOR.VCMPcc.b_w_l_q_x_pn_p_vn_v_vn_w_pn_q", "vcmpcc", "VCMPcc.{B|W|L|Q}(x) Pn(p), Vn(v), Vn(w), Pn(q)", "111111010xxxccccppppqqqqvvvvvwwwww", "extralong", "VECTOR",
+  5, 0, 0, 0, 1,
+  "x;c;p;q;v;w", "size;cc;govern;dst;lhs;rhs", "SIZE_VTYPE;CC;Pn;Pn;Vn;Vn", "", "">;
+def BRForm_VECTOR_VCMPcc_b_w_l_q_x_pn_p_vn_v_ea_e_pn_q : BedrockISAForm<
+  "VECTOR.VCMPcc.b_w_l_q_x_pn_p_vn_v_ea_e_pn_q", "vcmpcc", "VCMPcc.{B|W|L|Q}(x) Pn(p), Vn(v), <ea>(e), Pn(q)", "111111110000000xxxccccppppqqqqvvvvveeeeeee", "xxlong", "VECTOR",
   6, 0, 1, 1, 0,
-  "z;p;v;e", "size;govern;dst;src", "VECTOR.field_types.SIZE_HSD;VECTOR.field_types.Pn;VECTOR.field_types.Vn;VECTOR.field_types.VEA", "", "">;
-def BRForm_VECTOR_instructions_VTRUNC_h_s_d_z_pn_p_vn_v_ea_e : BedrockISAForm<
-  "VECTOR.instructions.VTRUNC.h_s_d_z_pn_p_vn_v_ea_e", "vtrunc", "VTRUNC.{H|S|D}(z) Pn(p), Vn(v), <ea>(e)", "11111111000000100100zz1100ppppvvvvveeeeeee", "xxlong", "VECTOR",
+  "x;c;p;q;v;e", "size;cc;govern;dst;lhs;src", "SIZE_VTYPE;CC;Pn;Pn;Vn;VEA", "", "">;
+def BRForm_VECTOR_VTESTZ_b_w_l_q_z_pn_p_vn_v_vn_w_pn_q : BedrockISAForm<
+  "VECTOR.VTESTZ.b_w_l_q_z_pn_p_vn_v_vn_w_pn_q", "vtestz", "VTESTZ.{B|W|L|Q}(z) Pn(p), Vn(v), Vn(w), Pn(q)", "111111011000zz00ppppqqqqvvvvvwwwww", "extralong", "VECTOR",
+  5, 0, 0, 0, 1,
+  "z;p;q;v;w", "size;govern;dst;lhs;rhs", "SIZE_BWLQ;Pn;Pn;Vn;Vn", "", "">;
+def BRForm_VECTOR_VTESTZ_b_w_l_q_z_pn_p_vn_v_ea_e_pn_q : BedrockISAForm<
+  "VECTOR.VTESTZ.b_w_l_q_z_pn_p_vn_v_ea_e_pn_q", "vtestz", "VTESTZ.{B|W|L|Q}(z) Pn(p), Vn(v), <ea>(e), Pn(q)", "11111111000000101000zzppppqqqqvvvvveeeeeee", "xxlong", "VECTOR",
   6, 0, 1, 1, 0,
-  "z;p;v;e", "size;govern;src;dst", "VECTOR.field_types.SIZE_HSD;VECTOR.field_types.Pn;VECTOR.field_types.Vn;VECTOR.field_types.VEA", "", "">;
-def BRForm_VECTOR_instructions_VFLOOR_h_s_d_z_pn_p_vn_v : BedrockISAForm<
-  "VECTOR.instructions.VFLOOR.h_s_d_z_pn_p_vn_v", "vfloor", "VFLOOR.{H|S|D}(z) Pn(p), Vn(v)", "11111010000111zz0ppppvvvvv", "long", "VECTOR",
+  "z;p;q;v;e", "size;govern;dst;lhs;src", "SIZE_BWLQ;Pn;Pn;Vn;VEA", "", "">;
+def BRForm_VECTOR_VTESTNZ_b_w_l_q_z_pn_p_vn_v_vn_w_pn_q : BedrockISAForm<
+  "VECTOR.VTESTNZ.b_w_l_q_z_pn_p_vn_v_vn_w_pn_q", "vtestnz", "VTESTNZ.{B|W|L|Q}(z) Pn(p), Vn(v), Vn(w), Pn(q)", "111111011000zz01ppppqqqqvvvvvwwwww", "extralong", "VECTOR",
+  5, 0, 0, 0, 1,
+  "z;p;q;v;w", "size;govern;dst;lhs;rhs", "SIZE_BWLQ;Pn;Pn;Vn;Vn", "", "">;
+def BRForm_VECTOR_VTESTNZ_b_w_l_q_z_pn_p_vn_v_ea_e_pn_q : BedrockISAForm<
+  "VECTOR.VTESTNZ.b_w_l_q_z_pn_p_vn_v_ea_e_pn_q", "vtestnz", "VTESTNZ.{B|W|L|Q}(z) Pn(p), Vn(v), <ea>(e), Pn(q)", "11111111000000101001zzppppqqqqvvvvveeeeeee", "xxlong", "VECTOR",
+  6, 0, 1, 1, 0,
+  "z;p;q;v;e", "size;govern;dst;lhs;src", "SIZE_BWLQ;Pn;Pn;Vn;VEA", "", "">;
+def BRForm_VECTOR_VADD_b_w_l_q_x_pn_p_vn_v_vn_w : BedrockISAForm<
+  "VECTOR.VADD.b_w_l_q_x_pn_p_vn_v_vn_w", "vadd", "VADD.{B|W|L|Q}(x) Pn(p), Vn(v), Vn(w)", "1111110111100000xxx0ppppvvvvvwwwww", "extralong", "VECTOR",
+  5, 0, 0, 0, 1,
+  "x;p;v;w", "size;govern;src;dst", "SIZE_VTYPE;Pn;Vn;Vn", "", "">;
+def BRForm_VECTOR_VADD_b_w_l_q_x_pn_p_ea_e_vn_v : BedrockISAForm<
+  "VECTOR.VADD.b_w_l_q_x_pn_p_ea_e_vn_v", "vadd", "VADD.{B|W|L|Q}(x) Pn(p), <ea>(e), Vn(v)", "1111111100000010000xxx0011ppppvvvvveeeeeee", "xxlong", "VECTOR",
+  6, 0, 1, 1, 0,
+  "x;p;v;e", "size;govern;dst;src", "SIZE_VTYPE;Pn;Vn;VEA", "", "">;
+def BRForm_VECTOR_VADD_b_w_l_q_x_pn_p_vn_v_ea_e : BedrockISAForm<
+  "VECTOR.VADD.b_w_l_q_x_pn_p_vn_v_ea_e", "vadd", "VADD.{B|W|L|Q}(x) Pn(p), Vn(v), <ea>(e)", "1111111100000010000xxx0100ppppvvvvveeeeeee", "xxlong", "VECTOR",
+  6, 0, 1, 1, 0,
+  "x;p;v;e", "size;govern;src;dst", "SIZE_VTYPE;Pn;Vn;VEA", "", "">;
+def BRForm_VECTOR_VSUB_b_w_l_q_x_pn_p_vn_v_vn_w : BedrockISAForm<
+  "VECTOR.VSUB.b_w_l_q_x_pn_p_vn_v_vn_w", "vsub", "VSUB.{B|W|L|Q}(x) Pn(p), Vn(v), Vn(w)", "1111110111100000xxx1ppppvvvvvwwwww", "extralong", "VECTOR",
+  5, 0, 0, 0, 1,
+  "x;p;v;w", "size;govern;src;dst", "SIZE_VTYPE;Pn;Vn;Vn", "", "">;
+def BRForm_VECTOR_VSUB_b_w_l_q_x_pn_p_ea_e_vn_v : BedrockISAForm<
+  "VECTOR.VSUB.b_w_l_q_x_pn_p_ea_e_vn_v", "vsub", "VSUB.{B|W|L|Q}(x) Pn(p), <ea>(e), Vn(v)", "1111111100000010000xxx0101ppppvvvvveeeeeee", "xxlong", "VECTOR",
+  6, 0, 1, 1, 0,
+  "x;p;v;e", "size;govern;dst;src", "SIZE_VTYPE;Pn;Vn;VEA", "", "">;
+def BRForm_VECTOR_VSUB_b_w_l_q_x_pn_p_vn_v_ea_e : BedrockISAForm<
+  "VECTOR.VSUB.b_w_l_q_x_pn_p_vn_v_ea_e", "vsub", "VSUB.{B|W|L|Q}(x) Pn(p), Vn(v), <ea>(e)", "1111111100000010000xxx0110ppppvvvvveeeeeee", "xxlong", "VECTOR",
+  6, 0, 1, 1, 0,
+  "x;p;v;e", "size;govern;src;dst", "SIZE_VTYPE;Pn;Vn;VEA", "", "">;
+def BRForm_VECTOR_VMUL_b_w_l_q_x_pn_p_vn_v_vn_w : BedrockISAForm<
+  "VECTOR.VMUL.b_w_l_q_x_pn_p_vn_v_vn_w", "vmul", "VMUL.{B|W|L|Q}(x) Pn(p), Vn(v), Vn(w)", "1111110111100001xxx0ppppvvvvvwwwww", "extralong", "VECTOR",
+  5, 0, 0, 0, 1,
+  "x;p;v;w", "size;govern;src;dst", "SIZE_VTYPE;Pn;Vn;Vn", "", "">;
+def BRForm_VECTOR_VMUL_b_w_l_q_x_pn_p_ea_e_vn_v : BedrockISAForm<
+  "VECTOR.VMUL.b_w_l_q_x_pn_p_ea_e_vn_v", "vmul", "VMUL.{B|W|L|Q}(x) Pn(p), <ea>(e), Vn(v)", "1111111100000010000xxx0111ppppvvvvveeeeeee", "xxlong", "VECTOR",
+  6, 0, 1, 1, 0,
+  "x;p;v;e", "size;govern;dst;src", "SIZE_VTYPE;Pn;Vn;VEA", "", "">;
+def BRForm_VECTOR_VMUL_b_w_l_q_x_pn_p_vn_v_ea_e : BedrockISAForm<
+  "VECTOR.VMUL.b_w_l_q_x_pn_p_vn_v_ea_e", "vmul", "VMUL.{B|W|L|Q}(x) Pn(p), Vn(v), <ea>(e)", "1111111100000010000xxx1000ppppvvvvveeeeeee", "xxlong", "VECTOR",
+  6, 0, 1, 1, 0,
+  "x;p;v;e", "size;govern;src;dst", "SIZE_VTYPE;Pn;Vn;VEA", "", "">;
+def BRForm_VECTOR_VAND_b_w_l_q_z_pn_p_vn_v_vn_w : BedrockISAForm<
+  "VECTOR.VAND.b_w_l_q_z_pn_p_vn_v_vn_w", "vand", "VAND.{B|W|L|Q}(z) Pn(p), Vn(v), Vn(w)", "11111101111000010zz1ppppvvvvvwwwww", "extralong", "VECTOR",
+  5, 0, 0, 0, 1,
+  "z;p;v;w", "size;govern;src;dst", "SIZE_BWLQ;Pn;Vn;Vn", "", "">;
+def BRForm_VECTOR_VAND_b_w_l_q_z_pn_p_ea_e_vn_v : BedrockISAForm<
+  "VECTOR.VAND.b_w_l_q_z_pn_p_ea_e_vn_v", "vand", "VAND.{B|W|L|Q}(z) Pn(p), <ea>(e), Vn(v)", "11111111000000100000zz1001ppppvvvvveeeeeee", "xxlong", "VECTOR",
+  6, 0, 1, 1, 0,
+  "z;p;v;e", "size;govern;dst;src", "SIZE_BWLQ;Pn;Vn;VEA", "", "">;
+def BRForm_VECTOR_VAND_b_w_l_q_z_pn_p_vn_v_ea_e : BedrockISAForm<
+  "VECTOR.VAND.b_w_l_q_z_pn_p_vn_v_ea_e", "vand", "VAND.{B|W|L|Q}(z) Pn(p), Vn(v), <ea>(e)", "11111111000000100000zz1010ppppvvvvveeeeeee", "xxlong", "VECTOR",
+  6, 0, 1, 1, 0,
+  "z;p;v;e", "size;govern;src;dst", "SIZE_BWLQ;Pn;Vn;VEA", "", "">;
+def BRForm_VECTOR_VOR_b_w_l_q_z_pn_p_vn_v_vn_w : BedrockISAForm<
+  "VECTOR.VOR.b_w_l_q_z_pn_p_vn_v_vn_w", "vor", "VOR.{B|W|L|Q}(z) Pn(p), Vn(v), Vn(w)", "11111101111000011zz1ppppvvvvvwwwww", "extralong", "VECTOR",
+  5, 0, 0, 0, 1,
+  "z;p;v;w", "size;govern;src;dst", "SIZE_BWLQ;Pn;Vn;Vn", "", "">;
+def BRForm_VECTOR_VOR_b_w_l_q_z_pn_p_ea_e_vn_v : BedrockISAForm<
+  "VECTOR.VOR.b_w_l_q_z_pn_p_ea_e_vn_v", "vor", "VOR.{B|W|L|Q}(z) Pn(p), <ea>(e), Vn(v)", "11111111000000100000zz1011ppppvvvvveeeeeee", "xxlong", "VECTOR",
+  6, 0, 1, 1, 0,
+  "z;p;v;e", "size;govern;dst;src", "SIZE_BWLQ;Pn;Vn;VEA", "", "">;
+def BRForm_VECTOR_VOR_b_w_l_q_z_pn_p_vn_v_ea_e : BedrockISAForm<
+  "VECTOR.VOR.b_w_l_q_z_pn_p_vn_v_ea_e", "vor", "VOR.{B|W|L|Q}(z) Pn(p), Vn(v), <ea>(e)", "11111111000000100000zz1100ppppvvvvveeeeeee", "xxlong", "VECTOR",
+  6, 0, 1, 1, 0,
+  "z;p;v;e", "size;govern;src;dst", "SIZE_BWLQ;Pn;Vn;VEA", "", "">;
+def BRForm_VECTOR_VXOR_b_w_l_q_z_pn_p_vn_v_vn_w : BedrockISAForm<
+  "VECTOR.VXOR.b_w_l_q_z_pn_p_vn_v_vn_w", "vxor", "VXOR.{B|W|L|Q}(z) Pn(p), Vn(v), Vn(w)", "11111101111000100zz0ppppvvvvvwwwww", "extralong", "VECTOR",
+  5, 0, 0, 0, 1,
+  "z;p;v;w", "size;govern;src;dst", "SIZE_BWLQ;Pn;Vn;Vn", "", "">;
+def BRForm_VECTOR_VXOR_b_w_l_q_z_pn_p_ea_e_vn_v : BedrockISAForm<
+  "VECTOR.VXOR.b_w_l_q_z_pn_p_ea_e_vn_v", "vxor", "VXOR.{B|W|L|Q}(z) Pn(p), <ea>(e), Vn(v)", "11111111000000100000zz1101ppppvvvvveeeeeee", "xxlong", "VECTOR",
+  6, 0, 1, 1, 0,
+  "z;p;v;e", "size;govern;dst;src", "SIZE_BWLQ;Pn;Vn;VEA", "", "">;
+def BRForm_VECTOR_VXOR_b_w_l_q_z_pn_p_vn_v_ea_e : BedrockISAForm<
+  "VECTOR.VXOR.b_w_l_q_z_pn_p_vn_v_ea_e", "vxor", "VXOR.{B|W|L|Q}(z) Pn(p), Vn(v), <ea>(e)", "11111111000000100000zz1110ppppvvvvveeeeeee", "xxlong", "VECTOR",
+  6, 0, 1, 1, 0,
+  "z;p;v;e", "size;govern;src;dst", "SIZE_BWLQ;Pn;Vn;VEA", "", "">;
+def BRForm_VECTOR_VMINS_b_w_l_q_z_pn_p_vn_v_vn_w : BedrockISAForm<
+  "VECTOR.VMINS.b_w_l_q_z_pn_p_vn_v_vn_w", "vmins", "VMINS.{B|W|L|Q}(z) Pn(p), Vn(v), Vn(w)", "11111101111000100zz1ppppvvvvvwwwww", "extralong", "VECTOR",
+  5, 0, 0, 0, 1,
+  "z;p;v;w", "size;govern;src;dst", "SIZE_BWLQ;Pn;Vn;Vn", "", "">;
+def BRForm_VECTOR_VMINS_b_w_l_q_z_pn_p_ea_e_vn_v : BedrockISAForm<
+  "VECTOR.VMINS.b_w_l_q_z_pn_p_ea_e_vn_v", "vmins", "VMINS.{B|W|L|Q}(z) Pn(p), <ea>(e), Vn(v)", "11111111000000100000zz1111ppppvvvvveeeeeee", "xxlong", "VECTOR",
+  6, 0, 1, 1, 0,
+  "z;p;v;e", "size;govern;dst;src", "SIZE_BWLQ;Pn;Vn;VEA", "", "">;
+def BRForm_VECTOR_VMINS_b_w_l_q_z_pn_p_vn_v_ea_e : BedrockISAForm<
+  "VECTOR.VMINS.b_w_l_q_z_pn_p_vn_v_ea_e", "vmins", "VMINS.{B|W|L|Q}(z) Pn(p), Vn(v), <ea>(e)", "11111111000000100001zz0000ppppvvvvveeeeeee", "xxlong", "VECTOR",
+  6, 0, 1, 1, 0,
+  "z;p;v;e", "size;govern;src;dst", "SIZE_BWLQ;Pn;Vn;VEA", "", "">;
+def BRForm_VECTOR_VMINU_b_w_l_q_z_pn_p_vn_v_vn_w : BedrockISAForm<
+  "VECTOR.VMINU.b_w_l_q_z_pn_p_vn_v_vn_w", "vminu", "VMINU.{B|W|L|Q}(z) Pn(p), Vn(v), Vn(w)", "11111101111000101zz0ppppvvvvvwwwww", "extralong", "VECTOR",
+  5, 0, 0, 0, 1,
+  "z;p;v;w", "size;govern;src;dst", "SIZE_BWLQ;Pn;Vn;Vn", "", "">;
+def BRForm_VECTOR_VMINU_b_w_l_q_z_pn_p_ea_e_vn_v : BedrockISAForm<
+  "VECTOR.VMINU.b_w_l_q_z_pn_p_ea_e_vn_v", "vminu", "VMINU.{B|W|L|Q}(z) Pn(p), <ea>(e), Vn(v)", "11111111000000100001zz0001ppppvvvvveeeeeee", "xxlong", "VECTOR",
+  6, 0, 1, 1, 0,
+  "z;p;v;e", "size;govern;dst;src", "SIZE_BWLQ;Pn;Vn;VEA", "", "">;
+def BRForm_VECTOR_VMINU_b_w_l_q_z_pn_p_vn_v_ea_e : BedrockISAForm<
+  "VECTOR.VMINU.b_w_l_q_z_pn_p_vn_v_ea_e", "vminu", "VMINU.{B|W|L|Q}(z) Pn(p), Vn(v), <ea>(e)", "11111111000000100001zz0010ppppvvvvveeeeeee", "xxlong", "VECTOR",
+  6, 0, 1, 1, 0,
+  "z;p;v;e", "size;govern;src;dst", "SIZE_BWLQ;Pn;Vn;VEA", "", "">;
+def BRForm_VECTOR_VMAXS_b_w_l_q_z_pn_p_vn_v_vn_w : BedrockISAForm<
+  "VECTOR.VMAXS.b_w_l_q_z_pn_p_vn_v_vn_w", "vmaxs", "VMAXS.{B|W|L|Q}(z) Pn(p), Vn(v), Vn(w)", "11111101111000101zz1ppppvvvvvwwwww", "extralong", "VECTOR",
+  5, 0, 0, 0, 1,
+  "z;p;v;w", "size;govern;src;dst", "SIZE_BWLQ;Pn;Vn;Vn", "", "">;
+def BRForm_VECTOR_VMAXS_b_w_l_q_z_pn_p_ea_e_vn_v : BedrockISAForm<
+  "VECTOR.VMAXS.b_w_l_q_z_pn_p_ea_e_vn_v", "vmaxs", "VMAXS.{B|W|L|Q}(z) Pn(p), <ea>(e), Vn(v)", "11111111000000100001zz1001ppppvvvvveeeeeee", "xxlong", "VECTOR",
+  6, 0, 1, 1, 0,
+  "z;p;v;e", "size;govern;dst;src", "SIZE_BWLQ;Pn;Vn;VEA", "", "">;
+def BRForm_VECTOR_VMAXS_b_w_l_q_z_pn_p_vn_v_ea_e : BedrockISAForm<
+  "VECTOR.VMAXS.b_w_l_q_z_pn_p_vn_v_ea_e", "vmaxs", "VMAXS.{B|W|L|Q}(z) Pn(p), Vn(v), <ea>(e)", "11111111000000100001zz1010ppppvvvvveeeeeee", "xxlong", "VECTOR",
+  6, 0, 1, 1, 0,
+  "z;p;v;e", "size;govern;src;dst", "SIZE_BWLQ;Pn;Vn;VEA", "", "">;
+def BRForm_VECTOR_VMAXU_b_w_l_q_z_pn_p_vn_v_vn_w : BedrockISAForm<
+  "VECTOR.VMAXU.b_w_l_q_z_pn_p_vn_v_vn_w", "vmaxu", "VMAXU.{B|W|L|Q}(z) Pn(p), Vn(v), Vn(w)", "11111101111000110zz0ppppvvvvvwwwww", "extralong", "VECTOR",
+  5, 0, 0, 0, 1,
+  "z;p;v;w", "size;govern;src;dst", "SIZE_BWLQ;Pn;Vn;Vn", "", "">;
+def BRForm_VECTOR_VMAXU_b_w_l_q_z_pn_p_ea_e_vn_v : BedrockISAForm<
+  "VECTOR.VMAXU.b_w_l_q_z_pn_p_ea_e_vn_v", "vmaxu", "VMAXU.{B|W|L|Q}(z) Pn(p), <ea>(e), Vn(v)", "11111111000000100001zz1011ppppvvvvveeeeeee", "xxlong", "VECTOR",
+  6, 0, 1, 1, 0,
+  "z;p;v;e", "size;govern;dst;src", "SIZE_BWLQ;Pn;Vn;VEA", "", "">;
+def BRForm_VECTOR_VMAXU_b_w_l_q_z_pn_p_vn_v_ea_e : BedrockISAForm<
+  "VECTOR.VMAXU.b_w_l_q_z_pn_p_vn_v_ea_e", "vmaxu", "VMAXU.{B|W|L|Q}(z) Pn(p), Vn(v), <ea>(e)", "11111111000000100001zz1100ppppvvvvveeeeeee", "xxlong", "VECTOR",
+  6, 0, 1, 1, 0,
+  "z;p;v;e", "size;govern;src;dst", "SIZE_BWLQ;Pn;Vn;VEA", "", "">;
+def BRForm_VECTOR_VMULHS_b_w_l_q_z_pn_p_vn_v_vn_w : BedrockISAForm<
+  "VECTOR.VMULHS.b_w_l_q_z_pn_p_vn_v_vn_w", "vmulhs", "VMULHS.{B|W|L|Q}(z) Pn(p), Vn(v), Vn(w)", "11111101111000110zz1ppppvvvvvwwwww", "extralong", "VECTOR",
+  5, 0, 0, 0, 1,
+  "z;p;v;w", "size;govern;src;dst", "SIZE_BWLQ;Pn;Vn;Vn", "", "">;
+def BRForm_VECTOR_VMULHS_b_w_l_q_z_pn_p_ea_e_vn_v : BedrockISAForm<
+  "VECTOR.VMULHS.b_w_l_q_z_pn_p_ea_e_vn_v", "vmulhs", "VMULHS.{B|W|L|Q}(z) Pn(p), <ea>(e), Vn(v)", "11111111000000100001zz1101ppppvvvvveeeeeee", "xxlong", "VECTOR",
+  6, 0, 1, 1, 0,
+  "z;p;v;e", "size;govern;dst;src", "SIZE_BWLQ;Pn;Vn;VEA", "", "">;
+def BRForm_VECTOR_VMULHS_b_w_l_q_z_pn_p_vn_v_ea_e : BedrockISAForm<
+  "VECTOR.VMULHS.b_w_l_q_z_pn_p_vn_v_ea_e", "vmulhs", "VMULHS.{B|W|L|Q}(z) Pn(p), Vn(v), <ea>(e)", "11111111000000100001zz1110ppppvvvvveeeeeee", "xxlong", "VECTOR",
+  6, 0, 1, 1, 0,
+  "z;p;v;e", "size;govern;src;dst", "SIZE_BWLQ;Pn;Vn;VEA", "", "">;
+def BRForm_VECTOR_VMULHU_b_w_l_q_z_pn_p_vn_v_vn_w : BedrockISAForm<
+  "VECTOR.VMULHU.b_w_l_q_z_pn_p_vn_v_vn_w", "vmulhu", "VMULHU.{B|W|L|Q}(z) Pn(p), Vn(v), Vn(w)", "11111101111000111zz0ppppvvvvvwwwww", "extralong", "VECTOR",
+  5, 0, 0, 0, 1,
+  "z;p;v;w", "size;govern;src;dst", "SIZE_BWLQ;Pn;Vn;Vn", "", "">;
+def BRForm_VECTOR_VMULHU_b_w_l_q_z_pn_p_ea_e_vn_v : BedrockISAForm<
+  "VECTOR.VMULHU.b_w_l_q_z_pn_p_ea_e_vn_v", "vmulhu", "VMULHU.{B|W|L|Q}(z) Pn(p), <ea>(e), Vn(v)", "11111111000000100001zz1111ppppvvvvveeeeeee", "xxlong", "VECTOR",
+  6, 0, 1, 1, 0,
+  "z;p;v;e", "size;govern;dst;src", "SIZE_BWLQ;Pn;Vn;VEA", "", "">;
+def BRForm_VECTOR_VMULHU_b_w_l_q_z_pn_p_vn_v_ea_e : BedrockISAForm<
+  "VECTOR.VMULHU.b_w_l_q_z_pn_p_vn_v_ea_e", "vmulhu", "VMULHU.{B|W|L|Q}(z) Pn(p), Vn(v), <ea>(e)", "11111111000000100010zz0000ppppvvvvveeeeeee", "xxlong", "VECTOR",
+  6, 0, 1, 1, 0,
+  "z;p;v;e", "size;govern;src;dst", "SIZE_BWLQ;Pn;Vn;VEA", "", "">;
+def BRForm_VECTOR_VMULHSU_b_w_l_q_z_pn_p_vn_v_vn_w : BedrockISAForm<
+  "VECTOR.VMULHSU.b_w_l_q_z_pn_p_vn_v_vn_w", "vmulhsu", "VMULHSU.{B|W|L|Q}(z) Pn(p), Vn(v), Vn(w)", "11111101111000111zz1ppppvvvvvwwwww", "extralong", "VECTOR",
+  5, 0, 0, 0, 1,
+  "z;p;v;w", "size;govern;src;dst", "SIZE_BWLQ;Pn;Vn;Vn", "", "">;
+def BRForm_VECTOR_VMULHSU_b_w_l_q_z_pn_p_ea_e_vn_v : BedrockISAForm<
+  "VECTOR.VMULHSU.b_w_l_q_z_pn_p_ea_e_vn_v", "vmulhsu", "VMULHSU.{B|W|L|Q}(z) Pn(p), <ea>(e), Vn(v)", "11111111000000100010zz0001ppppvvvvveeeeeee", "xxlong", "VECTOR",
+  6, 0, 1, 1, 0,
+  "z;p;v;e", "size;govern;dst;src", "SIZE_BWLQ;Pn;Vn;VEA", "", "">;
+def BRForm_VECTOR_VMULHSU_b_w_l_q_z_pn_p_vn_v_ea_e : BedrockISAForm<
+  "VECTOR.VMULHSU.b_w_l_q_z_pn_p_vn_v_ea_e", "vmulhsu", "VMULHSU.{B|W|L|Q}(z) Pn(p), Vn(v), <ea>(e)", "11111111000000100010zz0010ppppvvvvveeeeeee", "xxlong", "VECTOR",
+  6, 0, 1, 1, 0,
+  "z;p;v;e", "size;govern;src;dst", "SIZE_BWLQ;Pn;Vn;VEA", "", "">;
+def BRForm_VECTOR_VSHL_b_w_l_q_z_pn_p_vn_v_vn_w : BedrockISAForm<
+  "VECTOR.VSHL.b_w_l_q_z_pn_p_vn_v_vn_w", "vshl", "VSHL.{B|W|L|Q}(z) Pn(p), Vn(v), Vn(w)", "11111101111001000zz0ppppvvvvvwwwww", "extralong", "VECTOR",
+  5, 0, 0, 0, 1,
+  "z;p;v;w", "size;govern;src;dst", "SIZE_BWLQ;Pn;Vn;Vn", "", "">;
+def BRForm_VECTOR_VSHL_b_w_l_q_z_pn_p_imm6_i_vn_v : BedrockISAForm<
+  "VECTOR.VSHL.b_w_l_q_z_pn_p_imm6_i_vn_v", "vshl", "VSHL.{B|W|L|Q}(z) Pn(p), imm6(i), Vn(v)", "11111101111100000zzppppvvvvviiiiii", "extralong", "VECTOR",
+  5, 0, 0, 0, 1,
+  "z;p;v;i", "size;govern;dst;count", "SIZE_BWLQ;Pn;Vn;IMM6", "", "">;
+def BRForm_VECTOR_VSHL_b_w_l_q_z_pn_p_ea_e_vn_v : BedrockISAForm<
+  "VECTOR.VSHL.b_w_l_q_z_pn_p_ea_e_vn_v", "vshl", "VSHL.{B|W|L|Q}(z) Pn(p), <ea>(e), Vn(v)", "11111111000000100010zz0011ppppvvvvveeeeeee", "xxlong", "VECTOR",
+  6, 0, 1, 1, 0,
+  "z;p;v;e", "size;govern;dst;src", "SIZE_BWLQ;Pn;Vn;VEA", "", "">;
+def BRForm_VECTOR_VSHL_b_w_l_q_z_pn_p_vn_v_ea_e : BedrockISAForm<
+  "VECTOR.VSHL.b_w_l_q_z_pn_p_vn_v_ea_e", "vshl", "VSHL.{B|W|L|Q}(z) Pn(p), Vn(v), <ea>(e)", "11111111000000100010zz0100ppppvvvvveeeeeee", "xxlong", "VECTOR",
+  6, 0, 1, 1, 0,
+  "z;p;v;e", "size;govern;src;dst", "SIZE_BWLQ;Pn;Vn;VEA", "", "">;
+def BRForm_VECTOR_VSHL_b_w_l_q_z_pn_p_imm6_i_ea_e : BedrockISAForm<
+  "VECTOR.VSHL.b_w_l_q_z_pn_p_imm6_i_ea_e", "vshl", "VSHL.{B|W|L|Q}(z) Pn(p), imm6(i), <ea>(e)", "11111111000000101100zz000ppppiiiiiieeeeeee", "xxlong", "VECTOR",
+  6, 0, 1, 1, 0,
+  "z;p;i;e", "size;govern;count;dst", "SIZE_BWLQ;Pn;IMM6;VEA", "", "">;
+def BRForm_VECTOR_VSHR_b_w_l_q_z_pn_p_vn_v_vn_w : BedrockISAForm<
+  "VECTOR.VSHR.b_w_l_q_z_pn_p_vn_v_vn_w", "vshr", "VSHR.{B|W|L|Q}(z) Pn(p), Vn(v), Vn(w)", "11111101111001000zz1ppppvvvvvwwwww", "extralong", "VECTOR",
+  5, 0, 0, 0, 1,
+  "z;p;v;w", "size;govern;src;dst", "SIZE_BWLQ;Pn;Vn;Vn", "", "">;
+def BRForm_VECTOR_VSHR_b_w_l_q_z_pn_p_imm6_i_vn_v : BedrockISAForm<
+  "VECTOR.VSHR.b_w_l_q_z_pn_p_imm6_i_vn_v", "vshr", "VSHR.{B|W|L|Q}(z) Pn(p), imm6(i), Vn(v)", "11111101111100001zzppppvvvvviiiiii", "extralong", "VECTOR",
+  5, 0, 0, 0, 1,
+  "z;p;v;i", "size;govern;dst;count", "SIZE_BWLQ;Pn;Vn;IMM6", "", "">;
+def BRForm_VECTOR_VSHR_b_w_l_q_z_pn_p_ea_e_vn_v : BedrockISAForm<
+  "VECTOR.VSHR.b_w_l_q_z_pn_p_ea_e_vn_v", "vshr", "VSHR.{B|W|L|Q}(z) Pn(p), <ea>(e), Vn(v)", "11111111000000100010zz0101ppppvvvvveeeeeee", "xxlong", "VECTOR",
+  6, 0, 1, 1, 0,
+  "z;p;v;e", "size;govern;dst;src", "SIZE_BWLQ;Pn;Vn;VEA", "", "">;
+def BRForm_VECTOR_VSHR_b_w_l_q_z_pn_p_vn_v_ea_e : BedrockISAForm<
+  "VECTOR.VSHR.b_w_l_q_z_pn_p_vn_v_ea_e", "vshr", "VSHR.{B|W|L|Q}(z) Pn(p), Vn(v), <ea>(e)", "11111111000000100010zz0110ppppvvvvveeeeeee", "xxlong", "VECTOR",
+  6, 0, 1, 1, 0,
+  "z;p;v;e", "size;govern;src;dst", "SIZE_BWLQ;Pn;Vn;VEA", "", "">;
+def BRForm_VECTOR_VSHR_b_w_l_q_z_pn_p_imm6_i_ea_e : BedrockISAForm<
+  "VECTOR.VSHR.b_w_l_q_z_pn_p_imm6_i_ea_e", "vshr", "VSHR.{B|W|L|Q}(z) Pn(p), imm6(i), <ea>(e)", "11111111000000101100zz001ppppiiiiiieeeeeee", "xxlong", "VECTOR",
+  6, 0, 1, 1, 0,
+  "z;p;i;e", "size;govern;count;dst", "SIZE_BWLQ;Pn;IMM6;VEA", "", "">;
+def BRForm_VECTOR_VSAR_b_w_l_q_z_pn_p_vn_v_vn_w : BedrockISAForm<
+  "VECTOR.VSAR.b_w_l_q_z_pn_p_vn_v_vn_w", "vsar", "VSAR.{B|W|L|Q}(z) Pn(p), Vn(v), Vn(w)", "11111101111001001zz0ppppvvvvvwwwww", "extralong", "VECTOR",
+  5, 0, 0, 0, 1,
+  "z;p;v;w", "size;govern;src;dst", "SIZE_BWLQ;Pn;Vn;Vn", "", "">;
+def BRForm_VECTOR_VSAR_b_w_l_q_z_pn_p_imm6_i_vn_v : BedrockISAForm<
+  "VECTOR.VSAR.b_w_l_q_z_pn_p_imm6_i_vn_v", "vsar", "VSAR.{B|W|L|Q}(z) Pn(p), imm6(i), Vn(v)", "11111101111100010zzppppvvvvviiiiii", "extralong", "VECTOR",
+  5, 0, 0, 0, 1,
+  "z;p;v;i", "size;govern;dst;count", "SIZE_BWLQ;Pn;Vn;IMM6", "", "">;
+def BRForm_VECTOR_VSAR_b_w_l_q_z_pn_p_ea_e_vn_v : BedrockISAForm<
+  "VECTOR.VSAR.b_w_l_q_z_pn_p_ea_e_vn_v", "vsar", "VSAR.{B|W|L|Q}(z) Pn(p), <ea>(e), Vn(v)", "11111111000000100010zz0111ppppvvvvveeeeeee", "xxlong", "VECTOR",
+  6, 0, 1, 1, 0,
+  "z;p;v;e", "size;govern;dst;src", "SIZE_BWLQ;Pn;Vn;VEA", "", "">;
+def BRForm_VECTOR_VSAR_b_w_l_q_z_pn_p_vn_v_ea_e : BedrockISAForm<
+  "VECTOR.VSAR.b_w_l_q_z_pn_p_vn_v_ea_e", "vsar", "VSAR.{B|W|L|Q}(z) Pn(p), Vn(v), <ea>(e)", "11111111000000100010zz1000ppppvvvvveeeeeee", "xxlong", "VECTOR",
+  6, 0, 1, 1, 0,
+  "z;p;v;e", "size;govern;src;dst", "SIZE_BWLQ;Pn;Vn;VEA", "", "">;
+def BRForm_VECTOR_VSAR_b_w_l_q_z_pn_p_imm6_i_ea_e : BedrockISAForm<
+  "VECTOR.VSAR.b_w_l_q_z_pn_p_imm6_i_ea_e", "vsar", "VSAR.{B|W|L|Q}(z) Pn(p), imm6(i), <ea>(e)", "11111111000000101100zz010ppppiiiiiieeeeeee", "xxlong", "VECTOR",
+  6, 0, 1, 1, 0,
+  "z;p;i;e", "size;govern;count;dst", "SIZE_BWLQ;Pn;IMM6;VEA", "", "">;
+def BRForm_VECTOR_VROL_b_w_l_q_z_pn_p_vn_v_vn_w : BedrockISAForm<
+  "VECTOR.VROL.b_w_l_q_z_pn_p_vn_v_vn_w", "vrol", "VROL.{B|W|L|Q}(z) Pn(p), Vn(v), Vn(w)", "11111101111001001zz1ppppvvvvvwwwww", "extralong", "VECTOR",
+  5, 0, 0, 0, 1,
+  "z;p;v;w", "size;govern;src;dst", "SIZE_BWLQ;Pn;Vn;Vn", "", "">;
+def BRForm_VECTOR_VROL_b_w_l_q_z_pn_p_imm6_i_vn_v : BedrockISAForm<
+  "VECTOR.VROL.b_w_l_q_z_pn_p_imm6_i_vn_v", "vrol", "VROL.{B|W|L|Q}(z) Pn(p), imm6(i), Vn(v)", "11111101111100011zzppppvvvvviiiiii", "extralong", "VECTOR",
+  5, 0, 0, 0, 1,
+  "z;p;v;i", "size;govern;dst;count", "SIZE_BWLQ;Pn;Vn;IMM6", "", "">;
+def BRForm_VECTOR_VROL_b_w_l_q_z_pn_p_ea_e_vn_v : BedrockISAForm<
+  "VECTOR.VROL.b_w_l_q_z_pn_p_ea_e_vn_v", "vrol", "VROL.{B|W|L|Q}(z) Pn(p), <ea>(e), Vn(v)", "11111111000000100010zz1001ppppvvvvveeeeeee", "xxlong", "VECTOR",
+  6, 0, 1, 1, 0,
+  "z;p;v;e", "size;govern;dst;src", "SIZE_BWLQ;Pn;Vn;VEA", "", "">;
+def BRForm_VECTOR_VROL_b_w_l_q_z_pn_p_vn_v_ea_e : BedrockISAForm<
+  "VECTOR.VROL.b_w_l_q_z_pn_p_vn_v_ea_e", "vrol", "VROL.{B|W|L|Q}(z) Pn(p), Vn(v), <ea>(e)", "11111111000000100010zz1010ppppvvvvveeeeeee", "xxlong", "VECTOR",
+  6, 0, 1, 1, 0,
+  "z;p;v;e", "size;govern;src;dst", "SIZE_BWLQ;Pn;Vn;VEA", "", "">;
+def BRForm_VECTOR_VROL_b_w_l_q_z_pn_p_imm6_i_ea_e : BedrockISAForm<
+  "VECTOR.VROL.b_w_l_q_z_pn_p_imm6_i_ea_e", "vrol", "VROL.{B|W|L|Q}(z) Pn(p), imm6(i), <ea>(e)", "11111111000000101100zz011ppppiiiiiieeeeeee", "xxlong", "VECTOR",
+  6, 0, 1, 1, 0,
+  "z;p;i;e", "size;govern;count;dst", "SIZE_BWLQ;Pn;IMM6;VEA", "", "">;
+def BRForm_VECTOR_VROR_b_w_l_q_z_pn_p_vn_v_vn_w : BedrockISAForm<
+  "VECTOR.VROR.b_w_l_q_z_pn_p_vn_v_vn_w", "vror", "VROR.{B|W|L|Q}(z) Pn(p), Vn(v), Vn(w)", "11111101111001010zz0ppppvvvvvwwwww", "extralong", "VECTOR",
+  5, 0, 0, 0, 1,
+  "z;p;v;w", "size;govern;src;dst", "SIZE_BWLQ;Pn;Vn;Vn", "", "">;
+def BRForm_VECTOR_VROR_b_w_l_q_z_pn_p_imm6_i_vn_v : BedrockISAForm<
+  "VECTOR.VROR.b_w_l_q_z_pn_p_imm6_i_vn_v", "vror", "VROR.{B|W|L|Q}(z) Pn(p), imm6(i), Vn(v)", "11111101111100100zzppppvvvvviiiiii", "extralong", "VECTOR",
+  5, 0, 0, 0, 1,
+  "z;p;v;i", "size;govern;dst;count", "SIZE_BWLQ;Pn;Vn;IMM6", "", "">;
+def BRForm_VECTOR_VROR_b_w_l_q_z_pn_p_ea_e_vn_v : BedrockISAForm<
+  "VECTOR.VROR.b_w_l_q_z_pn_p_ea_e_vn_v", "vror", "VROR.{B|W|L|Q}(z) Pn(p), <ea>(e), Vn(v)", "11111111000000100010zz1011ppppvvvvveeeeeee", "xxlong", "VECTOR",
+  6, 0, 1, 1, 0,
+  "z;p;v;e", "size;govern;dst;src", "SIZE_BWLQ;Pn;Vn;VEA", "", "">;
+def BRForm_VECTOR_VROR_b_w_l_q_z_pn_p_vn_v_ea_e : BedrockISAForm<
+  "VECTOR.VROR.b_w_l_q_z_pn_p_vn_v_ea_e", "vror", "VROR.{B|W|L|Q}(z) Pn(p), Vn(v), <ea>(e)", "11111111000000100010zz1100ppppvvvvveeeeeee", "xxlong", "VECTOR",
+  6, 0, 1, 1, 0,
+  "z;p;v;e", "size;govern;src;dst", "SIZE_BWLQ;Pn;Vn;VEA", "", "">;
+def BRForm_VECTOR_VROR_b_w_l_q_z_pn_p_imm6_i_ea_e : BedrockISAForm<
+  "VECTOR.VROR.b_w_l_q_z_pn_p_imm6_i_ea_e", "vror", "VROR.{B|W|L|Q}(z) Pn(p), imm6(i), <ea>(e)", "11111111000000101100zz100ppppiiiiiieeeeeee", "xxlong", "VECTOR",
+  6, 0, 1, 1, 0,
+  "z;p;i;e", "size;govern;count;dst", "SIZE_BWLQ;Pn;IMM6;VEA", "", "">;
+def BRForm_VECTOR_VEXTZW_b_z_pn_p_vn_v_vn_w : BedrockISAForm<
+  "VECTOR.VEXTZW.b_z_pn_p_vn_v_vn_w", "vextzw", "VEXTZW.{B}(z) Pn(p), Vn(v), Vn(w)", "11111101111001100zz1ppppvvvvvwwwww", "extralong", "VECTOR",
+  5, 0, 0, 0, 1,
+  "z;p;v;w", "size;govern;src;dst", "SIZE_B_ONLY;Pn;Vn;Vn", "", "">;
+def BRForm_VECTOR_VEXTSW_b_z_pn_p_vn_v_vn_w : BedrockISAForm<
+  "VECTOR.VEXTSW.b_z_pn_p_vn_v_vn_w", "vextsw", "VEXTSW.{B}(z) Pn(p), Vn(v), Vn(w)", "11111101111001101zz0ppppvvvvvwwwww", "extralong", "VECTOR",
+  5, 0, 0, 0, 1,
+  "z;p;v;w", "size;govern;src;dst", "SIZE_B_ONLY;Pn;Vn;Vn", "", "">;
+def BRForm_VECTOR_VEXTZL_b_w_z_pn_p_vn_v_vn_w : BedrockISAForm<
+  "VECTOR.VEXTZL.b_w_z_pn_p_vn_v_vn_w", "vextzl", "VEXTZL.{B|W}(z) Pn(p), Vn(v), Vn(w)", "11111101111001101zz1ppppvvvvvwwwww", "extralong", "VECTOR",
+  5, 0, 0, 0, 1,
+  "z;p;v;w", "size;govern;src;dst", "SIZE_V_BW;Pn;Vn;Vn", "", "">;
+def BRForm_VECTOR_VEXTSL_b_w_z_pn_p_vn_v_vn_w : BedrockISAForm<
+  "VECTOR.VEXTSL.b_w_z_pn_p_vn_v_vn_w", "vextsl", "VEXTSL.{B|W}(z) Pn(p), Vn(v), Vn(w)", "11111101111001110zz0ppppvvvvvwwwww", "extralong", "VECTOR",
+  5, 0, 0, 0, 1,
+  "z;p;v;w", "size;govern;src;dst", "SIZE_V_BW;Pn;Vn;Vn", "", "">;
+def BRForm_VECTOR_VEXTZQ_b_w_l_z_pn_p_vn_v_vn_w : BedrockISAForm<
+  "VECTOR.VEXTZQ.b_w_l_z_pn_p_vn_v_vn_w", "vextzq", "VEXTZQ.{B|W|L}(z) Pn(p), Vn(v), Vn(w)", "11111101111001110zz1ppppvvvvvwwwww", "extralong", "VECTOR",
+  5, 0, 0, 0, 1,
+  "z;p;v;w", "size;govern;src;dst", "SIZE_BWL;Pn;Vn;Vn", "", "">;
+def BRForm_VECTOR_VEXTSQ_b_w_l_z_pn_p_vn_v_vn_w : BedrockISAForm<
+  "VECTOR.VEXTSQ.b_w_l_z_pn_p_vn_v_vn_w", "vextsq", "VEXTSQ.{B|W|L}(z) Pn(p), Vn(v), Vn(w)", "11111101111001111zz0ppppvvvvvwwwww", "extralong", "VECTOR",
+  5, 0, 0, 0, 1,
+  "z;p;v;w", "size;govern;src;dst", "SIZE_BWL;Pn;Vn;Vn", "", "">;
+def BRForm_VECTOR_VTRUNCB_w_l_q_z_pn_p_vn_v_vn_w : BedrockISAForm<
+  "VECTOR.VTRUNCB.w_l_q_z_pn_p_vn_v_vn_w", "vtruncb", "VTRUNCB.{W|L|Q}(z) Pn(p), Vn(v), Vn(w)", "11111101111001111zz1ppppvvvvvwwwww", "extralong", "VECTOR",
+  5, 0, 0, 0, 1,
+  "z;p;v;w", "size;govern;src;dst", "SIZE_WLQ;Pn;Vn;Vn", "", "">;
+def BRForm_VECTOR_VTRUNCW_l_q_z_pn_p_vn_v_vn_w : BedrockISAForm<
+  "VECTOR.VTRUNCW.l_q_z_pn_p_vn_v_vn_w", "vtruncw", "VTRUNCW.{L|Q}(z) Pn(p), Vn(v), Vn(w)", "11111101111010000zz0ppppvvvvvwwwww", "extralong", "VECTOR",
+  5, 0, 0, 0, 1,
+  "z;p;v;w", "size;govern;src;dst", "SIZE_V_LQ;Pn;Vn;Vn", "", "">;
+def BRForm_VECTOR_VTRUNCL_q_z_pn_p_vn_v_vn_w : BedrockISAForm<
+  "VECTOR.VTRUNCL.q_z_pn_p_vn_v_vn_w", "vtruncl", "VTRUNCL.{Q}(z) Pn(p), Vn(v), Vn(w)", "11111101111010000zz1ppppvvvvvwwwww", "extralong", "VECTOR",
+  5, 0, 0, 0, 1,
+  "z;p;v;w", "size;govern;src;dst", "SIZE_Q_ONLY;Pn;Vn;Vn", "", "">;
+def BRForm_VECTOR_VPERM_b_w_l_q_z_pn_p_vn_v_vn_w : BedrockISAForm<
+  "VECTOR.VPERM.b_w_l_q_z_pn_p_vn_v_vn_w", "vperm", "VPERM.{B|W|L|Q}(z) Pn(p), Vn(v), Vn(w)", "11111101111010110zz1ppppvvvvvwwwww", "extralong", "VECTOR",
+  5, 0, 0, 0, 1,
+  "z;p;v;w", "size;govern;src;dst", "SIZE_BWLQ;Pn;Vn;Vn", "", "">;
+def BRForm_VECTOR_VZIPLO_b_w_l_q_z_pn_p_vn_v_vn_w : BedrockISAForm<
+  "VECTOR.VZIPLO.b_w_l_q_z_pn_p_vn_v_vn_w", "vziplo", "VZIPLO.{B|W|L|Q}(z) Pn(p), Vn(v), Vn(w)", "11111101111010111zz0ppppvvvvvwwwww", "extralong", "VECTOR",
+  5, 0, 0, 0, 1,
+  "z;p;v;w", "size;govern;src;dst", "SIZE_BWLQ;Pn;Vn;Vn", "", "">;
+def BRForm_VECTOR_VZIPHI_b_w_l_q_z_pn_p_vn_v_vn_w : BedrockISAForm<
+  "VECTOR.VZIPHI.b_w_l_q_z_pn_p_vn_v_vn_w", "vziphi", "VZIPHI.{B|W|L|Q}(z) Pn(p), Vn(v), Vn(w)", "11111101111010111zz1ppppvvvvvwwwww", "extralong", "VECTOR",
+  5, 0, 0, 0, 1,
+  "z;p;v;w", "size;govern;src;dst", "SIZE_BWLQ;Pn;Vn;Vn", "", "">;
+def BRForm_VECTOR_VUZIPLO_b_w_l_q_z_pn_p_vn_v_vn_w : BedrockISAForm<
+  "VECTOR.VUZIPLO.b_w_l_q_z_pn_p_vn_v_vn_w", "vuziplo", "VUZIPLO.{B|W|L|Q}(z) Pn(p), Vn(v), Vn(w)", "11111101111011000zz0ppppvvvvvwwwww", "extralong", "VECTOR",
+  5, 0, 0, 0, 1,
+  "z;p;v;w", "size;govern;src;dst", "SIZE_BWLQ;Pn;Vn;Vn", "", "">;
+def BRForm_VECTOR_VUZIPHI_b_w_l_q_z_pn_p_vn_v_vn_w : BedrockISAForm<
+  "VECTOR.VUZIPHI.b_w_l_q_z_pn_p_vn_v_vn_w", "vuziphi", "VUZIPHI.{B|W|L|Q}(z) Pn(p), Vn(v), Vn(w)", "11111101111011000zz1ppppvvvvvwwwww", "extralong", "VECTOR",
+  5, 0, 0, 0, 1,
+  "z;p;v;w", "size;govern;src;dst", "SIZE_BWLQ;Pn;Vn;Vn", "", "">;
+def BRForm_VECTOR_VTRNLO_b_w_l_q_z_pn_p_vn_v_vn_w : BedrockISAForm<
+  "VECTOR.VTRNLO.b_w_l_q_z_pn_p_vn_v_vn_w", "vtrnlo", "VTRNLO.{B|W|L|Q}(z) Pn(p), Vn(v), Vn(w)", "11111101111011001zz0ppppvvvvvwwwww", "extralong", "VECTOR",
+  5, 0, 0, 0, 1,
+  "z;p;v;w", "size;govern;src;dst", "SIZE_BWLQ;Pn;Vn;Vn", "", "">;
+def BRForm_VECTOR_VTRNHI_b_w_l_q_z_pn_p_vn_v_vn_w : BedrockISAForm<
+  "VECTOR.VTRNHI.b_w_l_q_z_pn_p_vn_v_vn_w", "vtrnhi", "VTRNHI.{B|W|L|Q}(z) Pn(p), Vn(v), Vn(w)", "11111101111011001zz1ppppvvvvvwwwww", "extralong", "VECTOR",
+  5, 0, 0, 0, 1,
+  "z;p;v;w", "size;govern;src;dst", "SIZE_BWLQ;Pn;Vn;Vn", "", "">;
+def BRForm_VECTOR_VSLICE_b_w_l_q_z_pn_p_vn_v_imm6_i_vn_w : BedrockISAForm<
+  "VECTOR.VSLICE.b_w_l_q_z_pn_p_vn_v_imm6_i_vn_w", "vslice", "VSLICE.{B|W|L|Q}(z) Pn(p), Vn(v), imm6(i), Vn(w)", "111111011010zzppppvvvvvwwwwwiiiiii", "extralong", "VECTOR",
+  5, 0, 0, 0, 1,
+  "z;p;v;w;i", "size;govern;src;dst;count", "SIZE_BWLQ;Pn;Vn;Vn;IMM6", "", "">;
+def BRForm_VECTOR_VSLIDEUP_b_w_l_q_z_pn_p_imm6_i_vn_v : BedrockISAForm<
+  "VECTOR.VSLIDEUP.b_w_l_q_z_pn_p_imm6_i_vn_v", "vslideup", "VSLIDEUP.{B|W|L|Q}(z) Pn(p), imm6(i), Vn(v)", "11111101111100101zzppppvvvvviiiiii", "extralong", "VECTOR",
+  5, 0, 0, 0, 1,
+  "z;p;v;i", "size;govern;dst;count", "SIZE_BWLQ;Pn;Vn;IMM6", "", "">;
+def BRForm_VECTOR_VSLIDEDN_b_w_l_q_z_pn_p_imm6_i_vn_v : BedrockISAForm<
+  "VECTOR.VSLIDEDN.b_w_l_q_z_pn_p_imm6_i_vn_v", "vslidedn", "VSLIDEDN.{B|W|L|Q}(z) Pn(p), imm6(i), Vn(v)", "11111101111100110zzppppvvvvviiiiii", "extralong", "VECTOR",
+  5, 0, 0, 0, 1,
+  "z;p;v;i", "size;govern;dst;count", "SIZE_BWLQ;Pn;Vn;IMM6", "", "">;
+def BRForm_VECTOR_VEXTRACT_b_w_l_q_z_vn_v_rn_r_rn_s : BedrockISAForm<
+  "VECTOR.VEXTRACT.b_w_l_q_z_vn_v_rn_r_rn_s", "vextract", "VEXTRACT.{B|W|L|Q}(z) Vn(v), Rn(r), Rn(s)", "11111101111110000zz00rrrrssssvvvvv", "extralong", "VECTOR",
+  5, 0, 0, 0, 1,
+  "z;r;s;v", "size;index;dst;src", "SIZE_BWLQ;Rn;Rn;Vn", "", "">;
+def BRForm_VECTOR_VINSERT_b_w_l_q_z_rn_r_rn_s_vn_v : BedrockISAForm<
+  "VECTOR.VINSERT.b_w_l_q_z_rn_r_rn_s_vn_v", "vinsert", "VINSERT.{B|W|L|Q}(z) Rn(r), Rn(s), Vn(v)", "11111101111110000zz01rrrrssssvvvvv", "extralong", "VECTOR",
+  5, 0, 0, 0, 1,
+  "z;r;s;v", "size;src;index;dst", "SIZE_BWLQ;Rn;Rn;Vn", "", "">;
+def BRForm_VECTOR_VREDADD_b_w_l_q_z_pn_p_vn_v_rn_r : BedrockISAForm<
+  "VECTOR.VREDADD.b_w_l_q_z_pn_p_vn_v_rn_r", "vredadd", "VREDADD.{B|W|L|Q}(z) Pn(p), Vn(v), Rn(r)", "11111101111110100zz00pppprrrrvvvvv", "extralong", "VECTOR",
+  5, 0, 0, 0, 1,
+  "z;p;r;v", "size;govern;dst;src", "SIZE_BWLQ;Pn;Rn;Vn", "", "">;
+def BRForm_VECTOR_VREDADD_b_w_l_q_z_pn_p_ea_e_rn_r : BedrockISAForm<
+  "VECTOR.VREDADD.b_w_l_q_z_pn_p_ea_e_rn_r", "vredadd", "VREDADD.{B|W|L|Q}(z) Pn(p), <ea>(e), Rn(r)", "11111111000000101110zz00000pppprrrreeeeeee", "xxlong", "VECTOR",
+  6, 0, 1, 1, 0,
+  "z;p;r;e", "size;govern;dst;src", "SIZE_BWLQ;Pn;Rn;VEA", "", "">;
+def BRForm_VECTOR_VREDMINS_b_w_l_q_z_pn_p_vn_v_rn_r : BedrockISAForm<
+  "VECTOR.VREDMINS.b_w_l_q_z_pn_p_vn_v_rn_r", "vredmins", "VREDMINS.{B|W|L|Q}(z) Pn(p), Vn(v), Rn(r)", "11111101111110100zz01pppprrrrvvvvv", "extralong", "VECTOR",
+  5, 0, 0, 0, 1,
+  "z;p;r;v", "size;govern;dst;src", "SIZE_BWLQ;Pn;Rn;Vn", "", "">;
+def BRForm_VECTOR_VREDMINS_b_w_l_q_z_pn_p_ea_e_rn_r : BedrockISAForm<
+  "VECTOR.VREDMINS.b_w_l_q_z_pn_p_ea_e_rn_r", "vredmins", "VREDMINS.{B|W|L|Q}(z) Pn(p), <ea>(e), Rn(r)", "11111111000000101110zz00001pppprrrreeeeeee", "xxlong", "VECTOR",
+  6, 0, 1, 1, 0,
+  "z;p;r;e", "size;govern;dst;src", "SIZE_BWLQ;Pn;Rn;VEA", "", "">;
+def BRForm_VECTOR_VREDMINU_b_w_l_q_z_pn_p_vn_v_rn_r : BedrockISAForm<
+  "VECTOR.VREDMINU.b_w_l_q_z_pn_p_vn_v_rn_r", "vredminu", "VREDMINU.{B|W|L|Q}(z) Pn(p), Vn(v), Rn(r)", "11111101111110100zz10pppprrrrvvvvv", "extralong", "VECTOR",
+  5, 0, 0, 0, 1,
+  "z;p;r;v", "size;govern;dst;src", "SIZE_BWLQ;Pn;Rn;Vn", "", "">;
+def BRForm_VECTOR_VREDMINU_b_w_l_q_z_pn_p_ea_e_rn_r : BedrockISAForm<
+  "VECTOR.VREDMINU.b_w_l_q_z_pn_p_ea_e_rn_r", "vredminu", "VREDMINU.{B|W|L|Q}(z) Pn(p), <ea>(e), Rn(r)", "11111111000000101110zz00010pppprrrreeeeeee", "xxlong", "VECTOR",
+  6, 0, 1, 1, 0,
+  "z;p;r;e", "size;govern;dst;src", "SIZE_BWLQ;Pn;Rn;VEA", "", "">;
+def BRForm_VECTOR_VREDMAXS_b_w_l_q_z_pn_p_vn_v_rn_r : BedrockISAForm<
+  "VECTOR.VREDMAXS.b_w_l_q_z_pn_p_vn_v_rn_r", "vredmaxs", "VREDMAXS.{B|W|L|Q}(z) Pn(p), Vn(v), Rn(r)", "11111101111110100zz11pppprrrrvvvvv", "extralong", "VECTOR",
+  5, 0, 0, 0, 1,
+  "z;p;r;v", "size;govern;dst;src", "SIZE_BWLQ;Pn;Rn;Vn", "", "">;
+def BRForm_VECTOR_VREDMAXS_b_w_l_q_z_pn_p_ea_e_rn_r : BedrockISAForm<
+  "VECTOR.VREDMAXS.b_w_l_q_z_pn_p_ea_e_rn_r", "vredmaxs", "VREDMAXS.{B|W|L|Q}(z) Pn(p), <ea>(e), Rn(r)", "11111111000000101110zz00011pppprrrreeeeeee", "xxlong", "VECTOR",
+  6, 0, 1, 1, 0,
+  "z;p;r;e", "size;govern;dst;src", "SIZE_BWLQ;Pn;Rn;VEA", "", "">;
+def BRForm_VECTOR_VREDMAXU_b_w_l_q_z_pn_p_vn_v_rn_r : BedrockISAForm<
+  "VECTOR.VREDMAXU.b_w_l_q_z_pn_p_vn_v_rn_r", "vredmaxu", "VREDMAXU.{B|W|L|Q}(z) Pn(p), Vn(v), Rn(r)", "11111101111110101zz00pppprrrrvvvvv", "extralong", "VECTOR",
+  5, 0, 0, 0, 1,
+  "z;p;r;v", "size;govern;dst;src", "SIZE_BWLQ;Pn;Rn;Vn", "", "">;
+def BRForm_VECTOR_VREDMAXU_b_w_l_q_z_pn_p_ea_e_rn_r : BedrockISAForm<
+  "VECTOR.VREDMAXU.b_w_l_q_z_pn_p_ea_e_rn_r", "vredmaxu", "VREDMAXU.{B|W|L|Q}(z) Pn(p), <ea>(e), Rn(r)", "11111111000000101110zz00100pppprrrreeeeeee", "xxlong", "VECTOR",
+  6, 0, 1, 1, 0,
+  "z;p;r;e", "size;govern;dst;src", "SIZE_BWLQ;Pn;Rn;VEA", "", "">;
+def BRForm_VECTOR_VREDAND_b_w_l_q_z_pn_p_vn_v_rn_r : BedrockISAForm<
+  "VECTOR.VREDAND.b_w_l_q_z_pn_p_vn_v_rn_r", "vredand", "VREDAND.{B|W|L|Q}(z) Pn(p), Vn(v), Rn(r)", "11111101111110101zz01pppprrrrvvvvv", "extralong", "VECTOR",
+  5, 0, 0, 0, 1,
+  "z;p;r;v", "size;govern;dst;src", "SIZE_BWLQ;Pn;Rn;Vn", "", "">;
+def BRForm_VECTOR_VREDAND_b_w_l_q_z_pn_p_ea_e_rn_r : BedrockISAForm<
+  "VECTOR.VREDAND.b_w_l_q_z_pn_p_ea_e_rn_r", "vredand", "VREDAND.{B|W|L|Q}(z) Pn(p), <ea>(e), Rn(r)", "11111111000000101110zz00101pppprrrreeeeeee", "xxlong", "VECTOR",
+  6, 0, 1, 1, 0,
+  "z;p;r;e", "size;govern;dst;src", "SIZE_BWLQ;Pn;Rn;VEA", "", "">;
+def BRForm_VECTOR_VREDOR_b_w_l_q_z_pn_p_vn_v_rn_r : BedrockISAForm<
+  "VECTOR.VREDOR.b_w_l_q_z_pn_p_vn_v_rn_r", "vredor", "VREDOR.{B|W|L|Q}(z) Pn(p), Vn(v), Rn(r)", "11111101111110101zz10pppprrrrvvvvv", "extralong", "VECTOR",
+  5, 0, 0, 0, 1,
+  "z;p;r;v", "size;govern;dst;src", "SIZE_BWLQ;Pn;Rn;Vn", "", "">;
+def BRForm_VECTOR_VREDOR_b_w_l_q_z_pn_p_ea_e_rn_r : BedrockISAForm<
+  "VECTOR.VREDOR.b_w_l_q_z_pn_p_ea_e_rn_r", "vredor", "VREDOR.{B|W|L|Q}(z) Pn(p), <ea>(e), Rn(r)", "11111111000000101110zz00110pppprrrreeeeeee", "xxlong", "VECTOR",
+  6, 0, 1, 1, 0,
+  "z;p;r;e", "size;govern;dst;src", "SIZE_BWLQ;Pn;Rn;VEA", "", "">;
+def BRForm_VECTOR_VREDXOR_b_w_l_q_z_pn_p_vn_v_rn_r : BedrockISAForm<
+  "VECTOR.VREDXOR.b_w_l_q_z_pn_p_vn_v_rn_r", "vredxor", "VREDXOR.{B|W|L|Q}(z) Pn(p), Vn(v), Rn(r)", "11111101111110101zz11pppprrrrvvvvv", "extralong", "VECTOR",
+  5, 0, 0, 0, 1,
+  "z;p;r;v", "size;govern;dst;src", "SIZE_BWLQ;Pn;Rn;Vn", "", "">;
+def BRForm_VECTOR_VREDXOR_b_w_l_q_z_pn_p_ea_e_rn_r : BedrockISAForm<
+  "VECTOR.VREDXOR.b_w_l_q_z_pn_p_ea_e_rn_r", "vredxor", "VREDXOR.{B|W|L|Q}(z) Pn(p), <ea>(e), Rn(r)", "11111111000000101110zz00111pppprrrreeeeeee", "xxlong", "VECTOR",
+  6, 0, 1, 1, 0,
+  "z;p;r;e", "size;govern;dst;src", "SIZE_BWLQ;Pn;Rn;VEA", "", "">;
+def BRForm_VECTOR_PSEL_pn_p_pn_q_pn_h : BedrockISAForm<
+  "VECTOR.PSEL.pn_p_pn_q_pn_h", "psel", "PSEL Pn(p), Pn(q), Pn(h)", "1111110111111100000000ppppqqqqhhhh", "extralong", "VECTOR",
+  5, 0, 0, 0, 1,
+  "p;q;h", "select;src;dst", "Pn;Pn;Pn", "", "">;
+def BRForm_VECTOR_PZIPLO_b_w_l_q_z_pn_p_pn_q_pn_h : BedrockISAForm<
+  "VECTOR.PZIPLO.b_w_l_q_z_pn_p_pn_q_pn_h", "pziplo", "PZIPLO.{B|W|L|Q}(z) Pn(p), Pn(q), Pn(h)", "11111101111111000zz001ppppqqqqhhhh", "extralong", "VECTOR",
+  5, 0, 0, 0, 1,
+  "z;p;q;h", "size;lhs;rhs;dst", "SIZE_BWLQ;Pn;Pn;Pn", "", "">;
+def BRForm_VECTOR_PZIPHI_b_w_l_q_z_pn_p_pn_q_pn_h : BedrockISAForm<
+  "VECTOR.PZIPHI.b_w_l_q_z_pn_p_pn_q_pn_h", "pziphi", "PZIPHI.{B|W|L|Q}(z) Pn(p), Pn(q), Pn(h)", "11111101111111000zz010ppppqqqqhhhh", "extralong", "VECTOR",
+  5, 0, 0, 0, 1,
+  "z;p;q;h", "size;lhs;rhs;dst", "SIZE_BWLQ;Pn;Pn;Pn", "", "">;
+def BRForm_VECTOR_PUZIPLO_b_w_l_q_z_pn_p_pn_q_pn_h : BedrockISAForm<
+  "VECTOR.PUZIPLO.b_w_l_q_z_pn_p_pn_q_pn_h", "puziplo", "PUZIPLO.{B|W|L|Q}(z) Pn(p), Pn(q), Pn(h)", "11111101111111000zz011ppppqqqqhhhh", "extralong", "VECTOR",
+  5, 0, 0, 0, 1,
+  "z;p;q;h", "size;lhs;rhs;dst", "SIZE_BWLQ;Pn;Pn;Pn", "", "">;
+def BRForm_VECTOR_PUZIPHI_b_w_l_q_z_pn_p_pn_q_pn_h : BedrockISAForm<
+  "VECTOR.PUZIPHI.b_w_l_q_z_pn_p_pn_q_pn_h", "puziphi", "PUZIPHI.{B|W|L|Q}(z) Pn(p), Pn(q), Pn(h)", "11111101111111000zz100ppppqqqqhhhh", "extralong", "VECTOR",
+  5, 0, 0, 0, 1,
+  "z;p;q;h", "size;lhs;rhs;dst", "SIZE_BWLQ;Pn;Pn;Pn", "", "">;
+def BRForm_VECTOR_PTRNLO_b_w_l_q_z_pn_p_pn_q_pn_h : BedrockISAForm<
+  "VECTOR.PTRNLO.b_w_l_q_z_pn_p_pn_q_pn_h", "ptrnlo", "PTRNLO.{B|W|L|Q}(z) Pn(p), Pn(q), Pn(h)", "11111101111111000zz101ppppqqqqhhhh", "extralong", "VECTOR",
+  5, 0, 0, 0, 1,
+  "z;p;q;h", "size;lhs;rhs;dst", "SIZE_BWLQ;Pn;Pn;Pn", "", "">;
+def BRForm_VECTOR_PTRNHI_b_w_l_q_z_pn_p_pn_q_pn_h : BedrockISAForm<
+  "VECTOR.PTRNHI.b_w_l_q_z_pn_p_pn_q_pn_h", "ptrnhi", "PTRNHI.{B|W|L|Q}(z) Pn(p), Pn(q), Pn(h)", "11111101111111000zz110ppppqqqqhhhh", "extralong", "VECTOR",
+  5, 0, 0, 0, 1,
+  "z;p;q;h", "size;lhs;rhs;dst", "SIZE_BWLQ;Pn;Pn;Pn", "", "">;
+def BRForm_VECTOR_PSLICE_b_w_l_q_z_pn_p_imm6_i_pn_q : BedrockISAForm<
+  "VECTOR.PSLICE.b_w_l_q_z_pn_p_imm6_i_pn_q", "pslice", "PSLICE.{B|W|L|Q}(z) Pn(p), imm6(i), Pn(q)", "111111011111111000zzppppqqqqiiiiii", "extralong", "VECTOR",
+  5, 0, 0, 0, 1,
+  "z;p;q;i", "size;src;dst;count", "SIZE_BWLQ;Pn;Pn;IMM6", "", "">;
+def BRForm_VECTOR_VMOVZ_b_w_l_q_z_pn_p_ea_e_vn_v : BedrockISAForm<
+  "VECTOR.VMOVZ.b_w_l_q_z_pn_p_ea_e_vn_v", "vmovz", "VMOVZ.{B|W|L|Q}(z) Pn(p), <ea>(e), Vn(v)", "11111111000000100000zz0010ppppvvvvveeeeeee", "xxlong", "VECTOR",
+  6, 0, 1, 1, 0,
+  "z;p;v;e", "size;govern;dst;src", "SIZE_BWLQ;Pn;Vn;VEA", "", "">;
+def BRForm_VECTOR_PLOOP_b_w_l_q_z_rn_r_rn_s_pn_p_ea_e : BedrockISAForm<
+  "VECTOR.PLOOP.b_w_l_q_z_rn_r_rn_s_pn_p_ea_e", "ploop", "PLOOP.{B|W|L|Q}(z) Rn(r), Rn(s), Pn(p), <ea>(e)", "11111111000000101010zz0rrrrssssppppeeeeeee", "xxlong", "VECTOR",
+  6, 0, 1, 1, 0,
+  "z;r;s;p;e", "size;remaining;offset;predicate;target", "SIZE_BWLQ;Rn;Rn;Pn;EA", "", "">;
+def BRForm_VECTOR_PMOV_ea_e_pn_p : BedrockISAForm<
+  "VECTOR.PMOV.ea_e_pn_p", "pmov", "PMOV <ea>(e), Pn(p)", "1111111100000011000000000000000ppppeeeeeee", "xxlong", "VECTOR",
+  6, 0, 1, 1, 0,
+  "p;e", "dst;src", "Pn;EA", "", "">;
+def BRForm_VECTOR_PMOV_pn_p_ea_e : BedrockISAForm<
+  "VECTOR.PMOV.pn_p_ea_e", "pmov", "PMOV Pn(p), <ea>(e)", "1111111100000011000000000000001ppppeeeeeee", "xxlong", "VECTOR",
+  6, 0, 1, 1, 0,
+  "p;e", "src;dst", "Pn;EA", "", "">;
+def BRForm_VECTORFP_VFDUP_h_s_d_z_fn_r_vn_v : BedrockISAForm<
+  "VECTORFP.VFDUP.h_s_d_z_fn_r_vn_v", "vfdup", "VFDUP.{H|S|D}(z) Fn(r), Vn(v)", "11111010010010zz1rrrrvvvvv", "long", "VECTORFP",
   4, 0, 0, 0, 1,
-  "z;p;v", "size;govern;dst", "VECTOR.field_types.SIZE_HSD;VECTOR.field_types.Pn;VECTOR.field_types.Vn", "", "">;
-def BRForm_VECTOR_instructions_VFLOOR_h_s_d_z_pn_p_ea_e_vn_v : BedrockISAForm<
-  "VECTOR.instructions.VFLOOR.h_s_d_z_pn_p_ea_e_vn_v", "vfloor", "VFLOOR.{H|S|D}(z) Pn(p), <ea>(e), Vn(v)", "11111111000000100100zz1101ppppvvvvveeeeeee", "xxlong", "VECTOR",
-  6, 0, 1, 1, 0,
-  "z;p;v;e", "size;govern;dst;src", "VECTOR.field_types.SIZE_HSD;VECTOR.field_types.Pn;VECTOR.field_types.Vn;VECTOR.field_types.VEA", "", "">;
-def BRForm_VECTOR_instructions_VFLOOR_h_s_d_z_pn_p_vn_v_ea_e : BedrockISAForm<
-  "VECTOR.instructions.VFLOOR.h_s_d_z_pn_p_vn_v_ea_e", "vfloor", "VFLOOR.{H|S|D}(z) Pn(p), Vn(v), <ea>(e)", "11111111000000100100zz1110ppppvvvvveeeeeee", "xxlong", "VECTOR",
-  6, 0, 1, 1, 0,
-  "z;p;v;e", "size;govern;src;dst", "VECTOR.field_types.SIZE_HSD;VECTOR.field_types.Pn;VECTOR.field_types.Vn;VECTOR.field_types.VEA", "", "">;
-def BRForm_VECTOR_instructions_VCEIL_h_s_d_z_pn_p_vn_v : BedrockISAForm<
-  "VECTOR.instructions.VCEIL.h_s_d_z_pn_p_vn_v", "vceil", "VCEIL.{H|S|D}(z) Pn(p), Vn(v)", "11111010000111zz1ppppvvvvv", "long", "VECTOR",
+  "z;r;v", "size;src;dst", "SIZE_HSD;Fn;Vn", "", "">;
+def BRForm_VECTORFP_VFNEG_h_s_d_x_pn_p_vn_v : BedrockISAForm<
+  "VECTORFP.VFNEG.h_s_d_x_pn_p_vn_v", "vfneg", "VFNEG.{H|S|D}(x) Pn(p), Vn(v)", "1111101000000xxx0ppppvvvvv", "long", "VECTORFP",
   4, 0, 0, 0, 1,
-  "z;p;v", "size;govern;dst", "VECTOR.field_types.SIZE_HSD;VECTOR.field_types.Pn;VECTOR.field_types.Vn", "", "">;
-def BRForm_VECTOR_instructions_VCEIL_h_s_d_z_pn_p_ea_e_vn_v : BedrockISAForm<
-  "VECTOR.instructions.VCEIL.h_s_d_z_pn_p_ea_e_vn_v", "vceil", "VCEIL.{H|S|D}(z) Pn(p), <ea>(e), Vn(v)", "11111111000000100100zz1111ppppvvvvveeeeeee", "xxlong", "VECTOR",
+  "x;p;v", "size;govern;dst", "SIZE_VTYPE;Pn;Vn", "", "">;
+def BRForm_VECTORFP_VFNEG_h_s_d_x_pn_p_ea_e_vn_v : BedrockISAForm<
+  "VECTORFP.VFNEG.h_s_d_x_pn_p_ea_e_vn_v", "vfneg", "VFNEG.{H|S|D}(x) Pn(p), <ea>(e), Vn(v)", "1111111100000010010xxx0000ppppvvvvveeeeeee", "xxlong", "VECTORFP",
   6, 0, 1, 1, 0,
-  "z;p;v;e", "size;govern;dst;src", "VECTOR.field_types.SIZE_HSD;VECTOR.field_types.Pn;VECTOR.field_types.Vn;VECTOR.field_types.VEA", "", "">;
-def BRForm_VECTOR_instructions_VCEIL_h_s_d_z_pn_p_vn_v_ea_e : BedrockISAForm<
-  "VECTOR.instructions.VCEIL.h_s_d_z_pn_p_vn_v_ea_e", "vceil", "VCEIL.{H|S|D}(z) Pn(p), Vn(v), <ea>(e)", "11111111000000100101zz0100ppppvvvvveeeeeee", "xxlong", "VECTOR",
+  "x;p;v;e", "size;govern;dst;src", "SIZE_VTYPE;Pn;Vn;VEA", "", "">;
+def BRForm_VECTORFP_VFNEG_h_s_d_x_pn_p_vn_v_ea_e : BedrockISAForm<
+  "VECTORFP.VFNEG.h_s_d_x_pn_p_vn_v_ea_e", "vfneg", "VFNEG.{H|S|D}(x) Pn(p), Vn(v), <ea>(e)", "1111111100000010010xxx0001ppppvvvvveeeeeee", "xxlong", "VECTORFP",
   6, 0, 1, 1, 0,
-  "z;p;v;e", "size;govern;src;dst", "VECTOR.field_types.SIZE_HSD;VECTOR.field_types.Pn;VECTOR.field_types.Vn;VECTOR.field_types.VEA", "", "">;
-def BRForm_VECTOR_instructions_VCLASS_h_s_d_z_pn_p_vn_v : BedrockISAForm<
-  "VECTOR.instructions.VCLASS.h_s_d_z_pn_p_vn_v", "vclass", "VCLASS.{H|S|D}(z) Pn(p), Vn(v)", "11111010001000zz0ppppvvvvv", "long", "VECTOR",
+  "x;p;v;e", "size;govern;src;dst", "SIZE_VTYPE;Pn;Vn;VEA", "", "">;
+def BRForm_VECTORFP_VFABS_h_s_d_x_pn_p_vn_v : BedrockISAForm<
+  "VECTORFP.VFABS.h_s_d_x_pn_p_vn_v", "vfabs", "VFABS.{H|S|D}(x) Pn(p), Vn(v)", "1111101000000xxx1ppppvvvvv", "long", "VECTORFP",
   4, 0, 0, 0, 1,
-  "z;p;v", "size;govern;dst", "VECTOR.field_types.SIZE_HSD;VECTOR.field_types.Pn;VECTOR.field_types.Vn", "", "">;
-def BRForm_VECTOR_instructions_VCLASS_h_s_d_z_pn_p_ea_e_vn_v : BedrockISAForm<
-  "VECTOR.instructions.VCLASS.h_s_d_z_pn_p_ea_e_vn_v", "vclass", "VCLASS.{H|S|D}(z) Pn(p), <ea>(e), Vn(v)", "11111111000000100101zz0101ppppvvvvveeeeeee", "xxlong", "VECTOR",
+  "x;p;v", "size;govern;dst", "SIZE_VTYPE;Pn;Vn", "", "">;
+def BRForm_VECTORFP_VFABS_h_s_d_x_pn_p_ea_e_vn_v : BedrockISAForm<
+  "VECTORFP.VFABS.h_s_d_x_pn_p_ea_e_vn_v", "vfabs", "VFABS.{H|S|D}(x) Pn(p), <ea>(e), Vn(v)", "1111111100000010010xxx0010ppppvvvvveeeeeee", "xxlong", "VECTORFP",
   6, 0, 1, 1, 0,
-  "z;p;v;e", "size;govern;dst;src", "VECTOR.field_types.SIZE_HSD;VECTOR.field_types.Pn;VECTOR.field_types.Vn;VECTOR.field_types.VEA", "", "">;
-def BRForm_VECTOR_instructions_VCLASS_h_s_d_z_pn_p_vn_v_ea_e : BedrockISAForm<
-  "VECTOR.instructions.VCLASS.h_s_d_z_pn_p_vn_v_ea_e", "vclass", "VCLASS.{H|S|D}(z) Pn(p), Vn(v), <ea>(e)", "11111111000000100101zz0110ppppvvvvveeeeeee", "xxlong", "VECTOR",
+  "x;p;v;e", "size;govern;dst;src", "SIZE_VTYPE;Pn;Vn;VEA", "", "">;
+def BRForm_VECTORFP_VFABS_h_s_d_x_pn_p_vn_v_ea_e : BedrockISAForm<
+  "VECTORFP.VFABS.h_s_d_x_pn_p_vn_v_ea_e", "vfabs", "VFABS.{H|S|D}(x) Pn(p), Vn(v), <ea>(e)", "1111111100000010010xxx0011ppppvvvvveeeeeee", "xxlong", "VECTORFP",
   6, 0, 1, 1, 0,
-  "z;p;v;e", "size;govern;src;dst", "VECTOR.field_types.SIZE_HSD;VECTOR.field_types.Pn;VECTOR.field_types.Vn;VECTOR.field_types.VEA", "", "">;
-def BRForm_VECTOR_instructions_PPERM_b_w_l_q_z_vn_v_pn_p : BedrockISAForm<
-  "VECTOR.instructions.PPERM.b_w_l_q_z_vn_v_pn_p", "pperm", "PPERM.{B|W|L|Q}(z) Vn(v), Pn(p)", "11111010001000zz1ppppvvvvv", "long", "VECTOR",
+  "x;p;v;e", "size;govern;src;dst", "SIZE_VTYPE;Pn;Vn;VEA", "", "">;
+def BRForm_VECTORFP_VFSQRT_h_s_d_z_pn_p_vn_v : BedrockISAForm<
+  "VECTORFP.VFSQRT.h_s_d_z_pn_p_vn_v", "vfsqrt", "VFSQRT.{H|S|D}(z) Pn(p), Vn(v)", "11111010000101zz1ppppvvvvv", "long", "VECTORFP",
   4, 0, 0, 0, 1,
-  "z;p;v", "size;dst;index", "base.field_types.SIZE_BWLQ;VECTOR.field_types.Pn;VECTOR.field_types.Vn", "", "">;
-def BRForm_VECTOR_instructions_PSLIDEUP_b_w_l_q_z_imm6_i_pn_p : BedrockISAForm<
-  "VECTOR.instructions.PSLIDEUP.b_w_l_q_z_imm6_i_pn_p", "pslideup", "PSLIDEUP.{B|W|L|Q}(z) imm6(i), Pn(p)", "11111010011110zzppppiiiiii", "long", "VECTOR",
+  "z;p;v", "size;govern;dst", "SIZE_HSD;Pn;Vn", "", "">;
+def BRForm_VECTORFP_VFSQRT_h_s_d_z_pn_p_ea_e_vn_v : BedrockISAForm<
+  "VECTORFP.VFSQRT.h_s_d_z_pn_p_ea_e_vn_v", "vfsqrt", "VFSQRT.{H|S|D}(z) Pn(p), <ea>(e), Vn(v)", "11111111000000100100zz0111ppppvvvvveeeeeee", "xxlong", "VECTORFP",
+  6, 0, 1, 1, 0,
+  "z;p;v;e", "size;govern;dst;src", "SIZE_HSD;Pn;Vn;VEA", "", "">;
+def BRForm_VECTORFP_VFSQRT_h_s_d_z_pn_p_vn_v_ea_e : BedrockISAForm<
+  "VECTORFP.VFSQRT.h_s_d_z_pn_p_vn_v_ea_e", "vfsqrt", "VFSQRT.{H|S|D}(z) Pn(p), Vn(v), <ea>(e)", "11111111000000100100zz1000ppppvvvvveeeeeee", "xxlong", "VECTORFP",
+  6, 0, 1, 1, 0,
+  "z;p;v;e", "size;govern;src;dst", "SIZE_HSD;Pn;Vn;VEA", "", "">;
+def BRForm_VECTORFP_VFROUND_h_s_d_z_pn_p_vn_v : BedrockISAForm<
+  "VECTORFP.VFROUND.h_s_d_z_pn_p_vn_v", "vfround", "VFROUND.{H|S|D}(z) Pn(p), Vn(v)", "11111010000110zz0ppppvvvvv", "long", "VECTORFP",
   4, 0, 0, 0, 1,
-  "z;p;i", "size;dst;count", "base.field_types.SIZE_BWLQ;VECTOR.field_types.Pn;base.field_types.IMM6", "", "">;
-def BRForm_VECTOR_instructions_PSLIDEDN_b_w_l_q_z_imm6_i_pn_p : BedrockISAForm<
-  "VECTOR.instructions.PSLIDEDN.b_w_l_q_z_imm6_i_pn_p", "pslidedn", "PSLIDEDN.{B|W|L|Q}(z) imm6(i), Pn(p)", "11111010011111zzppppiiiiii", "long", "VECTOR",
+  "z;p;v", "size;govern;dst", "SIZE_HSD;Pn;Vn", "", "">;
+def BRForm_VECTORFP_VFROUND_h_s_d_z_pn_p_ea_e_vn_v : BedrockISAForm<
+  "VECTORFP.VFROUND.h_s_d_z_pn_p_ea_e_vn_v", "vfround", "VFROUND.{H|S|D}(z) Pn(p), <ea>(e), Vn(v)", "11111111000000100100zz1001ppppvvvvveeeeeee", "xxlong", "VECTORFP",
+  6, 0, 1, 1, 0,
+  "z;p;v;e", "size;govern;dst;src", "SIZE_HSD;Pn;Vn;VEA", "", "">;
+def BRForm_VECTORFP_VFROUND_h_s_d_z_pn_p_vn_v_ea_e : BedrockISAForm<
+  "VECTORFP.VFROUND.h_s_d_z_pn_p_vn_v_ea_e", "vfround", "VFROUND.{H|S|D}(z) Pn(p), Vn(v), <ea>(e)", "11111111000000100100zz1010ppppvvvvveeeeeee", "xxlong", "VECTORFP",
+  6, 0, 1, 1, 0,
+  "z;p;v;e", "size;govern;src;dst", "SIZE_HSD;Pn;Vn;VEA", "", "">;
+def BRForm_VECTORFP_VFTRUNC_h_s_d_z_pn_p_vn_v : BedrockISAForm<
+  "VECTORFP.VFTRUNC.h_s_d_z_pn_p_vn_v", "vftrunc", "VFTRUNC.{H|S|D}(z) Pn(p), Vn(v)", "11111010000110zz1ppppvvvvv", "long", "VECTORFP",
   4, 0, 0, 0, 1,
-  "z;p;i", "size;dst;count", "base.field_types.SIZE_BWLQ;VECTOR.field_types.Pn;base.field_types.IMM6", "", "">;
-def BRForm_VECTOR_instructions_VCMPcc_b_w_l_q_x_pn_p_vn_v_vn_w_pn_q : BedrockISAForm<
-  "VECTOR.instructions.VCMPcc.b_w_l_q_x_pn_p_vn_v_vn_w_pn_q", "vcmpcc", "VCMPcc.{B|W|L|Q}(x) Pn(p), Vn(v), Vn(w), Pn(q)", "111111010xxxccccppppqqqqvvvvvwwwww", "extralong", "VECTOR",
-  5, 0, 0, 0, 1,
-  "x;c;p;q;v;w", "size;cc;govern;dst;lhs;rhs", "VECTOR.field_types.SIZE_VTYPE;base.field_types.CC;VECTOR.field_types.Pn;VECTOR.field_types.Pn;VECTOR.field_types.Vn;VECTOR.field_types.Vn", "", "">;
-def BRForm_VECTOR_instructions_VCMPcc_h_s_d_x_pn_p_vn_v_vn_w_pn_q : BedrockISAForm<
-  "VECTOR.instructions.VCMPcc.h_s_d_x_pn_p_vn_v_vn_w_pn_q", "vcmpcc", "VCMPcc.{H|S|D}(x) Pn(p), Vn(v), Vn(w), Pn(q)", "111111010xxxccccppppqqqqvvvvvwwwww", "extralong", "VECTOR",
-  5, 0, 0, 0, 1,
-  "x;c;p;q;v;w", "size;cc;govern;dst;lhs;rhs", "VECTOR.field_types.SIZE_VTYPE;base.field_types.CC;VECTOR.field_types.Pn;VECTOR.field_types.Pn;VECTOR.field_types.Vn;VECTOR.field_types.Vn", "", "">;
-def BRForm_VECTOR_instructions_VCMPcc_b_w_l_q_x_pn_p_vn_v_ea_e_pn_q : BedrockISAForm<
-  "VECTOR.instructions.VCMPcc.b_w_l_q_x_pn_p_vn_v_ea_e_pn_q", "vcmpcc", "VCMPcc.{B|W|L|Q}(x) Pn(p), Vn(v), <ea>(e), Pn(q)", "111111110000000xxxccccppppqqqqvvvvveeeeeee", "xxlong", "VECTOR",
-  6, 0, 1, 1, 0,
-  "x;c;p;q;v;e", "size;cc;govern;dst;lhs;src", "VECTOR.field_types.SIZE_VTYPE;base.field_types.CC;VECTOR.field_types.Pn;VECTOR.field_types.Pn;VECTOR.field_types.Vn;VECTOR.field_types.VEA", "", "">;
-def BRForm_VECTOR_instructions_VCMPcc_h_s_d_x_pn_p_vn_v_ea_e_pn_q : BedrockISAForm<
-  "VECTOR.instructions.VCMPcc.h_s_d_x_pn_p_vn_v_ea_e_pn_q", "vcmpcc", "VCMPcc.{H|S|D}(x) Pn(p), Vn(v), <ea>(e), Pn(q)", "111111110000000xxxccccppppqqqqvvvvveeeeeee", "xxlong", "VECTOR",
-  6, 0, 1, 1, 0,
-  "x;c;p;q;v;e", "size;cc;govern;dst;lhs;src", "VECTOR.field_types.SIZE_VTYPE;base.field_types.CC;VECTOR.field_types.Pn;VECTOR.field_types.Pn;VECTOR.field_types.Vn;VECTOR.field_types.VEA", "", "">;
-def BRForm_VECTOR_instructions_VTESTZ_b_w_l_q_z_pn_p_vn_v_vn_w_pn_q : BedrockISAForm<
-  "VECTOR.instructions.VTESTZ.b_w_l_q_z_pn_p_vn_v_vn_w_pn_q", "vtestz", "VTESTZ.{B|W|L|Q}(z) Pn(p), Vn(v), Vn(w), Pn(q)", "111111011000zz00ppppqqqqvvvvvwwwww", "extralong", "VECTOR",
-  5, 0, 0, 0, 1,
-  "z;p;q;v;w", "size;govern;dst;lhs;rhs", "base.field_types.SIZE_BWLQ;VECTOR.field_types.Pn;VECTOR.field_types.Pn;VECTOR.field_types.Vn;VECTOR.field_types.Vn", "", "">;
-def BRForm_VECTOR_instructions_VTESTZ_b_w_l_q_z_pn_p_vn_v_ea_e_pn_q : BedrockISAForm<
-  "VECTOR.instructions.VTESTZ.b_w_l_q_z_pn_p_vn_v_ea_e_pn_q", "vtestz", "VTESTZ.{B|W|L|Q}(z) Pn(p), Vn(v), <ea>(e), Pn(q)", "11111111000000101000zzppppqqqqvvvvveeeeeee", "xxlong", "VECTOR",
-  6, 0, 1, 1, 0,
-  "z;p;q;v;e", "size;govern;dst;lhs;src", "base.field_types.SIZE_BWLQ;VECTOR.field_types.Pn;VECTOR.field_types.Pn;VECTOR.field_types.Vn;VECTOR.field_types.VEA", "", "">;
-def BRForm_VECTOR_instructions_VTESTNZ_b_w_l_q_z_pn_p_vn_v_vn_w_pn_q : BedrockISAForm<
-  "VECTOR.instructions.VTESTNZ.b_w_l_q_z_pn_p_vn_v_vn_w_pn_q", "vtestnz", "VTESTNZ.{B|W|L|Q}(z) Pn(p), Vn(v), Vn(w), Pn(q)", "111111011000zz01ppppqqqqvvvvvwwwww", "extralong", "VECTOR",
-  5, 0, 0, 0, 1,
-  "z;p;q;v;w", "size;govern;dst;lhs;rhs", "base.field_types.SIZE_BWLQ;VECTOR.field_types.Pn;VECTOR.field_types.Pn;VECTOR.field_types.Vn;VECTOR.field_types.Vn", "", "">;
-def BRForm_VECTOR_instructions_VTESTNZ_b_w_l_q_z_pn_p_vn_v_ea_e_pn_q : BedrockISAForm<
-  "VECTOR.instructions.VTESTNZ.b_w_l_q_z_pn_p_vn_v_ea_e_pn_q", "vtestnz", "VTESTNZ.{B|W|L|Q}(z) Pn(p), Vn(v), <ea>(e), Pn(q)", "11111111000000101001zzppppqqqqvvvvveeeeeee", "xxlong", "VECTOR",
-  6, 0, 1, 1, 0,
-  "z;p;q;v;e", "size;govern;dst;lhs;src", "base.field_types.SIZE_BWLQ;VECTOR.field_types.Pn;VECTOR.field_types.Pn;VECTOR.field_types.Vn;VECTOR.field_types.VEA", "", "">;
-def BRForm_VECTOR_instructions_VADD_b_w_l_q_h_s_d_x_pn_p_vn_v_vn_w : BedrockISAForm<
-  "VECTOR.instructions.VADD.b_w_l_q_h_s_d_x_pn_p_vn_v_vn_w", "vadd", "VADD.{B|W|L|Q|H|S|D}(x) Pn(p), Vn(v), Vn(w)", "1111110111100000xxx0ppppvvvvvwwwww", "extralong", "VECTOR",
-  5, 0, 0, 0, 1,
-  "x;p;v;w", "size;govern;src;dst", "VECTOR.field_types.SIZE_VTYPE;VECTOR.field_types.Pn;VECTOR.field_types.Vn;VECTOR.field_types.Vn", "", "">;
-def BRForm_VECTOR_instructions_VADD_b_w_l_q_h_s_d_x_pn_p_ea_e_vn_v : BedrockISAForm<
-  "VECTOR.instructions.VADD.b_w_l_q_h_s_d_x_pn_p_ea_e_vn_v", "vadd", "VADD.{B|W|L|Q|H|S|D}(x) Pn(p), <ea>(e), Vn(v)", "1111111100000010000xxx0011ppppvvvvveeeeeee", "xxlong", "VECTOR",
-  6, 0, 1, 1, 0,
-  "x;p;v;e", "size;govern;dst;src", "VECTOR.field_types.SIZE_VTYPE;VECTOR.field_types.Pn;VECTOR.field_types.Vn;VECTOR.field_types.VEA", "", "">;
-def BRForm_VECTOR_instructions_VADD_b_w_l_q_h_s_d_x_pn_p_vn_v_ea_e : BedrockISAForm<
-  "VECTOR.instructions.VADD.b_w_l_q_h_s_d_x_pn_p_vn_v_ea_e", "vadd", "VADD.{B|W|L|Q|H|S|D}(x) Pn(p), Vn(v), <ea>(e)", "1111111100000010000xxx0100ppppvvvvveeeeeee", "xxlong", "VECTOR",
-  6, 0, 1, 1, 0,
-  "x;p;v;e", "size;govern;src;dst", "VECTOR.field_types.SIZE_VTYPE;VECTOR.field_types.Pn;VECTOR.field_types.Vn;VECTOR.field_types.VEA", "", "">;
-def BRForm_VECTOR_instructions_VSUB_b_w_l_q_h_s_d_x_pn_p_vn_v_vn_w : BedrockISAForm<
-  "VECTOR.instructions.VSUB.b_w_l_q_h_s_d_x_pn_p_vn_v_vn_w", "vsub", "VSUB.{B|W|L|Q|H|S|D}(x) Pn(p), Vn(v), Vn(w)", "1111110111100000xxx1ppppvvvvvwwwww", "extralong", "VECTOR",
-  5, 0, 0, 0, 1,
-  "x;p;v;w", "size;govern;src;dst", "VECTOR.field_types.SIZE_VTYPE;VECTOR.field_types.Pn;VECTOR.field_types.Vn;VECTOR.field_types.Vn", "", "">;
-def BRForm_VECTOR_instructions_VSUB_b_w_l_q_h_s_d_x_pn_p_ea_e_vn_v : BedrockISAForm<
-  "VECTOR.instructions.VSUB.b_w_l_q_h_s_d_x_pn_p_ea_e_vn_v", "vsub", "VSUB.{B|W|L|Q|H|S|D}(x) Pn(p), <ea>(e), Vn(v)", "1111111100000010000xxx0101ppppvvvvveeeeeee", "xxlong", "VECTOR",
-  6, 0, 1, 1, 0,
-  "x;p;v;e", "size;govern;dst;src", "VECTOR.field_types.SIZE_VTYPE;VECTOR.field_types.Pn;VECTOR.field_types.Vn;VECTOR.field_types.VEA", "", "">;
-def BRForm_VECTOR_instructions_VSUB_b_w_l_q_h_s_d_x_pn_p_vn_v_ea_e : BedrockISAForm<
-  "VECTOR.instructions.VSUB.b_w_l_q_h_s_d_x_pn_p_vn_v_ea_e", "vsub", "VSUB.{B|W|L|Q|H|S|D}(x) Pn(p), Vn(v), <ea>(e)", "1111111100000010000xxx0110ppppvvvvveeeeeee", "xxlong", "VECTOR",
-  6, 0, 1, 1, 0,
-  "x;p;v;e", "size;govern;src;dst", "VECTOR.field_types.SIZE_VTYPE;VECTOR.field_types.Pn;VECTOR.field_types.Vn;VECTOR.field_types.VEA", "", "">;
-def BRForm_VECTOR_instructions_VMUL_b_w_l_q_h_s_d_x_pn_p_vn_v_vn_w : BedrockISAForm<
-  "VECTOR.instructions.VMUL.b_w_l_q_h_s_d_x_pn_p_vn_v_vn_w", "vmul", "VMUL.{B|W|L|Q|H|S|D}(x) Pn(p), Vn(v), Vn(w)", "1111110111100001xxx0ppppvvvvvwwwww", "extralong", "VECTOR",
-  5, 0, 0, 0, 1,
-  "x;p;v;w", "size;govern;src;dst", "VECTOR.field_types.SIZE_VTYPE;VECTOR.field_types.Pn;VECTOR.field_types.Vn;VECTOR.field_types.Vn", "", "">;
-def BRForm_VECTOR_instructions_VMUL_b_w_l_q_h_s_d_x_pn_p_ea_e_vn_v : BedrockISAForm<
-  "VECTOR.instructions.VMUL.b_w_l_q_h_s_d_x_pn_p_ea_e_vn_v", "vmul", "VMUL.{B|W|L|Q|H|S|D}(x) Pn(p), <ea>(e), Vn(v)", "1111111100000010000xxx0111ppppvvvvveeeeeee", "xxlong", "VECTOR",
-  6, 0, 1, 1, 0,
-  "x;p;v;e", "size;govern;dst;src", "VECTOR.field_types.SIZE_VTYPE;VECTOR.field_types.Pn;VECTOR.field_types.Vn;VECTOR.field_types.VEA", "", "">;
-def BRForm_VECTOR_instructions_VMUL_b_w_l_q_h_s_d_x_pn_p_vn_v_ea_e : BedrockISAForm<
-  "VECTOR.instructions.VMUL.b_w_l_q_h_s_d_x_pn_p_vn_v_ea_e", "vmul", "VMUL.{B|W|L|Q|H|S|D}(x) Pn(p), Vn(v), <ea>(e)", "1111111100000010000xxx1000ppppvvvvveeeeeee", "xxlong", "VECTOR",
-  6, 0, 1, 1, 0,
-  "x;p;v;e", "size;govern;src;dst", "VECTOR.field_types.SIZE_VTYPE;VECTOR.field_types.Pn;VECTOR.field_types.Vn;VECTOR.field_types.VEA", "", "">;
-def BRForm_VECTOR_instructions_VAND_b_w_l_q_z_pn_p_vn_v_vn_w : BedrockISAForm<
-  "VECTOR.instructions.VAND.b_w_l_q_z_pn_p_vn_v_vn_w", "vand", "VAND.{B|W|L|Q}(z) Pn(p), Vn(v), Vn(w)", "11111101111000010zz1ppppvvvvvwwwww", "extralong", "VECTOR",
-  5, 0, 0, 0, 1,
-  "z;p;v;w", "size;govern;src;dst", "base.field_types.SIZE_BWLQ;VECTOR.field_types.Pn;VECTOR.field_types.Vn;VECTOR.field_types.Vn", "", "">;
-def BRForm_VECTOR_instructions_VAND_b_w_l_q_z_pn_p_ea_e_vn_v : BedrockISAForm<
-  "VECTOR.instructions.VAND.b_w_l_q_z_pn_p_ea_e_vn_v", "vand", "VAND.{B|W|L|Q}(z) Pn(p), <ea>(e), Vn(v)", "11111111000000100000zz1001ppppvvvvveeeeeee", "xxlong", "VECTOR",
-  6, 0, 1, 1, 0,
-  "z;p;v;e", "size;govern;dst;src", "base.field_types.SIZE_BWLQ;VECTOR.field_types.Pn;VECTOR.field_types.Vn;VECTOR.field_types.VEA", "", "">;
-def BRForm_VECTOR_instructions_VAND_b_w_l_q_z_pn_p_vn_v_ea_e : BedrockISAForm<
-  "VECTOR.instructions.VAND.b_w_l_q_z_pn_p_vn_v_ea_e", "vand", "VAND.{B|W|L|Q}(z) Pn(p), Vn(v), <ea>(e)", "11111111000000100000zz1010ppppvvvvveeeeeee", "xxlong", "VECTOR",
-  6, 0, 1, 1, 0,
-  "z;p;v;e", "size;govern;src;dst", "base.field_types.SIZE_BWLQ;VECTOR.field_types.Pn;VECTOR.field_types.Vn;VECTOR.field_types.VEA", "", "">;
-def BRForm_VECTOR_instructions_VOR_b_w_l_q_z_pn_p_vn_v_vn_w : BedrockISAForm<
-  "VECTOR.instructions.VOR.b_w_l_q_z_pn_p_vn_v_vn_w", "vor", "VOR.{B|W|L|Q}(z) Pn(p), Vn(v), Vn(w)", "11111101111000011zz1ppppvvvvvwwwww", "extralong", "VECTOR",
-  5, 0, 0, 0, 1,
-  "z;p;v;w", "size;govern;src;dst", "base.field_types.SIZE_BWLQ;VECTOR.field_types.Pn;VECTOR.field_types.Vn;VECTOR.field_types.Vn", "", "">;
-def BRForm_VECTOR_instructions_VOR_b_w_l_q_z_pn_p_ea_e_vn_v : BedrockISAForm<
-  "VECTOR.instructions.VOR.b_w_l_q_z_pn_p_ea_e_vn_v", "vor", "VOR.{B|W|L|Q}(z) Pn(p), <ea>(e), Vn(v)", "11111111000000100000zz1011ppppvvvvveeeeeee", "xxlong", "VECTOR",
-  6, 0, 1, 1, 0,
-  "z;p;v;e", "size;govern;dst;src", "base.field_types.SIZE_BWLQ;VECTOR.field_types.Pn;VECTOR.field_types.Vn;VECTOR.field_types.VEA", "", "">;
-def BRForm_VECTOR_instructions_VOR_b_w_l_q_z_pn_p_vn_v_ea_e : BedrockISAForm<
-  "VECTOR.instructions.VOR.b_w_l_q_z_pn_p_vn_v_ea_e", "vor", "VOR.{B|W|L|Q}(z) Pn(p), Vn(v), <ea>(e)", "11111111000000100000zz1100ppppvvvvveeeeeee", "xxlong", "VECTOR",
-  6, 0, 1, 1, 0,
-  "z;p;v;e", "size;govern;src;dst", "base.field_types.SIZE_BWLQ;VECTOR.field_types.Pn;VECTOR.field_types.Vn;VECTOR.field_types.VEA", "", "">;
-def BRForm_VECTOR_instructions_VXOR_b_w_l_q_z_pn_p_vn_v_vn_w : BedrockISAForm<
-  "VECTOR.instructions.VXOR.b_w_l_q_z_pn_p_vn_v_vn_w", "vxor", "VXOR.{B|W|L|Q}(z) Pn(p), Vn(v), Vn(w)", "11111101111000100zz0ppppvvvvvwwwww", "extralong", "VECTOR",
-  5, 0, 0, 0, 1,
-  "z;p;v;w", "size;govern;src;dst", "base.field_types.SIZE_BWLQ;VECTOR.field_types.Pn;VECTOR.field_types.Vn;VECTOR.field_types.Vn", "", "">;
-def BRForm_VECTOR_instructions_VXOR_b_w_l_q_z_pn_p_ea_e_vn_v : BedrockISAForm<
-  "VECTOR.instructions.VXOR.b_w_l_q_z_pn_p_ea_e_vn_v", "vxor", "VXOR.{B|W|L|Q}(z) Pn(p), <ea>(e), Vn(v)", "11111111000000100000zz1101ppppvvvvveeeeeee", "xxlong", "VECTOR",
-  6, 0, 1, 1, 0,
-  "z;p;v;e", "size;govern;dst;src", "base.field_types.SIZE_BWLQ;VECTOR.field_types.Pn;VECTOR.field_types.Vn;VECTOR.field_types.VEA", "", "">;
-def BRForm_VECTOR_instructions_VXOR_b_w_l_q_z_pn_p_vn_v_ea_e : BedrockISAForm<
-  "VECTOR.instructions.VXOR.b_w_l_q_z_pn_p_vn_v_ea_e", "vxor", "VXOR.{B|W|L|Q}(z) Pn(p), Vn(v), <ea>(e)", "11111111000000100000zz1110ppppvvvvveeeeeee", "xxlong", "VECTOR",
-  6, 0, 1, 1, 0,
-  "z;p;v;e", "size;govern;src;dst", "base.field_types.SIZE_BWLQ;VECTOR.field_types.Pn;VECTOR.field_types.Vn;VECTOR.field_types.VEA", "", "">;
-def BRForm_VECTOR_instructions_VMINS_b_w_l_q_z_pn_p_vn_v_vn_w : BedrockISAForm<
-  "VECTOR.instructions.VMINS.b_w_l_q_z_pn_p_vn_v_vn_w", "vmins", "VMINS.{B|W|L|Q}(z) Pn(p), Vn(v), Vn(w)", "11111101111000100zz1ppppvvvvvwwwww", "extralong", "VECTOR",
-  5, 0, 0, 0, 1,
-  "z;p;v;w", "size;govern;src;dst", "base.field_types.SIZE_BWLQ;VECTOR.field_types.Pn;VECTOR.field_types.Vn;VECTOR.field_types.Vn", "", "">;
-def BRForm_VECTOR_instructions_VMINS_b_w_l_q_z_pn_p_ea_e_vn_v : BedrockISAForm<
-  "VECTOR.instructions.VMINS.b_w_l_q_z_pn_p_ea_e_vn_v", "vmins", "VMINS.{B|W|L|Q}(z) Pn(p), <ea>(e), Vn(v)", "11111111000000100000zz1111ppppvvvvveeeeeee", "xxlong", "VECTOR",
-  6, 0, 1, 1, 0,
-  "z;p;v;e", "size;govern;dst;src", "base.field_types.SIZE_BWLQ;VECTOR.field_types.Pn;VECTOR.field_types.Vn;VECTOR.field_types.VEA", "", "">;
-def BRForm_VECTOR_instructions_VMINS_b_w_l_q_z_pn_p_vn_v_ea_e : BedrockISAForm<
-  "VECTOR.instructions.VMINS.b_w_l_q_z_pn_p_vn_v_ea_e", "vmins", "VMINS.{B|W|L|Q}(z) Pn(p), Vn(v), <ea>(e)", "11111111000000100001zz0000ppppvvvvveeeeeee", "xxlong", "VECTOR",
-  6, 0, 1, 1, 0,
-  "z;p;v;e", "size;govern;src;dst", "base.field_types.SIZE_BWLQ;VECTOR.field_types.Pn;VECTOR.field_types.Vn;VECTOR.field_types.VEA", "", "">;
-def BRForm_VECTOR_instructions_VMINU_b_w_l_q_z_pn_p_vn_v_vn_w : BedrockISAForm<
-  "VECTOR.instructions.VMINU.b_w_l_q_z_pn_p_vn_v_vn_w", "vminu", "VMINU.{B|W|L|Q}(z) Pn(p), Vn(v), Vn(w)", "11111101111000101zz0ppppvvvvvwwwww", "extralong", "VECTOR",
-  5, 0, 0, 0, 1,
-  "z;p;v;w", "size;govern;src;dst", "base.field_types.SIZE_BWLQ;VECTOR.field_types.Pn;VECTOR.field_types.Vn;VECTOR.field_types.Vn", "", "">;
-def BRForm_VECTOR_instructions_VMINU_b_w_l_q_z_pn_p_ea_e_vn_v : BedrockISAForm<
-  "VECTOR.instructions.VMINU.b_w_l_q_z_pn_p_ea_e_vn_v", "vminu", "VMINU.{B|W|L|Q}(z) Pn(p), <ea>(e), Vn(v)", "11111111000000100001zz0001ppppvvvvveeeeeee", "xxlong", "VECTOR",
-  6, 0, 1, 1, 0,
-  "z;p;v;e", "size;govern;dst;src", "base.field_types.SIZE_BWLQ;VECTOR.field_types.Pn;VECTOR.field_types.Vn;VECTOR.field_types.VEA", "", "">;
-def BRForm_VECTOR_instructions_VMINU_b_w_l_q_z_pn_p_vn_v_ea_e : BedrockISAForm<
-  "VECTOR.instructions.VMINU.b_w_l_q_z_pn_p_vn_v_ea_e", "vminu", "VMINU.{B|W|L|Q}(z) Pn(p), Vn(v), <ea>(e)", "11111111000000100001zz0010ppppvvvvveeeeeee", "xxlong", "VECTOR",
-  6, 0, 1, 1, 0,
-  "z;p;v;e", "size;govern;src;dst", "base.field_types.SIZE_BWLQ;VECTOR.field_types.Pn;VECTOR.field_types.Vn;VECTOR.field_types.VEA", "", "">;
-def BRForm_VECTOR_instructions_VMAXS_b_w_l_q_z_pn_p_vn_v_vn_w : BedrockISAForm<
-  "VECTOR.instructions.VMAXS.b_w_l_q_z_pn_p_vn_v_vn_w", "vmaxs", "VMAXS.{B|W|L|Q}(z) Pn(p), Vn(v), Vn(w)", "11111101111000101zz1ppppvvvvvwwwww", "extralong", "VECTOR",
-  5, 0, 0, 0, 1,
-  "z;p;v;w", "size;govern;src;dst", "base.field_types.SIZE_BWLQ;VECTOR.field_types.Pn;VECTOR.field_types.Vn;VECTOR.field_types.Vn", "", "">;
-def BRForm_VECTOR_instructions_VMAXS_b_w_l_q_z_pn_p_ea_e_vn_v : BedrockISAForm<
-  "VECTOR.instructions.VMAXS.b_w_l_q_z_pn_p_ea_e_vn_v", "vmaxs", "VMAXS.{B|W|L|Q}(z) Pn(p), <ea>(e), Vn(v)", "11111111000000100001zz1001ppppvvvvveeeeeee", "xxlong", "VECTOR",
-  6, 0, 1, 1, 0,
-  "z;p;v;e", "size;govern;dst;src", "base.field_types.SIZE_BWLQ;VECTOR.field_types.Pn;VECTOR.field_types.Vn;VECTOR.field_types.VEA", "", "">;
-def BRForm_VECTOR_instructions_VMAXS_b_w_l_q_z_pn_p_vn_v_ea_e : BedrockISAForm<
-  "VECTOR.instructions.VMAXS.b_w_l_q_z_pn_p_vn_v_ea_e", "vmaxs", "VMAXS.{B|W|L|Q}(z) Pn(p), Vn(v), <ea>(e)", "11111111000000100001zz1010ppppvvvvveeeeeee", "xxlong", "VECTOR",
-  6, 0, 1, 1, 0,
-  "z;p;v;e", "size;govern;src;dst", "base.field_types.SIZE_BWLQ;VECTOR.field_types.Pn;VECTOR.field_types.Vn;VECTOR.field_types.VEA", "", "">;
-def BRForm_VECTOR_instructions_VMAXU_b_w_l_q_z_pn_p_vn_v_vn_w : BedrockISAForm<
-  "VECTOR.instructions.VMAXU.b_w_l_q_z_pn_p_vn_v_vn_w", "vmaxu", "VMAXU.{B|W|L|Q}(z) Pn(p), Vn(v), Vn(w)", "11111101111000110zz0ppppvvvvvwwwww", "extralong", "VECTOR",
-  5, 0, 0, 0, 1,
-  "z;p;v;w", "size;govern;src;dst", "base.field_types.SIZE_BWLQ;VECTOR.field_types.Pn;VECTOR.field_types.Vn;VECTOR.field_types.Vn", "", "">;
-def BRForm_VECTOR_instructions_VMAXU_b_w_l_q_z_pn_p_ea_e_vn_v : BedrockISAForm<
-  "VECTOR.instructions.VMAXU.b_w_l_q_z_pn_p_ea_e_vn_v", "vmaxu", "VMAXU.{B|W|L|Q}(z) Pn(p), <ea>(e), Vn(v)", "11111111000000100001zz1011ppppvvvvveeeeeee", "xxlong", "VECTOR",
-  6, 0, 1, 1, 0,
-  "z;p;v;e", "size;govern;dst;src", "base.field_types.SIZE_BWLQ;VECTOR.field_types.Pn;VECTOR.field_types.Vn;VECTOR.field_types.VEA", "", "">;
-def BRForm_VECTOR_instructions_VMAXU_b_w_l_q_z_pn_p_vn_v_ea_e : BedrockISAForm<
-  "VECTOR.instructions.VMAXU.b_w_l_q_z_pn_p_vn_v_ea_e", "vmaxu", "VMAXU.{B|W|L|Q}(z) Pn(p), Vn(v), <ea>(e)", "11111111000000100001zz1100ppppvvvvveeeeeee", "xxlong", "VECTOR",
-  6, 0, 1, 1, 0,
-  "z;p;v;e", "size;govern;src;dst", "base.field_types.SIZE_BWLQ;VECTOR.field_types.Pn;VECTOR.field_types.Vn;VECTOR.field_types.VEA", "", "">;
-def BRForm_VECTOR_instructions_VMULHS_b_w_l_q_z_pn_p_vn_v_vn_w : BedrockISAForm<
-  "VECTOR.instructions.VMULHS.b_w_l_q_z_pn_p_vn_v_vn_w", "vmulhs", "VMULHS.{B|W|L|Q}(z) Pn(p), Vn(v), Vn(w)", "11111101111000110zz1ppppvvvvvwwwww", "extralong", "VECTOR",
-  5, 0, 0, 0, 1,
-  "z;p;v;w", "size;govern;src;dst", "base.field_types.SIZE_BWLQ;VECTOR.field_types.Pn;VECTOR.field_types.Vn;VECTOR.field_types.Vn", "", "">;
-def BRForm_VECTOR_instructions_VMULHS_b_w_l_q_z_pn_p_ea_e_vn_v : BedrockISAForm<
-  "VECTOR.instructions.VMULHS.b_w_l_q_z_pn_p_ea_e_vn_v", "vmulhs", "VMULHS.{B|W|L|Q}(z) Pn(p), <ea>(e), Vn(v)", "11111111000000100001zz1101ppppvvvvveeeeeee", "xxlong", "VECTOR",
-  6, 0, 1, 1, 0,
-  "z;p;v;e", "size;govern;dst;src", "base.field_types.SIZE_BWLQ;VECTOR.field_types.Pn;VECTOR.field_types.Vn;VECTOR.field_types.VEA", "", "">;
-def BRForm_VECTOR_instructions_VMULHS_b_w_l_q_z_pn_p_vn_v_ea_e : BedrockISAForm<
-  "VECTOR.instructions.VMULHS.b_w_l_q_z_pn_p_vn_v_ea_e", "vmulhs", "VMULHS.{B|W|L|Q}(z) Pn(p), Vn(v), <ea>(e)", "11111111000000100001zz1110ppppvvvvveeeeeee", "xxlong", "VECTOR",
-  6, 0, 1, 1, 0,
-  "z;p;v;e", "size;govern;src;dst", "base.field_types.SIZE_BWLQ;VECTOR.field_types.Pn;VECTOR.field_types.Vn;VECTOR.field_types.VEA", "", "">;
-def BRForm_VECTOR_instructions_VMULHU_b_w_l_q_z_pn_p_vn_v_vn_w : BedrockISAForm<
-  "VECTOR.instructions.VMULHU.b_w_l_q_z_pn_p_vn_v_vn_w", "vmulhu", "VMULHU.{B|W|L|Q}(z) Pn(p), Vn(v), Vn(w)", "11111101111000111zz0ppppvvvvvwwwww", "extralong", "VECTOR",
-  5, 0, 0, 0, 1,
-  "z;p;v;w", "size;govern;src;dst", "base.field_types.SIZE_BWLQ;VECTOR.field_types.Pn;VECTOR.field_types.Vn;VECTOR.field_types.Vn", "", "">;
-def BRForm_VECTOR_instructions_VMULHU_b_w_l_q_z_pn_p_ea_e_vn_v : BedrockISAForm<
-  "VECTOR.instructions.VMULHU.b_w_l_q_z_pn_p_ea_e_vn_v", "vmulhu", "VMULHU.{B|W|L|Q}(z) Pn(p), <ea>(e), Vn(v)", "11111111000000100001zz1111ppppvvvvveeeeeee", "xxlong", "VECTOR",
-  6, 0, 1, 1, 0,
-  "z;p;v;e", "size;govern;dst;src", "base.field_types.SIZE_BWLQ;VECTOR.field_types.Pn;VECTOR.field_types.Vn;VECTOR.field_types.VEA", "", "">;
-def BRForm_VECTOR_instructions_VMULHU_b_w_l_q_z_pn_p_vn_v_ea_e : BedrockISAForm<
-  "VECTOR.instructions.VMULHU.b_w_l_q_z_pn_p_vn_v_ea_e", "vmulhu", "VMULHU.{B|W|L|Q}(z) Pn(p), Vn(v), <ea>(e)", "11111111000000100010zz0000ppppvvvvveeeeeee", "xxlong", "VECTOR",
-  6, 0, 1, 1, 0,
-  "z;p;v;e", "size;govern;src;dst", "base.field_types.SIZE_BWLQ;VECTOR.field_types.Pn;VECTOR.field_types.Vn;VECTOR.field_types.VEA", "", "">;
-def BRForm_VECTOR_instructions_VMULHSU_b_w_l_q_z_pn_p_vn_v_vn_w : BedrockISAForm<
-  "VECTOR.instructions.VMULHSU.b_w_l_q_z_pn_p_vn_v_vn_w", "vmulhsu", "VMULHSU.{B|W|L|Q}(z) Pn(p), Vn(v), Vn(w)", "11111101111000111zz1ppppvvvvvwwwww", "extralong", "VECTOR",
-  5, 0, 0, 0, 1,
-  "z;p;v;w", "size;govern;src;dst", "base.field_types.SIZE_BWLQ;VECTOR.field_types.Pn;VECTOR.field_types.Vn;VECTOR.field_types.Vn", "", "">;
-def BRForm_VECTOR_instructions_VMULHSU_b_w_l_q_z_pn_p_ea_e_vn_v : BedrockISAForm<
-  "VECTOR.instructions.VMULHSU.b_w_l_q_z_pn_p_ea_e_vn_v", "vmulhsu", "VMULHSU.{B|W|L|Q}(z) Pn(p), <ea>(e), Vn(v)", "11111111000000100010zz0001ppppvvvvveeeeeee", "xxlong", "VECTOR",
-  6, 0, 1, 1, 0,
-  "z;p;v;e", "size;govern;dst;src", "base.field_types.SIZE_BWLQ;VECTOR.field_types.Pn;VECTOR.field_types.Vn;VECTOR.field_types.VEA", "", "">;
-def BRForm_VECTOR_instructions_VMULHSU_b_w_l_q_z_pn_p_vn_v_ea_e : BedrockISAForm<
-  "VECTOR.instructions.VMULHSU.b_w_l_q_z_pn_p_vn_v_ea_e", "vmulhsu", "VMULHSU.{B|W|L|Q}(z) Pn(p), Vn(v), <ea>(e)", "11111111000000100010zz0010ppppvvvvveeeeeee", "xxlong", "VECTOR",
-  6, 0, 1, 1, 0,
-  "z;p;v;e", "size;govern;src;dst", "base.field_types.SIZE_BWLQ;VECTOR.field_types.Pn;VECTOR.field_types.Vn;VECTOR.field_types.VEA", "", "">;
-def BRForm_VECTOR_instructions_VSHL_b_w_l_q_z_pn_p_vn_v_vn_w : BedrockISAForm<
-  "VECTOR.instructions.VSHL.b_w_l_q_z_pn_p_vn_v_vn_w", "vshl", "VSHL.{B|W|L|Q}(z) Pn(p), Vn(v), Vn(w)", "11111101111001000zz0ppppvvvvvwwwww", "extralong", "VECTOR",
-  5, 0, 0, 0, 1,
-  "z;p;v;w", "size;govern;src;dst", "base.field_types.SIZE_BWLQ;VECTOR.field_types.Pn;VECTOR.field_types.Vn;VECTOR.field_types.Vn", "", "">;
-def BRForm_VECTOR_instructions_VSHL_b_w_l_q_z_pn_p_imm6_i_vn_v : BedrockISAForm<
-  "VECTOR.instructions.VSHL.b_w_l_q_z_pn_p_imm6_i_vn_v", "vshl", "VSHL.{B|W|L|Q}(z) Pn(p), imm6(i), Vn(v)", "11111101111100000zzppppvvvvviiiiii", "extralong", "VECTOR",
-  5, 0, 0, 0, 1,
-  "z;p;v;i", "size;govern;dst;count", "base.field_types.SIZE_BWLQ;VECTOR.field_types.Pn;VECTOR.field_types.Vn;base.field_types.IMM6", "", "">;
-def BRForm_VECTOR_instructions_VSHL_b_w_l_q_z_pn_p_ea_e_vn_v : BedrockISAForm<
-  "VECTOR.instructions.VSHL.b_w_l_q_z_pn_p_ea_e_vn_v", "vshl", "VSHL.{B|W|L|Q}(z) Pn(p), <ea>(e), Vn(v)", "11111111000000100010zz0011ppppvvvvveeeeeee", "xxlong", "VECTOR",
-  6, 0, 1, 1, 0,
-  "z;p;v;e", "size;govern;dst;src", "base.field_types.SIZE_BWLQ;VECTOR.field_types.Pn;VECTOR.field_types.Vn;VECTOR.field_types.VEA", "", "">;
-def BRForm_VECTOR_instructions_VSHL_b_w_l_q_z_pn_p_vn_v_ea_e : BedrockISAForm<
-  "VECTOR.instructions.VSHL.b_w_l_q_z_pn_p_vn_v_ea_e", "vshl", "VSHL.{B|W|L|Q}(z) Pn(p), Vn(v), <ea>(e)", "11111111000000100010zz0100ppppvvvvveeeeeee", "xxlong", "VECTOR",
-  6, 0, 1, 1, 0,
-  "z;p;v;e", "size;govern;src;dst", "base.field_types.SIZE_BWLQ;VECTOR.field_types.Pn;VECTOR.field_types.Vn;VECTOR.field_types.VEA", "", "">;
-def BRForm_VECTOR_instructions_VSHL_b_w_l_q_z_pn_p_imm6_i_ea_e : BedrockISAForm<
-  "VECTOR.instructions.VSHL.b_w_l_q_z_pn_p_imm6_i_ea_e", "vshl", "VSHL.{B|W|L|Q}(z) Pn(p), imm6(i), <ea>(e)", "11111111000000101100zz000ppppiiiiiieeeeeee", "xxlong", "VECTOR",
-  6, 0, 1, 1, 0,
-  "z;p;i;e", "size;govern;count;dst", "base.field_types.SIZE_BWLQ;VECTOR.field_types.Pn;base.field_types.IMM6;VECTOR.field_types.VEA", "", "">;
-def BRForm_VECTOR_instructions_VSHR_b_w_l_q_z_pn_p_vn_v_vn_w : BedrockISAForm<
-  "VECTOR.instructions.VSHR.b_w_l_q_z_pn_p_vn_v_vn_w", "vshr", "VSHR.{B|W|L|Q}(z) Pn(p), Vn(v), Vn(w)", "11111101111001000zz1ppppvvvvvwwwww", "extralong", "VECTOR",
-  5, 0, 0, 0, 1,
-  "z;p;v;w", "size;govern;src;dst", "base.field_types.SIZE_BWLQ;VECTOR.field_types.Pn;VECTOR.field_types.Vn;VECTOR.field_types.Vn", "", "">;
-def BRForm_VECTOR_instructions_VSHR_b_w_l_q_z_pn_p_imm6_i_vn_v : BedrockISAForm<
-  "VECTOR.instructions.VSHR.b_w_l_q_z_pn_p_imm6_i_vn_v", "vshr", "VSHR.{B|W|L|Q}(z) Pn(p), imm6(i), Vn(v)", "11111101111100001zzppppvvvvviiiiii", "extralong", "VECTOR",
-  5, 0, 0, 0, 1,
-  "z;p;v;i", "size;govern;dst;count", "base.field_types.SIZE_BWLQ;VECTOR.field_types.Pn;VECTOR.field_types.Vn;base.field_types.IMM6", "", "">;
-def BRForm_VECTOR_instructions_VSHR_b_w_l_q_z_pn_p_ea_e_vn_v : BedrockISAForm<
-  "VECTOR.instructions.VSHR.b_w_l_q_z_pn_p_ea_e_vn_v", "vshr", "VSHR.{B|W|L|Q}(z) Pn(p), <ea>(e), Vn(v)", "11111111000000100010zz0101ppppvvvvveeeeeee", "xxlong", "VECTOR",
-  6, 0, 1, 1, 0,
-  "z;p;v;e", "size;govern;dst;src", "base.field_types.SIZE_BWLQ;VECTOR.field_types.Pn;VECTOR.field_types.Vn;VECTOR.field_types.VEA", "", "">;
-def BRForm_VECTOR_instructions_VSHR_b_w_l_q_z_pn_p_vn_v_ea_e : BedrockISAForm<
-  "VECTOR.instructions.VSHR.b_w_l_q_z_pn_p_vn_v_ea_e", "vshr", "VSHR.{B|W|L|Q}(z) Pn(p), Vn(v), <ea>(e)", "11111111000000100010zz0110ppppvvvvveeeeeee", "xxlong", "VECTOR",
-  6, 0, 1, 1, 0,
-  "z;p;v;e", "size;govern;src;dst", "base.field_types.SIZE_BWLQ;VECTOR.field_types.Pn;VECTOR.field_types.Vn;VECTOR.field_types.VEA", "", "">;
-def BRForm_VECTOR_instructions_VSHR_b_w_l_q_z_pn_p_imm6_i_ea_e : BedrockISAForm<
-  "VECTOR.instructions.VSHR.b_w_l_q_z_pn_p_imm6_i_ea_e", "vshr", "VSHR.{B|W|L|Q}(z) Pn(p), imm6(i), <ea>(e)", "11111111000000101100zz001ppppiiiiiieeeeeee", "xxlong", "VECTOR",
-  6, 0, 1, 1, 0,
-  "z;p;i;e", "size;govern;count;dst", "base.field_types.SIZE_BWLQ;VECTOR.field_types.Pn;base.field_types.IMM6;VECTOR.field_types.VEA", "", "">;
-def BRForm_VECTOR_instructions_VSAR_b_w_l_q_z_pn_p_vn_v_vn_w : BedrockISAForm<
-  "VECTOR.instructions.VSAR.b_w_l_q_z_pn_p_vn_v_vn_w", "vsar", "VSAR.{B|W|L|Q}(z) Pn(p), Vn(v), Vn(w)", "11111101111001001zz0ppppvvvvvwwwww", "extralong", "VECTOR",
-  5, 0, 0, 0, 1,
-  "z;p;v;w", "size;govern;src;dst", "base.field_types.SIZE_BWLQ;VECTOR.field_types.Pn;VECTOR.field_types.Vn;VECTOR.field_types.Vn", "", "">;
-def BRForm_VECTOR_instructions_VSAR_b_w_l_q_z_pn_p_imm6_i_vn_v : BedrockISAForm<
-  "VECTOR.instructions.VSAR.b_w_l_q_z_pn_p_imm6_i_vn_v", "vsar", "VSAR.{B|W|L|Q}(z) Pn(p), imm6(i), Vn(v)", "11111101111100010zzppppvvvvviiiiii", "extralong", "VECTOR",
-  5, 0, 0, 0, 1,
-  "z;p;v;i", "size;govern;dst;count", "base.field_types.SIZE_BWLQ;VECTOR.field_types.Pn;VECTOR.field_types.Vn;base.field_types.IMM6", "", "">;
-def BRForm_VECTOR_instructions_VSAR_b_w_l_q_z_pn_p_ea_e_vn_v : BedrockISAForm<
-  "VECTOR.instructions.VSAR.b_w_l_q_z_pn_p_ea_e_vn_v", "vsar", "VSAR.{B|W|L|Q}(z) Pn(p), <ea>(e), Vn(v)", "11111111000000100010zz0111ppppvvvvveeeeeee", "xxlong", "VECTOR",
-  6, 0, 1, 1, 0,
-  "z;p;v;e", "size;govern;dst;src", "base.field_types.SIZE_BWLQ;VECTOR.field_types.Pn;VECTOR.field_types.Vn;VECTOR.field_types.VEA", "", "">;
-def BRForm_VECTOR_instructions_VSAR_b_w_l_q_z_pn_p_vn_v_ea_e : BedrockISAForm<
-  "VECTOR.instructions.VSAR.b_w_l_q_z_pn_p_vn_v_ea_e", "vsar", "VSAR.{B|W|L|Q}(z) Pn(p), Vn(v), <ea>(e)", "11111111000000100010zz1000ppppvvvvveeeeeee", "xxlong", "VECTOR",
-  6, 0, 1, 1, 0,
-  "z;p;v;e", "size;govern;src;dst", "base.field_types.SIZE_BWLQ;VECTOR.field_types.Pn;VECTOR.field_types.Vn;VECTOR.field_types.VEA", "", "">;
-def BRForm_VECTOR_instructions_VSAR_b_w_l_q_z_pn_p_imm6_i_ea_e : BedrockISAForm<
-  "VECTOR.instructions.VSAR.b_w_l_q_z_pn_p_imm6_i_ea_e", "vsar", "VSAR.{B|W|L|Q}(z) Pn(p), imm6(i), <ea>(e)", "11111111000000101100zz010ppppiiiiiieeeeeee", "xxlong", "VECTOR",
-  6, 0, 1, 1, 0,
-  "z;p;i;e", "size;govern;count;dst", "base.field_types.SIZE_BWLQ;VECTOR.field_types.Pn;base.field_types.IMM6;VECTOR.field_types.VEA", "", "">;
-def BRForm_VECTOR_instructions_VROL_b_w_l_q_z_pn_p_vn_v_vn_w : BedrockISAForm<
-  "VECTOR.instructions.VROL.b_w_l_q_z_pn_p_vn_v_vn_w", "vrol", "VROL.{B|W|L|Q}(z) Pn(p), Vn(v), Vn(w)", "11111101111001001zz1ppppvvvvvwwwww", "extralong", "VECTOR",
-  5, 0, 0, 0, 1,
-  "z;p;v;w", "size;govern;src;dst", "base.field_types.SIZE_BWLQ;VECTOR.field_types.Pn;VECTOR.field_types.Vn;VECTOR.field_types.Vn", "", "">;
-def BRForm_VECTOR_instructions_VROL_b_w_l_q_z_pn_p_imm6_i_vn_v : BedrockISAForm<
-  "VECTOR.instructions.VROL.b_w_l_q_z_pn_p_imm6_i_vn_v", "vrol", "VROL.{B|W|L|Q}(z) Pn(p), imm6(i), Vn(v)", "11111101111100011zzppppvvvvviiiiii", "extralong", "VECTOR",
-  5, 0, 0, 0, 1,
-  "z;p;v;i", "size;govern;dst;count", "base.field_types.SIZE_BWLQ;VECTOR.field_types.Pn;VECTOR.field_types.Vn;base.field_types.IMM6", "", "">;
-def BRForm_VECTOR_instructions_VROL_b_w_l_q_z_pn_p_ea_e_vn_v : BedrockISAForm<
-  "VECTOR.instructions.VROL.b_w_l_q_z_pn_p_ea_e_vn_v", "vrol", "VROL.{B|W|L|Q}(z) Pn(p), <ea>(e), Vn(v)", "11111111000000100010zz1001ppppvvvvveeeeeee", "xxlong", "VECTOR",
-  6, 0, 1, 1, 0,
-  "z;p;v;e", "size;govern;dst;src", "base.field_types.SIZE_BWLQ;VECTOR.field_types.Pn;VECTOR.field_types.Vn;VECTOR.field_types.VEA", "", "">;
-def BRForm_VECTOR_instructions_VROL_b_w_l_q_z_pn_p_vn_v_ea_e : BedrockISAForm<
-  "VECTOR.instructions.VROL.b_w_l_q_z_pn_p_vn_v_ea_e", "vrol", "VROL.{B|W|L|Q}(z) Pn(p), Vn(v), <ea>(e)", "11111111000000100010zz1010ppppvvvvveeeeeee", "xxlong", "VECTOR",
-  6, 0, 1, 1, 0,
-  "z;p;v;e", "size;govern;src;dst", "base.field_types.SIZE_BWLQ;VECTOR.field_types.Pn;VECTOR.field_types.Vn;VECTOR.field_types.VEA", "", "">;
-def BRForm_VECTOR_instructions_VROL_b_w_l_q_z_pn_p_imm6_i_ea_e : BedrockISAForm<
-  "VECTOR.instructions.VROL.b_w_l_q_z_pn_p_imm6_i_ea_e", "vrol", "VROL.{B|W|L|Q}(z) Pn(p), imm6(i), <ea>(e)", "11111111000000101100zz011ppppiiiiiieeeeeee", "xxlong", "VECTOR",
-  6, 0, 1, 1, 0,
-  "z;p;i;e", "size;govern;count;dst", "base.field_types.SIZE_BWLQ;VECTOR.field_types.Pn;base.field_types.IMM6;VECTOR.field_types.VEA", "", "">;
-def BRForm_VECTOR_instructions_VROR_b_w_l_q_z_pn_p_vn_v_vn_w : BedrockISAForm<
-  "VECTOR.instructions.VROR.b_w_l_q_z_pn_p_vn_v_vn_w", "vror", "VROR.{B|W|L|Q}(z) Pn(p), Vn(v), Vn(w)", "11111101111001010zz0ppppvvvvvwwwww", "extralong", "VECTOR",
-  5, 0, 0, 0, 1,
-  "z;p;v;w", "size;govern;src;dst", "base.field_types.SIZE_BWLQ;VECTOR.field_types.Pn;VECTOR.field_types.Vn;VECTOR.field_types.Vn", "", "">;
-def BRForm_VECTOR_instructions_VROR_b_w_l_q_z_pn_p_imm6_i_vn_v : BedrockISAForm<
-  "VECTOR.instructions.VROR.b_w_l_q_z_pn_p_imm6_i_vn_v", "vror", "VROR.{B|W|L|Q}(z) Pn(p), imm6(i), Vn(v)", "11111101111100100zzppppvvvvviiiiii", "extralong", "VECTOR",
-  5, 0, 0, 0, 1,
-  "z;p;v;i", "size;govern;dst;count", "base.field_types.SIZE_BWLQ;VECTOR.field_types.Pn;VECTOR.field_types.Vn;base.field_types.IMM6", "", "">;
-def BRForm_VECTOR_instructions_VROR_b_w_l_q_z_pn_p_ea_e_vn_v : BedrockISAForm<
-  "VECTOR.instructions.VROR.b_w_l_q_z_pn_p_ea_e_vn_v", "vror", "VROR.{B|W|L|Q}(z) Pn(p), <ea>(e), Vn(v)", "11111111000000100010zz1011ppppvvvvveeeeeee", "xxlong", "VECTOR",
-  6, 0, 1, 1, 0,
-  "z;p;v;e", "size;govern;dst;src", "base.field_types.SIZE_BWLQ;VECTOR.field_types.Pn;VECTOR.field_types.Vn;VECTOR.field_types.VEA", "", "">;
-def BRForm_VECTOR_instructions_VROR_b_w_l_q_z_pn_p_vn_v_ea_e : BedrockISAForm<
-  "VECTOR.instructions.VROR.b_w_l_q_z_pn_p_vn_v_ea_e", "vror", "VROR.{B|W|L|Q}(z) Pn(p), Vn(v), <ea>(e)", "11111111000000100010zz1100ppppvvvvveeeeeee", "xxlong", "VECTOR",
-  6, 0, 1, 1, 0,
-  "z;p;v;e", "size;govern;src;dst", "base.field_types.SIZE_BWLQ;VECTOR.field_types.Pn;VECTOR.field_types.Vn;VECTOR.field_types.VEA", "", "">;
-def BRForm_VECTOR_instructions_VROR_b_w_l_q_z_pn_p_imm6_i_ea_e : BedrockISAForm<
-  "VECTOR.instructions.VROR.b_w_l_q_z_pn_p_imm6_i_ea_e", "vror", "VROR.{B|W|L|Q}(z) Pn(p), imm6(i), <ea>(e)", "11111111000000101100zz100ppppiiiiiieeeeeee", "xxlong", "VECTOR",
-  6, 0, 1, 1, 0,
-  "z;p;i;e", "size;govern;count;dst", "base.field_types.SIZE_BWLQ;VECTOR.field_types.Pn;base.field_types.IMM6;VECTOR.field_types.VEA", "", "">;
-def BRForm_VECTOR_instructions_VMIN_h_s_d_z_pn_p_vn_v_vn_w : BedrockISAForm<
-  "VECTOR.instructions.VMIN.h_s_d_z_pn_p_vn_v_vn_w", "vmin", "VMIN.{H|S|D}(z) Pn(p), Vn(v), Vn(w)", "11111101111001010zz1ppppvvvvvwwwww", "extralong", "VECTOR",
-  5, 0, 0, 0, 1,
-  "z;p;v;w", "size;govern;src;dst", "VECTOR.field_types.SIZE_HSD;VECTOR.field_types.Pn;VECTOR.field_types.Vn;VECTOR.field_types.Vn", "", "">;
-def BRForm_VECTOR_instructions_VMIN_h_s_d_z_pn_p_ea_e_vn_v : BedrockISAForm<
-  "VECTOR.instructions.VMIN.h_s_d_z_pn_p_ea_e_vn_v", "vmin", "VMIN.{H|S|D}(z) Pn(p), <ea>(e), Vn(v)", "11111111000000100010zz1101ppppvvvvveeeeeee", "xxlong", "VECTOR",
-  6, 0, 1, 1, 0,
-  "z;p;v;e", "size;govern;dst;src", "VECTOR.field_types.SIZE_HSD;VECTOR.field_types.Pn;VECTOR.field_types.Vn;VECTOR.field_types.VEA", "", "">;
-def BRForm_VECTOR_instructions_VMIN_h_s_d_z_pn_p_vn_v_ea_e : BedrockISAForm<
-  "VECTOR.instructions.VMIN.h_s_d_z_pn_p_vn_v_ea_e", "vmin", "VMIN.{H|S|D}(z) Pn(p), Vn(v), <ea>(e)", "11111111000000100010zz1110ppppvvvvveeeeeee", "xxlong", "VECTOR",
-  6, 0, 1, 1, 0,
-  "z;p;v;e", "size;govern;src;dst", "VECTOR.field_types.SIZE_HSD;VECTOR.field_types.Pn;VECTOR.field_types.Vn;VECTOR.field_types.VEA", "", "">;
-def BRForm_VECTOR_instructions_VMAX_h_s_d_z_pn_p_vn_v_vn_w : BedrockISAForm<
-  "VECTOR.instructions.VMAX.h_s_d_z_pn_p_vn_v_vn_w", "vmax", "VMAX.{H|S|D}(z) Pn(p), Vn(v), Vn(w)", "11111101111001011zz0ppppvvvvvwwwww", "extralong", "VECTOR",
-  5, 0, 0, 0, 1,
-  "z;p;v;w", "size;govern;src;dst", "VECTOR.field_types.SIZE_HSD;VECTOR.field_types.Pn;VECTOR.field_types.Vn;VECTOR.field_types.Vn", "", "">;
-def BRForm_VECTOR_instructions_VMAX_h_s_d_z_pn_p_ea_e_vn_v : BedrockISAForm<
-  "VECTOR.instructions.VMAX.h_s_d_z_pn_p_ea_e_vn_v", "vmax", "VMAX.{H|S|D}(z) Pn(p), <ea>(e), Vn(v)", "11111111000000100010zz1111ppppvvvvveeeeeee", "xxlong", "VECTOR",
-  6, 0, 1, 1, 0,
-  "z;p;v;e", "size;govern;dst;src", "VECTOR.field_types.SIZE_HSD;VECTOR.field_types.Pn;VECTOR.field_types.Vn;VECTOR.field_types.VEA", "", "">;
-def BRForm_VECTOR_instructions_VMAX_h_s_d_z_pn_p_vn_v_ea_e : BedrockISAForm<
-  "VECTOR.instructions.VMAX.h_s_d_z_pn_p_vn_v_ea_e", "vmax", "VMAX.{H|S|D}(z) Pn(p), Vn(v), <ea>(e)", "11111111000000100011zz0000ppppvvvvveeeeeee", "xxlong", "VECTOR",
-  6, 0, 1, 1, 0,
-  "z;p;v;e", "size;govern;src;dst", "VECTOR.field_types.SIZE_HSD;VECTOR.field_types.Pn;VECTOR.field_types.Vn;VECTOR.field_types.VEA", "", "">;
-def BRForm_VECTOR_instructions_VDIV_h_s_d_z_pn_p_vn_v_vn_w : BedrockISAForm<
-  "VECTOR.instructions.VDIV.h_s_d_z_pn_p_vn_v_vn_w", "vdiv", "VDIV.{H|S|D}(z) Pn(p), Vn(v), Vn(w)", "11111101111001011zz1ppppvvvvvwwwww", "extralong", "VECTOR",
-  5, 0, 0, 0, 1,
-  "z;p;v;w", "size;govern;src;dst", "VECTOR.field_types.SIZE_HSD;VECTOR.field_types.Pn;VECTOR.field_types.Vn;VECTOR.field_types.Vn", "", "">;
-def BRForm_VECTOR_instructions_VDIV_h_s_d_z_pn_p_ea_e_vn_v : BedrockISAForm<
-  "VECTOR.instructions.VDIV.h_s_d_z_pn_p_ea_e_vn_v", "vdiv", "VDIV.{H|S|D}(z) Pn(p), <ea>(e), Vn(v)", "11111111000000100011zz0001ppppvvvvveeeeeee", "xxlong", "VECTOR",
-  6, 0, 1, 1, 0,
-  "z;p;v;e", "size;govern;dst;src", "VECTOR.field_types.SIZE_HSD;VECTOR.field_types.Pn;VECTOR.field_types.Vn;VECTOR.field_types.VEA", "", "">;
-def BRForm_VECTOR_instructions_VDIV_h_s_d_z_pn_p_vn_v_ea_e : BedrockISAForm<
-  "VECTOR.instructions.VDIV.h_s_d_z_pn_p_vn_v_ea_e", "vdiv", "VDIV.{H|S|D}(z) Pn(p), Vn(v), <ea>(e)", "11111111000000100011zz0010ppppvvvvveeeeeee", "xxlong", "VECTOR",
-  6, 0, 1, 1, 0,
-  "z;p;v;e", "size;govern;src;dst", "VECTOR.field_types.SIZE_HSD;VECTOR.field_types.Pn;VECTOR.field_types.Vn;VECTOR.field_types.VEA", "", "">;
-def BRForm_VECTOR_instructions_VCOPYSIGN_h_s_d_z_pn_p_vn_v_vn_w : BedrockISAForm<
-  "VECTOR.instructions.VCOPYSIGN.h_s_d_z_pn_p_vn_v_vn_w", "vcopysign", "VCOPYSIGN.{H|S|D}(z) Pn(p), Vn(v), Vn(w)", "11111101111001100zz0ppppvvvvvwwwww", "extralong", "VECTOR",
-  5, 0, 0, 0, 1,
-  "z;p;v;w", "size;govern;src;dst", "VECTOR.field_types.SIZE_HSD;VECTOR.field_types.Pn;VECTOR.field_types.Vn;VECTOR.field_types.Vn", "", "">;
-def BRForm_VECTOR_instructions_VCOPYSIGN_h_s_d_z_pn_p_ea_e_vn_v : BedrockISAForm<
-  "VECTOR.instructions.VCOPYSIGN.h_s_d_z_pn_p_ea_e_vn_v", "vcopysign", "VCOPYSIGN.{H|S|D}(z) Pn(p), <ea>(e), Vn(v)", "11111111000000100011zz0011ppppvvvvveeeeeee", "xxlong", "VECTOR",
-  6, 0, 1, 1, 0,
-  "z;p;v;e", "size;govern;dst;src", "VECTOR.field_types.SIZE_HSD;VECTOR.field_types.Pn;VECTOR.field_types.Vn;VECTOR.field_types.VEA", "", "">;
-def BRForm_VECTOR_instructions_VCOPYSIGN_h_s_d_z_pn_p_vn_v_ea_e : BedrockISAForm<
-  "VECTOR.instructions.VCOPYSIGN.h_s_d_z_pn_p_vn_v_ea_e", "vcopysign", "VCOPYSIGN.{H|S|D}(z) Pn(p), Vn(v), <ea>(e)", "11111111000000100011zz0100ppppvvvvveeeeeee", "xxlong", "VECTOR",
-  6, 0, 1, 1, 0,
-  "z;p;v;e", "size;govern;src;dst", "VECTOR.field_types.SIZE_HSD;VECTOR.field_types.Pn;VECTOR.field_types.Vn;VECTOR.field_types.VEA", "", "">;
-def BRForm_VECTOR_instructions_VEXTZW_b_z_pn_p_vn_v_vn_w : BedrockISAForm<
-  "VECTOR.instructions.VEXTZW.b_z_pn_p_vn_v_vn_w", "vextzw", "VEXTZW.{B}(z) Pn(p), Vn(v), Vn(w)", "11111101111001100zz1ppppvvvvvwwwww", "extralong", "VECTOR",
-  5, 0, 0, 0, 1,
-  "z;p;v;w", "size;govern;src;dst", "VECTOR.field_types.SIZE_B_ONLY;VECTOR.field_types.Pn;VECTOR.field_types.Vn;VECTOR.field_types.Vn", "", "">;
-def BRForm_VECTOR_instructions_VEXTSW_b_z_pn_p_vn_v_vn_w : BedrockISAForm<
-  "VECTOR.instructions.VEXTSW.b_z_pn_p_vn_v_vn_w", "vextsw", "VEXTSW.{B}(z) Pn(p), Vn(v), Vn(w)", "11111101111001101zz0ppppvvvvvwwwww", "extralong", "VECTOR",
-  5, 0, 0, 0, 1,
-  "z;p;v;w", "size;govern;src;dst", "VECTOR.field_types.SIZE_B_ONLY;VECTOR.field_types.Pn;VECTOR.field_types.Vn;VECTOR.field_types.Vn", "", "">;
-def BRForm_VECTOR_instructions_VEXTZL_b_w_z_pn_p_vn_v_vn_w : BedrockISAForm<
-  "VECTOR.instructions.VEXTZL.b_w_z_pn_p_vn_v_vn_w", "vextzl", "VEXTZL.{B|W}(z) Pn(p), Vn(v), Vn(w)", "11111101111001101zz1ppppvvvvvwwwww", "extralong", "VECTOR",
-  5, 0, 0, 0, 1,
-  "z;p;v;w", "size;govern;src;dst", "VECTOR.field_types.SIZE_V_BW;VECTOR.field_types.Pn;VECTOR.field_types.Vn;VECTOR.field_types.Vn", "", "">;
-def BRForm_VECTOR_instructions_VEXTSL_b_w_z_pn_p_vn_v_vn_w : BedrockISAForm<
-  "VECTOR.instructions.VEXTSL.b_w_z_pn_p_vn_v_vn_w", "vextsl", "VEXTSL.{B|W}(z) Pn(p), Vn(v), Vn(w)", "11111101111001110zz0ppppvvvvvwwwww", "extralong", "VECTOR",
-  5, 0, 0, 0, 1,
-  "z;p;v;w", "size;govern;src;dst", "VECTOR.field_types.SIZE_V_BW;VECTOR.field_types.Pn;VECTOR.field_types.Vn;VECTOR.field_types.Vn", "", "">;
-def BRForm_VECTOR_instructions_VEXTZQ_b_w_l_z_pn_p_vn_v_vn_w : BedrockISAForm<
-  "VECTOR.instructions.VEXTZQ.b_w_l_z_pn_p_vn_v_vn_w", "vextzq", "VEXTZQ.{B|W|L}(z) Pn(p), Vn(v), Vn(w)", "11111101111001110zz1ppppvvvvvwwwww", "extralong", "VECTOR",
-  5, 0, 0, 0, 1,
-  "z;p;v;w", "size;govern;src;dst", "VECTOR.field_types.SIZE_BWL;VECTOR.field_types.Pn;VECTOR.field_types.Vn;VECTOR.field_types.Vn", "", "">;
-def BRForm_VECTOR_instructions_VEXTSQ_b_w_l_z_pn_p_vn_v_vn_w : BedrockISAForm<
-  "VECTOR.instructions.VEXTSQ.b_w_l_z_pn_p_vn_v_vn_w", "vextsq", "VEXTSQ.{B|W|L}(z) Pn(p), Vn(v), Vn(w)", "11111101111001111zz0ppppvvvvvwwwww", "extralong", "VECTOR",
-  5, 0, 0, 0, 1,
-  "z;p;v;w", "size;govern;src;dst", "VECTOR.field_types.SIZE_BWL;VECTOR.field_types.Pn;VECTOR.field_types.Vn;VECTOR.field_types.Vn", "", "">;
-def BRForm_VECTOR_instructions_VTRUNCB_w_l_q_z_pn_p_vn_v_vn_w : BedrockISAForm<
-  "VECTOR.instructions.VTRUNCB.w_l_q_z_pn_p_vn_v_vn_w", "vtruncb", "VTRUNCB.{W|L|Q}(z) Pn(p), Vn(v), Vn(w)", "11111101111001111zz1ppppvvvvvwwwww", "extralong", "VECTOR",
-  5, 0, 0, 0, 1,
-  "z;p;v;w", "size;govern;src;dst", "base.field_types.SIZE_WLQ;VECTOR.field_types.Pn;VECTOR.field_types.Vn;VECTOR.field_types.Vn", "", "">;
-def BRForm_VECTOR_instructions_VTRUNCW_l_q_z_pn_p_vn_v_vn_w : BedrockISAForm<
-  "VECTOR.instructions.VTRUNCW.l_q_z_pn_p_vn_v_vn_w", "vtruncw", "VTRUNCW.{L|Q}(z) Pn(p), Vn(v), Vn(w)", "11111101111010000zz0ppppvvvvvwwwww", "extralong", "VECTOR",
-  5, 0, 0, 0, 1,
-  "z;p;v;w", "size;govern;src;dst", "VECTOR.field_types.SIZE_V_LQ;VECTOR.field_types.Pn;VECTOR.field_types.Vn;VECTOR.field_types.Vn", "", "">;
-def BRForm_VECTOR_instructions_VTRUNCL_q_z_pn_p_vn_v_vn_w : BedrockISAForm<
-  "VECTOR.instructions.VTRUNCL.q_z_pn_p_vn_v_vn_w", "vtruncl", "VTRUNCL.{Q}(z) Pn(p), Vn(v), Vn(w)", "11111101111010000zz1ppppvvvvvwwwww", "extralong", "VECTOR",
-  5, 0, 0, 0, 1,
-  "z;p;v;w", "size;govern;src;dst", "VECTOR.field_types.SIZE_Q_ONLY;VECTOR.field_types.Pn;VECTOR.field_types.Vn;VECTOR.field_types.Vn", "", "">;
-def BRForm_VECTOR_instructions_VCVTS_h_d_z_pn_p_vn_v_vn_w : BedrockISAForm<
-  "VECTOR.instructions.VCVTS.h_d_z_pn_p_vn_v_vn_w", "vcvts", "VCVTS.{H|D}(z) Pn(p), Vn(v), Vn(w)", "11111101111010001zz0ppppvvvvvwwwww", "extralong", "VECTOR",
-  5, 0, 0, 0, 1,
-  "z;p;v;w", "size;govern;src;dst", "VECTOR.field_types.SIZE_HD;VECTOR.field_types.Pn;VECTOR.field_types.Vn;VECTOR.field_types.Vn", "", "">;
-def BRForm_VECTOR_instructions_VCVTS_l_q_z_pn_p_vn_v_vn_w : BedrockISAForm<
-  "VECTOR.instructions.VCVTS.l_q_z_pn_p_vn_v_vn_w", "vcvts", "VCVTS.{L|Q}(z) Pn(p), Vn(v), Vn(w)", "11111101111010010zz0ppppvvvvvwwwww", "extralong", "VECTOR",
-  5, 0, 0, 0, 1,
-  "z;p;v;w", "size;govern;src;dst", "VECTOR.field_types.SIZE_V_LQ;VECTOR.field_types.Pn;VECTOR.field_types.Vn;VECTOR.field_types.Vn", "", "">;
-def BRForm_VECTOR_instructions_VCVTD_h_s_z_pn_p_vn_v_vn_w : BedrockISAForm<
-  "VECTOR.instructions.VCVTD.h_s_z_pn_p_vn_v_vn_w", "vcvtd", "VCVTD.{H|S}(z) Pn(p), Vn(v), Vn(w)", "11111101111010001zz1ppppvvvvvwwwww", "extralong", "VECTOR",
-  5, 0, 0, 0, 1,
-  "z;p;v;w", "size;govern;src;dst", "VECTOR.field_types.SIZE_HS;VECTOR.field_types.Pn;VECTOR.field_types.Vn;VECTOR.field_types.Vn", "", "">;
-def BRForm_VECTOR_instructions_VCVTD_l_q_z_pn_p_vn_v_vn_w : BedrockISAForm<
-  "VECTOR.instructions.VCVTD.l_q_z_pn_p_vn_v_vn_w", "vcvtd", "VCVTD.{L|Q}(z) Pn(p), Vn(v), Vn(w)", "11111101111010011zz0ppppvvvvvwwwww", "extralong", "VECTOR",
-  5, 0, 0, 0, 1,
-  "z;p;v;w", "size;govern;src;dst", "VECTOR.field_types.SIZE_V_LQ;VECTOR.field_types.Pn;VECTOR.field_types.Vn;VECTOR.field_types.Vn", "", "">;
-def BRForm_VECTOR_instructions_VCVTUS_l_q_z_pn_p_vn_v_vn_w : BedrockISAForm<
-  "VECTOR.instructions.VCVTUS.l_q_z_pn_p_vn_v_vn_w", "vcvtus", "VCVTUS.{L|Q}(z) Pn(p), Vn(v), Vn(w)", "11111101111010010zz1ppppvvvvvwwwww", "extralong", "VECTOR",
-  5, 0, 0, 0, 1,
-  "z;p;v;w", "size;govern;src;dst", "VECTOR.field_types.SIZE_V_LQ;VECTOR.field_types.Pn;VECTOR.field_types.Vn;VECTOR.field_types.Vn", "", "">;
-def BRForm_VECTOR_instructions_VCVTUD_l_q_z_pn_p_vn_v_vn_w : BedrockISAForm<
-  "VECTOR.instructions.VCVTUD.l_q_z_pn_p_vn_v_vn_w", "vcvtud", "VCVTUD.{L|Q}(z) Pn(p), Vn(v), Vn(w)", "11111101111010011zz1ppppvvvvvwwwww", "extralong", "VECTOR",
-  5, 0, 0, 0, 1,
-  "z;p;v;w", "size;govern;src;dst", "VECTOR.field_types.SIZE_V_LQ;VECTOR.field_types.Pn;VECTOR.field_types.Vn;VECTOR.field_types.Vn", "", "">;
-def BRForm_VECTOR_instructions_VCVTL_h_s_d_z_pn_p_vn_v_vn_w : BedrockISAForm<
-  "VECTOR.instructions.VCVTL.h_s_d_z_pn_p_vn_v_vn_w", "vcvtl", "VCVTL.{H|S|D}(z) Pn(p), Vn(v), Vn(w)", "11111101111010100zz0ppppvvvvvwwwww", "extralong", "VECTOR",
-  5, 0, 0, 0, 1,
-  "z;p;v;w", "size;govern;src;dst", "VECTOR.field_types.SIZE_HSD;VECTOR.field_types.Pn;VECTOR.field_types.Vn;VECTOR.field_types.Vn", "", "">;
-def BRForm_VECTOR_instructions_VCVTUL_h_s_d_z_pn_p_vn_v_vn_w : BedrockISAForm<
-  "VECTOR.instructions.VCVTUL.h_s_d_z_pn_p_vn_v_vn_w", "vcvtul", "VCVTUL.{H|S|D}(z) Pn(p), Vn(v), Vn(w)", "11111101111010100zz1ppppvvvvvwwwww", "extralong", "VECTOR",
-  5, 0, 0, 0, 1,
-  "z;p;v;w", "size;govern;src;dst", "VECTOR.field_types.SIZE_HSD;VECTOR.field_types.Pn;VECTOR.field_types.Vn;VECTOR.field_types.Vn", "", "">;
-def BRForm_VECTOR_instructions_VCVTQ_h_s_d_z_pn_p_vn_v_vn_w : BedrockISAForm<
-  "VECTOR.instructions.VCVTQ.h_s_d_z_pn_p_vn_v_vn_w", "vcvtq", "VCVTQ.{H|S|D}(z) Pn(p), Vn(v), Vn(w)", "11111101111010101zz0ppppvvvvvwwwww", "extralong", "VECTOR",
-  5, 0, 0, 0, 1,
-  "z;p;v;w", "size;govern;src;dst", "VECTOR.field_types.SIZE_HSD;VECTOR.field_types.Pn;VECTOR.field_types.Vn;VECTOR.field_types.Vn", "", "">;
-def BRForm_VECTOR_instructions_VCVTUQ_h_s_d_z_pn_p_vn_v_vn_w : BedrockISAForm<
-  "VECTOR.instructions.VCVTUQ.h_s_d_z_pn_p_vn_v_vn_w", "vcvtuq", "VCVTUQ.{H|S|D}(z) Pn(p), Vn(v), Vn(w)", "11111101111010101zz1ppppvvvvvwwwww", "extralong", "VECTOR",
-  5, 0, 0, 0, 1,
-  "z;p;v;w", "size;govern;src;dst", "VECTOR.field_types.SIZE_HSD;VECTOR.field_types.Pn;VECTOR.field_types.Vn;VECTOR.field_types.Vn", "", "">;
-def BRForm_VECTOR_instructions_VPERM_b_w_l_q_z_pn_p_vn_v_vn_w : BedrockISAForm<
-  "VECTOR.instructions.VPERM.b_w_l_q_z_pn_p_vn_v_vn_w", "vperm", "VPERM.{B|W|L|Q}(z) Pn(p), Vn(v), Vn(w)", "11111101111010110zz1ppppvvvvvwwwww", "extralong", "VECTOR",
-  5, 0, 0, 0, 1,
-  "z;p;v;w", "size;govern;src;dst", "base.field_types.SIZE_BWLQ;VECTOR.field_types.Pn;VECTOR.field_types.Vn;VECTOR.field_types.Vn", "", "">;
-def BRForm_VECTOR_instructions_VZIPLO_b_w_l_q_z_pn_p_vn_v_vn_w : BedrockISAForm<
-  "VECTOR.instructions.VZIPLO.b_w_l_q_z_pn_p_vn_v_vn_w", "vziplo", "VZIPLO.{B|W|L|Q}(z) Pn(p), Vn(v), Vn(w)", "11111101111010111zz0ppppvvvvvwwwww", "extralong", "VECTOR",
-  5, 0, 0, 0, 1,
-  "z;p;v;w", "size;govern;src;dst", "base.field_types.SIZE_BWLQ;VECTOR.field_types.Pn;VECTOR.field_types.Vn;VECTOR.field_types.Vn", "", "">;
-def BRForm_VECTOR_instructions_VZIPHI_b_w_l_q_z_pn_p_vn_v_vn_w : BedrockISAForm<
-  "VECTOR.instructions.VZIPHI.b_w_l_q_z_pn_p_vn_v_vn_w", "vziphi", "VZIPHI.{B|W|L|Q}(z) Pn(p), Vn(v), Vn(w)", "11111101111010111zz1ppppvvvvvwwwww", "extralong", "VECTOR",
-  5, 0, 0, 0, 1,
-  "z;p;v;w", "size;govern;src;dst", "base.field_types.SIZE_BWLQ;VECTOR.field_types.Pn;VECTOR.field_types.Vn;VECTOR.field_types.Vn", "", "">;
-def BRForm_VECTOR_instructions_VUZIPLO_b_w_l_q_z_pn_p_vn_v_vn_w : BedrockISAForm<
-  "VECTOR.instructions.VUZIPLO.b_w_l_q_z_pn_p_vn_v_vn_w", "vuziplo", "VUZIPLO.{B|W|L|Q}(z) Pn(p), Vn(v), Vn(w)", "11111101111011000zz0ppppvvvvvwwwww", "extralong", "VECTOR",
-  5, 0, 0, 0, 1,
-  "z;p;v;w", "size;govern;src;dst", "base.field_types.SIZE_BWLQ;VECTOR.field_types.Pn;VECTOR.field_types.Vn;VECTOR.field_types.Vn", "", "">;
-def BRForm_VECTOR_instructions_VUZIPHI_b_w_l_q_z_pn_p_vn_v_vn_w : BedrockISAForm<
-  "VECTOR.instructions.VUZIPHI.b_w_l_q_z_pn_p_vn_v_vn_w", "vuziphi", "VUZIPHI.{B|W|L|Q}(z) Pn(p), Vn(v), Vn(w)", "11111101111011000zz1ppppvvvvvwwwww", "extralong", "VECTOR",
-  5, 0, 0, 0, 1,
-  "z;p;v;w", "size;govern;src;dst", "base.field_types.SIZE_BWLQ;VECTOR.field_types.Pn;VECTOR.field_types.Vn;VECTOR.field_types.Vn", "", "">;
-def BRForm_VECTOR_instructions_VTRNLO_b_w_l_q_z_pn_p_vn_v_vn_w : BedrockISAForm<
-  "VECTOR.instructions.VTRNLO.b_w_l_q_z_pn_p_vn_v_vn_w", "vtrnlo", "VTRNLO.{B|W|L|Q}(z) Pn(p), Vn(v), Vn(w)", "11111101111011001zz0ppppvvvvvwwwww", "extralong", "VECTOR",
-  5, 0, 0, 0, 1,
-  "z;p;v;w", "size;govern;src;dst", "base.field_types.SIZE_BWLQ;VECTOR.field_types.Pn;VECTOR.field_types.Vn;VECTOR.field_types.Vn", "", "">;
-def BRForm_VECTOR_instructions_VTRNHI_b_w_l_q_z_pn_p_vn_v_vn_w : BedrockISAForm<
-  "VECTOR.instructions.VTRNHI.b_w_l_q_z_pn_p_vn_v_vn_w", "vtrnhi", "VTRNHI.{B|W|L|Q}(z) Pn(p), Vn(v), Vn(w)", "11111101111011001zz1ppppvvvvvwwwww", "extralong", "VECTOR",
-  5, 0, 0, 0, 1,
-  "z;p;v;w", "size;govern;src;dst", "base.field_types.SIZE_BWLQ;VECTOR.field_types.Pn;VECTOR.field_types.Vn;VECTOR.field_types.Vn", "", "">;
-def BRForm_VECTOR_instructions_VCVTH_s_d_z_pn_p_vn_v_vn_w : BedrockISAForm<
-  "VECTOR.instructions.VCVTH.s_d_z_pn_p_vn_v_vn_w", "vcvth", "VCVTH.{S|D}(z) Pn(p), Vn(v), Vn(w)", "11111101111011010zz0ppppvvvvvwwwww", "extralong", "VECTOR",
-  5, 0, 0, 0, 1,
-  "z;p;v;w", "size;govern;src;dst", "VECTOR.field_types.SIZE_V_SD;VECTOR.field_types.Pn;VECTOR.field_types.Vn;VECTOR.field_types.Vn", "", "">;
-def BRForm_VECTOR_instructions_VCVTH_l_q_z_pn_p_vn_v_vn_w : BedrockISAForm<
-  "VECTOR.instructions.VCVTH.l_q_z_pn_p_vn_v_vn_w", "vcvth", "VCVTH.{L|Q}(z) Pn(p), Vn(v), Vn(w)", "11111101111011011zz0ppppvvvvvwwwww", "extralong", "VECTOR",
-  5, 0, 0, 0, 1,
-  "z;p;v;w", "size;govern;src;dst", "VECTOR.field_types.SIZE_V_LQ;VECTOR.field_types.Pn;VECTOR.field_types.Vn;VECTOR.field_types.Vn", "", "">;
-def BRForm_VECTOR_instructions_VCVTUH_l_q_z_pn_p_vn_v_vn_w : BedrockISAForm<
-  "VECTOR.instructions.VCVTUH.l_q_z_pn_p_vn_v_vn_w", "vcvtuh", "VCVTUH.{L|Q}(z) Pn(p), Vn(v), Vn(w)", "11111101111011011zz1ppppvvvvvwwwww", "extralong", "VECTOR",
-  5, 0, 0, 0, 1,
-  "z;p;v;w", "size;govern;src;dst", "VECTOR.field_types.SIZE_V_LQ;VECTOR.field_types.Pn;VECTOR.field_types.Vn;VECTOR.field_types.Vn", "", "">;
-def BRForm_VECTOR_instructions_VMADD_h_s_d_z_pn_p_vn_v_vn_w_vn_y : BedrockISAForm<
-  "VECTOR.instructions.VMADD.h_s_d_z_pn_p_vn_v_vn_w_vn_y", "vmadd", "VMADD.{H|S|D}(z) Pn(p), Vn(v), Vn(w), Vn(y)", "111111011100zz0ppppvvvvvwwwwwyyyyy", "extralong", "VECTOR",
-  5, 0, 0, 0, 1,
-  "z;p;v;w;y", "size;govern;lhs;rhs;dst", "VECTOR.field_types.SIZE_HSD;VECTOR.field_types.Pn;VECTOR.field_types.Vn;VECTOR.field_types.Vn;VECTOR.field_types.Vn", "", "">;
-def BRForm_VECTOR_instructions_VMSUB_h_s_d_z_pn_p_vn_v_vn_w_vn_y : BedrockISAForm<
-  "VECTOR.instructions.VMSUB.h_s_d_z_pn_p_vn_v_vn_w_vn_y", "vmsub", "VMSUB.{H|S|D}(z) Pn(p), Vn(v), Vn(w), Vn(y)", "111111011100zz1ppppvvvvvwwwwwyyyyy", "extralong", "VECTOR",
-  5, 0, 0, 0, 1,
-  "z;p;v;w;y", "size;govern;lhs;rhs;dst", "VECTOR.field_types.SIZE_HSD;VECTOR.field_types.Pn;VECTOR.field_types.Vn;VECTOR.field_types.Vn;VECTOR.field_types.Vn", "", "">;
-def BRForm_VECTOR_instructions_VNMADD_h_s_d_z_pn_p_vn_v_vn_w_vn_y : BedrockISAForm<
-  "VECTOR.instructions.VNMADD.h_s_d_z_pn_p_vn_v_vn_w_vn_y", "vnmadd", "VNMADD.{H|S|D}(z) Pn(p), Vn(v), Vn(w), Vn(y)", "111111011101zz0ppppvvvvvwwwwwyyyyy", "extralong", "VECTOR",
-  5, 0, 0, 0, 1,
-  "z;p;v;w;y", "size;govern;lhs;rhs;dst", "VECTOR.field_types.SIZE_HSD;VECTOR.field_types.Pn;VECTOR.field_types.Vn;VECTOR.field_types.Vn;VECTOR.field_types.Vn", "", "">;
-def BRForm_VECTOR_instructions_VNMSUB_h_s_d_z_pn_p_vn_v_vn_w_vn_y : BedrockISAForm<
-  "VECTOR.instructions.VNMSUB.h_s_d_z_pn_p_vn_v_vn_w_vn_y", "vnmsub", "VNMSUB.{H|S|D}(z) Pn(p), Vn(v), Vn(w), Vn(y)", "111111011101zz1ppppvvvvvwwwwwyyyyy", "extralong", "VECTOR",
-  5, 0, 0, 0, 1,
-  "z;p;v;w;y", "size;govern;lhs;rhs;dst", "VECTOR.field_types.SIZE_HSD;VECTOR.field_types.Pn;VECTOR.field_types.Vn;VECTOR.field_types.Vn;VECTOR.field_types.Vn", "", "">;
-def BRForm_VECTOR_instructions_VSLICE_b_w_l_q_z_pn_p_vn_v_imm6_i_vn_w : BedrockISAForm<
-  "VECTOR.instructions.VSLICE.b_w_l_q_z_pn_p_vn_v_imm6_i_vn_w", "vslice", "VSLICE.{B|W|L|Q}(z) Pn(p), Vn(v), imm6(i), Vn(w)", "111111011010zzppppvvvvvwwwwwiiiiii", "extralong", "VECTOR",
-  5, 0, 0, 0, 1,
-  "z;p;v;w;i", "size;govern;src;dst;count", "base.field_types.SIZE_BWLQ;VECTOR.field_types.Pn;VECTOR.field_types.Vn;VECTOR.field_types.Vn;base.field_types.IMM6", "", "">;
-def BRForm_VECTOR_instructions_VSLIDEUP_b_w_l_q_z_pn_p_imm6_i_vn_v : BedrockISAForm<
-  "VECTOR.instructions.VSLIDEUP.b_w_l_q_z_pn_p_imm6_i_vn_v", "vslideup", "VSLIDEUP.{B|W|L|Q}(z) Pn(p), imm6(i), Vn(v)", "11111101111100101zzppppvvvvviiiiii", "extralong", "VECTOR",
-  5, 0, 0, 0, 1,
-  "z;p;v;i", "size;govern;dst;count", "base.field_types.SIZE_BWLQ;VECTOR.field_types.Pn;VECTOR.field_types.Vn;base.field_types.IMM6", "", "">;
-def BRForm_VECTOR_instructions_VSLIDEDN_b_w_l_q_z_pn_p_imm6_i_vn_v : BedrockISAForm<
-  "VECTOR.instructions.VSLIDEDN.b_w_l_q_z_pn_p_imm6_i_vn_v", "vslidedn", "VSLIDEDN.{B|W|L|Q}(z) Pn(p), imm6(i), Vn(v)", "11111101111100110zzppppvvvvviiiiii", "extralong", "VECTOR",
-  5, 0, 0, 0, 1,
-  "z;p;v;i", "size;govern;dst;count", "base.field_types.SIZE_BWLQ;VECTOR.field_types.Pn;VECTOR.field_types.Vn;base.field_types.IMM6", "", "">;
-def BRForm_VECTOR_instructions_VEXTRACT_b_w_l_q_z_vn_v_rn_r_rn_s : BedrockISAForm<
-  "VECTOR.instructions.VEXTRACT.b_w_l_q_z_vn_v_rn_r_rn_s", "vextract", "VEXTRACT.{B|W|L|Q}(z) Vn(v), Rn(r), Rn(s)", "11111101111110000zz00rrrrssssvvvvv", "extralong", "VECTOR",
-  5, 0, 0, 0, 1,
-  "z;r;s;v", "size;index;dst;src", "base.field_types.SIZE_BWLQ;base.field_types.Rn;base.field_types.Rn;VECTOR.field_types.Vn", "", "">;
-def BRForm_VECTOR_instructions_VEXTRACT_h_s_d_z_vn_v_rn_r_fn_s : BedrockISAForm<
-  "VECTOR.instructions.VEXTRACT.h_s_d_z_vn_v_rn_r_fn_s", "vextract", "VEXTRACT.{H|S|D}(z) Vn(v), Rn(r), Fn(s)", "11111101111110000zz10rrrrssssvvvvv", "extralong", "VECTOR",
-  5, 0, 0, 0, 1,
-  "z;r;s;v", "size;index;dst;src", "VECTOR.field_types.SIZE_HSD;base.field_types.Rn;FP.field_types.Fn;VECTOR.field_types.Vn", "", "">;
-def BRForm_VECTOR_instructions_VINSERT_b_w_l_q_z_rn_r_rn_s_vn_v : BedrockISAForm<
-  "VECTOR.instructions.VINSERT.b_w_l_q_z_rn_r_rn_s_vn_v", "vinsert", "VINSERT.{B|W|L|Q}(z) Rn(r), Rn(s), Vn(v)", "11111101111110000zz01rrrrssssvvvvv", "extralong", "VECTOR",
-  5, 0, 0, 0, 1,
-  "z;r;s;v", "size;src;index;dst", "base.field_types.SIZE_BWLQ;base.field_types.Rn;base.field_types.Rn;VECTOR.field_types.Vn", "", "">;
-def BRForm_VECTOR_instructions_VINSERT_h_s_d_z_fn_r_rn_s_vn_v : BedrockISAForm<
-  "VECTOR.instructions.VINSERT.h_s_d_z_fn_r_rn_s_vn_v", "vinsert", "VINSERT.{H|S|D}(z) Fn(r), Rn(s), Vn(v)", "11111101111110000zz11rrrrssssvvvvv", "extralong", "VECTOR",
-  5, 0, 0, 0, 1,
-  "z;r;s;v", "size;src;index;dst", "VECTOR.field_types.SIZE_HSD;FP.field_types.Fn;base.field_types.Rn;VECTOR.field_types.Vn", "", "">;
-def BRForm_VECTOR_instructions_VREDADD_b_w_l_q_z_pn_p_vn_v_rn_r : BedrockISAForm<
-  "VECTOR.instructions.VREDADD.b_w_l_q_z_pn_p_vn_v_rn_r", "vredadd", "VREDADD.{B|W|L|Q}(z) Pn(p), Vn(v), Rn(r)", "11111101111110100zz00pppprrrrvvvvv", "extralong", "VECTOR",
-  5, 0, 0, 0, 1,
-  "z;p;r;v", "size;govern;dst;src", "base.field_types.SIZE_BWLQ;VECTOR.field_types.Pn;base.field_types.Rn;VECTOR.field_types.Vn", "", "">;
-def BRForm_VECTOR_instructions_VREDADD_h_s_d_z_pn_p_vn_v_fn_r : BedrockISAForm<
-  "VECTOR.instructions.VREDADD.h_s_d_z_pn_p_vn_v_fn_r", "vredadd", "VREDADD.{H|S|D}(z) Pn(p), Vn(v), Fn(r)", "11111101111110110zz00pppprrrrvvvvv", "extralong", "VECTOR",
-  5, 0, 0, 0, 1,
-  "z;p;r;v", "size;govern;dst;src", "VECTOR.field_types.SIZE_HSD;VECTOR.field_types.Pn;FP.field_types.Fn;VECTOR.field_types.Vn", "", "">;
-def BRForm_VECTOR_instructions_VREDADD_b_w_l_q_z_pn_p_ea_e_rn_r : BedrockISAForm<
-  "VECTOR.instructions.VREDADD.b_w_l_q_z_pn_p_ea_e_rn_r", "vredadd", "VREDADD.{B|W|L|Q}(z) Pn(p), <ea>(e), Rn(r)", "11111111000000101110zz00000pppprrrreeeeeee", "xxlong", "VECTOR",
-  6, 0, 1, 1, 0,
-  "z;p;r;e", "size;govern;dst;src", "base.field_types.SIZE_BWLQ;VECTOR.field_types.Pn;base.field_types.Rn;VECTOR.field_types.VEA", "", "">;
-def BRForm_VECTOR_instructions_VREDADD_h_s_d_z_pn_p_ea_e_fn_r : BedrockISAForm<
-  "VECTOR.instructions.VREDADD.h_s_d_z_pn_p_ea_e_fn_r", "vredadd", "VREDADD.{H|S|D}(z) Pn(p), <ea>(e), Fn(r)", "11111111000000101110zz01000pppprrrreeeeeee", "xxlong", "VECTOR",
-  6, 0, 1, 1, 0,
-  "z;p;r;e", "size;govern;dst;src", "VECTOR.field_types.SIZE_HSD;VECTOR.field_types.Pn;FP.field_types.Fn;VECTOR.field_types.VEA", "", "">;
-def BRForm_VECTOR_instructions_VREDMINS_b_w_l_q_z_pn_p_vn_v_rn_r : BedrockISAForm<
-  "VECTOR.instructions.VREDMINS.b_w_l_q_z_pn_p_vn_v_rn_r", "vredmins", "VREDMINS.{B|W|L|Q}(z) Pn(p), Vn(v), Rn(r)", "11111101111110100zz01pppprrrrvvvvv", "extralong", "VECTOR",
-  5, 0, 0, 0, 1,
-  "z;p;r;v", "size;govern;dst;src", "base.field_types.SIZE_BWLQ;VECTOR.field_types.Pn;base.field_types.Rn;VECTOR.field_types.Vn", "", "">;
-def BRForm_VECTOR_instructions_VREDMINS_b_w_l_q_z_pn_p_ea_e_rn_r : BedrockISAForm<
-  "VECTOR.instructions.VREDMINS.b_w_l_q_z_pn_p_ea_e_rn_r", "vredmins", "VREDMINS.{B|W|L|Q}(z) Pn(p), <ea>(e), Rn(r)", "11111111000000101110zz00001pppprrrreeeeeee", "xxlong", "VECTOR",
-  6, 0, 1, 1, 0,
-  "z;p;r;e", "size;govern;dst;src", "base.field_types.SIZE_BWLQ;VECTOR.field_types.Pn;base.field_types.Rn;VECTOR.field_types.VEA", "", "">;
-def BRForm_VECTOR_instructions_VREDMINU_b_w_l_q_z_pn_p_vn_v_rn_r : BedrockISAForm<
-  "VECTOR.instructions.VREDMINU.b_w_l_q_z_pn_p_vn_v_rn_r", "vredminu", "VREDMINU.{B|W|L|Q}(z) Pn(p), Vn(v), Rn(r)", "11111101111110100zz10pppprrrrvvvvv", "extralong", "VECTOR",
-  5, 0, 0, 0, 1,
-  "z;p;r;v", "size;govern;dst;src", "base.field_types.SIZE_BWLQ;VECTOR.field_types.Pn;base.field_types.Rn;VECTOR.field_types.Vn", "", "">;
-def BRForm_VECTOR_instructions_VREDMINU_b_w_l_q_z_pn_p_ea_e_rn_r : BedrockISAForm<
-  "VECTOR.instructions.VREDMINU.b_w_l_q_z_pn_p_ea_e_rn_r", "vredminu", "VREDMINU.{B|W|L|Q}(z) Pn(p), <ea>(e), Rn(r)", "11111111000000101110zz00010pppprrrreeeeeee", "xxlong", "VECTOR",
-  6, 0, 1, 1, 0,
-  "z;p;r;e", "size;govern;dst;src", "base.field_types.SIZE_BWLQ;VECTOR.field_types.Pn;base.field_types.Rn;VECTOR.field_types.VEA", "", "">;
-def BRForm_VECTOR_instructions_VREDMAXS_b_w_l_q_z_pn_p_vn_v_rn_r : BedrockISAForm<
-  "VECTOR.instructions.VREDMAXS.b_w_l_q_z_pn_p_vn_v_rn_r", "vredmaxs", "VREDMAXS.{B|W|L|Q}(z) Pn(p), Vn(v), Rn(r)", "11111101111110100zz11pppprrrrvvvvv", "extralong", "VECTOR",
-  5, 0, 0, 0, 1,
-  "z;p;r;v", "size;govern;dst;src", "base.field_types.SIZE_BWLQ;VECTOR.field_types.Pn;base.field_types.Rn;VECTOR.field_types.Vn", "", "">;
-def BRForm_VECTOR_instructions_VREDMAXS_b_w_l_q_z_pn_p_ea_e_rn_r : BedrockISAForm<
-  "VECTOR.instructions.VREDMAXS.b_w_l_q_z_pn_p_ea_e_rn_r", "vredmaxs", "VREDMAXS.{B|W|L|Q}(z) Pn(p), <ea>(e), Rn(r)", "11111111000000101110zz00011pppprrrreeeeeee", "xxlong", "VECTOR",
-  6, 0, 1, 1, 0,
-  "z;p;r;e", "size;govern;dst;src", "base.field_types.SIZE_BWLQ;VECTOR.field_types.Pn;base.field_types.Rn;VECTOR.field_types.VEA", "", "">;
-def BRForm_VECTOR_instructions_VREDMAXU_b_w_l_q_z_pn_p_vn_v_rn_r : BedrockISAForm<
-  "VECTOR.instructions.VREDMAXU.b_w_l_q_z_pn_p_vn_v_rn_r", "vredmaxu", "VREDMAXU.{B|W|L|Q}(z) Pn(p), Vn(v), Rn(r)", "11111101111110101zz00pppprrrrvvvvv", "extralong", "VECTOR",
-  5, 0, 0, 0, 1,
-  "z;p;r;v", "size;govern;dst;src", "base.field_types.SIZE_BWLQ;VECTOR.field_types.Pn;base.field_types.Rn;VECTOR.field_types.Vn", "", "">;
-def BRForm_VECTOR_instructions_VREDMAXU_b_w_l_q_z_pn_p_ea_e_rn_r : BedrockISAForm<
-  "VECTOR.instructions.VREDMAXU.b_w_l_q_z_pn_p_ea_e_rn_r", "vredmaxu", "VREDMAXU.{B|W|L|Q}(z) Pn(p), <ea>(e), Rn(r)", "11111111000000101110zz00100pppprrrreeeeeee", "xxlong", "VECTOR",
-  6, 0, 1, 1, 0,
-  "z;p;r;e", "size;govern;dst;src", "base.field_types.SIZE_BWLQ;VECTOR.field_types.Pn;base.field_types.Rn;VECTOR.field_types.VEA", "", "">;
-def BRForm_VECTOR_instructions_VREDAND_b_w_l_q_z_pn_p_vn_v_rn_r : BedrockISAForm<
-  "VECTOR.instructions.VREDAND.b_w_l_q_z_pn_p_vn_v_rn_r", "vredand", "VREDAND.{B|W|L|Q}(z) Pn(p), Vn(v), Rn(r)", "11111101111110101zz01pppprrrrvvvvv", "extralong", "VECTOR",
-  5, 0, 0, 0, 1,
-  "z;p;r;v", "size;govern;dst;src", "base.field_types.SIZE_BWLQ;VECTOR.field_types.Pn;base.field_types.Rn;VECTOR.field_types.Vn", "", "">;
-def BRForm_VECTOR_instructions_VREDAND_b_w_l_q_z_pn_p_ea_e_rn_r : BedrockISAForm<
-  "VECTOR.instructions.VREDAND.b_w_l_q_z_pn_p_ea_e_rn_r", "vredand", "VREDAND.{B|W|L|Q}(z) Pn(p), <ea>(e), Rn(r)", "11111111000000101110zz00101pppprrrreeeeeee", "xxlong", "VECTOR",
-  6, 0, 1, 1, 0,
-  "z;p;r;e", "size;govern;dst;src", "base.field_types.SIZE_BWLQ;VECTOR.field_types.Pn;base.field_types.Rn;VECTOR.field_types.VEA", "", "">;
-def BRForm_VECTOR_instructions_VREDOR_b_w_l_q_z_pn_p_vn_v_rn_r : BedrockISAForm<
-  "VECTOR.instructions.VREDOR.b_w_l_q_z_pn_p_vn_v_rn_r", "vredor", "VREDOR.{B|W|L|Q}(z) Pn(p), Vn(v), Rn(r)", "11111101111110101zz10pppprrrrvvvvv", "extralong", "VECTOR",
-  5, 0, 0, 0, 1,
-  "z;p;r;v", "size;govern;dst;src", "base.field_types.SIZE_BWLQ;VECTOR.field_types.Pn;base.field_types.Rn;VECTOR.field_types.Vn", "", "">;
-def BRForm_VECTOR_instructions_VREDOR_b_w_l_q_z_pn_p_ea_e_rn_r : BedrockISAForm<
-  "VECTOR.instructions.VREDOR.b_w_l_q_z_pn_p_ea_e_rn_r", "vredor", "VREDOR.{B|W|L|Q}(z) Pn(p), <ea>(e), Rn(r)", "11111111000000101110zz00110pppprrrreeeeeee", "xxlong", "VECTOR",
-  6, 0, 1, 1, 0,
-  "z;p;r;e", "size;govern;dst;src", "base.field_types.SIZE_BWLQ;VECTOR.field_types.Pn;base.field_types.Rn;VECTOR.field_types.VEA", "", "">;
-def BRForm_VECTOR_instructions_VREDXOR_b_w_l_q_z_pn_p_vn_v_rn_r : BedrockISAForm<
-  "VECTOR.instructions.VREDXOR.b_w_l_q_z_pn_p_vn_v_rn_r", "vredxor", "VREDXOR.{B|W|L|Q}(z) Pn(p), Vn(v), Rn(r)", "11111101111110101zz11pppprrrrvvvvv", "extralong", "VECTOR",
-  5, 0, 0, 0, 1,
-  "z;p;r;v", "size;govern;dst;src", "base.field_types.SIZE_BWLQ;VECTOR.field_types.Pn;base.field_types.Rn;VECTOR.field_types.Vn", "", "">;
-def BRForm_VECTOR_instructions_VREDXOR_b_w_l_q_z_pn_p_ea_e_rn_r : BedrockISAForm<
-  "VECTOR.instructions.VREDXOR.b_w_l_q_z_pn_p_ea_e_rn_r", "vredxor", "VREDXOR.{B|W|L|Q}(z) Pn(p), <ea>(e), Rn(r)", "11111111000000101110zz00111pppprrrreeeeeee", "xxlong", "VECTOR",
-  6, 0, 1, 1, 0,
-  "z;p;r;e", "size;govern;dst;src", "base.field_types.SIZE_BWLQ;VECTOR.field_types.Pn;base.field_types.Rn;VECTOR.field_types.VEA", "", "">;
-def BRForm_VECTOR_instructions_VREDMIN_h_s_d_z_pn_p_vn_v_fn_r : BedrockISAForm<
-  "VECTOR.instructions.VREDMIN.h_s_d_z_pn_p_vn_v_fn_r", "vredmin", "VREDMIN.{H|S|D}(z) Pn(p), Vn(v), Fn(r)", "11111101111110110zz01pppprrrrvvvvv", "extralong", "VECTOR",
-  5, 0, 0, 0, 1,
-  "z;p;r;v", "size;govern;dst;src", "VECTOR.field_types.SIZE_HSD;VECTOR.field_types.Pn;FP.field_types.Fn;VECTOR.field_types.Vn", "", "">;
-def BRForm_VECTOR_instructions_VREDMIN_h_s_d_z_pn_p_ea_e_fn_r : BedrockISAForm<
-  "VECTOR.instructions.VREDMIN.h_s_d_z_pn_p_ea_e_fn_r", "vredmin", "VREDMIN.{H|S|D}(z) Pn(p), <ea>(e), Fn(r)", "11111111000000101110zz01001pppprrrreeeeeee", "xxlong", "VECTOR",
-  6, 0, 1, 1, 0,
-  "z;p;r;e", "size;govern;dst;src", "VECTOR.field_types.SIZE_HSD;VECTOR.field_types.Pn;FP.field_types.Fn;VECTOR.field_types.VEA", "", "">;
-def BRForm_VECTOR_instructions_VREDMAX_h_s_d_z_pn_p_vn_v_fn_r : BedrockISAForm<
-  "VECTOR.instructions.VREDMAX.h_s_d_z_pn_p_vn_v_fn_r", "vredmax", "VREDMAX.{H|S|D}(z) Pn(p), Vn(v), Fn(r)", "11111101111110110zz10pppprrrrvvvvv", "extralong", "VECTOR",
-  5, 0, 0, 0, 1,
-  "z;p;r;v", "size;govern;dst;src", "VECTOR.field_types.SIZE_HSD;VECTOR.field_types.Pn;FP.field_types.Fn;VECTOR.field_types.Vn", "", "">;
-def BRForm_VECTOR_instructions_VREDMAX_h_s_d_z_pn_p_ea_e_fn_r : BedrockISAForm<
-  "VECTOR.instructions.VREDMAX.h_s_d_z_pn_p_ea_e_fn_r", "vredmax", "VREDMAX.{H|S|D}(z) Pn(p), <ea>(e), Fn(r)", "11111111000000101110zz01010pppprrrreeeeeee", "xxlong", "VECTOR",
-  6, 0, 1, 1, 0,
-  "z;p;r;e", "size;govern;dst;src", "VECTOR.field_types.SIZE_HSD;VECTOR.field_types.Pn;FP.field_types.Fn;VECTOR.field_types.VEA", "", "">;
-def BRForm_VECTOR_instructions_PSEL_pn_p_pn_q_pn_h : BedrockISAForm<
-  "VECTOR.instructions.PSEL.pn_p_pn_q_pn_h", "psel", "PSEL Pn(p), Pn(q), Pn(h)", "1111110111111100000000ppppqqqqhhhh", "extralong", "VECTOR",
-  5, 0, 0, 0, 1,
-  "p;q;h", "select;src;dst", "VECTOR.field_types.Pn;VECTOR.field_types.Pn;VECTOR.field_types.Pn", "", "">;
-def BRForm_VECTOR_instructions_PZIPLO_b_w_l_q_z_pn_p_pn_q_pn_h : BedrockISAForm<
-  "VECTOR.instructions.PZIPLO.b_w_l_q_z_pn_p_pn_q_pn_h", "pziplo", "PZIPLO.{B|W|L|Q}(z) Pn(p), Pn(q), Pn(h)", "11111101111111000zz001ppppqqqqhhhh", "extralong", "VECTOR",
-  5, 0, 0, 0, 1,
-  "z;p;q;h", "size;lhs;rhs;dst", "base.field_types.SIZE_BWLQ;VECTOR.field_types.Pn;VECTOR.field_types.Pn;VECTOR.field_types.Pn", "", "">;
-def BRForm_VECTOR_instructions_PZIPHI_b_w_l_q_z_pn_p_pn_q_pn_h : BedrockISAForm<
-  "VECTOR.instructions.PZIPHI.b_w_l_q_z_pn_p_pn_q_pn_h", "pziphi", "PZIPHI.{B|W|L|Q}(z) Pn(p), Pn(q), Pn(h)", "11111101111111000zz010ppppqqqqhhhh", "extralong", "VECTOR",
-  5, 0, 0, 0, 1,
-  "z;p;q;h", "size;lhs;rhs;dst", "base.field_types.SIZE_BWLQ;VECTOR.field_types.Pn;VECTOR.field_types.Pn;VECTOR.field_types.Pn", "", "">;
-def BRForm_VECTOR_instructions_PUZIPLO_b_w_l_q_z_pn_p_pn_q_pn_h : BedrockISAForm<
-  "VECTOR.instructions.PUZIPLO.b_w_l_q_z_pn_p_pn_q_pn_h", "puziplo", "PUZIPLO.{B|W|L|Q}(z) Pn(p), Pn(q), Pn(h)", "11111101111111000zz011ppppqqqqhhhh", "extralong", "VECTOR",
-  5, 0, 0, 0, 1,
-  "z;p;q;h", "size;lhs;rhs;dst", "base.field_types.SIZE_BWLQ;VECTOR.field_types.Pn;VECTOR.field_types.Pn;VECTOR.field_types.Pn", "", "">;
-def BRForm_VECTOR_instructions_PUZIPHI_b_w_l_q_z_pn_p_pn_q_pn_h : BedrockISAForm<
-  "VECTOR.instructions.PUZIPHI.b_w_l_q_z_pn_p_pn_q_pn_h", "puziphi", "PUZIPHI.{B|W|L|Q}(z) Pn(p), Pn(q), Pn(h)", "11111101111111000zz100ppppqqqqhhhh", "extralong", "VECTOR",
-  5, 0, 0, 0, 1,
-  "z;p;q;h", "size;lhs;rhs;dst", "base.field_types.SIZE_BWLQ;VECTOR.field_types.Pn;VECTOR.field_types.Pn;VECTOR.field_types.Pn", "", "">;
-def BRForm_VECTOR_instructions_PTRNLO_b_w_l_q_z_pn_p_pn_q_pn_h : BedrockISAForm<
-  "VECTOR.instructions.PTRNLO.b_w_l_q_z_pn_p_pn_q_pn_h", "ptrnlo", "PTRNLO.{B|W|L|Q}(z) Pn(p), Pn(q), Pn(h)", "11111101111111000zz101ppppqqqqhhhh", "extralong", "VECTOR",
-  5, 0, 0, 0, 1,
-  "z;p;q;h", "size;lhs;rhs;dst", "base.field_types.SIZE_BWLQ;VECTOR.field_types.Pn;VECTOR.field_types.Pn;VECTOR.field_types.Pn", "", "">;
-def BRForm_VECTOR_instructions_PTRNHI_b_w_l_q_z_pn_p_pn_q_pn_h : BedrockISAForm<
-  "VECTOR.instructions.PTRNHI.b_w_l_q_z_pn_p_pn_q_pn_h", "ptrnhi", "PTRNHI.{B|W|L|Q}(z) Pn(p), Pn(q), Pn(h)", "11111101111111000zz110ppppqqqqhhhh", "extralong", "VECTOR",
-  5, 0, 0, 0, 1,
-  "z;p;q;h", "size;lhs;rhs;dst", "base.field_types.SIZE_BWLQ;VECTOR.field_types.Pn;VECTOR.field_types.Pn;VECTOR.field_types.Pn", "", "">;
-def BRForm_VECTOR_instructions_PSLICE_b_w_l_q_z_pn_p_imm6_i_pn_q : BedrockISAForm<
-  "VECTOR.instructions.PSLICE.b_w_l_q_z_pn_p_imm6_i_pn_q", "pslice", "PSLICE.{B|W|L|Q}(z) Pn(p), imm6(i), Pn(q)", "111111011111111000zzppppqqqqiiiiii", "extralong", "VECTOR",
-  5, 0, 0, 0, 1,
-  "z;p;q;i", "size;src;dst;count", "base.field_types.SIZE_BWLQ;VECTOR.field_types.Pn;VECTOR.field_types.Pn;base.field_types.IMM6", "", "">;
-def BRForm_VECTOR_instructions_VMOVZ_b_w_l_q_z_pn_p_ea_e_vn_v : BedrockISAForm<
-  "VECTOR.instructions.VMOVZ.b_w_l_q_z_pn_p_ea_e_vn_v", "vmovz", "VMOVZ.{B|W|L|Q}(z) Pn(p), <ea>(e), Vn(v)", "11111111000000100000zz0010ppppvvvvveeeeeee", "xxlong", "VECTOR",
-  6, 0, 1, 1, 0,
-  "z;p;v;e", "size;govern;dst;src", "base.field_types.SIZE_BWLQ;VECTOR.field_types.Pn;VECTOR.field_types.Vn;VECTOR.field_types.VEA", "", "">;
-def BRForm_VECTOR_instructions_PLOOP_b_w_l_q_z_rn_r_rn_s_pn_p_ea_e : BedrockISAForm<
-  "VECTOR.instructions.PLOOP.b_w_l_q_z_rn_r_rn_s_pn_p_ea_e", "ploop", "PLOOP.{B|W|L|Q}(z) Rn(r), Rn(s), Pn(p), <ea>(e)", "11111111000000101010zz0rrrrssssppppeeeeeee", "xxlong", "VECTOR",
-  6, 0, 1, 1, 0,
-  "z;r;s;p;e", "size;remaining;offset;predicate;target", "base.field_types.SIZE_BWLQ;base.field_types.Rn;base.field_types.Rn;VECTOR.field_types.Pn;base.field_types.EA", "", "">;
-def BRForm_VECTOR_instructions_PMOV_ea_e_pn_p : BedrockISAForm<
-  "VECTOR.instructions.PMOV.ea_e_pn_p", "pmov", "PMOV <ea>(e), Pn(p)", "1111111100000011000000000000000ppppeeeeeee", "xxlong", "VECTOR",
-  6, 0, 1, 1, 0,
-  "p;e", "dst;src", "VECTOR.field_types.Pn;base.field_types.EA", "", "">;
-def BRForm_VECTOR_instructions_PMOV_pn_p_ea_e : BedrockISAForm<
-  "VECTOR.instructions.PMOV.pn_p_ea_e", "pmov", "PMOV Pn(p), <ea>(e)", "1111111100000011000000000000001ppppeeeeeee", "xxlong", "VECTOR",
-  6, 0, 1, 1, 0,
-  "p;e", "src;dst", "VECTOR.field_types.Pn;base.field_types.EA", "", "">;
+  "z;p;v", "size;govern;dst", "SIZE_HSD;Pn;Vn", "", "">;
+def BRForm_VECTORFP_VFTRUNC_h_s_d_z_pn_p_ea_e_vn_v : BedrockISAForm<
+  "VECTORFP.VFTRUNC.h_s_d_z_pn_p_ea_e_vn_v", "vftrunc", "VFTRUNC.{H|S|D}(z) Pn(p), <ea>(e), Vn(v)", "11111111000000100100zz1011ppppvvvvveeeeeee", "xxlong", "VECTORFP",
+  6, 0, 1, 1, 0,
+  "z;p;v;e", "size;govern;dst;src", "SIZE_HSD;Pn;Vn;VEA", "", "">;
+def BRForm_VECTORFP_VFTRUNC_h_s_d_z_pn_p_vn_v_ea_e : BedrockISAForm<
+  "VECTORFP.VFTRUNC.h_s_d_z_pn_p_vn_v_ea_e", "vftrunc", "VFTRUNC.{H|S|D}(z) Pn(p), Vn(v), <ea>(e)", "11111111000000100100zz1100ppppvvvvveeeeeee", "xxlong", "VECTORFP",
+  6, 0, 1, 1, 0,
+  "z;p;v;e", "size;govern;src;dst", "SIZE_HSD;Pn;Vn;VEA", "", "">;
+def BRForm_VECTORFP_VFFLOOR_h_s_d_z_pn_p_vn_v : BedrockISAForm<
+  "VECTORFP.VFFLOOR.h_s_d_z_pn_p_vn_v", "vffloor", "VFFLOOR.{H|S|D}(z) Pn(p), Vn(v)", "11111010000111zz0ppppvvvvv", "long", "VECTORFP",
+  4, 0, 0, 0, 1,
+  "z;p;v", "size;govern;dst", "SIZE_HSD;Pn;Vn", "", "">;
+def BRForm_VECTORFP_VFFLOOR_h_s_d_z_pn_p_ea_e_vn_v : BedrockISAForm<
+  "VECTORFP.VFFLOOR.h_s_d_z_pn_p_ea_e_vn_v", "vffloor", "VFFLOOR.{H|S|D}(z) Pn(p), <ea>(e), Vn(v)", "11111111000000100100zz1101ppppvvvvveeeeeee", "xxlong", "VECTORFP",
+  6, 0, 1, 1, 0,
+  "z;p;v;e", "size;govern;dst;src", "SIZE_HSD;Pn;Vn;VEA", "", "">;
+def BRForm_VECTORFP_VFFLOOR_h_s_d_z_pn_p_vn_v_ea_e : BedrockISAForm<
+  "VECTORFP.VFFLOOR.h_s_d_z_pn_p_vn_v_ea_e", "vffloor", "VFFLOOR.{H|S|D}(z) Pn(p), Vn(v), <ea>(e)", "11111111000000100100zz1110ppppvvvvveeeeeee", "xxlong", "VECTORFP",
+  6, 0, 1, 1, 0,
+  "z;p;v;e", "size;govern;src;dst", "SIZE_HSD;Pn;Vn;VEA", "", "">;
+def BRForm_VECTORFP_VFCEIL_h_s_d_z_pn_p_vn_v : BedrockISAForm<
+  "VECTORFP.VFCEIL.h_s_d_z_pn_p_vn_v", "vfceil", "VFCEIL.{H|S|D}(z) Pn(p), Vn(v)", "11111010000111zz1ppppvvvvv", "long", "VECTORFP",
+  4, 0, 0, 0, 1,
+  "z;p;v", "size;govern;dst", "SIZE_HSD;Pn;Vn", "", "">;
+def BRForm_VECTORFP_VFCEIL_h_s_d_z_pn_p_ea_e_vn_v : BedrockISAForm<
+  "VECTORFP.VFCEIL.h_s_d_z_pn_p_ea_e_vn_v", "vfceil", "VFCEIL.{H|S|D}(z) Pn(p), <ea>(e), Vn(v)", "11111111000000100100zz1111ppppvvvvveeeeeee", "xxlong", "VECTORFP",
+  6, 0, 1, 1, 0,
+  "z;p;v;e", "size;govern;dst;src", "SIZE_HSD;Pn;Vn;VEA", "", "">;
+def BRForm_VECTORFP_VFCEIL_h_s_d_z_pn_p_vn_v_ea_e : BedrockISAForm<
+  "VECTORFP.VFCEIL.h_s_d_z_pn_p_vn_v_ea_e", "vfceil", "VFCEIL.{H|S|D}(z) Pn(p), Vn(v), <ea>(e)", "11111111000000100101zz0100ppppvvvvveeeeeee", "xxlong", "VECTORFP",
+  6, 0, 1, 1, 0,
+  "z;p;v;e", "size;govern;src;dst", "SIZE_HSD;Pn;Vn;VEA", "", "">;
+def BRForm_VECTORFP_VFCLASS_h_s_d_z_pn_p_vn_v : BedrockISAForm<
+  "VECTORFP.VFCLASS.h_s_d_z_pn_p_vn_v", "vfclass", "VFCLASS.{H|S|D}(z) Pn(p), Vn(v)", "11111010001000zz0ppppvvvvv", "long", "VECTORFP",
+  4, 0, 0, 0, 1,
+  "z;p;v", "size;govern;dst", "SIZE_HSD;Pn;Vn", "", "">;
+def BRForm_VECTORFP_VFCLASS_h_s_d_z_pn_p_ea_e_vn_v : BedrockISAForm<
+  "VECTORFP.VFCLASS.h_s_d_z_pn_p_ea_e_vn_v", "vfclass", "VFCLASS.{H|S|D}(z) Pn(p), <ea>(e), Vn(v)", "11111111000000100101zz0101ppppvvvvveeeeeee", "xxlong", "VECTORFP",
+  6, 0, 1, 1, 0,
+  "z;p;v;e", "size;govern;dst;src", "SIZE_HSD;Pn;Vn;VEA", "", "">;
+def BRForm_VECTORFP_VFCLASS_h_s_d_z_pn_p_vn_v_ea_e : BedrockISAForm<
+  "VECTORFP.VFCLASS.h_s_d_z_pn_p_vn_v_ea_e", "vfclass", "VFCLASS.{H|S|D}(z) Pn(p), Vn(v), <ea>(e)", "11111111000000100101zz0110ppppvvvvveeeeeee", "xxlong", "VECTORFP",
+  6, 0, 1, 1, 0,
+  "z;p;v;e", "size;govern;src;dst", "SIZE_HSD;Pn;Vn;VEA", "", "">;
+def BRForm_VECTORFP_VFCMPcc_h_s_d_x_pn_p_vn_v_vn_w_pn_q : BedrockISAForm<
+  "VECTORFP.VFCMPcc.h_s_d_x_pn_p_vn_v_vn_w_pn_q", "vfcmpcc", "VFCMPcc.{H|S|D}(x) Pn(p), Vn(v), Vn(w), Pn(q)", "111111010xxxccccppppqqqqvvvvvwwwww", "extralong", "VECTORFP",
+  5, 0, 0, 0, 1,
+  "x;c;p;q;v;w", "size;cc;govern;dst;lhs;rhs", "SIZE_VTYPE;CC;Pn;Pn;Vn;Vn", "", "">;
+def BRForm_VECTORFP_VFCMPcc_h_s_d_x_pn_p_vn_v_ea_e_pn_q : BedrockISAForm<
+  "VECTORFP.VFCMPcc.h_s_d_x_pn_p_vn_v_ea_e_pn_q", "vfcmpcc", "VFCMPcc.{H|S|D}(x) Pn(p), Vn(v), <ea>(e), Pn(q)", "111111110000000xxxccccppppqqqqvvvvveeeeeee", "xxlong", "VECTORFP",
+  6, 0, 1, 1, 0,
+  "x;c;p;q;v;e", "size;cc;govern;dst;lhs;src", "SIZE_VTYPE;CC;Pn;Pn;Vn;VEA", "", "">;
+def BRForm_VECTORFP_VFADD_h_s_d_x_pn_p_vn_v_vn_w : BedrockISAForm<
+  "VECTORFP.VFADD.h_s_d_x_pn_p_vn_v_vn_w", "vfadd", "VFADD.{H|S|D}(x) Pn(p), Vn(v), Vn(w)", "1111110111100000xxx0ppppvvvvvwwwww", "extralong", "VECTORFP",
+  5, 0, 0, 0, 1,
+  "x;p;v;w", "size;govern;src;dst", "SIZE_VTYPE;Pn;Vn;Vn", "", "">;
+def BRForm_VECTORFP_VFADD_h_s_d_x_pn_p_ea_e_vn_v : BedrockISAForm<
+  "VECTORFP.VFADD.h_s_d_x_pn_p_ea_e_vn_v", "vfadd", "VFADD.{H|S|D}(x) Pn(p), <ea>(e), Vn(v)", "1111111100000010000xxx0011ppppvvvvveeeeeee", "xxlong", "VECTORFP",
+  6, 0, 1, 1, 0,
+  "x;p;v;e", "size;govern;dst;src", "SIZE_VTYPE;Pn;Vn;VEA", "", "">;
+def BRForm_VECTORFP_VFADD_h_s_d_x_pn_p_vn_v_ea_e : BedrockISAForm<
+  "VECTORFP.VFADD.h_s_d_x_pn_p_vn_v_ea_e", "vfadd", "VFADD.{H|S|D}(x) Pn(p), Vn(v), <ea>(e)", "1111111100000010000xxx0100ppppvvvvveeeeeee", "xxlong", "VECTORFP",
+  6, 0, 1, 1, 0,
+  "x;p;v;e", "size;govern;src;dst", "SIZE_VTYPE;Pn;Vn;VEA", "", "">;
+def BRForm_VECTORFP_VFSUB_h_s_d_x_pn_p_vn_v_vn_w : BedrockISAForm<
+  "VECTORFP.VFSUB.h_s_d_x_pn_p_vn_v_vn_w", "vfsub", "VFSUB.{H|S|D}(x) Pn(p), Vn(v), Vn(w)", "1111110111100000xxx1ppppvvvvvwwwww", "extralong", "VECTORFP",
+  5, 0, 0, 0, 1,
+  "x;p;v;w", "size;govern;src;dst", "SIZE_VTYPE;Pn;Vn;Vn", "", "">;
+def BRForm_VECTORFP_VFSUB_h_s_d_x_pn_p_ea_e_vn_v : BedrockISAForm<
+  "VECTORFP.VFSUB.h_s_d_x_pn_p_ea_e_vn_v", "vfsub", "VFSUB.{H|S|D}(x) Pn(p), <ea>(e), Vn(v)", "1111111100000010000xxx0101ppppvvvvveeeeeee", "xxlong", "VECTORFP",
+  6, 0, 1, 1, 0,
+  "x;p;v;e", "size;govern;dst;src", "SIZE_VTYPE;Pn;Vn;VEA", "", "">;
+def BRForm_VECTORFP_VFSUB_h_s_d_x_pn_p_vn_v_ea_e : BedrockISAForm<
+  "VECTORFP.VFSUB.h_s_d_x_pn_p_vn_v_ea_e", "vfsub", "VFSUB.{H|S|D}(x) Pn(p), Vn(v), <ea>(e)", "1111111100000010000xxx0110ppppvvvvveeeeeee", "xxlong", "VECTORFP",
+  6, 0, 1, 1, 0,
+  "x;p;v;e", "size;govern;src;dst", "SIZE_VTYPE;Pn;Vn;VEA", "", "">;
+def BRForm_VECTORFP_VFMUL_h_s_d_x_pn_p_vn_v_vn_w : BedrockISAForm<
+  "VECTORFP.VFMUL.h_s_d_x_pn_p_vn_v_vn_w", "vfmul", "VFMUL.{H|S|D}(x) Pn(p), Vn(v), Vn(w)", "1111110111100001xxx0ppppvvvvvwwwww", "extralong", "VECTORFP",
+  5, 0, 0, 0, 1,
+  "x;p;v;w", "size;govern;src;dst", "SIZE_VTYPE;Pn;Vn;Vn", "", "">;
+def BRForm_VECTORFP_VFMUL_h_s_d_x_pn_p_ea_e_vn_v : BedrockISAForm<
+  "VECTORFP.VFMUL.h_s_d_x_pn_p_ea_e_vn_v", "vfmul", "VFMUL.{H|S|D}(x) Pn(p), <ea>(e), Vn(v)", "1111111100000010000xxx0111ppppvvvvveeeeeee", "xxlong", "VECTORFP",
+  6, 0, 1, 1, 0,
+  "x;p;v;e", "size;govern;dst;src", "SIZE_VTYPE;Pn;Vn;VEA", "", "">;
+def BRForm_VECTORFP_VFMUL_h_s_d_x_pn_p_vn_v_ea_e : BedrockISAForm<
+  "VECTORFP.VFMUL.h_s_d_x_pn_p_vn_v_ea_e", "vfmul", "VFMUL.{H|S|D}(x) Pn(p), Vn(v), <ea>(e)", "1111111100000010000xxx1000ppppvvvvveeeeeee", "xxlong", "VECTORFP",
+  6, 0, 1, 1, 0,
+  "x;p;v;e", "size;govern;src;dst", "SIZE_VTYPE;Pn;Vn;VEA", "", "">;
+def BRForm_VECTORFP_VFMIN_h_s_d_z_pn_p_vn_v_vn_w : BedrockISAForm<
+  "VECTORFP.VFMIN.h_s_d_z_pn_p_vn_v_vn_w", "vfmin", "VFMIN.{H|S|D}(z) Pn(p), Vn(v), Vn(w)", "11111101111001010zz1ppppvvvvvwwwww", "extralong", "VECTORFP",
+  5, 0, 0, 0, 1,
+  "z;p;v;w", "size;govern;src;dst", "SIZE_HSD;Pn;Vn;Vn", "", "">;
+def BRForm_VECTORFP_VFMIN_h_s_d_z_pn_p_ea_e_vn_v : BedrockISAForm<
+  "VECTORFP.VFMIN.h_s_d_z_pn_p_ea_e_vn_v", "vfmin", "VFMIN.{H|S|D}(z) Pn(p), <ea>(e), Vn(v)", "11111111000000100010zz1101ppppvvvvveeeeeee", "xxlong", "VECTORFP",
+  6, 0, 1, 1, 0,
+  "z;p;v;e", "size;govern;dst;src", "SIZE_HSD;Pn;Vn;VEA", "", "">;
+def BRForm_VECTORFP_VFMIN_h_s_d_z_pn_p_vn_v_ea_e : BedrockISAForm<
+  "VECTORFP.VFMIN.h_s_d_z_pn_p_vn_v_ea_e", "vfmin", "VFMIN.{H|S|D}(z) Pn(p), Vn(v), <ea>(e)", "11111111000000100010zz1110ppppvvvvveeeeeee", "xxlong", "VECTORFP",
+  6, 0, 1, 1, 0,
+  "z;p;v;e", "size;govern;src;dst", "SIZE_HSD;Pn;Vn;VEA", "", "">;
+def BRForm_VECTORFP_VFMAX_h_s_d_z_pn_p_vn_v_vn_w : BedrockISAForm<
+  "VECTORFP.VFMAX.h_s_d_z_pn_p_vn_v_vn_w", "vfmax", "VFMAX.{H|S|D}(z) Pn(p), Vn(v), Vn(w)", "11111101111001011zz0ppppvvvvvwwwww", "extralong", "VECTORFP",
+  5, 0, 0, 0, 1,
+  "z;p;v;w", "size;govern;src;dst", "SIZE_HSD;Pn;Vn;Vn", "", "">;
+def BRForm_VECTORFP_VFMAX_h_s_d_z_pn_p_ea_e_vn_v : BedrockISAForm<
+  "VECTORFP.VFMAX.h_s_d_z_pn_p_ea_e_vn_v", "vfmax", "VFMAX.{H|S|D}(z) Pn(p), <ea>(e), Vn(v)", "11111111000000100010zz1111ppppvvvvveeeeeee", "xxlong", "VECTORFP",
+  6, 0, 1, 1, 0,
+  "z;p;v;e", "size;govern;dst;src", "SIZE_HSD;Pn;Vn;VEA", "", "">;
+def BRForm_VECTORFP_VFMAX_h_s_d_z_pn_p_vn_v_ea_e : BedrockISAForm<
+  "VECTORFP.VFMAX.h_s_d_z_pn_p_vn_v_ea_e", "vfmax", "VFMAX.{H|S|D}(z) Pn(p), Vn(v), <ea>(e)", "11111111000000100011zz0000ppppvvvvveeeeeee", "xxlong", "VECTORFP",
+  6, 0, 1, 1, 0,
+  "z;p;v;e", "size;govern;src;dst", "SIZE_HSD;Pn;Vn;VEA", "", "">;
+def BRForm_VECTORFP_VFDIV_h_s_d_z_pn_p_vn_v_vn_w : BedrockISAForm<
+  "VECTORFP.VFDIV.h_s_d_z_pn_p_vn_v_vn_w", "vfdiv", "VFDIV.{H|S|D}(z) Pn(p), Vn(v), Vn(w)", "11111101111001011zz1ppppvvvvvwwwww", "extralong", "VECTORFP",
+  5, 0, 0, 0, 1,
+  "z;p;v;w", "size;govern;src;dst", "SIZE_HSD;Pn;Vn;Vn", "", "">;
+def BRForm_VECTORFP_VFDIV_h_s_d_z_pn_p_ea_e_vn_v : BedrockISAForm<
+  "VECTORFP.VFDIV.h_s_d_z_pn_p_ea_e_vn_v", "vfdiv", "VFDIV.{H|S|D}(z) Pn(p), <ea>(e), Vn(v)", "11111111000000100011zz0001ppppvvvvveeeeeee", "xxlong", "VECTORFP",
+  6, 0, 1, 1, 0,
+  "z;p;v;e", "size;govern;dst;src", "SIZE_HSD;Pn;Vn;VEA", "", "">;
+def BRForm_VECTORFP_VFDIV_h_s_d_z_pn_p_vn_v_ea_e : BedrockISAForm<
+  "VECTORFP.VFDIV.h_s_d_z_pn_p_vn_v_ea_e", "vfdiv", "VFDIV.{H|S|D}(z) Pn(p), Vn(v), <ea>(e)", "11111111000000100011zz0010ppppvvvvveeeeeee", "xxlong", "VECTORFP",
+  6, 0, 1, 1, 0,
+  "z;p;v;e", "size;govern;src;dst", "SIZE_HSD;Pn;Vn;VEA", "", "">;
+def BRForm_VECTORFP_VFCOPYSIGN_h_s_d_z_pn_p_vn_v_vn_w : BedrockISAForm<
+  "VECTORFP.VFCOPYSIGN.h_s_d_z_pn_p_vn_v_vn_w", "vfcopysign", "VFCOPYSIGN.{H|S|D}(z) Pn(p), Vn(v), Vn(w)", "11111101111001100zz0ppppvvvvvwwwww", "extralong", "VECTORFP",
+  5, 0, 0, 0, 1,
+  "z;p;v;w", "size;govern;src;dst", "SIZE_HSD;Pn;Vn;Vn", "", "">;
+def BRForm_VECTORFP_VFCOPYSIGN_h_s_d_z_pn_p_ea_e_vn_v : BedrockISAForm<
+  "VECTORFP.VFCOPYSIGN.h_s_d_z_pn_p_ea_e_vn_v", "vfcopysign", "VFCOPYSIGN.{H|S|D}(z) Pn(p), <ea>(e), Vn(v)", "11111111000000100011zz0011ppppvvvvveeeeeee", "xxlong", "VECTORFP",
+  6, 0, 1, 1, 0,
+  "z;p;v;e", "size;govern;dst;src", "SIZE_HSD;Pn;Vn;VEA", "", "">;
+def BRForm_VECTORFP_VFCOPYSIGN_h_s_d_z_pn_p_vn_v_ea_e : BedrockISAForm<
+  "VECTORFP.VFCOPYSIGN.h_s_d_z_pn_p_vn_v_ea_e", "vfcopysign", "VFCOPYSIGN.{H|S|D}(z) Pn(p), Vn(v), <ea>(e)", "11111111000000100011zz0100ppppvvvvveeeeeee", "xxlong", "VECTORFP",
+  6, 0, 1, 1, 0,
+  "z;p;v;e", "size;govern;src;dst", "SIZE_HSD;Pn;Vn;VEA", "", "">;
+def BRForm_VECTORFP_VFCVTS_h_d_z_pn_p_vn_v_vn_w : BedrockISAForm<
+  "VECTORFP.VFCVTS.h_d_z_pn_p_vn_v_vn_w", "vfcvts", "VFCVTS.{H|D}(z) Pn(p), Vn(v), Vn(w)", "11111101111010001zz0ppppvvvvvwwwww", "extralong", "VECTORFP",
+  5, 0, 0, 0, 1,
+  "z;p;v;w", "size;govern;src;dst", "SIZE_HD;Pn;Vn;Vn", "", "">;
+def BRForm_VECTORFP_VFCVTS_l_q_z_pn_p_vn_v_vn_w : BedrockISAForm<
+  "VECTORFP.VFCVTS.l_q_z_pn_p_vn_v_vn_w", "vfcvts", "VFCVTS.{L|Q}(z) Pn(p), Vn(v), Vn(w)", "11111101111010010zz0ppppvvvvvwwwww", "extralong", "VECTORFP",
+  5, 0, 0, 0, 1,
+  "z;p;v;w", "size;govern;src;dst", "SIZE_V_LQ;Pn;Vn;Vn", "", "">;
+def BRForm_VECTORFP_VFCVTD_h_s_z_pn_p_vn_v_vn_w : BedrockISAForm<
+  "VECTORFP.VFCVTD.h_s_z_pn_p_vn_v_vn_w", "vfcvtd", "VFCVTD.{H|S}(z) Pn(p), Vn(v), Vn(w)", "11111101111010001zz1ppppvvvvvwwwww", "extralong", "VECTORFP",
+  5, 0, 0, 0, 1,
+  "z;p;v;w", "size;govern;src;dst", "SIZE_HS;Pn;Vn;Vn", "", "">;
+def BRForm_VECTORFP_VFCVTD_l_q_z_pn_p_vn_v_vn_w : BedrockISAForm<
+  "VECTORFP.VFCVTD.l_q_z_pn_p_vn_v_vn_w", "vfcvtd", "VFCVTD.{L|Q}(z) Pn(p), Vn(v), Vn(w)", "11111101111010011zz0ppppvvvvvwwwww", "extralong", "VECTORFP",
+  5, 0, 0, 0, 1,
+  "z;p;v;w", "size;govern;src;dst", "SIZE_V_LQ;Pn;Vn;Vn", "", "">;
+def BRForm_VECTORFP_VFCVTUS_l_q_z_pn_p_vn_v_vn_w : BedrockISAForm<
+  "VECTORFP.VFCVTUS.l_q_z_pn_p_vn_v_vn_w", "vfcvtus", "VFCVTUS.{L|Q}(z) Pn(p), Vn(v), Vn(w)", "11111101111010010zz1ppppvvvvvwwwww", "extralong", "VECTORFP",
+  5, 0, 0, 0, 1,
+  "z;p;v;w", "size;govern;src;dst", "SIZE_V_LQ;Pn;Vn;Vn", "", "">;
+def BRForm_VECTORFP_VFCVTUD_l_q_z_pn_p_vn_v_vn_w : BedrockISAForm<
+  "VECTORFP.VFCVTUD.l_q_z_pn_p_vn_v_vn_w", "vfcvtud", "VFCVTUD.{L|Q}(z) Pn(p), Vn(v), Vn(w)", "11111101111010011zz1ppppvvvvvwwwww", "extralong", "VECTORFP",
+  5, 0, 0, 0, 1,
+  "z;p;v;w", "size;govern;src;dst", "SIZE_V_LQ;Pn;Vn;Vn", "", "">;
+def BRForm_VECTORFP_VFCVTL_h_s_d_z_pn_p_vn_v_vn_w : BedrockISAForm<
+  "VECTORFP.VFCVTL.h_s_d_z_pn_p_vn_v_vn_w", "vfcvtl", "VFCVTL.{H|S|D}(z) Pn(p), Vn(v), Vn(w)", "11111101111010100zz0ppppvvvvvwwwww", "extralong", "VECTORFP",
+  5, 0, 0, 0, 1,
+  "z;p;v;w", "size;govern;src;dst", "SIZE_HSD;Pn;Vn;Vn", "", "">;
+def BRForm_VECTORFP_VFCVTUL_h_s_d_z_pn_p_vn_v_vn_w : BedrockISAForm<
+  "VECTORFP.VFCVTUL.h_s_d_z_pn_p_vn_v_vn_w", "vfcvtul", "VFCVTUL.{H|S|D}(z) Pn(p), Vn(v), Vn(w)", "11111101111010100zz1ppppvvvvvwwwww", "extralong", "VECTORFP",
+  5, 0, 0, 0, 1,
+  "z;p;v;w", "size;govern;src;dst", "SIZE_HSD;Pn;Vn;Vn", "", "">;
+def BRForm_VECTORFP_VFCVTQ_h_s_d_z_pn_p_vn_v_vn_w : BedrockISAForm<
+  "VECTORFP.VFCVTQ.h_s_d_z_pn_p_vn_v_vn_w", "vfcvtq", "VFCVTQ.{H|S|D}(z) Pn(p), Vn(v), Vn(w)", "11111101111010101zz0ppppvvvvvwwwww", "extralong", "VECTORFP",
+  5, 0, 0, 0, 1,
+  "z;p;v;w", "size;govern;src;dst", "SIZE_HSD;Pn;Vn;Vn", "", "">;
+def BRForm_VECTORFP_VFCVTUQ_h_s_d_z_pn_p_vn_v_vn_w : BedrockISAForm<
+  "VECTORFP.VFCVTUQ.h_s_d_z_pn_p_vn_v_vn_w", "vfcvtuq", "VFCVTUQ.{H|S|D}(z) Pn(p), Vn(v), Vn(w)", "11111101111010101zz1ppppvvvvvwwwww", "extralong", "VECTORFP",
+  5, 0, 0, 0, 1,
+  "z;p;v;w", "size;govern;src;dst", "SIZE_HSD;Pn;Vn;Vn", "", "">;
+def BRForm_VECTORFP_VFCVTH_s_d_z_pn_p_vn_v_vn_w : BedrockISAForm<
+  "VECTORFP.VFCVTH.s_d_z_pn_p_vn_v_vn_w", "vfcvth", "VFCVTH.{S|D}(z) Pn(p), Vn(v), Vn(w)", "11111101111011010zz0ppppvvvvvwwwww", "extralong", "VECTORFP",
+  5, 0, 0, 0, 1,
+  "z;p;v;w", "size;govern;src;dst", "SIZE_V_SD;Pn;Vn;Vn", "", "">;
+def BRForm_VECTORFP_VFCVTH_l_q_z_pn_p_vn_v_vn_w : BedrockISAForm<
+  "VECTORFP.VFCVTH.l_q_z_pn_p_vn_v_vn_w", "vfcvth", "VFCVTH.{L|Q}(z) Pn(p), Vn(v), Vn(w)", "11111101111011011zz0ppppvvvvvwwwww", "extralong", "VECTORFP",
+  5, 0, 0, 0, 1,
+  "z;p;v;w", "size;govern;src;dst", "SIZE_V_LQ;Pn;Vn;Vn", "", "">;
+def BRForm_VECTORFP_VFCVTUH_l_q_z_pn_p_vn_v_vn_w : BedrockISAForm<
+  "VECTORFP.VFCVTUH.l_q_z_pn_p_vn_v_vn_w", "vfcvtuh", "VFCVTUH.{L|Q}(z) Pn(p), Vn(v), Vn(w)", "11111101111011011zz1ppppvvvvvwwwww", "extralong", "VECTORFP",
+  5, 0, 0, 0, 1,
+  "z;p;v;w", "size;govern;src;dst", "SIZE_V_LQ;Pn;Vn;Vn", "", "">;
+def BRForm_VECTORFP_VFMADD_h_s_d_z_pn_p_vn_v_vn_w_vn_y : BedrockISAForm<
+  "VECTORFP.VFMADD.h_s_d_z_pn_p_vn_v_vn_w_vn_y", "vfmadd", "VFMADD.{H|S|D}(z) Pn(p), Vn(v), Vn(w), Vn(y)", "111111011100zz0ppppvvvvvwwwwwyyyyy", "extralong", "VECTORFP",
+  5, 0, 0, 0, 1,
+  "z;p;v;w;y", "size;govern;lhs;rhs;dst", "SIZE_HSD;Pn;Vn;Vn;Vn", "", "">;
+def BRForm_VECTORFP_VFMSUB_h_s_d_z_pn_p_vn_v_vn_w_vn_y : BedrockISAForm<
+  "VECTORFP.VFMSUB.h_s_d_z_pn_p_vn_v_vn_w_vn_y", "vfmsub", "VFMSUB.{H|S|D}(z) Pn(p), Vn(v), Vn(w), Vn(y)", "111111011100zz1ppppvvvvvwwwwwyyyyy", "extralong", "VECTORFP",
+  5, 0, 0, 0, 1,
+  "z;p;v;w;y", "size;govern;lhs;rhs;dst", "SIZE_HSD;Pn;Vn;Vn;Vn", "", "">;
+def BRForm_VECTORFP_VFNMADD_h_s_d_z_pn_p_vn_v_vn_w_vn_y : BedrockISAForm<
+  "VECTORFP.VFNMADD.h_s_d_z_pn_p_vn_v_vn_w_vn_y", "vfnmadd", "VFNMADD.{H|S|D}(z) Pn(p), Vn(v), Vn(w), Vn(y)", "111111011101zz0ppppvvvvvwwwwwyyyyy", "extralong", "VECTORFP",
+  5, 0, 0, 0, 1,
+  "z;p;v;w;y", "size;govern;lhs;rhs;dst", "SIZE_HSD;Pn;Vn;Vn;Vn", "", "">;
+def BRForm_VECTORFP_VFNMSUB_h_s_d_z_pn_p_vn_v_vn_w_vn_y : BedrockISAForm<
+  "VECTORFP.VFNMSUB.h_s_d_z_pn_p_vn_v_vn_w_vn_y", "vfnmsub", "VFNMSUB.{H|S|D}(z) Pn(p), Vn(v), Vn(w), Vn(y)", "111111011101zz1ppppvvvvvwwwwwyyyyy", "extralong", "VECTORFP",
+  5, 0, 0, 0, 1,
+  "z;p;v;w;y", "size;govern;lhs;rhs;dst", "SIZE_HSD;Pn;Vn;Vn;Vn", "", "">;
+def BRForm_VECTORFP_VFEXTRACT_h_s_d_z_vn_v_rn_r_fn_s : BedrockISAForm<
+  "VECTORFP.VFEXTRACT.h_s_d_z_vn_v_rn_r_fn_s", "vfextract", "VFEXTRACT.{H|S|D}(z) Vn(v), Rn(r), Fn(s)", "11111101111110000zz10rrrrssssvvvvv", "extralong", "VECTORFP",
+  5, 0, 0, 0, 1,
+  "z;r;s;v", "size;index;dst;src", "SIZE_HSD;Rn;Fn;Vn", "", "">;
+def BRForm_VECTORFP_VFINSERT_h_s_d_z_fn_r_rn_s_vn_v : BedrockISAForm<
+  "VECTORFP.VFINSERT.h_s_d_z_fn_r_rn_s_vn_v", "vfinsert", "VFINSERT.{H|S|D}(z) Fn(r), Rn(s), Vn(v)", "11111101111110000zz11rrrrssssvvvvv", "extralong", "VECTORFP",
+  5, 0, 0, 0, 1,
+  "z;r;s;v", "size;src;index;dst", "SIZE_HSD;Fn;Rn;Vn", "", "">;
+def BRForm_VECTORFP_VFREDADD_h_s_d_z_pn_p_vn_v_fn_r : BedrockISAForm<
+  "VECTORFP.VFREDADD.h_s_d_z_pn_p_vn_v_fn_r", "vfredadd", "VFREDADD.{H|S|D}(z) Pn(p), Vn(v), Fn(r)", "11111101111110110zz00pppprrrrvvvvv", "extralong", "VECTORFP",
+  5, 0, 0, 0, 1,
+  "z;p;r;v", "size;govern;dst;src", "SIZE_HSD;Pn;Fn;Vn", "", "">;
+def BRForm_VECTORFP_VFREDADD_h_s_d_z_pn_p_ea_e_fn_r : BedrockISAForm<
+  "VECTORFP.VFREDADD.h_s_d_z_pn_p_ea_e_fn_r", "vfredadd", "VFREDADD.{H|S|D}(z) Pn(p), <ea>(e), Fn(r)", "11111111000000101110zz01000pppprrrreeeeeee", "xxlong", "VECTORFP",
+  6, 0, 1, 1, 0,
+  "z;p;r;e", "size;govern;dst;src", "SIZE_HSD;Pn;Fn;VEA", "", "">;
+def BRForm_VECTORFP_VFREDMIN_h_s_d_z_pn_p_vn_v_fn_r : BedrockISAForm<
+  "VECTORFP.VFREDMIN.h_s_d_z_pn_p_vn_v_fn_r", "vfredmin", "VFREDMIN.{H|S|D}(z) Pn(p), Vn(v), Fn(r)", "11111101111110110zz01pppprrrrvvvvv", "extralong", "VECTORFP",
+  5, 0, 0, 0, 1,
+  "z;p;r;v", "size;govern;dst;src", "SIZE_HSD;Pn;Fn;Vn", "", "">;
+def BRForm_VECTORFP_VFREDMIN_h_s_d_z_pn_p_ea_e_fn_r : BedrockISAForm<
+  "VECTORFP.VFREDMIN.h_s_d_z_pn_p_ea_e_fn_r", "vfredmin", "VFREDMIN.{H|S|D}(z) Pn(p), <ea>(e), Fn(r)", "11111111000000101110zz01001pppprrrreeeeeee", "xxlong", "VECTORFP",
+  6, 0, 1, 1, 0,
+  "z;p;r;e", "size;govern;dst;src", "SIZE_HSD;Pn;Fn;VEA", "", "">;
+def BRForm_VECTORFP_VFREDMAX_h_s_d_z_pn_p_vn_v_fn_r : BedrockISAForm<
+  "VECTORFP.VFREDMAX.h_s_d_z_pn_p_vn_v_fn_r", "vfredmax", "VFREDMAX.{H|S|D}(z) Pn(p), Vn(v), Fn(r)", "11111101111110110zz10pppprrrrvvvvv", "extralong", "VECTORFP",
+  5, 0, 0, 0, 1,
+  "z;p;r;v", "size;govern;dst;src", "SIZE_HSD;Pn;Fn;Vn", "", "">;
+def BRForm_VECTORFP_VFREDMAX_h_s_d_z_pn_p_ea_e_fn_r : BedrockISAForm<
+  "VECTORFP.VFREDMAX.h_s_d_z_pn_p_ea_e_fn_r", "vfredmax", "VFREDMAX.{H|S|D}(z) Pn(p), <ea>(e), Fn(r)", "11111111000000101110zz01010pppprrrreeeeeee", "xxlong", "VECTORFP",
+  6, 0, 1, 1, 0,
+  "z;p;r;e", "size;govern;dst;src", "SIZE_HSD;Pn;Fn;VEA", "", "">;
 
 class BedrockScalarEncodingForm<
     string id, string mnemonic, string pattern, bits<8> fixedPayloadBytes,
@@ -2906,1752 +2966,1752 @@ def BedrockScalarEncodingForms : GenericTable {
                 "DistinctOperandA", "DistinctOperandB"];
 }
 
-def BRForm_scalar_base_instructions_ABS_l_q_z_rn_r : BedrockScalarEncodingForm<
-  "base.instructions.ABS.l_q_z_rn_r", "abs", "10100z0100rrrr", 0, "lq", 122, 3, 0, 65535, 1,
+def BRForm_scalar_base_ABS_l_q_z_rn_r : BedrockScalarEncodingForm<
+  "base.ABS.l_q_z_rn_r", "abs", "10100z0100rrrr", 0, "lq", 122, 3, 0, 65535, 1,
   2, 114, 4, 0, 0, 0, 65535, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0,
   0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 255, 255>;
-def BRForm_scalar_base_instructions_ABS_b_w_l_q_z_ea_e : BedrockScalarEncodingForm<
-  "base.instructions.ABS.b_w_l_q_z_ea_e", "abs", "11100zz0000eeeeeee", 0, "bwlq", 122, 15, 0, 65535, 1,
+def BRForm_scalar_base_ABS_b_w_l_q_z_ea_e : BedrockScalarEncodingForm<
+  "base.ABS.b_w_l_q_z_ea_e", "abs", "11100zz0000eeeeeee", 0, "bwlq", 122, 15, 0, 65535, 1,
   6, 101, 7, 0, 0, 0, 18446744073709551615, 18446744073709551615, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0,
   0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 255, 255>;
-def BRForm_scalar_base_instructions_ADC_b_w_l_q_z_rn_s_rn_d : BedrockScalarEncodingForm<
-  "base.instructions.ADC.b_w_l_q_z_rn_s_rn_d", "adc", "10000zz100ssssdddd", 0, "bwlq", 122, 15, 0, 65535, 2,
+def BRForm_scalar_base_ADC_b_w_l_q_z_rn_s_rn_d : BedrockScalarEncodingForm<
+  "base.ADC.b_w_l_q_z_rn_s_rn_d", "adc", "10000zz100ssssdddd", 0, "bwlq", 122, 15, 0, 65535, 2,
   2, 115, 4, 0, 0, 0, 65535, 0, 0, 0, 2, 100, 4, 0, 0, 0, 65535, 0,
   0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 255, 255>;
-def BRForm_scalar_base_instructions_ADC_b_w_l_q_z_rn_s_ea_e : BedrockScalarEncodingForm<
-  "base.instructions.ADC.b_w_l_q_z_rn_s_ea_e", "adc", "1111001100zz100sssseeeeeee", 0, "bwlq", 122, 15, 0, 65535, 2,
+def BRForm_scalar_base_ADC_b_w_l_q_z_rn_s_ea_e : BedrockScalarEncodingForm<
+  "base.ADC.b_w_l_q_z_rn_s_ea_e", "adc", "1111001100zz100sssseeeeeee", 0, "bwlq", 122, 15, 0, 65535, 2,
   2, 115, 4, 0, 0, 0, 65535, 0, 0, 0, 6, 101, 7, 0, 0, 0, 18446744073709551615, 18446744073709551615,
   0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 255, 255>;
-def BRForm_scalar_base_instructions_ADC_b_w_l_q_z_ea_e_rn_s : BedrockScalarEncodingForm<
-  "base.instructions.ADC.b_w_l_q_z_ea_e_rn_s", "adc", "1111001000zz100sssseeeeeee", 0, "bwlq", 122, 15, 0, 65535, 2,
+def BRForm_scalar_base_ADC_b_w_l_q_z_ea_e_rn_s : BedrockScalarEncodingForm<
+  "base.ADC.b_w_l_q_z_ea_e_rn_s", "adc", "1111001000zz100sssseeeeeee", 0, "bwlq", 122, 15, 0, 65535, 2,
   6, 101, 7, 0, 1, 0, 18446744073709551615, 18446744073709551615, 0, 0, 2, 115, 4, 0, 0, 0, 65535, 0,
   0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 255, 255>;
-def BRForm_scalar_base_instructions_ADD_q_8_sp : BedrockScalarEncodingForm<
-  "base.instructions.ADD.q_8_sp", "add.q", "0001110", 0, "", 0, 1, 0, 65535, 2,
+def BRForm_scalar_base_ADD_q_8_sp : BedrockScalarEncodingForm<
+  "base.ADD.q_8_sp", "add.q", "0001110", 0, "", 0, 1, 0, 65535, 2,
   14, 0, 0, 0, 0, 8, 1, 0, 0, 0, 12, 0, 0, 0, 0, 0, 1, 0,
   0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 255, 255>;
-def BRForm_scalar_base_instructions_ADD_l_q_z_rn_s_rn_d : BedrockScalarEncodingForm<
-  "base.instructions.ADD.l_q_z_rn_s_rn_d", "add", "00001zssssdddd", 0, "lq", 122, 3, 0, 65535, 2,
+def BRForm_scalar_base_ADD_l_q_z_rn_s_rn_d : BedrockScalarEncodingForm<
+  "base.ADD.l_q_z_rn_s_rn_d", "add", "00001zssssdddd", 0, "lq", 122, 3, 0, 65535, 2,
   2, 115, 4, 0, 0, 0, 65535, 0, 0, 0, 2, 100, 4, 0, 0, 0, 65535, 0,
   0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 255, 255>;
-def BRForm_scalar_base_instructions_ADD_q_imm8_i_sp : BedrockScalarEncodingForm<
-  "base.instructions.ADD.q_imm8_i_sp", "add.q", "100011iiiiiiii", 0, "", 0, 1, 0, 65535, 2,
+def BRForm_scalar_base_ADD_q_imm8_i_sp : BedrockScalarEncodingForm<
+  "base.ADD.q_imm8_i_sp", "add.q", "100011iiiiiiii", 0, "", 0, 1, 0, 65535, 2,
   8, 105, 8, 0, 0, 0, 18446744073709551615, 18446744073709551615, 18446744073709551615, 18446744073709551615, 12, 0, 0, 0, 0, 0, 1, 0,
   0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 255, 255>;
-def BRForm_scalar_base_instructions_ADD_q_imm16s_sp : BedrockScalarEncodingForm<
-  "base.instructions.ADD.q_imm16s_sp", "add.q", "111011110000000000", 2, "", 0, 1, 0, 65535, 2,
+def BRForm_scalar_base_ADD_q_imm16s_sp : BedrockScalarEncodingForm<
+  "base.ADD.q_imm16s_sp", "add.q", "111011110000000000", 2, "", 0, 1, 0, 65535, 2,
   9, 0, 16, 1, 0, 0, 1, 0, 0, 0, 12, 0, 0, 0, 0, 0, 1, 0,
   0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 255, 255>;
-def BRForm_scalar_base_instructions_ADD_q_imm32s_sp : BedrockScalarEncodingForm<
-  "base.instructions.ADD.q_imm32s_sp", "add.q", "111011110000000001", 4, "", 0, 1, 0, 65535, 2,
+def BRForm_scalar_base_ADD_q_imm32s_sp : BedrockScalarEncodingForm<
+  "base.ADD.q_imm32s_sp", "add.q", "111011110000000001", 4, "", 0, 1, 0, 65535, 2,
   9, 0, 32, 1, 0, 0, 1, 0, 0, 0, 12, 0, 0, 0, 0, 0, 1, 0,
   0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 255, 255>;
-def BRForm_scalar_base_instructions_ADD_b_w_l_q_z_rn_s_ea_e : BedrockScalarEncodingForm<
-  "base.instructions.ADD.b_w_l_q_z_rn_s_ea_e", "add", "00001zzsssseeeeeee", 0, "bwlq", 122, 15, 0, 65535, 2,
+def BRForm_scalar_base_ADD_b_w_l_q_z_rn_s_ea_e : BedrockScalarEncodingForm<
+  "base.ADD.b_w_l_q_z_rn_s_ea_e", "add", "00001zzsssseeeeeee", 0, "bwlq", 122, 15, 0, 65535, 2,
   2, 115, 4, 0, 0, 0, 65535, 0, 0, 0, 6, 101, 7, 0, 0, 0, 18446744073709551615, 18446744073709551615,
   0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 255, 255>;
-def BRForm_scalar_base_instructions_ADD_b_w_l_q_z_ea_e_rn_d : BedrockScalarEncodingForm<
-  "base.instructions.ADD.b_w_l_q_z_ea_e_rn_d", "add", "01001zzddddeeeeeee", 0, "bwlq", 122, 15, 0, 65535, 2,
+def BRForm_scalar_base_ADD_b_w_l_q_z_ea_e_rn_d : BedrockScalarEncodingForm<
+  "base.ADD.b_w_l_q_z_ea_e_rn_d", "add", "01001zzddddeeeeeee", 0, "bwlq", 122, 15, 0, 65535, 2,
   6, 101, 7, 0, 1, 0, 18446744073709551615, 18446744073709551615, 0, 0, 2, 100, 4, 0, 0, 0, 65535, 0,
   0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 255, 255>;
-def BRForm_scalar_base_instructions_ADD_b_w_l_q_z_imm8s_ea_e : BedrockScalarEncodingForm<
-  "base.instructions.ADD.b_w_l_q_z_imm8s_ea_e", "add", "11100zz0001eeeeeee", 1, "bwlq", 122, 15, 0, 65535, 2,
+def BRForm_scalar_base_ADD_b_w_l_q_z_imm8s_ea_e : BedrockScalarEncodingForm<
+  "base.ADD.b_w_l_q_z_imm8s_ea_e", "add", "11100zz0001eeeeeee", 1, "bwlq", 122, 15, 0, 65535, 2,
   9, 0, 8, 1, 0, 0, 1, 0, 0, 0, 6, 101, 7, 0, 0, 0, 18446744073709551615, 18446744073709551615,
   0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 255, 255>;
-def BRForm_scalar_base_instructions_ADD_w_l_q_z_imm16s_ea_e : BedrockScalarEncodingForm<
-  "base.instructions.ADD.w_l_q_z_imm16s_ea_e", "add", "11100zz0010eeeeeee", 2, "?wlq", 122, 14, 0, 65535, 2,
+def BRForm_scalar_base_ADD_w_l_q_z_imm16s_ea_e : BedrockScalarEncodingForm<
+  "base.ADD.w_l_q_z_imm16s_ea_e", "add", "11100zz0010eeeeeee", 2, "?wlq", 122, 14, 0, 65535, 2,
   9, 0, 16, 1, 0, 0, 1, 0, 0, 0, 6, 101, 7, 0, 0, 0, 18446744073709551615, 18446744073709551615,
   0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 255, 255>;
-def BRForm_scalar_base_instructions_ADD_l_q_z_imm32s_ea_e : BedrockScalarEncodingForm<
-  "base.instructions.ADD.l_q_z_imm32s_ea_e", "add", "111001z0011eeeeeee", 4, "lq", 122, 3, 0, 65535, 2,
+def BRForm_scalar_base_ADD_l_q_z_imm32s_ea_e : BedrockScalarEncodingForm<
+  "base.ADD.l_q_z_imm32s_ea_e", "add", "111001z0011eeeeeee", 4, "lq", 122, 3, 0, 65535, 2,
   9, 0, 32, 1, 0, 0, 1, 0, 0, 0, 6, 101, 7, 0, 0, 0, 18446744073709551615, 18446744073709551615,
   0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 255, 255>;
-def BRForm_scalar_base_instructions_ADD_q_imm64_ea_e : BedrockScalarEncodingForm<
-  "base.instructions.ADD.q_imm64_ea_e", "add.q", "11101000000eeeeeee", 8, "", 0, 1, 0, 65535, 2,
+def BRForm_scalar_base_ADD_q_imm64_ea_e : BedrockScalarEncodingForm<
+  "base.ADD.q_imm64_ea_e", "add.q", "11101000000eeeeeee", 8, "", 0, 1, 0, 65535, 2,
   9, 0, 64, 1, 0, 0, 1, 0, 0, 0, 6, 101, 7, 0, 0, 0, 18446744073709551615, 18446744073709551615,
   0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 255, 255>;
-def BRForm_scalar_base_instructions_AFENCE_plain : BedrockScalarEncodingForm<
-  "base.instructions.AFENCE.plain", "afence", "0001100", 0, "", 0, 1, 0, 65535, 0,
+def BRForm_scalar_base_AFENCE_plain : BedrockScalarEncodingForm<
+  "base.AFENCE.plain", "afence", "0001100", 0, "", 0, 1, 0, 65535, 0,
   0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0,
   0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 255, 255>;
-def BRForm_scalar_base_instructions_AND_l_q_z_rn_s_rn_d : BedrockScalarEncodingForm<
-  "base.instructions.AND.l_q_z_rn_s_rn_d", "and", "00100zssssdddd", 0, "lq", 122, 3, 0, 65535, 2,
+def BRForm_scalar_base_AND_l_q_z_rn_s_rn_d : BedrockScalarEncodingForm<
+  "base.AND.l_q_z_rn_s_rn_d", "and", "00100zssssdddd", 0, "lq", 122, 3, 0, 65535, 2,
   2, 115, 4, 0, 0, 0, 65535, 0, 0, 0, 2, 100, 4, 0, 0, 0, 65535, 0,
   0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 255, 255>;
-def BRForm_scalar_base_instructions_AND_b_w_l_q_z_rn_s_ea_e : BedrockScalarEncodingForm<
-  "base.instructions.AND.b_w_l_q_z_rn_s_ea_e", "and", "00100zzsssseeeeeee", 0, "bwlq", 122, 15, 0, 65535, 2,
+def BRForm_scalar_base_AND_b_w_l_q_z_rn_s_ea_e : BedrockScalarEncodingForm<
+  "base.AND.b_w_l_q_z_rn_s_ea_e", "and", "00100zzsssseeeeeee", 0, "bwlq", 122, 15, 0, 65535, 2,
   2, 115, 4, 0, 0, 0, 65535, 0, 0, 0, 6, 101, 7, 0, 0, 0, 18446744073709551615, 18446744073709551615,
   0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 255, 255>;
-def BRForm_scalar_base_instructions_AND_b_w_l_q_z_ea_e_rn_d : BedrockScalarEncodingForm<
-  "base.instructions.AND.b_w_l_q_z_ea_e_rn_d", "and", "01100zzddddeeeeeee", 0, "bwlq", 122, 15, 0, 65535, 2,
+def BRForm_scalar_base_AND_b_w_l_q_z_ea_e_rn_d : BedrockScalarEncodingForm<
+  "base.AND.b_w_l_q_z_ea_e_rn_d", "and", "01100zzddddeeeeeee", 0, "bwlq", 122, 15, 0, 65535, 2,
   6, 101, 7, 0, 1, 0, 18446744073709551615, 18446744073709551615, 0, 0, 2, 100, 4, 0, 0, 0, 65535, 0,
   0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 255, 255>;
-def BRForm_scalar_base_instructions_AND_b_w_l_q_z_imm8s_ea_e : BedrockScalarEncodingForm<
-  "base.instructions.AND.b_w_l_q_z_imm8s_ea_e", "and", "11100zz0100eeeeeee", 1, "bwlq", 122, 15, 0, 65535, 2,
+def BRForm_scalar_base_AND_b_w_l_q_z_imm8s_ea_e : BedrockScalarEncodingForm<
+  "base.AND.b_w_l_q_z_imm8s_ea_e", "and", "11100zz0100eeeeeee", 1, "bwlq", 122, 15, 0, 65535, 2,
   9, 0, 8, 1, 0, 0, 1, 0, 0, 0, 6, 101, 7, 0, 0, 0, 18446744073709551615, 18446744073709551615,
   0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 255, 255>;
-def BRForm_scalar_base_instructions_AND_w_l_q_z_imm16s_ea_e : BedrockScalarEncodingForm<
-  "base.instructions.AND.w_l_q_z_imm16s_ea_e", "and", "11100zz0101eeeeeee", 2, "?wlq", 122, 14, 0, 65535, 2,
+def BRForm_scalar_base_AND_w_l_q_z_imm16s_ea_e : BedrockScalarEncodingForm<
+  "base.AND.w_l_q_z_imm16s_ea_e", "and", "11100zz0101eeeeeee", 2, "?wlq", 122, 14, 0, 65535, 2,
   9, 0, 16, 1, 0, 0, 1, 0, 0, 0, 6, 101, 7, 0, 0, 0, 18446744073709551615, 18446744073709551615,
   0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 255, 255>;
-def BRForm_scalar_base_instructions_AND_l_q_z_imm32s_ea_e : BedrockScalarEncodingForm<
-  "base.instructions.AND.l_q_z_imm32s_ea_e", "and", "111001z0110eeeeeee", 4, "lq", 122, 3, 0, 65535, 2,
+def BRForm_scalar_base_AND_l_q_z_imm32s_ea_e : BedrockScalarEncodingForm<
+  "base.AND.l_q_z_imm32s_ea_e", "and", "111001z0110eeeeeee", 4, "lq", 122, 3, 0, 65535, 2,
   9, 0, 32, 1, 0, 0, 1, 0, 0, 0, 6, 101, 7, 0, 0, 0, 18446744073709551615, 18446744073709551615,
   0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 255, 255>;
-def BRForm_scalar_base_instructions_AND_q_imm64_ea_e : BedrockScalarEncodingForm<
-  "base.instructions.AND.q_imm64_ea_e", "and.q", "11101000001eeeeeee", 8, "", 0, 1, 0, 65535, 2,
+def BRForm_scalar_base_AND_q_imm64_ea_e : BedrockScalarEncodingForm<
+  "base.AND.q_imm64_ea_e", "and.q", "11101000001eeeeeee", 8, "", 0, 1, 0, 65535, 2,
   9, 0, 64, 1, 0, 0, 1, 0, 0, 0, 6, 101, 7, 0, 0, 0, 18446744073709551615, 18446744073709551615,
   0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 255, 255>;
-def BRForm_scalar_base_instructions_BCHG_rn_b_ea_e : BedrockScalarEncodingForm<
-  "base.instructions.BCHG.rn_b_ea_e", "bchg", "111100110000000bbbbeeeeeee", 0, "", 0, 1, 0, 65535, 2,
+def BRForm_scalar_base_BCHG_rn_b_ea_e : BedrockScalarEncodingForm<
+  "base.BCHG.rn_b_ea_e", "bchg", "111100110000000bbbbeeeeeee", 0, "", 0, 1, 0, 65535, 2,
   2, 98, 4, 0, 0, 0, 65535, 0, 0, 0, 6, 101, 7, 0, 0, 0, 18446744073709551615, 18446744073709551615,
   0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 255, 255>;
-def BRForm_scalar_base_instructions_BCHG_imm6_i_ea_e : BedrockScalarEncodingForm<
-  "base.instructions.BCHG.imm6_i_ea_e", "bchg", "1111011100000iiiiiieeeeeee", 0, "", 0, 1, 0, 65535, 2,
+def BRForm_scalar_base_BCHG_imm6_i_ea_e : BedrockScalarEncodingForm<
+  "base.BCHG.imm6_i_ea_e", "bchg", "1111011100000iiiiiieeeeeee", 0, "", 0, 1, 0, 65535, 2,
   8, 105, 6, 0, 0, 0, 18446744073709551615, 0, 0, 0, 6, 101, 7, 0, 0, 0, 18446744073709551615, 18446744073709551615,
   0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 255, 255>;
-def BRForm_scalar_base_instructions_BCHG_rn_b_rn_e : BedrockScalarEncodingForm<
-  "base.instructions.BCHG.rn_b_rn_e", "bchg", "1000000000bbbbeeee", 0, "", 0, 1, 0, 65535, 2,
+def BRForm_scalar_base_BCHG_rn_b_rn_e : BedrockScalarEncodingForm<
+  "base.BCHG.rn_b_rn_e", "bchg", "1000000000bbbbeeee", 0, "", 0, 1, 0, 65535, 2,
   2, 98, 4, 0, 0, 0, 65535, 0, 0, 0, 2, 101, 4, 0, 0, 0, 65535, 0,
   0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 255, 255>;
-def BRForm_scalar_base_instructions_BCHG_imm6_i_rn_e : BedrockScalarEncodingForm<
-  "base.instructions.BCHG.imm6_i_rn_e", "bchg", "1111011001101000eeeeiiiiii", 0, "", 0, 1, 0, 65535, 2,
+def BRForm_scalar_base_BCHG_imm6_i_rn_e : BedrockScalarEncodingForm<
+  "base.BCHG.imm6_i_rn_e", "bchg", "1111011001101000eeeeiiiiii", 0, "", 0, 1, 0, 65535, 2,
   8, 105, 6, 0, 0, 0, 18446744073709551615, 0, 0, 0, 2, 101, 4, 0, 0, 0, 65535, 0,
   0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 255, 255>;
-def BRForm_scalar_base_instructions_BCLR_rn_b_ea_e : BedrockScalarEncodingForm<
-  "base.instructions.BCLR.rn_b_ea_e", "bclr", "111100110000001bbbbeeeeeee", 0, "", 0, 1, 0, 65535, 2,
+def BRForm_scalar_base_BCLR_rn_b_ea_e : BedrockScalarEncodingForm<
+  "base.BCLR.rn_b_ea_e", "bclr", "111100110000001bbbbeeeeeee", 0, "", 0, 1, 0, 65535, 2,
   2, 98, 4, 0, 0, 0, 65535, 0, 0, 0, 6, 101, 7, 0, 0, 0, 18446744073709551615, 18446744073709551615,
   0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 255, 255>;
-def BRForm_scalar_base_instructions_BCLR_imm6_i_ea_e : BedrockScalarEncodingForm<
-  "base.instructions.BCLR.imm6_i_ea_e", "bclr", "1111011100001iiiiiieeeeeee", 0, "", 0, 1, 0, 65535, 2,
+def BRForm_scalar_base_BCLR_imm6_i_ea_e : BedrockScalarEncodingForm<
+  "base.BCLR.imm6_i_ea_e", "bclr", "1111011100001iiiiiieeeeeee", 0, "", 0, 1, 0, 65535, 2,
   8, 105, 6, 0, 0, 0, 18446744073709551615, 0, 0, 0, 6, 101, 7, 0, 0, 0, 18446744073709551615, 18446744073709551615,
   0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 255, 255>;
-def BRForm_scalar_base_instructions_BCLR_rn_b_rn_e : BedrockScalarEncodingForm<
-  "base.instructions.BCLR.rn_b_rn_e", "bclr", "1000000001bbbbeeee", 0, "", 0, 1, 0, 65535, 2,
+def BRForm_scalar_base_BCLR_rn_b_rn_e : BedrockScalarEncodingForm<
+  "base.BCLR.rn_b_rn_e", "bclr", "1000000001bbbbeeee", 0, "", 0, 1, 0, 65535, 2,
   2, 98, 4, 0, 0, 0, 65535, 0, 0, 0, 2, 101, 4, 0, 0, 0, 65535, 0,
   0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 255, 255>;
-def BRForm_scalar_base_instructions_BCLR_imm6_i_rn_e : BedrockScalarEncodingForm<
-  "base.instructions.BCLR.imm6_i_rn_e", "bclr", "1111011001101001eeeeiiiiii", 0, "", 0, 1, 0, 65535, 2,
+def BRForm_scalar_base_BCLR_imm6_i_rn_e : BedrockScalarEncodingForm<
+  "base.BCLR.imm6_i_rn_e", "bclr", "1111011001101001eeeeiiiiii", 0, "", 0, 1, 0, 65535, 2,
   8, 105, 6, 0, 0, 0, 18446744073709551615, 0, 0, 0, 2, 101, 4, 0, 0, 0, 65535, 0,
   0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 255, 255>;
-def BRForm_scalar_base_instructions_BKPT_plain : BedrockScalarEncodingForm<
-  "base.instructions.BKPT.plain", "bkpt", "0000111", 0, "", 0, 1, 0, 65535, 0,
+def BRForm_scalar_base_BKPT_plain : BedrockScalarEncodingForm<
+  "base.BKPT.plain", "bkpt", "0000111", 0, "", 0, 1, 0, 65535, 0,
   0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0,
   0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 255, 255>;
-def BRForm_scalar_base_instructions_BNDSII_b_w_l_q_z_rn_l_ea_e_rn_h : BedrockScalarEncodingForm<
-  "base.instructions.BNDSII.b_w_l_q_z_rn_l_ea_e_rn_h", "bndsii", "11111100010000zz000llllhhhheeeeeee", 0, "bwlq", 122, 15, 0, 65535, 3,
+def BRForm_scalar_base_BNDSII_b_w_l_q_z_rn_l_ea_e_rn_h : BedrockScalarEncodingForm<
+  "base.BNDSII.b_w_l_q_z_rn_l_ea_e_rn_h", "bndsii", "11111100010000zz000llllhhhheeeeeee", 0, "bwlq", 122, 15, 0, 65535, 3,
   2, 108, 4, 0, 0, 0, 65535, 0, 0, 0, 6, 101, 7, 0, 1, 0, 18446744073709551615, 18446744073709551615,
   0, 0, 2, 104, 4, 0, 0, 0, 65535, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 255, 255>;
-def BRForm_scalar_base_instructions_BNDSII_b_w_l_q_z_rn_l_rn_v_rn_h : BedrockScalarEncodingForm<
-  "base.instructions.BNDSII.b_w_l_q_z_rn_l_rn_v_rn_h", "bndsii", "11111100000000zz000000llllvvvvhhhh", 0, "bwlq", 122, 15, 0, 65535, 3,
+def BRForm_scalar_base_BNDSII_b_w_l_q_z_rn_l_rn_v_rn_h : BedrockScalarEncodingForm<
+  "base.BNDSII.b_w_l_q_z_rn_l_rn_v_rn_h", "bndsii", "11111100000000zz000000llllvvvvhhhh", 0, "bwlq", 122, 15, 0, 65535, 3,
   2, 108, 4, 0, 0, 0, 65535, 0, 0, 0, 2, 118, 4, 0, 0, 0, 65535, 0,
   0, 0, 2, 104, 4, 0, 0, 0, 65535, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 255, 255>;
-def BRForm_scalar_base_instructions_BNDSIX_b_w_l_q_z_rn_l_ea_e_rn_h : BedrockScalarEncodingForm<
-  "base.instructions.BNDSIX.b_w_l_q_z_rn_l_ea_e_rn_h", "bndsix", "11111100010000zz001llllhhhheeeeeee", 0, "bwlq", 122, 15, 0, 65535, 3,
+def BRForm_scalar_base_BNDSIX_b_w_l_q_z_rn_l_ea_e_rn_h : BedrockScalarEncodingForm<
+  "base.BNDSIX.b_w_l_q_z_rn_l_ea_e_rn_h", "bndsix", "11111100010000zz001llllhhhheeeeeee", 0, "bwlq", 122, 15, 0, 65535, 3,
   2, 108, 4, 0, 0, 0, 65535, 0, 0, 0, 6, 101, 7, 0, 1, 0, 18446744073709551615, 18446744073709551615,
   0, 0, 2, 104, 4, 0, 0, 0, 65535, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 255, 255>;
-def BRForm_scalar_base_instructions_BNDSIX_b_w_l_q_z_rn_l_rn_v_rn_h : BedrockScalarEncodingForm<
-  "base.instructions.BNDSIX.b_w_l_q_z_rn_l_rn_v_rn_h", "bndsix", "11111100000000zz000001llllvvvvhhhh", 0, "bwlq", 122, 15, 0, 65535, 3,
+def BRForm_scalar_base_BNDSIX_b_w_l_q_z_rn_l_rn_v_rn_h : BedrockScalarEncodingForm<
+  "base.BNDSIX.b_w_l_q_z_rn_l_rn_v_rn_h", "bndsix", "11111100000000zz000001llllvvvvhhhh", 0, "bwlq", 122, 15, 0, 65535, 3,
   2, 108, 4, 0, 0, 0, 65535, 0, 0, 0, 2, 118, 4, 0, 0, 0, 65535, 0,
   0, 0, 2, 104, 4, 0, 0, 0, 65535, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 255, 255>;
-def BRForm_scalar_base_instructions_BNDSXI_b_w_l_q_z_rn_l_ea_e_rn_h : BedrockScalarEncodingForm<
-  "base.instructions.BNDSXI.b_w_l_q_z_rn_l_ea_e_rn_h", "bndsxi", "11111100010000zz010llllhhhheeeeeee", 0, "bwlq", 122, 15, 0, 65535, 3,
+def BRForm_scalar_base_BNDSXI_b_w_l_q_z_rn_l_ea_e_rn_h : BedrockScalarEncodingForm<
+  "base.BNDSXI.b_w_l_q_z_rn_l_ea_e_rn_h", "bndsxi", "11111100010000zz010llllhhhheeeeeee", 0, "bwlq", 122, 15, 0, 65535, 3,
   2, 108, 4, 0, 0, 0, 65535, 0, 0, 0, 6, 101, 7, 0, 1, 0, 18446744073709551615, 18446744073709551615,
   0, 0, 2, 104, 4, 0, 0, 0, 65535, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 255, 255>;
-def BRForm_scalar_base_instructions_BNDSXI_b_w_l_q_z_rn_l_rn_v_rn_h : BedrockScalarEncodingForm<
-  "base.instructions.BNDSXI.b_w_l_q_z_rn_l_rn_v_rn_h", "bndsxi", "11111100000000zz000010llllvvvvhhhh", 0, "bwlq", 122, 15, 0, 65535, 3,
+def BRForm_scalar_base_BNDSXI_b_w_l_q_z_rn_l_rn_v_rn_h : BedrockScalarEncodingForm<
+  "base.BNDSXI.b_w_l_q_z_rn_l_rn_v_rn_h", "bndsxi", "11111100000000zz000010llllvvvvhhhh", 0, "bwlq", 122, 15, 0, 65535, 3,
   2, 108, 4, 0, 0, 0, 65535, 0, 0, 0, 2, 118, 4, 0, 0, 0, 65535, 0,
   0, 0, 2, 104, 4, 0, 0, 0, 65535, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 255, 255>;
-def BRForm_scalar_base_instructions_BNDSXX_b_w_l_q_z_rn_l_ea_e_rn_h : BedrockScalarEncodingForm<
-  "base.instructions.BNDSXX.b_w_l_q_z_rn_l_ea_e_rn_h", "bndsxx", "11111100010000zz011llllhhhheeeeeee", 0, "bwlq", 122, 15, 0, 65535, 3,
+def BRForm_scalar_base_BNDSXX_b_w_l_q_z_rn_l_ea_e_rn_h : BedrockScalarEncodingForm<
+  "base.BNDSXX.b_w_l_q_z_rn_l_ea_e_rn_h", "bndsxx", "11111100010000zz011llllhhhheeeeeee", 0, "bwlq", 122, 15, 0, 65535, 3,
   2, 108, 4, 0, 0, 0, 65535, 0, 0, 0, 6, 101, 7, 0, 1, 0, 18446744073709551615, 18446744073709551615,
   0, 0, 2, 104, 4, 0, 0, 0, 65535, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 255, 255>;
-def BRForm_scalar_base_instructions_BNDSXX_b_w_l_q_z_rn_l_rn_v_rn_h : BedrockScalarEncodingForm<
-  "base.instructions.BNDSXX.b_w_l_q_z_rn_l_rn_v_rn_h", "bndsxx", "11111100000000zz000011llllvvvvhhhh", 0, "bwlq", 122, 15, 0, 65535, 3,
+def BRForm_scalar_base_BNDSXX_b_w_l_q_z_rn_l_rn_v_rn_h : BedrockScalarEncodingForm<
+  "base.BNDSXX.b_w_l_q_z_rn_l_rn_v_rn_h", "bndsxx", "11111100000000zz000011llllvvvvhhhh", 0, "bwlq", 122, 15, 0, 65535, 3,
   2, 108, 4, 0, 0, 0, 65535, 0, 0, 0, 2, 118, 4, 0, 0, 0, 65535, 0,
   0, 0, 2, 104, 4, 0, 0, 0, 65535, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 255, 255>;
-def BRForm_scalar_base_instructions_BNDUII_b_w_l_q_z_rn_l_ea_e_rn_h : BedrockScalarEncodingForm<
-  "base.instructions.BNDUII.b_w_l_q_z_rn_l_ea_e_rn_h", "bnduii", "11111100010000zz100llllhhhheeeeeee", 0, "bwlq", 122, 15, 0, 65535, 3,
+def BRForm_scalar_base_BNDUII_b_w_l_q_z_rn_l_ea_e_rn_h : BedrockScalarEncodingForm<
+  "base.BNDUII.b_w_l_q_z_rn_l_ea_e_rn_h", "bnduii", "11111100010000zz100llllhhhheeeeeee", 0, "bwlq", 122, 15, 0, 65535, 3,
   2, 108, 4, 0, 0, 0, 65535, 0, 0, 0, 6, 101, 7, 0, 1, 0, 18446744073709551615, 18446744073709551615,
   0, 0, 2, 104, 4, 0, 0, 0, 65535, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 255, 255>;
-def BRForm_scalar_base_instructions_BNDUII_b_w_l_q_z_rn_l_rn_v_rn_h : BedrockScalarEncodingForm<
-  "base.instructions.BNDUII.b_w_l_q_z_rn_l_rn_v_rn_h", "bnduii", "11111100000000zz000100llllvvvvhhhh", 0, "bwlq", 122, 15, 0, 65535, 3,
+def BRForm_scalar_base_BNDUII_b_w_l_q_z_rn_l_rn_v_rn_h : BedrockScalarEncodingForm<
+  "base.BNDUII.b_w_l_q_z_rn_l_rn_v_rn_h", "bnduii", "11111100000000zz000100llllvvvvhhhh", 0, "bwlq", 122, 15, 0, 65535, 3,
   2, 108, 4, 0, 0, 0, 65535, 0, 0, 0, 2, 118, 4, 0, 0, 0, 65535, 0,
   0, 0, 2, 104, 4, 0, 0, 0, 65535, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 255, 255>;
-def BRForm_scalar_base_instructions_BNDUIX_b_w_l_q_z_rn_l_ea_e_rn_h : BedrockScalarEncodingForm<
-  "base.instructions.BNDUIX.b_w_l_q_z_rn_l_ea_e_rn_h", "bnduix", "11111100010000zz101llllhhhheeeeeee", 0, "bwlq", 122, 15, 0, 65535, 3,
+def BRForm_scalar_base_BNDUIX_b_w_l_q_z_rn_l_ea_e_rn_h : BedrockScalarEncodingForm<
+  "base.BNDUIX.b_w_l_q_z_rn_l_ea_e_rn_h", "bnduix", "11111100010000zz101llllhhhheeeeeee", 0, "bwlq", 122, 15, 0, 65535, 3,
   2, 108, 4, 0, 0, 0, 65535, 0, 0, 0, 6, 101, 7, 0, 1, 0, 18446744073709551615, 18446744073709551615,
   0, 0, 2, 104, 4, 0, 0, 0, 65535, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 255, 255>;
-def BRForm_scalar_base_instructions_BNDUIX_b_w_l_q_z_rn_l_rn_v_rn_h : BedrockScalarEncodingForm<
-  "base.instructions.BNDUIX.b_w_l_q_z_rn_l_rn_v_rn_h", "bnduix", "11111100000000zz000101llllvvvvhhhh", 0, "bwlq", 122, 15, 0, 65535, 3,
+def BRForm_scalar_base_BNDUIX_b_w_l_q_z_rn_l_rn_v_rn_h : BedrockScalarEncodingForm<
+  "base.BNDUIX.b_w_l_q_z_rn_l_rn_v_rn_h", "bnduix", "11111100000000zz000101llllvvvvhhhh", 0, "bwlq", 122, 15, 0, 65535, 3,
   2, 108, 4, 0, 0, 0, 65535, 0, 0, 0, 2, 118, 4, 0, 0, 0, 65535, 0,
   0, 0, 2, 104, 4, 0, 0, 0, 65535, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 255, 255>;
-def BRForm_scalar_base_instructions_BNDUXI_b_w_l_q_z_rn_l_ea_e_rn_h : BedrockScalarEncodingForm<
-  "base.instructions.BNDUXI.b_w_l_q_z_rn_l_ea_e_rn_h", "bnduxi", "11111100010000zz110llllhhhheeeeeee", 0, "bwlq", 122, 15, 0, 65535, 3,
+def BRForm_scalar_base_BNDUXI_b_w_l_q_z_rn_l_ea_e_rn_h : BedrockScalarEncodingForm<
+  "base.BNDUXI.b_w_l_q_z_rn_l_ea_e_rn_h", "bnduxi", "11111100010000zz110llllhhhheeeeeee", 0, "bwlq", 122, 15, 0, 65535, 3,
   2, 108, 4, 0, 0, 0, 65535, 0, 0, 0, 6, 101, 7, 0, 1, 0, 18446744073709551615, 18446744073709551615,
   0, 0, 2, 104, 4, 0, 0, 0, 65535, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 255, 255>;
-def BRForm_scalar_base_instructions_BNDUXI_b_w_l_q_z_rn_l_rn_v_rn_h : BedrockScalarEncodingForm<
-  "base.instructions.BNDUXI.b_w_l_q_z_rn_l_rn_v_rn_h", "bnduxi", "11111100000000zz000110llllvvvvhhhh", 0, "bwlq", 122, 15, 0, 65535, 3,
+def BRForm_scalar_base_BNDUXI_b_w_l_q_z_rn_l_rn_v_rn_h : BedrockScalarEncodingForm<
+  "base.BNDUXI.b_w_l_q_z_rn_l_rn_v_rn_h", "bnduxi", "11111100000000zz000110llllvvvvhhhh", 0, "bwlq", 122, 15, 0, 65535, 3,
   2, 108, 4, 0, 0, 0, 65535, 0, 0, 0, 2, 118, 4, 0, 0, 0, 65535, 0,
   0, 0, 2, 104, 4, 0, 0, 0, 65535, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 255, 255>;
-def BRForm_scalar_base_instructions_BNDUXX_b_w_l_q_z_rn_l_ea_e_rn_h : BedrockScalarEncodingForm<
-  "base.instructions.BNDUXX.b_w_l_q_z_rn_l_ea_e_rn_h", "bnduxx", "11111100010000zz111llllhhhheeeeeee", 0, "bwlq", 122, 15, 0, 65535, 3,
+def BRForm_scalar_base_BNDUXX_b_w_l_q_z_rn_l_ea_e_rn_h : BedrockScalarEncodingForm<
+  "base.BNDUXX.b_w_l_q_z_rn_l_ea_e_rn_h", "bnduxx", "11111100010000zz111llllhhhheeeeeee", 0, "bwlq", 122, 15, 0, 65535, 3,
   2, 108, 4, 0, 0, 0, 65535, 0, 0, 0, 6, 101, 7, 0, 1, 0, 18446744073709551615, 18446744073709551615,
   0, 0, 2, 104, 4, 0, 0, 0, 65535, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 255, 255>;
-def BRForm_scalar_base_instructions_BNDUXX_b_w_l_q_z_rn_l_rn_v_rn_h : BedrockScalarEncodingForm<
-  "base.instructions.BNDUXX.b_w_l_q_z_rn_l_rn_v_rn_h", "bnduxx", "11111100000000zz000111llllvvvvhhhh", 0, "bwlq", 122, 15, 0, 65535, 3,
+def BRForm_scalar_base_BNDUXX_b_w_l_q_z_rn_l_rn_v_rn_h : BedrockScalarEncodingForm<
+  "base.BNDUXX.b_w_l_q_z_rn_l_rn_v_rn_h", "bnduxx", "11111100000000zz000111llllvvvvhhhh", 0, "bwlq", 122, 15, 0, 65535, 3,
   2, 108, 4, 0, 0, 0, 65535, 0, 0, 0, 2, 118, 4, 0, 0, 0, 65535, 0,
   0, 0, 2, 104, 4, 0, 0, 0, 65535, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 255, 255>;
-def BRForm_scalar_base_instructions_BSET_rn_b_ea_e : BedrockScalarEncodingForm<
-  "base.instructions.BSET.rn_b_ea_e", "bset", "111100110000010bbbbeeeeeee", 0, "", 0, 1, 0, 65535, 2,
+def BRForm_scalar_base_BSET_rn_b_ea_e : BedrockScalarEncodingForm<
+  "base.BSET.rn_b_ea_e", "bset", "111100110000010bbbbeeeeeee", 0, "", 0, 1, 0, 65535, 2,
   2, 98, 4, 0, 0, 0, 65535, 0, 0, 0, 6, 101, 7, 0, 0, 0, 18446744073709551615, 18446744073709551615,
   0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 255, 255>;
-def BRForm_scalar_base_instructions_BSET_imm6_i_ea_e : BedrockScalarEncodingForm<
-  "base.instructions.BSET.imm6_i_ea_e", "bset", "1111011100010iiiiiieeeeeee", 0, "", 0, 1, 0, 65535, 2,
+def BRForm_scalar_base_BSET_imm6_i_ea_e : BedrockScalarEncodingForm<
+  "base.BSET.imm6_i_ea_e", "bset", "1111011100010iiiiiieeeeeee", 0, "", 0, 1, 0, 65535, 2,
   8, 105, 6, 0, 0, 0, 18446744073709551615, 0, 0, 0, 6, 101, 7, 0, 0, 0, 18446744073709551615, 18446744073709551615,
   0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 255, 255>;
-def BRForm_scalar_base_instructions_BSET_rn_b_rn_e : BedrockScalarEncodingForm<
-  "base.instructions.BSET.rn_b_rn_e", "bset", "1000000010bbbbeeee", 0, "", 0, 1, 0, 65535, 2,
+def BRForm_scalar_base_BSET_rn_b_rn_e : BedrockScalarEncodingForm<
+  "base.BSET.rn_b_rn_e", "bset", "1000000010bbbbeeee", 0, "", 0, 1, 0, 65535, 2,
   2, 98, 4, 0, 0, 0, 65535, 0, 0, 0, 2, 101, 4, 0, 0, 0, 65535, 0,
   0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 255, 255>;
-def BRForm_scalar_base_instructions_BSET_imm6_i_rn_e : BedrockScalarEncodingForm<
-  "base.instructions.BSET.imm6_i_rn_e", "bset", "1111011001101010eeeeiiiiii", 0, "", 0, 1, 0, 65535, 2,
+def BRForm_scalar_base_BSET_imm6_i_rn_e : BedrockScalarEncodingForm<
+  "base.BSET.imm6_i_rn_e", "bset", "1111011001101010eeeeiiiiii", 0, "", 0, 1, 0, 65535, 2,
   8, 105, 6, 0, 0, 0, 18446744073709551615, 0, 0, 0, 2, 101, 4, 0, 0, 0, 65535, 0,
   0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 255, 255>;
-def BRForm_scalar_base_instructions_BTEST_rn_b_ea_e : BedrockScalarEncodingForm<
-  "base.instructions.BTEST.rn_b_ea_e", "btest", "111100110000011bbbbeeeeeee", 0, "", 0, 1, 0, 65535, 2,
+def BRForm_scalar_base_BTEST_rn_b_ea_e : BedrockScalarEncodingForm<
+  "base.BTEST.rn_b_ea_e", "btest", "111100110000011bbbbeeeeeee", 0, "", 0, 1, 0, 65535, 2,
   2, 98, 4, 0, 0, 0, 65535, 0, 0, 0, 6, 101, 7, 0, 1, 0, 18446744073709551615, 18446744073709551615,
   0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 255, 255>;
-def BRForm_scalar_base_instructions_BTEST_imm6_i_ea_e : BedrockScalarEncodingForm<
-  "base.instructions.BTEST.imm6_i_ea_e", "btest", "1111011100011iiiiiieeeeeee", 0, "", 0, 1, 0, 65535, 2,
+def BRForm_scalar_base_BTEST_imm6_i_ea_e : BedrockScalarEncodingForm<
+  "base.BTEST.imm6_i_ea_e", "btest", "1111011100011iiiiiieeeeeee", 0, "", 0, 1, 0, 65535, 2,
   8, 105, 6, 0, 0, 0, 18446744073709551615, 0, 0, 0, 6, 101, 7, 0, 1, 0, 18446744073709551615, 18446744073709551615,
   0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 255, 255>;
-def BRForm_scalar_base_instructions_BTEST_rn_b_rn_e : BedrockScalarEncodingForm<
-  "base.instructions.BTEST.rn_b_rn_e", "btest", "1000000011bbbbeeee", 0, "", 0, 1, 0, 65535, 2,
+def BRForm_scalar_base_BTEST_rn_b_rn_e : BedrockScalarEncodingForm<
+  "base.BTEST.rn_b_rn_e", "btest", "1000000011bbbbeeee", 0, "", 0, 1, 0, 65535, 2,
   2, 98, 4, 0, 0, 0, 65535, 0, 0, 0, 2, 101, 4, 0, 0, 0, 65535, 0,
   0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 255, 255>;
-def BRForm_scalar_base_instructions_BTEST_imm6_i_rn_e : BedrockScalarEncodingForm<
-  "base.instructions.BTEST.imm6_i_rn_e", "btest", "1111011001101011eeeeiiiiii", 0, "", 0, 1, 0, 65535, 2,
+def BRForm_scalar_base_BTEST_imm6_i_rn_e : BedrockScalarEncodingForm<
+  "base.BTEST.imm6_i_rn_e", "btest", "1111011001101011eeeeiiiiii", 0, "", 0, 1, 0, 65535, 2,
   8, 105, 6, 0, 0, 0, 18446744073709551615, 0, 0, 0, 2, 101, 4, 0, 0, 0, 65535, 0,
   0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 255, 255>;
-def BRForm_scalar_base_instructions_CALL_imm16s : BedrockScalarEncodingForm<
-  "base.instructions.CALL.imm16s", "call", "111011110000000010", 2, "", 0, 1, 0, 65535, 1,
+def BRForm_scalar_base_CALL_imm16s : BedrockScalarEncodingForm<
+  "base.CALL.imm16s", "call", "111011110000000010", 2, "", 0, 1, 0, 65535, 1,
   9, 0, 16, 1, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0,
   0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 255, 255>;
-def BRForm_scalar_base_instructions_CALL_imm32s : BedrockScalarEncodingForm<
-  "base.instructions.CALL.imm32s", "call", "111011110000000011", 4, "", 0, 1, 0, 65535, 1,
+def BRForm_scalar_base_CALL_imm32s : BedrockScalarEncodingForm<
+  "base.CALL.imm32s", "call", "111011110000000011", 4, "", 0, 1, 0, 65535, 1,
   9, 0, 32, 1, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0,
   0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 255, 255>;
-def BRForm_scalar_base_instructions_CALL_ea_e : BedrockScalarEncodingForm<
-  "base.instructions.CALL.ea_e", "call", "11101000010eeeeeee", 0, "", 0, 1, 0, 65535, 1,
+def BRForm_scalar_base_CALL_ea_e : BedrockScalarEncodingForm<
+  "base.CALL.ea_e", "call", "11101000010eeeeeee", 0, "", 0, 1, 0, 65535, 1,
   6, 101, 7, 0, 0, 0, 18446744073709551615, 18446744073709551615, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0,
   0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 255, 255>;
-def BRForm_scalar_base_instructions_CALL_rn_r : BedrockScalarEncodingForm<
-  "base.instructions.CALL.rn_r", "call", "11101101000010rrrr", 0, "", 0, 1, 0, 65535, 1,
+def BRForm_scalar_base_CALL_rn_r : BedrockScalarEncodingForm<
+  "base.CALL.rn_r", "call", "11101101000010rrrr", 0, "", 0, 1, 0, 65535, 1,
   2, 114, 4, 0, 0, 0, 65535, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0,
   0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 255, 255>;
-def BRForm_scalar_base_instructions_CALLcc_imm16s : BedrockScalarEncodingForm<
-  "base.instructions.CALLcc.imm16s", "call", "11101110000000cccc", 2, "", 0, 1, 99, 65532, 1,
+def BRForm_scalar_base_CALLcc_imm16s : BedrockScalarEncodingForm<
+  "base.CALLcc.imm16s", "call", "11101110000000cccc", 2, "", 0, 1, 99, 65532, 1,
   9, 0, 16, 1, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0,
   0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 255, 255>;
-def BRForm_scalar_base_instructions_CALLcc_imm32s : BedrockScalarEncodingForm<
-  "base.instructions.CALLcc.imm32s", "call", "11101110000001cccc", 4, "", 0, 1, 99, 65532, 1,
+def BRForm_scalar_base_CALLcc_imm32s : BedrockScalarEncodingForm<
+  "base.CALLcc.imm32s", "call", "11101110000001cccc", 4, "", 0, 1, 99, 65532, 1,
   9, 0, 32, 1, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0,
   0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 255, 255>;
-def BRForm_scalar_base_instructions_CALLcc_ea_e : BedrockScalarEncodingForm<
-  "base.instructions.CALLcc.ea_e", "call", "111101100010000cccceeeeeee", 0, "", 0, 1, 99, 65532, 1,
+def BRForm_scalar_base_CALLcc_ea_e : BedrockScalarEncodingForm<
+  "base.CALLcc.ea_e", "call", "111101100010000cccceeeeeee", 0, "", 0, 1, 99, 65532, 1,
   6, 101, 7, 0, 0, 0, 18446744073709551615, 18446744073709551615, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0,
   0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 255, 255>;
-def BRForm_scalar_base_instructions_CALLcc_rn_r : BedrockScalarEncodingForm<
-  "base.instructions.CALLcc.rn_r", "call", "111101100110000000ccccrrrr", 0, "", 0, 1, 99, 65532, 1,
+def BRForm_scalar_base_CALLcc_rn_r : BedrockScalarEncodingForm<
+  "base.CALLcc.rn_r", "call", "111101100110000000ccccrrrr", 0, "", 0, 1, 99, 65532, 1,
   2, 114, 4, 0, 0, 0, 65535, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0,
   0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 255, 255>;
-def BRForm_scalar_base_instructions_CLMUL_b_w_l_q_z_ea_e_rn_d : BedrockScalarEncodingForm<
-  "base.instructions.CLMUL.b_w_l_q_z_ea_e_rn_d", "clmul", "1111001010zz010ddddeeeeeee", 0, "bwlq", 122, 15, 0, 65535, 2,
+def BRForm_scalar_base_CLMUL_b_w_l_q_z_ea_e_rn_d : BedrockScalarEncodingForm<
+  "base.CLMUL.b_w_l_q_z_ea_e_rn_d", "clmul", "1111001010zz010ddddeeeeeee", 0, "bwlq", 122, 15, 0, 65535, 2,
   6, 101, 7, 0, 1, 0, 18446744073709551615, 18446744073709551615, 0, 0, 2, 100, 4, 0, 0, 0, 65535, 0,
   0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 255, 255>;
-def BRForm_scalar_base_instructions_CLMUL_b_w_l_q_z_rn_s_rn_d : BedrockScalarEncodingForm<
-  "base.instructions.CLMUL.b_w_l_q_z_rn_s_rn_d", "clmul", "10010zz010ssssdddd", 0, "bwlq", 122, 15, 0, 65535, 2,
+def BRForm_scalar_base_CLMUL_b_w_l_q_z_rn_s_rn_d : BedrockScalarEncodingForm<
+  "base.CLMUL.b_w_l_q_z_rn_s_rn_d", "clmul", "10010zz010ssssdddd", 0, "bwlq", 122, 15, 0, 65535, 2,
   2, 115, 4, 0, 0, 0, 65535, 0, 0, 0, 2, 100, 4, 0, 0, 0, 65535, 0,
   0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 255, 255>;
-def BRForm_scalar_base_instructions_CLMULH_q_ea_e_rn_d : BedrockScalarEncodingForm<
-  "base.instructions.CLMULH.q_ea_e_rn_d", "clmulh.q", "111100101011011ddddeeeeeee", 0, "", 0, 1, 0, 65535, 2,
+def BRForm_scalar_base_CLMULH_q_ea_e_rn_d : BedrockScalarEncodingForm<
+  "base.CLMULH.q_ea_e_rn_d", "clmulh.q", "111100101011011ddddeeeeeee", 0, "", 0, 1, 0, 65535, 2,
   6, 101, 7, 0, 1, 0, 18446744073709551615, 18446744073709551615, 0, 0, 2, 100, 4, 0, 0, 0, 65535, 0,
   0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 255, 255>;
-def BRForm_scalar_base_instructions_CLMULH_q_rn_s_rn_d : BedrockScalarEncodingForm<
-  "base.instructions.CLMULH.q_rn_s_rn_d", "clmulh.q", "1001011011ssssdddd", 0, "", 0, 1, 0, 65535, 2,
+def BRForm_scalar_base_CLMULH_q_rn_s_rn_d : BedrockScalarEncodingForm<
+  "base.CLMULH.q_rn_s_rn_d", "clmulh.q", "1001011011ssssdddd", 0, "", 0, 1, 0, 65535, 2,
   2, 115, 4, 0, 0, 0, 65535, 0, 0, 0, 2, 100, 4, 0, 0, 0, 65535, 0,
   0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 255, 255>;
-def BRForm_scalar_base_instructions_CLR_q_rn_r : BedrockScalarEncodingForm<
-  "base.instructions.CLR.q_rn_r", "clr.q", "111rrrr", 0, "", 0, 1, 0, 65535, 1,
+def BRForm_scalar_base_CLR_q_rn_r : BedrockScalarEncodingForm<
+  "base.CLR.q_rn_r", "clr.q", "111rrrr", 0, "", 0, 1, 0, 65535, 1,
   2, 114, 4, 0, 0, 0, 65535, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0,
   0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 255, 255>;
-def BRForm_scalar_base_instructions_CLR_l_rn_r : BedrockScalarEncodingForm<
-  "base.instructions.CLR.l_rn_r", "clr.l", "1011000000rrrr", 0, "", 0, 1, 0, 65535, 1,
+def BRForm_scalar_base_CLR_l_rn_r : BedrockScalarEncodingForm<
+  "base.CLR.l_rn_r", "clr.l", "1011000000rrrr", 0, "", 0, 1, 0, 65535, 1,
   2, 114, 4, 0, 0, 0, 65535, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0,
   0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 255, 255>;
-def BRForm_scalar_base_instructions_CLR_b_w_l_q_z_ea_e : BedrockScalarEncodingForm<
-  "base.instructions.CLR.b_w_l_q_z_ea_e", "clr", "11100zz0111eeeeeee", 0, "bwlq", 122, 15, 0, 65535, 1,
+def BRForm_scalar_base_CLR_b_w_l_q_z_ea_e : BedrockScalarEncodingForm<
+  "base.CLR.b_w_l_q_z_ea_e", "clr", "11100zz0111eeeeeee", 0, "bwlq", 122, 15, 0, 65535, 1,
   6, 101, 7, 0, 0, 0, 18446744073709551615, 18446744073709551615, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0,
   0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 255, 255>;
-def BRForm_scalar_base_instructions_CLS_b_w_l_q_z_ea_e_rn_d : BedrockScalarEncodingForm<
-  "base.instructions.CLS.b_w_l_q_z_ea_e_rn_d", "cls", "1111001010zz100ddddeeeeeee", 0, "bwlq", 122, 15, 0, 65535, 2,
+def BRForm_scalar_base_CLS_b_w_l_q_z_ea_e_rn_d : BedrockScalarEncodingForm<
+  "base.CLS.b_w_l_q_z_ea_e_rn_d", "cls", "1111001010zz100ddddeeeeeee", 0, "bwlq", 122, 15, 0, 65535, 2,
   6, 101, 7, 0, 1, 0, 18446744073709551615, 18446744073709551615, 0, 0, 2, 100, 4, 0, 0, 0, 65535, 0,
   0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 255, 255>;
-def BRForm_scalar_base_instructions_CLS_b_w_l_q_z_rn_s_rn_d : BedrockScalarEncodingForm<
-  "base.instructions.CLS.b_w_l_q_z_rn_s_rn_d", "cls", "10010zz100ssssdddd", 0, "bwlq", 122, 15, 0, 65535, 2,
+def BRForm_scalar_base_CLS_b_w_l_q_z_rn_s_rn_d : BedrockScalarEncodingForm<
+  "base.CLS.b_w_l_q_z_rn_s_rn_d", "cls", "10010zz100ssssdddd", 0, "bwlq", 122, 15, 0, 65535, 2,
   2, 115, 4, 0, 0, 0, 65535, 0, 0, 0, 2, 100, 4, 0, 0, 0, 65535, 0,
   0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 255, 255>;
-def BRForm_scalar_base_instructions_CLZ_b_w_l_q_z_ea_e_rn_d : BedrockScalarEncodingForm<
-  "base.instructions.CLZ.b_w_l_q_z_ea_e_rn_d", "clz", "1111001010zz101ddddeeeeeee", 0, "bwlq", 122, 15, 0, 65535, 2,
+def BRForm_scalar_base_CLZ_b_w_l_q_z_ea_e_rn_d : BedrockScalarEncodingForm<
+  "base.CLZ.b_w_l_q_z_ea_e_rn_d", "clz", "1111001010zz101ddddeeeeeee", 0, "bwlq", 122, 15, 0, 65535, 2,
   6, 101, 7, 0, 1, 0, 18446744073709551615, 18446744073709551615, 0, 0, 2, 100, 4, 0, 0, 0, 65535, 0,
   0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 255, 255>;
-def BRForm_scalar_base_instructions_CLZ_b_w_l_q_z_rn_s_rn_d : BedrockScalarEncodingForm<
-  "base.instructions.CLZ.b_w_l_q_z_rn_s_rn_d", "clz", "10010zz101ssssdddd", 0, "bwlq", 122, 15, 0, 65535, 2,
+def BRForm_scalar_base_CLZ_b_w_l_q_z_rn_s_rn_d : BedrockScalarEncodingForm<
+  "base.CLZ.b_w_l_q_z_rn_s_rn_d", "clz", "10010zz101ssssdddd", 0, "bwlq", 122, 15, 0, 65535, 2,
   2, 115, 4, 0, 0, 0, 65535, 0, 0, 0, 2, 100, 4, 0, 0, 0, 65535, 0,
   0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 255, 255>;
-def BRForm_scalar_base_instructions_CMP_l_q_z_rn_s_rn_d : BedrockScalarEncodingForm<
-  "base.instructions.CMP.l_q_z_rn_s_rn_d", "cmp", "00011zssssdddd", 0, "lq", 122, 3, 0, 65535, 2,
+def BRForm_scalar_base_CMP_l_q_z_rn_s_rn_d : BedrockScalarEncodingForm<
+  "base.CMP.l_q_z_rn_s_rn_d", "cmp", "00011zssssdddd", 0, "lq", 122, 3, 0, 65535, 2,
   2, 115, 4, 0, 0, 0, 65535, 0, 0, 0, 2, 100, 4, 0, 0, 0, 65535, 0,
   0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 255, 255>;
-def BRForm_scalar_base_instructions_CMP_b_w_l_q_z_rn_s_ea_e : BedrockScalarEncodingForm<
-  "base.instructions.CMP.b_w_l_q_z_rn_s_ea_e", "cmp", "00011zzsssseeeeeee", 0, "bwlq", 122, 15, 0, 65535, 2,
+def BRForm_scalar_base_CMP_b_w_l_q_z_rn_s_ea_e : BedrockScalarEncodingForm<
+  "base.CMP.b_w_l_q_z_rn_s_ea_e", "cmp", "00011zzsssseeeeeee", 0, "bwlq", 122, 15, 0, 65535, 2,
   2, 115, 4, 0, 0, 0, 65535, 0, 0, 0, 6, 101, 7, 0, 1, 0, 18446744073709551615, 18446744073709551615,
   0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 255, 255>;
-def BRForm_scalar_base_instructions_CMP_b_w_l_q_z_ea_e_rn_d : BedrockScalarEncodingForm<
-  "base.instructions.CMP.b_w_l_q_z_ea_e_rn_d", "cmp", "01011zzddddeeeeeee", 0, "bwlq", 122, 15, 0, 65535, 2,
+def BRForm_scalar_base_CMP_b_w_l_q_z_ea_e_rn_d : BedrockScalarEncodingForm<
+  "base.CMP.b_w_l_q_z_ea_e_rn_d", "cmp", "01011zzddddeeeeeee", 0, "bwlq", 122, 15, 0, 65535, 2,
   6, 101, 7, 0, 1, 0, 18446744073709551615, 18446744073709551615, 0, 0, 2, 100, 4, 0, 0, 0, 65535, 0,
   0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 255, 255>;
-def BRForm_scalar_base_instructions_CMP_b_w_l_q_z_ea_s_ea_d : BedrockScalarEncodingForm<
-  "base.instructions.CMP.b_w_l_q_z_ea_s_ea_d", "cmp", "1111000000zzsssssssddddddd", 0, "bwlq", 122, 15, 0, 65535, 2,
+def BRForm_scalar_base_CMP_b_w_l_q_z_ea_s_ea_d : BedrockScalarEncodingForm<
+  "base.CMP.b_w_l_q_z_ea_s_ea_d", "cmp", "1111000000zzsssssssddddddd", 0, "bwlq", 122, 15, 0, 65535, 2,
   6, 115, 7, 0, 1, 0, 18446744073709551615, 18446744073709551615, 0, 0, 6, 100, 7, 0, 1, 0, 18446744073709551615, 18446744073709551615,
   0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 255, 255>;
-def BRForm_scalar_base_instructions_CMPJcc_b_w_l_q_z_rn_s_rn_d_imm8s : BedrockScalarEncodingForm<
-  "base.instructions.CMPJcc.b_w_l_q_z_rn_s_rn_d_imm8s", "cmpj", "111101000000zzccccssssdddd", 1, "bwlq", 122, 15, 99, 65532, 3,
+def BRForm_scalar_base_CMPJcc_b_w_l_q_z_rn_s_rn_d_imm8s : BedrockScalarEncodingForm<
+  "base.CMPJcc.b_w_l_q_z_rn_s_rn_d_imm8s", "cmpj", "111101000000zzccccssssdddd", 1, "bwlq", 122, 15, 99, 65532, 3,
   2, 115, 4, 0, 0, 0, 65535, 0, 0, 0, 2, 100, 4, 0, 0, 0, 65535, 0,
   0, 0, 9, 0, 8, 1, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 255, 255>;
-def BRForm_scalar_base_instructions_CMPJcc_b_w_l_q_z_rn_s_rn_d_imm16s : BedrockScalarEncodingForm<
-  "base.instructions.CMPJcc.b_w_l_q_z_rn_s_rn_d_imm16s", "cmpj", "111101000001zzccccssssdddd", 2, "bwlq", 122, 15, 99, 65532, 3,
+def BRForm_scalar_base_CMPJcc_b_w_l_q_z_rn_s_rn_d_imm16s : BedrockScalarEncodingForm<
+  "base.CMPJcc.b_w_l_q_z_rn_s_rn_d_imm16s", "cmpj", "111101000001zzccccssssdddd", 2, "bwlq", 122, 15, 99, 65532, 3,
   2, 115, 4, 0, 0, 0, 65535, 0, 0, 0, 2, 100, 4, 0, 0, 0, 65535, 0,
   0, 0, 9, 0, 16, 1, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 255, 255>;
-def BRForm_scalar_base_instructions_CMPXCHG_b_w_l_q_z_order_o_rn_x_rn_d_ea_e : BedrockScalarEncodingForm<
-  "base.instructions.CMPXCHG.b_w_l_q_z_order_o_rn_x_rn_d_ea_e", "cmpxchg", "11111100010100zzoooxxxxddddeeeeeee", 0, "bwlq", 122, 15, 0, 65535, 4,
+def BRForm_scalar_base_CMPXCHG_b_w_l_q_z_order_o_rn_x_rn_d_ea_e : BedrockScalarEncodingForm<
+  "base.CMPXCHG.b_w_l_q_z_order_o_rn_x_rn_d_ea_e", "cmpxchg", "11111100010100zzoooxxxxddddeeeeeee", 0, "bwlq", 122, 15, 0, 65535, 4,
   16, 111, 3, 0, 0, 0, 31, 0, 0, 0, 2, 120, 4, 0, 0, 0, 65535, 0,
   0, 0, 2, 100, 4, 0, 0, 0, 65535, 0, 0, 0, 6, 101, 7, 0, 0, 0, 18446744073709551615, 18446744073709551615, 0, 0, 255, 255>;
-def BRForm_scalar_base_instructions_CPUID_rn_r : BedrockScalarEncodingForm<
-  "base.instructions.CPUID.rn_r", "cpuid", "11101101000000rrrr", 0, "", 0, 1, 0, 65535, 1,
+def BRForm_scalar_base_CPUID_rn_r : BedrockScalarEncodingForm<
+  "base.CPUID.rn_r", "cpuid", "11101101000000rrrr", 0, "", 0, 1, 0, 65535, 1,
   2, 114, 4, 0, 0, 0, 65535, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0,
   0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 255, 255>;
-def BRForm_scalar_base_instructions_CTS_b_w_l_q_z_ea_e_rn_d : BedrockScalarEncodingForm<
-  "base.instructions.CTS.b_w_l_q_z_ea_e_rn_d", "cts", "1111001010zz110ddddeeeeeee", 0, "bwlq", 122, 15, 0, 65535, 2,
+def BRForm_scalar_base_CTS_b_w_l_q_z_ea_e_rn_d : BedrockScalarEncodingForm<
+  "base.CTS.b_w_l_q_z_ea_e_rn_d", "cts", "1111001010zz110ddddeeeeeee", 0, "bwlq", 122, 15, 0, 65535, 2,
   6, 101, 7, 0, 1, 0, 18446744073709551615, 18446744073709551615, 0, 0, 2, 100, 4, 0, 0, 0, 65535, 0,
   0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 255, 255>;
-def BRForm_scalar_base_instructions_CTS_b_w_l_q_z_rn_s_rn_d : BedrockScalarEncodingForm<
-  "base.instructions.CTS.b_w_l_q_z_rn_s_rn_d", "cts", "10010zz110ssssdddd", 0, "bwlq", 122, 15, 0, 65535, 2,
+def BRForm_scalar_base_CTS_b_w_l_q_z_rn_s_rn_d : BedrockScalarEncodingForm<
+  "base.CTS.b_w_l_q_z_rn_s_rn_d", "cts", "10010zz110ssssdddd", 0, "bwlq", 122, 15, 0, 65535, 2,
   2, 115, 4, 0, 0, 0, 65535, 0, 0, 0, 2, 100, 4, 0, 0, 0, 65535, 0,
   0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 255, 255>;
-def BRForm_scalar_base_instructions_CTZ_b_w_l_q_z_ea_e_rn_d : BedrockScalarEncodingForm<
-  "base.instructions.CTZ.b_w_l_q_z_ea_e_rn_d", "ctz", "1111001010zz111ddddeeeeeee", 0, "bwlq", 122, 15, 0, 65535, 2,
+def BRForm_scalar_base_CTZ_b_w_l_q_z_ea_e_rn_d : BedrockScalarEncodingForm<
+  "base.CTZ.b_w_l_q_z_ea_e_rn_d", "ctz", "1111001010zz111ddddeeeeeee", 0, "bwlq", 122, 15, 0, 65535, 2,
   6, 101, 7, 0, 1, 0, 18446744073709551615, 18446744073709551615, 0, 0, 2, 100, 4, 0, 0, 0, 65535, 0,
   0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 255, 255>;
-def BRForm_scalar_base_instructions_CTZ_b_w_l_q_z_rn_s_rn_d : BedrockScalarEncodingForm<
-  "base.instructions.CTZ.b_w_l_q_z_rn_s_rn_d", "ctz", "10010zz111ssssdddd", 0, "bwlq", 122, 15, 0, 65535, 2,
+def BRForm_scalar_base_CTZ_b_w_l_q_z_rn_s_rn_d : BedrockScalarEncodingForm<
+  "base.CTZ.b_w_l_q_z_rn_s_rn_d", "ctz", "10010zz111ssssdddd", 0, "bwlq", 122, 15, 0, 65535, 2,
   2, 115, 4, 0, 0, 0, 65535, 0, 0, 0, 2, 100, 4, 0, 0, 0, 65535, 0,
   0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 255, 255>;
-def BRForm_scalar_base_instructions_DEC_l_q_z_rn_r : BedrockScalarEncodingForm<
-  "base.instructions.DEC.l_q_z_rn_r", "dec", "10100z0001rrrr", 0, "lq", 122, 3, 0, 65535, 1,
+def BRForm_scalar_base_DEC_l_q_z_rn_r : BedrockScalarEncodingForm<
+  "base.DEC.l_q_z_rn_r", "dec", "10100z0001rrrr", 0, "lq", 122, 3, 0, 65535, 1,
   2, 114, 4, 0, 0, 0, 65535, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0,
   0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 255, 255>;
-def BRForm_scalar_base_instructions_DEC_b_w_l_q_z_ea_e : BedrockScalarEncodingForm<
-  "base.instructions.DEC.b_w_l_q_z_ea_e", "dec", "11100zz1000eeeeeee", 0, "bwlq", 122, 15, 0, 65535, 1,
+def BRForm_scalar_base_DEC_b_w_l_q_z_ea_e : BedrockScalarEncodingForm<
+  "base.DEC.b_w_l_q_z_ea_e", "dec", "11100zz1000eeeeeee", 0, "bwlq", 122, 15, 0, 65535, 1,
   6, 101, 7, 0, 0, 0, 18446744073709551615, 18446744073709551615, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0,
   0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 255, 255>;
-def BRForm_scalar_base_instructions_DECF_b_w_l_q_z_rn_r : BedrockScalarEncodingForm<
-  "base.instructions.DECF.b_w_l_q_z_rn_r", "decf", "1110110000zz00rrrr", 0, "bwlq", 122, 15, 0, 65535, 1,
+def BRForm_scalar_base_DECF_b_w_l_q_z_rn_r : BedrockScalarEncodingForm<
+  "base.DECF.b_w_l_q_z_rn_r", "decf", "1110110000zz00rrrr", 0, "bwlq", 122, 15, 0, 65535, 1,
   2, 114, 4, 0, 0, 0, 65535, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0,
   0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 255, 255>;
-def BRForm_scalar_base_instructions_DIVMODS_b_w_l_q_z_ea_e_rn_q_rn_r : BedrockScalarEncodingForm<
-  "base.instructions.DIVMODS.b_w_l_q_z_ea_e_rn_q_rn_r", "divmods", "11111100010001zz000qqqqrrrreeeeeee", 0, "bwlq", 122, 15, 0, 65535, 3,
+def BRForm_scalar_base_DIVMODS_b_w_l_q_z_ea_e_rn_q_rn_r : BedrockScalarEncodingForm<
+  "base.DIVMODS.b_w_l_q_z_ea_e_rn_q_rn_r", "divmods", "11111100010001zz000qqqqrrrreeeeeee", 0, "bwlq", 122, 15, 0, 65535, 3,
   6, 101, 7, 0, 1, 0, 18446744073709551615, 18446744073709551615, 0, 0, 2, 113, 4, 0, 0, 0, 65535, 0,
   0, 0, 2, 114, 4, 0, 0, 0, 65535, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 1, 2>;
-def BRForm_scalar_base_instructions_DIVMODS_b_w_l_q_z_rn_e_rn_q_rn_r : BedrockScalarEncodingForm<
-  "base.instructions.DIVMODS.b_w_l_q_z_rn_e_rn_q_rn_r", "divmods", "11111100000000zz001000eeeeqqqqrrrr", 0, "bwlq", 122, 15, 0, 65535, 3,
+def BRForm_scalar_base_DIVMODS_b_w_l_q_z_rn_e_rn_q_rn_r : BedrockScalarEncodingForm<
+  "base.DIVMODS.b_w_l_q_z_rn_e_rn_q_rn_r", "divmods", "11111100000000zz001000eeeeqqqqrrrr", 0, "bwlq", 122, 15, 0, 65535, 3,
   2, 101, 4, 0, 0, 0, 65535, 0, 0, 0, 2, 113, 4, 0, 0, 0, 65535, 0,
   0, 0, 2, 114, 4, 0, 0, 0, 65535, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 1, 2>;
-def BRForm_scalar_base_instructions_DIVMODU_b_w_l_q_z_ea_e_rn_q_rn_r : BedrockScalarEncodingForm<
-  "base.instructions.DIVMODU.b_w_l_q_z_ea_e_rn_q_rn_r", "divmodu", "11111100010001zz001qqqqrrrreeeeeee", 0, "bwlq", 122, 15, 0, 65535, 3,
+def BRForm_scalar_base_DIVMODU_b_w_l_q_z_ea_e_rn_q_rn_r : BedrockScalarEncodingForm<
+  "base.DIVMODU.b_w_l_q_z_ea_e_rn_q_rn_r", "divmodu", "11111100010001zz001qqqqrrrreeeeeee", 0, "bwlq", 122, 15, 0, 65535, 3,
   6, 101, 7, 0, 1, 0, 18446744073709551615, 18446744073709551615, 0, 0, 2, 113, 4, 0, 0, 0, 65535, 0,
   0, 0, 2, 114, 4, 0, 0, 0, 65535, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 1, 2>;
-def BRForm_scalar_base_instructions_DIVMODU_b_w_l_q_z_rn_e_rn_q_rn_r : BedrockScalarEncodingForm<
-  "base.instructions.DIVMODU.b_w_l_q_z_rn_e_rn_q_rn_r", "divmodu", "11111100000000zz001001eeeeqqqqrrrr", 0, "bwlq", 122, 15, 0, 65535, 3,
+def BRForm_scalar_base_DIVMODU_b_w_l_q_z_rn_e_rn_q_rn_r : BedrockScalarEncodingForm<
+  "base.DIVMODU.b_w_l_q_z_rn_e_rn_q_rn_r", "divmodu", "11111100000000zz001001eeeeqqqqrrrr", 0, "bwlq", 122, 15, 0, 65535, 3,
   2, 101, 4, 0, 0, 0, 65535, 0, 0, 0, 2, 113, 4, 0, 0, 0, 65535, 0,
   0, 0, 2, 114, 4, 0, 0, 0, 65535, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 1, 2>;
-def BRForm_scalar_base_instructions_DIVS_b_w_l_q_z_ea_e_rn_d : BedrockScalarEncodingForm<
-  "base.instructions.DIVS.b_w_l_q_z_ea_e_rn_d", "divs", "1111001011zz000ddddeeeeeee", 0, "bwlq", 122, 15, 0, 65535, 2,
+def BRForm_scalar_base_DIVS_b_w_l_q_z_ea_e_rn_d : BedrockScalarEncodingForm<
+  "base.DIVS.b_w_l_q_z_ea_e_rn_d", "divs", "1111001011zz000ddddeeeeeee", 0, "bwlq", 122, 15, 0, 65535, 2,
   6, 101, 7, 0, 1, 0, 18446744073709551615, 18446744073709551615, 0, 0, 2, 100, 4, 0, 0, 0, 65535, 0,
   0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 255, 255>;
-def BRForm_scalar_base_instructions_DIVS_b_w_l_q_z_rn_s_rn_d : BedrockScalarEncodingForm<
-  "base.instructions.DIVS.b_w_l_q_z_rn_s_rn_d", "divs", "10011zz000ssssdddd", 0, "bwlq", 122, 15, 0, 65535, 2,
+def BRForm_scalar_base_DIVS_b_w_l_q_z_rn_s_rn_d : BedrockScalarEncodingForm<
+  "base.DIVS.b_w_l_q_z_rn_s_rn_d", "divs", "10011zz000ssssdddd", 0, "bwlq", 122, 15, 0, 65535, 2,
   2, 115, 4, 0, 0, 0, 65535, 0, 0, 0, 2, 100, 4, 0, 0, 0, 65535, 0,
   0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 255, 255>;
-def BRForm_scalar_base_instructions_DIVU_b_w_l_q_z_ea_e_rn_d : BedrockScalarEncodingForm<
-  "base.instructions.DIVU.b_w_l_q_z_ea_e_rn_d", "divu", "1111001011zz001ddddeeeeeee", 0, "bwlq", 122, 15, 0, 65535, 2,
+def BRForm_scalar_base_DIVU_b_w_l_q_z_ea_e_rn_d : BedrockScalarEncodingForm<
+  "base.DIVU.b_w_l_q_z_ea_e_rn_d", "divu", "1111001011zz001ddddeeeeeee", 0, "bwlq", 122, 15, 0, 65535, 2,
   6, 101, 7, 0, 1, 0, 18446744073709551615, 18446744073709551615, 0, 0, 2, 100, 4, 0, 0, 0, 65535, 0,
   0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 255, 255>;
-def BRForm_scalar_base_instructions_DIVU_b_w_l_q_z_rn_s_rn_d : BedrockScalarEncodingForm<
-  "base.instructions.DIVU.b_w_l_q_z_rn_s_rn_d", "divu", "10011zz001ssssdddd", 0, "bwlq", 122, 15, 0, 65535, 2,
+def BRForm_scalar_base_DIVU_b_w_l_q_z_rn_s_rn_d : BedrockScalarEncodingForm<
+  "base.DIVU.b_w_l_q_z_rn_s_rn_d", "divu", "10011zz001ssssdddd", 0, "bwlq", 122, 15, 0, 65535, 2,
   2, 115, 4, 0, 0, 0, 65535, 0, 0, 0, 2, 100, 4, 0, 0, 0, 65535, 0,
   0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 255, 255>;
-def BRForm_scalar_base_instructions_DJcc_rn_r_ea_e : BedrockScalarEncodingForm<
-  "base.instructions.DJcc.rn_r_ea_e", "dj", "11110110100ccccrrrreeeeeee", 0, "", 0, 1, 99, 65533, 2,
+def BRForm_scalar_base_DJcc_rn_r_ea_e : BedrockScalarEncodingForm<
+  "base.DJcc.rn_r_ea_e", "dj", "11110110100ccccrrrreeeeeee", 0, "", 0, 1, 99, 65533, 2,
   2, 114, 4, 0, 0, 0, 65535, 0, 0, 0, 6, 101, 7, 0, 1, 0, 18446744073709551615, 18446744073709551615,
   0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 255, 255>;
-def BRForm_scalar_base_instructions_DJcc_rn_r_rn_e : BedrockScalarEncodingForm<
-  "base.instructions.DJcc.rn_r_rn_e", "dj", "11110100010000ccccrrrreeee", 0, "", 0, 1, 99, 65533, 2,
+def BRForm_scalar_base_DJcc_rn_r_rn_e : BedrockScalarEncodingForm<
+  "base.DJcc.rn_r_rn_e", "dj", "11110100010000ccccrrrreeee", 0, "", 0, 1, 99, 65533, 2,
   2, 114, 4, 0, 0, 0, 65535, 0, 0, 0, 2, 101, 4, 0, 0, 0, 65535, 0,
   0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 255, 255>;
-def BRForm_scalar_base_instructions_ERET_plain : BedrockScalarEncodingForm<
-  "base.instructions.ERET.plain", "eret", "0000100", 0, "", 0, 1, 0, 65535, 0,
+def BRForm_scalar_base_ERET_plain : BedrockScalarEncodingForm<
+  "base.ERET.plain", "eret", "0000100", 0, "", 0, 1, 0, 65535, 0,
   0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0,
   0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 255, 255>;
-def BRForm_scalar_base_instructions_EXTRACT_b_w_l_q_z_imm7_i_rn_h_rn_l : BedrockScalarEncodingForm<
-  "base.instructions.EXTRACT.b_w_l_q_z_imm7_i_rn_h_rn_l", "extract", "11111100000001zz000hhhhlllliiiiiii", 0, "bwlq", 122, 15, 0, 65535, 3,
+def BRForm_scalar_base_EXTRACT_b_w_l_q_z_imm7_i_rn_h_rn_l : BedrockScalarEncodingForm<
+  "base.EXTRACT.b_w_l_q_z_imm7_i_rn_h_rn_l", "extract", "11111100000001zz000hhhhlllliiiiiii", 0, "bwlq", 122, 15, 0, 65535, 3,
   8, 105, 7, 0, 0, 0, 18446744073709551615, 18446744073709551615, 0, 0, 2, 104, 4, 0, 0, 0, 65535, 0,
   0, 0, 2, 108, 4, 0, 0, 0, 65535, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 255, 255>;
-def BRForm_scalar_base_instructions_EXTSL_b_rn_s_ea_e : BedrockScalarEncodingForm<
-  "base.instructions.EXTSL.b_rn_s_ea_e", "extsl.b", "111100110100111sssseeeeeee", 0, "", 0, 1, 0, 65535, 2,
+def BRForm_scalar_base_EXTSL_b_rn_s_ea_e : BedrockScalarEncodingForm<
+  "base.EXTSL.b_rn_s_ea_e", "extsl.b", "111100110100111sssseeeeeee", 0, "", 0, 1, 0, 65535, 2,
   2, 115, 4, 0, 0, 0, 65535, 0, 0, 0, 6, 101, 7, 0, 0, 0, 18446744073709551615, 18446744073709551615,
   0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 255, 255>;
-def BRForm_scalar_base_instructions_EXTSL_w_rn_s_ea_e : BedrockScalarEncodingForm<
-  "base.instructions.EXTSL.w_rn_s_ea_e", "extsl.w", "111100110101111sssseeeeeee", 0, "", 0, 1, 0, 65535, 2,
+def BRForm_scalar_base_EXTSL_w_rn_s_ea_e : BedrockScalarEncodingForm<
+  "base.EXTSL.w_rn_s_ea_e", "extsl.w", "111100110101111sssseeeeeee", 0, "", 0, 1, 0, 65535, 2,
   2, 115, 4, 0, 0, 0, 65535, 0, 0, 0, 6, 101, 7, 0, 0, 0, 18446744073709551615, 18446744073709551615,
   0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 255, 255>;
-def BRForm_scalar_base_instructions_EXTSL_b_w_z_ea_s_ea_d : BedrockScalarEncodingForm<
-  "base.instructions.EXTSL.b_w_z_ea_s_ea_d", "extsl", "11110000010zsssssssddddddd", 0, "bw", 122, 3, 0, 65535, 2,
+def BRForm_scalar_base_EXTSL_b_w_z_ea_s_ea_d : BedrockScalarEncodingForm<
+  "base.EXTSL.b_w_z_ea_s_ea_d", "extsl", "11110000010zsssssssddddddd", 0, "bw", 122, 3, 0, 65535, 2,
   6, 115, 7, 0, 1, 0, 18446744073709551615, 18446744073709551615, 0, 0, 6, 100, 7, 0, 0, 0, 18446744073709551615, 18446744073709551615,
   0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 255, 255>;
-def BRForm_scalar_base_instructions_EXTSQ_b_rn_s_rn_d : BedrockScalarEncodingForm<
-  "base.instructions.EXTSQ.b_rn_s_rn_d", "extsq.b", "1000100110ssssdddd", 0, "", 0, 1, 0, 65535, 2,
+def BRForm_scalar_base_EXTSQ_b_rn_s_rn_d : BedrockScalarEncodingForm<
+  "base.EXTSQ.b_rn_s_rn_d", "extsq.b", "1000100110ssssdddd", 0, "", 0, 1, 0, 65535, 2,
   2, 115, 4, 0, 0, 0, 65535, 0, 0, 0, 2, 100, 4, 0, 0, 0, 65535, 0,
   0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 255, 255>;
-def BRForm_scalar_base_instructions_EXTSQ_w_rn_s_rn_d : BedrockScalarEncodingForm<
-  "base.instructions.EXTSQ.w_rn_s_rn_d", "extsq.w", "1000101110ssssdddd", 0, "", 0, 1, 0, 65535, 2,
+def BRForm_scalar_base_EXTSQ_w_rn_s_rn_d : BedrockScalarEncodingForm<
+  "base.EXTSQ.w_rn_s_rn_d", "extsq.w", "1000101110ssssdddd", 0, "", 0, 1, 0, 65535, 2,
   2, 115, 4, 0, 0, 0, 65535, 0, 0, 0, 2, 100, 4, 0, 0, 0, 65535, 0,
   0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 255, 255>;
-def BRForm_scalar_base_instructions_EXTSQ_l_rn_s_rn_d : BedrockScalarEncodingForm<
-  "base.instructions.EXTSQ.l_rn_s_rn_d", "extsq.l", "100010ssssdddd", 0, "", 0, 1, 0, 65535, 2,
+def BRForm_scalar_base_EXTSQ_l_rn_s_rn_d : BedrockScalarEncodingForm<
+  "base.EXTSQ.l_rn_s_rn_d", "extsq.l", "100010ssssdddd", 0, "", 0, 1, 0, 65535, 2,
   2, 115, 4, 0, 0, 0, 65535, 0, 0, 0, 2, 100, 4, 0, 0, 0, 65535, 0,
   0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 255, 255>;
-def BRForm_scalar_base_instructions_EXTSQ_b_rn_s_ea_e : BedrockScalarEncodingForm<
-  "base.instructions.EXTSQ.b_rn_s_ea_e", "extsq.b", "111100110000110sssseeeeeee", 0, "", 0, 1, 0, 65535, 2,
+def BRForm_scalar_base_EXTSQ_b_rn_s_ea_e : BedrockScalarEncodingForm<
+  "base.EXTSQ.b_rn_s_ea_e", "extsq.b", "111100110000110sssseeeeeee", 0, "", 0, 1, 0, 65535, 2,
   2, 115, 4, 0, 0, 0, 65535, 0, 0, 0, 6, 101, 7, 0, 0, 0, 18446744073709551615, 18446744073709551615,
   0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 255, 255>;
-def BRForm_scalar_base_instructions_EXTSQ_b_ea_e_rn_d : BedrockScalarEncodingForm<
-  "base.instructions.EXTSQ.b_ea_e_rn_d", "extsq.b", "1101100ddddeeeeeee", 0, "", 0, 1, 0, 65535, 2,
+def BRForm_scalar_base_EXTSQ_b_ea_e_rn_d : BedrockScalarEncodingForm<
+  "base.EXTSQ.b_ea_e_rn_d", "extsq.b", "1101100ddddeeeeeee", 0, "", 0, 1, 0, 65535, 2,
   6, 101, 7, 0, 1, 0, 18446744073709551615, 18446744073709551615, 0, 0, 2, 100, 4, 0, 0, 0, 65535, 0,
   0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 255, 255>;
-def BRForm_scalar_base_instructions_EXTSQ_w_rn_s_ea_e : BedrockScalarEncodingForm<
-  "base.instructions.EXTSQ.w_rn_s_ea_e", "extsq.w", "111100110001110sssseeeeeee", 0, "", 0, 1, 0, 65535, 2,
+def BRForm_scalar_base_EXTSQ_w_rn_s_ea_e : BedrockScalarEncodingForm<
+  "base.EXTSQ.w_rn_s_ea_e", "extsq.w", "111100110001110sssseeeeeee", 0, "", 0, 1, 0, 65535, 2,
   2, 115, 4, 0, 0, 0, 65535, 0, 0, 0, 6, 101, 7, 0, 0, 0, 18446744073709551615, 18446744073709551615,
   0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 255, 255>;
-def BRForm_scalar_base_instructions_EXTSQ_w_ea_e_rn_d : BedrockScalarEncodingForm<
-  "base.instructions.EXTSQ.w_ea_e_rn_d", "extsq.w", "1101101ddddeeeeeee", 0, "", 0, 1, 0, 65535, 2,
+def BRForm_scalar_base_EXTSQ_w_ea_e_rn_d : BedrockScalarEncodingForm<
+  "base.EXTSQ.w_ea_e_rn_d", "extsq.w", "1101101ddddeeeeeee", 0, "", 0, 1, 0, 65535, 2,
   6, 101, 7, 0, 1, 0, 18446744073709551615, 18446744073709551615, 0, 0, 2, 100, 4, 0, 0, 0, 65535, 0,
   0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 255, 255>;
-def BRForm_scalar_base_instructions_EXTSQ_l_rn_s_ea_e : BedrockScalarEncodingForm<
-  "base.instructions.EXTSQ.l_rn_s_ea_e", "extsq.l", "111100110010110sssseeeeeee", 0, "", 0, 1, 0, 65535, 2,
+def BRForm_scalar_base_EXTSQ_l_rn_s_ea_e : BedrockScalarEncodingForm<
+  "base.EXTSQ.l_rn_s_ea_e", "extsq.l", "111100110010110sssseeeeeee", 0, "", 0, 1, 0, 65535, 2,
   2, 115, 4, 0, 0, 0, 65535, 0, 0, 0, 6, 101, 7, 0, 0, 0, 18446744073709551615, 18446744073709551615,
   0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 255, 255>;
-def BRForm_scalar_base_instructions_EXTSQ_l_ea_e_rn_d : BedrockScalarEncodingForm<
-  "base.instructions.EXTSQ.l_ea_e_rn_d", "extsq.l", "1101110ddddeeeeeee", 0, "", 0, 1, 0, 65535, 2,
+def BRForm_scalar_base_EXTSQ_l_ea_e_rn_d : BedrockScalarEncodingForm<
+  "base.EXTSQ.l_ea_e_rn_d", "extsq.l", "1101110ddddeeeeeee", 0, "", 0, 1, 0, 65535, 2,
   6, 101, 7, 0, 1, 0, 18446744073709551615, 18446744073709551615, 0, 0, 2, 100, 4, 0, 0, 0, 65535, 0,
   0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 255, 255>;
-def BRForm_scalar_base_instructions_EXTSQ_b_ea_s_ea_d : BedrockScalarEncodingForm<
-  "base.instructions.EXTSQ.b_ea_s_ea_d", "extsq.b", "111100000110sssssssddddddd", 0, "", 0, 1, 0, 65535, 2,
+def BRForm_scalar_base_EXTSQ_b_ea_s_ea_d : BedrockScalarEncodingForm<
+  "base.EXTSQ.b_ea_s_ea_d", "extsq.b", "111100000110sssssssddddddd", 0, "", 0, 1, 0, 65535, 2,
   6, 115, 7, 0, 1, 0, 18446744073709551615, 18446744073709551615, 0, 0, 6, 100, 7, 0, 0, 0, 18446744073709551615, 18446744073709551615,
   0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 255, 255>;
-def BRForm_scalar_base_instructions_EXTSQ_w_ea_s_ea_d : BedrockScalarEncodingForm<
-  "base.instructions.EXTSQ.w_ea_s_ea_d", "extsq.w", "111100000111sssssssddddddd", 0, "", 0, 1, 0, 65535, 2,
+def BRForm_scalar_base_EXTSQ_w_ea_s_ea_d : BedrockScalarEncodingForm<
+  "base.EXTSQ.w_ea_s_ea_d", "extsq.w", "111100000111sssssssddddddd", 0, "", 0, 1, 0, 65535, 2,
   6, 115, 7, 0, 1, 0, 18446744073709551615, 18446744073709551615, 0, 0, 6, 100, 7, 0, 0, 0, 18446744073709551615, 18446744073709551615,
   0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 255, 255>;
-def BRForm_scalar_base_instructions_EXTSQ_l_ea_s_ea_d : BedrockScalarEncodingForm<
-  "base.instructions.EXTSQ.l_ea_s_ea_d", "extsq.l", "111100001000sssssssddddddd", 0, "", 0, 1, 0, 65535, 2,
+def BRForm_scalar_base_EXTSQ_l_ea_s_ea_d : BedrockScalarEncodingForm<
+  "base.EXTSQ.l_ea_s_ea_d", "extsq.l", "111100001000sssssssddddddd", 0, "", 0, 1, 0, 65535, 2,
   6, 115, 7, 0, 1, 0, 18446744073709551615, 18446744073709551615, 0, 0, 6, 100, 7, 0, 0, 0, 18446744073709551615, 18446744073709551615,
   0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 255, 255>;
-def BRForm_scalar_base_instructions_EXTSW_b_rn_s_ea_e : BedrockScalarEncodingForm<
-  "base.instructions.EXTSW.b_rn_s_ea_e", "extsw.b", "111100110000111sssseeeeeee", 0, "", 0, 1, 0, 65535, 2,
+def BRForm_scalar_base_EXTSW_b_rn_s_ea_e : BedrockScalarEncodingForm<
+  "base.EXTSW.b_rn_s_ea_e", "extsw.b", "111100110000111sssseeeeeee", 0, "", 0, 1, 0, 65535, 2,
   2, 115, 4, 0, 0, 0, 65535, 0, 0, 0, 6, 101, 7, 0, 0, 0, 18446744073709551615, 18446744073709551615,
   0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 255, 255>;
-def BRForm_scalar_base_instructions_EXTSW_b_ea_s_ea_d : BedrockScalarEncodingForm<
-  "base.instructions.EXTSW.b_ea_s_ea_d", "extsw.b", "111100001001sssssssddddddd", 0, "", 0, 1, 0, 65535, 2,
+def BRForm_scalar_base_EXTSW_b_ea_s_ea_d : BedrockScalarEncodingForm<
+  "base.EXTSW.b_ea_s_ea_d", "extsw.b", "111100001001sssssssddddddd", 0, "", 0, 1, 0, 65535, 2,
   6, 115, 7, 0, 1, 0, 18446744073709551615, 18446744073709551615, 0, 0, 6, 100, 7, 0, 0, 0, 18446744073709551615, 18446744073709551615,
   0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 255, 255>;
-def BRForm_scalar_base_instructions_EXTZL_b_rn_s_ea_e : BedrockScalarEncodingForm<
-  "base.instructions.EXTZL.b_rn_s_ea_e", "extzl.b", "111100110100110sssseeeeeee", 0, "", 0, 1, 0, 65535, 2,
+def BRForm_scalar_base_EXTZL_b_rn_s_ea_e : BedrockScalarEncodingForm<
+  "base.EXTZL.b_rn_s_ea_e", "extzl.b", "111100110100110sssseeeeeee", 0, "", 0, 1, 0, 65535, 2,
   2, 115, 4, 0, 0, 0, 65535, 0, 0, 0, 6, 101, 7, 0, 0, 0, 18446744073709551615, 18446744073709551615,
   0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 255, 255>;
-def BRForm_scalar_base_instructions_EXTZL_w_rn_s_ea_e : BedrockScalarEncodingForm<
-  "base.instructions.EXTZL.w_rn_s_ea_e", "extzl.w", "111100110101110sssseeeeeee", 0, "", 0, 1, 0, 65535, 2,
+def BRForm_scalar_base_EXTZL_w_rn_s_ea_e : BedrockScalarEncodingForm<
+  "base.EXTZL.w_rn_s_ea_e", "extzl.w", "111100110101110sssseeeeeee", 0, "", 0, 1, 0, 65535, 2,
   2, 115, 4, 0, 0, 0, 65535, 0, 0, 0, 6, 101, 7, 0, 0, 0, 18446744073709551615, 18446744073709551615,
   0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 255, 255>;
-def BRForm_scalar_base_instructions_EXTZL_b_w_z_ea_s_ea_d : BedrockScalarEncodingForm<
-  "base.instructions.EXTZL.b_w_z_ea_s_ea_d", "extzl", "11110000101zsssssssddddddd", 0, "bw", 122, 3, 0, 65535, 2,
+def BRForm_scalar_base_EXTZL_b_w_z_ea_s_ea_d : BedrockScalarEncodingForm<
+  "base.EXTZL.b_w_z_ea_s_ea_d", "extzl", "11110000101zsssssssddddddd", 0, "bw", 122, 3, 0, 65535, 2,
   6, 115, 7, 0, 1, 0, 18446744073709551615, 18446744073709551615, 0, 0, 6, 100, 7, 0, 0, 0, 18446744073709551615, 18446744073709551615,
   0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 255, 255>;
-def BRForm_scalar_base_instructions_EXTZQ_b_rn_s_ea_e : BedrockScalarEncodingForm<
-  "base.instructions.EXTZQ.b_rn_s_ea_e", "extzq.b", "111100110100000sssseeeeeee", 0, "", 0, 1, 0, 65535, 2,
+def BRForm_scalar_base_EXTZQ_b_rn_s_ea_e : BedrockScalarEncodingForm<
+  "base.EXTZQ.b_rn_s_ea_e", "extzq.b", "111100110100000sssseeeeeee", 0, "", 0, 1, 0, 65535, 2,
   2, 115, 4, 0, 0, 0, 65535, 0, 0, 0, 6, 101, 7, 0, 0, 0, 18446744073709551615, 18446744073709551615,
   0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 255, 255>;
-def BRForm_scalar_base_instructions_EXTZQ_w_rn_s_ea_e : BedrockScalarEncodingForm<
-  "base.instructions.EXTZQ.w_rn_s_ea_e", "extzq.w", "111100110101000sssseeeeeee", 0, "", 0, 1, 0, 65535, 2,
+def BRForm_scalar_base_EXTZQ_w_rn_s_ea_e : BedrockScalarEncodingForm<
+  "base.EXTZQ.w_rn_s_ea_e", "extzq.w", "111100110101000sssseeeeeee", 0, "", 0, 1, 0, 65535, 2,
   2, 115, 4, 0, 0, 0, 65535, 0, 0, 0, 6, 101, 7, 0, 0, 0, 18446744073709551615, 18446744073709551615,
   0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 255, 255>;
-def BRForm_scalar_base_instructions_EXTZQ_l_rn_s_ea_e : BedrockScalarEncodingForm<
-  "base.instructions.EXTZQ.l_rn_s_ea_e", "extzq.l", "111100110110000sssseeeeeee", 0, "", 0, 1, 0, 65535, 2,
+def BRForm_scalar_base_EXTZQ_l_rn_s_ea_e : BedrockScalarEncodingForm<
+  "base.EXTZQ.l_rn_s_ea_e", "extzq.l", "111100110110000sssseeeeeee", 0, "", 0, 1, 0, 65535, 2,
   2, 115, 4, 0, 0, 0, 65535, 0, 0, 0, 6, 101, 7, 0, 0, 0, 18446744073709551615, 18446744073709551615,
   0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 255, 255>;
-def BRForm_scalar_base_instructions_EXTZQ_b_ea_s_ea_d : BedrockScalarEncodingForm<
-  "base.instructions.EXTZQ.b_ea_s_ea_d", "extzq.b", "111100001100sssssssddddddd", 0, "", 0, 1, 0, 65535, 2,
+def BRForm_scalar_base_EXTZQ_b_ea_s_ea_d : BedrockScalarEncodingForm<
+  "base.EXTZQ.b_ea_s_ea_d", "extzq.b", "111100001100sssssssddddddd", 0, "", 0, 1, 0, 65535, 2,
   6, 115, 7, 0, 1, 0, 18446744073709551615, 18446744073709551615, 0, 0, 6, 100, 7, 0, 0, 0, 18446744073709551615, 18446744073709551615,
   0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 255, 255>;
-def BRForm_scalar_base_instructions_EXTZQ_w_ea_s_ea_d : BedrockScalarEncodingForm<
-  "base.instructions.EXTZQ.w_ea_s_ea_d", "extzq.w", "111100001101sssssssddddddd", 0, "", 0, 1, 0, 65535, 2,
+def BRForm_scalar_base_EXTZQ_w_ea_s_ea_d : BedrockScalarEncodingForm<
+  "base.EXTZQ.w_ea_s_ea_d", "extzq.w", "111100001101sssssssddddddd", 0, "", 0, 1, 0, 65535, 2,
   6, 115, 7, 0, 1, 0, 18446744073709551615, 18446744073709551615, 0, 0, 6, 100, 7, 0, 0, 0, 18446744073709551615, 18446744073709551615,
   0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 255, 255>;
-def BRForm_scalar_base_instructions_EXTZQ_l_ea_s_ea_d : BedrockScalarEncodingForm<
-  "base.instructions.EXTZQ.l_ea_s_ea_d", "extzq.l", "111100001110sssssssddddddd", 0, "", 0, 1, 0, 65535, 2,
+def BRForm_scalar_base_EXTZQ_l_ea_s_ea_d : BedrockScalarEncodingForm<
+  "base.EXTZQ.l_ea_s_ea_d", "extzq.l", "111100001110sssssssddddddd", 0, "", 0, 1, 0, 65535, 2,
   6, 115, 7, 0, 1, 0, 18446744073709551615, 18446744073709551615, 0, 0, 6, 100, 7, 0, 0, 0, 18446744073709551615, 18446744073709551615,
   0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 255, 255>;
-def BRForm_scalar_base_instructions_EXTZW_b_rn_s_ea_e : BedrockScalarEncodingForm<
-  "base.instructions.EXTZW.b_rn_s_ea_e", "extzw.b", "111100110100001sssseeeeeee", 0, "", 0, 1, 0, 65535, 2,
+def BRForm_scalar_base_EXTZW_b_rn_s_ea_e : BedrockScalarEncodingForm<
+  "base.EXTZW.b_rn_s_ea_e", "extzw.b", "111100110100001sssseeeeeee", 0, "", 0, 1, 0, 65535, 2,
   2, 115, 4, 0, 0, 0, 65535, 0, 0, 0, 6, 101, 7, 0, 0, 0, 18446744073709551615, 18446744073709551615,
   0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 255, 255>;
-def BRForm_scalar_base_instructions_EXTZW_b_ea_s_ea_d : BedrockScalarEncodingForm<
-  "base.instructions.EXTZW.b_ea_s_ea_d", "extzw.b", "111100001111sssssssddddddd", 0, "", 0, 1, 0, 65535, 2,
+def BRForm_scalar_base_EXTZW_b_ea_s_ea_d : BedrockScalarEncodingForm<
+  "base.EXTZW.b_ea_s_ea_d", "extzw.b", "111100001111sssssssddddddd", 0, "", 0, 1, 0, 65535, 2,
   6, 115, 7, 0, 1, 0, 18446744073709551615, 18446744073709551615, 0, 0, 6, 100, 7, 0, 0, 0, 18446744073709551615, 18446744073709551615,
   0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 255, 255>;
-def BRForm_scalar_base_instructions_FETCHADD_b_w_l_q_z_order_o_rn_s_ea_e : BedrockScalarEncodingForm<
-  "base.instructions.FETCHADD.b_w_l_q_z_order_o_rn_s_ea_e", "fetchadd", "11111100010010zz0000ooosssseeeeeee", 0, "bwlq", 122, 15, 0, 65535, 3,
+def BRForm_scalar_base_FETCHADD_b_w_l_q_z_order_o_rn_s_ea_e : BedrockScalarEncodingForm<
+  "base.FETCHADD.b_w_l_q_z_order_o_rn_s_ea_e", "fetchadd", "11111100010010zz0000ooosssseeeeeee", 0, "bwlq", 122, 15, 0, 65535, 3,
   16, 111, 3, 0, 0, 0, 31, 0, 0, 0, 2, 115, 4, 0, 0, 0, 65535, 0,
   0, 0, 6, 101, 7, 0, 0, 0, 18446744073709551615, 18446744073709551615, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 255, 255>;
-def BRForm_scalar_base_instructions_FETCHAND_b_w_l_q_z_order_o_rn_s_ea_e : BedrockScalarEncodingForm<
-  "base.instructions.FETCHAND.b_w_l_q_z_order_o_rn_s_ea_e", "fetchand", "11111100010010zz0001ooosssseeeeeee", 0, "bwlq", 122, 15, 0, 65535, 3,
+def BRForm_scalar_base_FETCHAND_b_w_l_q_z_order_o_rn_s_ea_e : BedrockScalarEncodingForm<
+  "base.FETCHAND.b_w_l_q_z_order_o_rn_s_ea_e", "fetchand", "11111100010010zz0001ooosssseeeeeee", 0, "bwlq", 122, 15, 0, 65535, 3,
   16, 111, 3, 0, 0, 0, 31, 0, 0, 0, 2, 115, 4, 0, 0, 0, 65535, 0,
   0, 0, 6, 101, 7, 0, 0, 0, 18446744073709551615, 18446744073709551615, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 255, 255>;
-def BRForm_scalar_base_instructions_FETCHOR_b_w_l_q_z_order_o_rn_s_ea_e : BedrockScalarEncodingForm<
-  "base.instructions.FETCHOR.b_w_l_q_z_order_o_rn_s_ea_e", "fetchor", "11111100010010zz0010ooosssseeeeeee", 0, "bwlq", 122, 15, 0, 65535, 3,
+def BRForm_scalar_base_FETCHOR_b_w_l_q_z_order_o_rn_s_ea_e : BedrockScalarEncodingForm<
+  "base.FETCHOR.b_w_l_q_z_order_o_rn_s_ea_e", "fetchor", "11111100010010zz0010ooosssseeeeeee", 0, "bwlq", 122, 15, 0, 65535, 3,
   16, 111, 3, 0, 0, 0, 31, 0, 0, 0, 2, 115, 4, 0, 0, 0, 65535, 0,
   0, 0, 6, 101, 7, 0, 0, 0, 18446744073709551615, 18446744073709551615, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 255, 255>;
-def BRForm_scalar_base_instructions_FETCHSUB_b_w_l_q_z_order_o_rn_s_ea_e : BedrockScalarEncodingForm<
-  "base.instructions.FETCHSUB.b_w_l_q_z_order_o_rn_s_ea_e", "fetchsub", "11111100010010zz0011ooosssseeeeeee", 0, "bwlq", 122, 15, 0, 65535, 3,
+def BRForm_scalar_base_FETCHSUB_b_w_l_q_z_order_o_rn_s_ea_e : BedrockScalarEncodingForm<
+  "base.FETCHSUB.b_w_l_q_z_order_o_rn_s_ea_e", "fetchsub", "11111100010010zz0011ooosssseeeeeee", 0, "bwlq", 122, 15, 0, 65535, 3,
   16, 111, 3, 0, 0, 0, 31, 0, 0, 0, 2, 115, 4, 0, 0, 0, 65535, 0,
   0, 0, 6, 101, 7, 0, 0, 0, 18446744073709551615, 18446744073709551615, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 255, 255>;
-def BRForm_scalar_base_instructions_FETCHXOR_b_w_l_q_z_order_o_rn_s_ea_e : BedrockScalarEncodingForm<
-  "base.instructions.FETCHXOR.b_w_l_q_z_order_o_rn_s_ea_e", "fetchxor", "11111100010010zz0100ooosssseeeeeee", 0, "bwlq", 122, 15, 0, 65535, 3,
+def BRForm_scalar_base_FETCHXOR_b_w_l_q_z_order_o_rn_s_ea_e : BedrockScalarEncodingForm<
+  "base.FETCHXOR.b_w_l_q_z_order_o_rn_s_ea_e", "fetchxor", "11111100010010zz0100ooosssseeeeeee", 0, "bwlq", 122, 15, 0, 65535, 3,
   16, 111, 3, 0, 0, 0, 31, 0, 0, 0, 2, 115, 4, 0, 0, 0, 65535, 0,
   0, 0, 6, 101, 7, 0, 0, 0, 18446744073709551615, 18446744073709551615, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 255, 255>;
-def BRForm_scalar_base_instructions_FLSHDCACHE_ea_e : BedrockScalarEncodingForm<
-  "base.instructions.FLSHDCACHE.ea_e", "flshdcache", "11101000011eeeeeee", 0, "", 0, 1, 0, 65535, 1,
+def BRForm_scalar_base_FLSHDCACHE_ea_e : BedrockScalarEncodingForm<
+  "base.FLSHDCACHE.ea_e", "flshdcache", "11101000011eeeeeee", 0, "", 0, 1, 0, 65535, 1,
   6, 101, 7, 0, 1, 0, 18446744073709551615, 18446744073709551615, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0,
   0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 255, 255>;
-def BRForm_scalar_base_instructions_HALT_plain : BedrockScalarEncodingForm<
-  "base.instructions.HALT.plain", "halt", "10111000000000", 0, "", 0, 1, 0, 65535, 0,
+def BRForm_scalar_base_HALT_plain : BedrockScalarEncodingForm<
+  "base.HALT.plain", "halt", "10111000000000", 0, "", 0, 1, 0, 65535, 0,
   0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0,
   0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 255, 255>;
-def BRForm_scalar_base_instructions_IJcc_rn_i_rn_b_ea_e : BedrockScalarEncodingForm<
-  "base.instructions.IJcc.rn_i_rn_b_ea_e", "ij", "111111000100110cccciiiibbbbeeeeeee", 0, "", 0, 1, 99, 65533, 3,
+def BRForm_scalar_base_IJcc_rn_i_rn_b_ea_e : BedrockScalarEncodingForm<
+  "base.IJcc.rn_i_rn_b_ea_e", "ij", "111111000100110cccciiiibbbbeeeeeee", 0, "", 0, 1, 99, 65533, 3,
   2, 105, 4, 0, 0, 0, 65535, 0, 0, 0, 2, 98, 4, 0, 0, 0, 65535, 0,
   0, 0, 6, 101, 7, 0, 1, 0, 18446744073709551615, 18446744073709551615, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 255, 255>;
-def BRForm_scalar_base_instructions_IJcc_rn_i_rn_b_rn_e : BedrockScalarEncodingForm<
-  "base.instructions.IJcc.rn_i_rn_b_rn_e", "ij", "111111000000100000cccciiiibbbbeeee", 0, "", 0, 1, 99, 65533, 3,
+def BRForm_scalar_base_IJcc_rn_i_rn_b_rn_e : BedrockScalarEncodingForm<
+  "base.IJcc.rn_i_rn_b_rn_e", "ij", "111111000000100000cccciiiibbbbeeee", 0, "", 0, 1, 99, 65533, 3,
   2, 105, 4, 0, 0, 0, 65535, 0, 0, 0, 2, 98, 4, 0, 0, 0, 65535, 0,
   0, 0, 2, 101, 4, 0, 0, 0, 65535, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 255, 255>;
-def BRForm_scalar_base_instructions_ILLEGAL_plain : BedrockScalarEncodingForm<
-  "base.instructions.ILLEGAL.plain", "illegal", "0000000", 0, "", 0, 1, 0, 65535, 0,
+def BRForm_scalar_base_ILLEGAL_plain : BedrockScalarEncodingForm<
+  "base.ILLEGAL.plain", "illegal", "0000000", 0, "", 0, 1, 0, 65535, 0,
   0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0,
   0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 255, 255>;
-def BRForm_scalar_base_instructions_INC_l_q_z_rn_r : BedrockScalarEncodingForm<
-  "base.instructions.INC.l_q_z_rn_r", "inc", "10100z0000rrrr", 0, "lq", 122, 3, 0, 65535, 1,
+def BRForm_scalar_base_INC_l_q_z_rn_r : BedrockScalarEncodingForm<
+  "base.INC.l_q_z_rn_r", "inc", "10100z0000rrrr", 0, "lq", 122, 3, 0, 65535, 1,
   2, 114, 4, 0, 0, 0, 65535, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0,
   0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 255, 255>;
-def BRForm_scalar_base_instructions_INC_b_w_l_q_z_ea_e : BedrockScalarEncodingForm<
-  "base.instructions.INC.b_w_l_q_z_ea_e", "inc", "11100zz1001eeeeeee", 0, "bwlq", 122, 15, 0, 65535, 1,
+def BRForm_scalar_base_INC_b_w_l_q_z_ea_e : BedrockScalarEncodingForm<
+  "base.INC.b_w_l_q_z_ea_e", "inc", "11100zz1001eeeeeee", 0, "bwlq", 122, 15, 0, 65535, 1,
   6, 101, 7, 0, 0, 0, 18446744073709551615, 18446744073709551615, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0,
   0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 255, 255>;
-def BRForm_scalar_base_instructions_INCF_b_w_l_q_z_rn_r : BedrockScalarEncodingForm<
-  "base.instructions.INCF.b_w_l_q_z_rn_r", "incf", "1110110000zz01rrrr", 0, "bwlq", 122, 15, 0, 65535, 1,
+def BRForm_scalar_base_INCF_b_w_l_q_z_rn_r : BedrockScalarEncodingForm<
+  "base.INCF.b_w_l_q_z_rn_r", "incf", "1110110000zz01rrrr", 0, "bwlq", 122, 15, 0, 65535, 1,
   2, 114, 4, 0, 0, 0, 65535, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0,
   0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 255, 255>;
-def BRForm_scalar_base_instructions_INVASID_imm16 : BedrockScalarEncodingForm<
-  "base.instructions.INVASID.imm16", "invasid", "111011110000000100", 2, "", 0, 1, 0, 65535, 1,
+def BRForm_scalar_base_INVASID_imm16 : BedrockScalarEncodingForm<
+  "base.INVASID.imm16", "invasid", "111011110000000100", 2, "", 0, 1, 0, 65535, 1,
   10, 0, 16, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0,
   0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 255, 255>;
-def BRForm_scalar_base_instructions_INVDCACHE_ea_e : BedrockScalarEncodingForm<
-  "base.instructions.INVDCACHE.ea_e", "invdcache", "11101000100eeeeeee", 0, "", 0, 1, 0, 65535, 1,
+def BRForm_scalar_base_INVDCACHE_ea_e : BedrockScalarEncodingForm<
+  "base.INVDCACHE.ea_e", "invdcache", "11101000100eeeeeee", 0, "", 0, 1, 0, 65535, 1,
   6, 101, 7, 0, 1, 0, 18446744073709551615, 18446744073709551615, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0,
   0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 255, 255>;
-def BRForm_scalar_base_instructions_INVICACHE_ea_e : BedrockScalarEncodingForm<
-  "base.instructions.INVICACHE.ea_e", "invicache", "11101000101eeeeeee", 0, "", 0, 1, 0, 65535, 1,
+def BRForm_scalar_base_INVICACHE_ea_e : BedrockScalarEncodingForm<
+  "base.INVICACHE.ea_e", "invicache", "11101000101eeeeeee", 0, "", 0, 1, 0, 65535, 1,
   6, 101, 7, 0, 1, 0, 18446744073709551615, 18446744073709551615, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0,
   0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 255, 255>;
-def BRForm_scalar_base_instructions_INVPAGE_ea_e : BedrockScalarEncodingForm<
-  "base.instructions.INVPAGE.ea_e", "invpage", "11101000110eeeeeee", 0, "", 0, 1, 0, 65535, 1,
+def BRForm_scalar_base_INVPAGE_ea_e : BedrockScalarEncodingForm<
+  "base.INVPAGE.ea_e", "invpage", "11101000110eeeeeee", 0, "", 0, 1, 0, 65535, 1,
   6, 101, 7, 0, 1, 0, 18446744073709551615, 18446744073709551615, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0,
   0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 255, 255>;
-def BRForm_scalar_base_instructions_INVPAGE_rn_r : BedrockScalarEncodingForm<
-  "base.instructions.INVPAGE.rn_r", "invpage", "11101101000110rrrr", 0, "", 0, 1, 0, 65535, 1,
+def BRForm_scalar_base_INVPAGE_rn_r : BedrockScalarEncodingForm<
+  "base.INVPAGE.rn_r", "invpage", "11101101000110rrrr", 0, "", 0, 1, 0, 65535, 1,
   2, 114, 4, 0, 0, 0, 65535, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0,
   0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 255, 255>;
-def BRForm_scalar_base_instructions_INVTLB_plain : BedrockScalarEncodingForm<
-  "base.instructions.INVTLB.plain", "invtlb", "111011110000000101", 0, "", 0, 1, 0, 65535, 0,
+def BRForm_scalar_base_INVTLB_plain : BedrockScalarEncodingForm<
+  "base.INVTLB.plain", "invtlb", "111011110000000101", 0, "", 0, 1, 0, 65535, 0,
   0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0,
   0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 255, 255>;
-def BRForm_scalar_base_instructions_Jcc_imm8s_i : BedrockScalarEncodingForm<
-  "base.instructions.Jcc.imm8s_i", "j", "11cccciiiiiiii", 0, "", 0, 1, 99, 65532, 1,
+def BRForm_scalar_base_Jcc_imm8s_i : BedrockScalarEncodingForm<
+  "base.Jcc.imm8s_i", "j", "11cccciiiiiiii", 0, "", 0, 1, 99, 65532, 1,
   8, 105, 8, 1, 0, 0, 18446744073709551615, 18446744073709551615, 18446744073709551615, 18446744073709551615, 0, 0, 0, 0, 0, 0, 1, 0,
   0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 255, 255>;
-def BRForm_scalar_base_instructions_Jcc_imm16s : BedrockScalarEncodingForm<
-  "base.instructions.Jcc.imm16s", "j", "11101110000010cccc", 2, "", 0, 1, 99, 65532, 1,
+def BRForm_scalar_base_Jcc_imm16s : BedrockScalarEncodingForm<
+  "base.Jcc.imm16s", "j", "11101110000010cccc", 2, "", 0, 1, 99, 65532, 1,
   9, 0, 16, 1, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0,
   0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 255, 255>;
-def BRForm_scalar_base_instructions_Jcc_imm32s : BedrockScalarEncodingForm<
-  "base.instructions.Jcc.imm32s", "j", "11101110000011cccc", 4, "", 0, 1, 99, 65532, 1,
+def BRForm_scalar_base_Jcc_imm32s : BedrockScalarEncodingForm<
+  "base.Jcc.imm32s", "j", "11101110000011cccc", 4, "", 0, 1, 99, 65532, 1,
   9, 0, 32, 1, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0,
   0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 255, 255>;
-def BRForm_scalar_base_instructions_Jcc_l_q_z_ea_e : BedrockScalarEncodingForm<
-  "base.instructions.Jcc.l_q_z_ea_e", "j", "11110110001001zcccceeeeeee", 0, "lq", 122, 3, 99, 65532, 1,
+def BRForm_scalar_base_Jcc_l_q_z_ea_e : BedrockScalarEncodingForm<
+  "base.Jcc.l_q_z_ea_e", "j", "11110110001001zcccceeeeeee", 0, "lq", 122, 3, 99, 65532, 1,
   6, 101, 7, 0, 0, 0, 18446744073709551615, 18446744073709551615, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0,
   0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 255, 255>;
-def BRForm_scalar_base_instructions_Jcc_l_q_z_rn_r : BedrockScalarEncodingForm<
-  "base.instructions.Jcc.l_q_z_rn_r", "j", "11110110011000001zccccrrrr", 0, "lq", 122, 3, 99, 65532, 1,
+def BRForm_scalar_base_Jcc_l_q_z_rn_r : BedrockScalarEncodingForm<
+  "base.Jcc.l_q_z_rn_r", "j", "11110110011000001zccccrrrr", 0, "lq", 122, 3, 99, 65532, 1,
   2, 114, 4, 0, 0, 0, 65535, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0,
   0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 255, 255>;
-def BRForm_scalar_base_instructions_JMP_imm8s_i : BedrockScalarEncodingForm<
-  "base.instructions.JMP.imm8s_i", "jmp", "100100iiiiiiii", 0, "", 0, 1, 0, 65535, 1,
+def BRForm_scalar_base_JMP_imm8s_i : BedrockScalarEncodingForm<
+  "base.JMP.imm8s_i", "jmp", "100100iiiiiiii", 0, "", 0, 1, 0, 65535, 1,
   8, 105, 8, 1, 0, 0, 18446744073709551615, 18446744073709551615, 18446744073709551615, 18446744073709551615, 0, 0, 0, 0, 0, 0, 1, 0,
   0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 255, 255>;
-def BRForm_scalar_base_instructions_JMP_imm16s : BedrockScalarEncodingForm<
-  "base.instructions.JMP.imm16s", "jmp", "111011110000000110", 2, "", 0, 1, 0, 65535, 1,
+def BRForm_scalar_base_JMP_imm16s : BedrockScalarEncodingForm<
+  "base.JMP.imm16s", "jmp", "111011110000000110", 2, "", 0, 1, 0, 65535, 1,
   9, 0, 16, 1, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0,
   0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 255, 255>;
-def BRForm_scalar_base_instructions_JMP_imm32s : BedrockScalarEncodingForm<
-  "base.instructions.JMP.imm32s", "jmp", "111011110000000111", 4, "", 0, 1, 0, 65535, 1,
+def BRForm_scalar_base_JMP_imm32s : BedrockScalarEncodingForm<
+  "base.JMP.imm32s", "jmp", "111011110000000111", 4, "", 0, 1, 0, 65535, 1,
   9, 0, 32, 1, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0,
   0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 255, 255>;
-def BRForm_scalar_base_instructions_JMP_l_q_z_ea_e : BedrockScalarEncodingForm<
-  "base.instructions.JMP.l_q_z_ea_e", "jmp", "111001z1010eeeeeee", 0, "lq", 122, 3, 0, 65535, 1,
+def BRForm_scalar_base_JMP_l_q_z_ea_e : BedrockScalarEncodingForm<
+  "base.JMP.l_q_z_ea_e", "jmp", "111001z1010eeeeeee", 0, "lq", 122, 3, 0, 65535, 1,
   6, 101, 7, 0, 0, 0, 18446744073709551615, 18446744073709551615, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0,
   0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 255, 255>;
-def BRForm_scalar_base_instructions_JMP_l_q_z_rn_r : BedrockScalarEncodingForm<
-  "base.instructions.JMP.l_q_z_rn_r", "jmp", "11101100001z10rrrr", 0, "lq", 122, 3, 0, 65535, 1,
+def BRForm_scalar_base_JMP_l_q_z_rn_r : BedrockScalarEncodingForm<
+  "base.JMP.l_q_z_rn_r", "jmp", "11101100001z10rrrr", 0, "lq", 122, 3, 0, 65535, 1,
   2, 114, 4, 0, 0, 0, 65535, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0,
   0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 255, 255>;
-def BRForm_scalar_base_instructions_LCALL_rn_r_ea_e : BedrockScalarEncodingForm<
-  "base.instructions.LCALL.rn_r_ea_e", "lcall", "111100111000010rrrreeeeeee", 0, "", 0, 1, 0, 65535, 2,
+def BRForm_scalar_base_LCALL_rn_r_ea_e : BedrockScalarEncodingForm<
+  "base.LCALL.rn_r_ea_e", "lcall", "111100111000010rrrreeeeeee", 0, "", 0, 1, 0, 65535, 2,
   2, 114, 4, 0, 0, 0, 65535, 0, 0, 0, 6, 101, 7, 0, 1, 0, 18446744073709551615, 18446744073709551615,
   0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 255, 255>;
-def BRForm_scalar_base_instructions_LCALL_rn_s_rn_d : BedrockScalarEncodingForm<
-  "base.instructions.LCALL.rn_s_rn_d", "lcall", "1100000001ssssdddd", 0, "", 0, 1, 0, 65535, 2,
+def BRForm_scalar_base_LCALL_rn_s_rn_d : BedrockScalarEncodingForm<
+  "base.LCALL.rn_s_rn_d", "lcall", "1100000001ssssdddd", 0, "", 0, 1, 0, 65535, 2,
   2, 115, 4, 0, 0, 0, 65535, 0, 0, 0, 2, 100, 4, 0, 0, 0, 65535, 0,
   0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 255, 255>;
-def BRForm_scalar_base_instructions_LEA_b_w_l_q_z_ea_e_rn_d : BedrockScalarEncodingForm<
-  "base.instructions.LEA.b_w_l_q_z_ea_e_rn_d", "lea", "00111zzddddeeeeeee", 0, "bwlq", 122, 15, 0, 65535, 2,
+def BRForm_scalar_base_LEA_b_w_l_q_z_ea_e_rn_d : BedrockScalarEncodingForm<
+  "base.LEA.b_w_l_q_z_ea_e_rn_d", "lea", "00111zzddddeeeeeee", 0, "bwlq", 122, 15, 0, 65535, 2,
   6, 101, 7, 0, 1, 0, 18446744073709551615, 18446744073709551615, 0, 0, 2, 100, 4, 0, 0, 0, 65535, 0,
   0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 255, 255>;
-def BRForm_scalar_base_instructions_LEA_b_w_l_q_z_rn_s_rn_d : BedrockScalarEncodingForm<
-  "base.instructions.LEA.b_w_l_q_z_rn_s_rn_d", "lea", "10011zz010ssssdddd", 0, "bwlq", 122, 15, 0, 65535, 2,
+def BRForm_scalar_base_LEA_b_w_l_q_z_rn_s_rn_d : BedrockScalarEncodingForm<
+  "base.LEA.b_w_l_q_z_rn_s_rn_d", "lea", "10011zz010ssssdddd", 0, "bwlq", 122, 15, 0, 65535, 2,
   2, 115, 4, 0, 0, 0, 65535, 0, 0, 0, 2, 100, 4, 0, 0, 0, 65535, 0,
   0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 255, 255>;
-def BRForm_scalar_base_instructions_LJMP_rn_r_ea_e : BedrockScalarEncodingForm<
-  "base.instructions.LJMP.rn_r_ea_e", "ljmp", "111100111000011rrrreeeeeee", 0, "", 0, 1, 0, 65535, 2,
+def BRForm_scalar_base_LJMP_rn_r_ea_e : BedrockScalarEncodingForm<
+  "base.LJMP.rn_r_ea_e", "ljmp", "111100111000011rrrreeeeeee", 0, "", 0, 1, 0, 65535, 2,
   2, 114, 4, 0, 0, 0, 65535, 0, 0, 0, 6, 101, 7, 0, 1, 0, 18446744073709551615, 18446744073709551615,
   0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 255, 255>;
-def BRForm_scalar_base_instructions_LJMP_rn_s_rn_d : BedrockScalarEncodingForm<
-  "base.instructions.LJMP.rn_s_rn_d", "ljmp", "1100000010ssssdddd", 0, "", 0, 1, 0, 65535, 2,
+def BRForm_scalar_base_LJMP_rn_s_rn_d : BedrockScalarEncodingForm<
+  "base.LJMP.rn_s_rn_d", "ljmp", "1100000010ssssdddd", 0, "", 0, 1, 0, 65535, 2,
   2, 115, 4, 0, 0, 0, 65535, 0, 0, 0, 2, 100, 4, 0, 0, 0, 65535, 0,
   0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 255, 255>;
-def BRForm_scalar_base_instructions_LRET_plain : BedrockScalarEncodingForm<
-  "base.instructions.LRET.plain", "lret", "0000011", 0, "", 0, 1, 0, 65535, 0,
+def BRForm_scalar_base_LRET_plain : BedrockScalarEncodingForm<
+  "base.LRET.plain", "lret", "0000011", 0, "", 0, 1, 0, 65535, 0,
   0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0,
   0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 255, 255>;
-def BRForm_scalar_base_instructions_MAXS_b_w_l_q_z_ea_e_rn_d : BedrockScalarEncodingForm<
-  "base.instructions.MAXS.b_w_l_q_z_ea_e_rn_d", "maxs", "1111001001zz010ddddeeeeeee", 0, "bwlq", 122, 15, 0, 65535, 2,
+def BRForm_scalar_base_MAXS_b_w_l_q_z_ea_e_rn_d : BedrockScalarEncodingForm<
+  "base.MAXS.b_w_l_q_z_ea_e_rn_d", "maxs", "1111001001zz010ddddeeeeeee", 0, "bwlq", 122, 15, 0, 65535, 2,
   6, 101, 7, 0, 1, 0, 18446744073709551615, 18446744073709551615, 0, 0, 2, 100, 4, 0, 0, 0, 65535, 0,
   0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 255, 255>;
-def BRForm_scalar_base_instructions_MAXS_b_w_l_q_z_rn_s_ea_e : BedrockScalarEncodingForm<
-  "base.instructions.MAXS.b_w_l_q_z_rn_s_ea_e", "maxs", "1111001101zz010sssseeeeeee", 0, "bwlq", 122, 15, 0, 65535, 2,
+def BRForm_scalar_base_MAXS_b_w_l_q_z_rn_s_ea_e : BedrockScalarEncodingForm<
+  "base.MAXS.b_w_l_q_z_rn_s_ea_e", "maxs", "1111001101zz010sssseeeeeee", 0, "bwlq", 122, 15, 0, 65535, 2,
   2, 115, 4, 0, 0, 0, 65535, 0, 0, 0, 6, 101, 7, 0, 0, 0, 18446744073709551615, 18446744073709551615,
   0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 255, 255>;
-def BRForm_scalar_base_instructions_MAXS_b_w_l_q_z_rn_s_rn_d : BedrockScalarEncodingForm<
-  "base.instructions.MAXS.b_w_l_q_z_rn_s_rn_d", "maxs", "10001zz010ssssdddd", 0, "bwlq", 122, 15, 0, 65535, 2,
+def BRForm_scalar_base_MAXS_b_w_l_q_z_rn_s_rn_d : BedrockScalarEncodingForm<
+  "base.MAXS.b_w_l_q_z_rn_s_rn_d", "maxs", "10001zz010ssssdddd", 0, "bwlq", 122, 15, 0, 65535, 2,
   2, 115, 4, 0, 0, 0, 65535, 0, 0, 0, 2, 100, 4, 0, 0, 0, 65535, 0,
   0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 255, 255>;
-def BRForm_scalar_base_instructions_MAXU_b_w_l_q_z_ea_e_rn_d : BedrockScalarEncodingForm<
-  "base.instructions.MAXU.b_w_l_q_z_ea_e_rn_d", "maxu", "1111001001zz011ddddeeeeeee", 0, "bwlq", 122, 15, 0, 65535, 2,
+def BRForm_scalar_base_MAXU_b_w_l_q_z_ea_e_rn_d : BedrockScalarEncodingForm<
+  "base.MAXU.b_w_l_q_z_ea_e_rn_d", "maxu", "1111001001zz011ddddeeeeeee", 0, "bwlq", 122, 15, 0, 65535, 2,
   6, 101, 7, 0, 1, 0, 18446744073709551615, 18446744073709551615, 0, 0, 2, 100, 4, 0, 0, 0, 65535, 0,
   0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 255, 255>;
-def BRForm_scalar_base_instructions_MAXU_b_w_l_q_z_rn_s_ea_e : BedrockScalarEncodingForm<
-  "base.instructions.MAXU.b_w_l_q_z_rn_s_ea_e", "maxu", "1111001101zz011sssseeeeeee", 0, "bwlq", 122, 15, 0, 65535, 2,
+def BRForm_scalar_base_MAXU_b_w_l_q_z_rn_s_ea_e : BedrockScalarEncodingForm<
+  "base.MAXU.b_w_l_q_z_rn_s_ea_e", "maxu", "1111001101zz011sssseeeeeee", 0, "bwlq", 122, 15, 0, 65535, 2,
   2, 115, 4, 0, 0, 0, 65535, 0, 0, 0, 6, 101, 7, 0, 0, 0, 18446744073709551615, 18446744073709551615,
   0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 255, 255>;
-def BRForm_scalar_base_instructions_MAXU_b_w_l_q_z_rn_s_rn_d : BedrockScalarEncodingForm<
-  "base.instructions.MAXU.b_w_l_q_z_rn_s_rn_d", "maxu", "10001zz011ssssdddd", 0, "bwlq", 122, 15, 0, 65535, 2,
+def BRForm_scalar_base_MAXU_b_w_l_q_z_rn_s_rn_d : BedrockScalarEncodingForm<
+  "base.MAXU.b_w_l_q_z_rn_s_rn_d", "maxu", "10001zz011ssssdddd", 0, "bwlq", 122, 15, 0, 65535, 2,
   2, 115, 4, 0, 0, 0, 65535, 0, 0, 0, 2, 100, 4, 0, 0, 0, 65535, 0,
   0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 255, 255>;
-def BRForm_scalar_base_instructions_MINS_b_w_l_q_z_ea_e_rn_d : BedrockScalarEncodingForm<
-  "base.instructions.MINS.b_w_l_q_z_ea_e_rn_d", "mins", "1111001001zz100ddddeeeeeee", 0, "bwlq", 122, 15, 0, 65535, 2,
+def BRForm_scalar_base_MINS_b_w_l_q_z_ea_e_rn_d : BedrockScalarEncodingForm<
+  "base.MINS.b_w_l_q_z_ea_e_rn_d", "mins", "1111001001zz100ddddeeeeeee", 0, "bwlq", 122, 15, 0, 65535, 2,
   6, 101, 7, 0, 1, 0, 18446744073709551615, 18446744073709551615, 0, 0, 2, 100, 4, 0, 0, 0, 65535, 0,
   0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 255, 255>;
-def BRForm_scalar_base_instructions_MINS_b_w_l_q_z_rn_s_ea_e : BedrockScalarEncodingForm<
-  "base.instructions.MINS.b_w_l_q_z_rn_s_ea_e", "mins", "1111001101zz100sssseeeeeee", 0, "bwlq", 122, 15, 0, 65535, 2,
+def BRForm_scalar_base_MINS_b_w_l_q_z_rn_s_ea_e : BedrockScalarEncodingForm<
+  "base.MINS.b_w_l_q_z_rn_s_ea_e", "mins", "1111001101zz100sssseeeeeee", 0, "bwlq", 122, 15, 0, 65535, 2,
   2, 115, 4, 0, 0, 0, 65535, 0, 0, 0, 6, 101, 7, 0, 0, 0, 18446744073709551615, 18446744073709551615,
   0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 255, 255>;
-def BRForm_scalar_base_instructions_MINS_b_w_l_q_z_rn_s_rn_d : BedrockScalarEncodingForm<
-  "base.instructions.MINS.b_w_l_q_z_rn_s_rn_d", "mins", "10001zz100ssssdddd", 0, "bwlq", 122, 15, 0, 65535, 2,
+def BRForm_scalar_base_MINS_b_w_l_q_z_rn_s_rn_d : BedrockScalarEncodingForm<
+  "base.MINS.b_w_l_q_z_rn_s_rn_d", "mins", "10001zz100ssssdddd", 0, "bwlq", 122, 15, 0, 65535, 2,
   2, 115, 4, 0, 0, 0, 65535, 0, 0, 0, 2, 100, 4, 0, 0, 0, 65535, 0,
   0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 255, 255>;
-def BRForm_scalar_base_instructions_MINU_b_w_l_q_z_ea_e_rn_d : BedrockScalarEncodingForm<
-  "base.instructions.MINU.b_w_l_q_z_ea_e_rn_d", "minu", "1111001001zz101ddddeeeeeee", 0, "bwlq", 122, 15, 0, 65535, 2,
+def BRForm_scalar_base_MINU_b_w_l_q_z_ea_e_rn_d : BedrockScalarEncodingForm<
+  "base.MINU.b_w_l_q_z_ea_e_rn_d", "minu", "1111001001zz101ddddeeeeeee", 0, "bwlq", 122, 15, 0, 65535, 2,
   6, 101, 7, 0, 1, 0, 18446744073709551615, 18446744073709551615, 0, 0, 2, 100, 4, 0, 0, 0, 65535, 0,
   0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 255, 255>;
-def BRForm_scalar_base_instructions_MINU_b_w_l_q_z_rn_s_ea_e : BedrockScalarEncodingForm<
-  "base.instructions.MINU.b_w_l_q_z_rn_s_ea_e", "minu", "1111001101zz101sssseeeeeee", 0, "bwlq", 122, 15, 0, 65535, 2,
+def BRForm_scalar_base_MINU_b_w_l_q_z_rn_s_ea_e : BedrockScalarEncodingForm<
+  "base.MINU.b_w_l_q_z_rn_s_ea_e", "minu", "1111001101zz101sssseeeeeee", 0, "bwlq", 122, 15, 0, 65535, 2,
   2, 115, 4, 0, 0, 0, 65535, 0, 0, 0, 6, 101, 7, 0, 0, 0, 18446744073709551615, 18446744073709551615,
   0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 255, 255>;
-def BRForm_scalar_base_instructions_MINU_b_w_l_q_z_rn_s_rn_d : BedrockScalarEncodingForm<
-  "base.instructions.MINU.b_w_l_q_z_rn_s_rn_d", "minu", "10001zz101ssssdddd", 0, "bwlq", 122, 15, 0, 65535, 2,
+def BRForm_scalar_base_MINU_b_w_l_q_z_rn_s_rn_d : BedrockScalarEncodingForm<
+  "base.MINU.b_w_l_q_z_rn_s_rn_d", "minu", "10001zz101ssssdddd", 0, "bwlq", 122, 15, 0, 65535, 2,
   2, 115, 4, 0, 0, 0, 65535, 0, 0, 0, 2, 100, 4, 0, 0, 0, 65535, 0,
   0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 255, 255>;
-def BRForm_scalar_base_instructions_MODS_b_w_l_q_z_ea_e_rn_d : BedrockScalarEncodingForm<
-  "base.instructions.MODS.b_w_l_q_z_ea_e_rn_d", "mods", "1111001011zz011ddddeeeeeee", 0, "bwlq", 122, 15, 0, 65535, 2,
+def BRForm_scalar_base_MODS_b_w_l_q_z_ea_e_rn_d : BedrockScalarEncodingForm<
+  "base.MODS.b_w_l_q_z_ea_e_rn_d", "mods", "1111001011zz011ddddeeeeeee", 0, "bwlq", 122, 15, 0, 65535, 2,
   6, 101, 7, 0, 1, 0, 18446744073709551615, 18446744073709551615, 0, 0, 2, 100, 4, 0, 0, 0, 65535, 0,
   0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 255, 255>;
-def BRForm_scalar_base_instructions_MODS_b_w_l_q_z_rn_s_rn_d : BedrockScalarEncodingForm<
-  "base.instructions.MODS.b_w_l_q_z_rn_s_rn_d", "mods", "10011zz011ssssdddd", 0, "bwlq", 122, 15, 0, 65535, 2,
+def BRForm_scalar_base_MODS_b_w_l_q_z_rn_s_rn_d : BedrockScalarEncodingForm<
+  "base.MODS.b_w_l_q_z_rn_s_rn_d", "mods", "10011zz011ssssdddd", 0, "bwlq", 122, 15, 0, 65535, 2,
   2, 115, 4, 0, 0, 0, 65535, 0, 0, 0, 2, 100, 4, 0, 0, 0, 65535, 0,
   0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 255, 255>;
-def BRForm_scalar_base_instructions_MODU_b_w_l_q_z_ea_e_rn_d : BedrockScalarEncodingForm<
-  "base.instructions.MODU.b_w_l_q_z_ea_e_rn_d", "modu", "1111001011zz100ddddeeeeeee", 0, "bwlq", 122, 15, 0, 65535, 2,
+def BRForm_scalar_base_MODU_b_w_l_q_z_ea_e_rn_d : BedrockScalarEncodingForm<
+  "base.MODU.b_w_l_q_z_ea_e_rn_d", "modu", "1111001011zz100ddddeeeeeee", 0, "bwlq", 122, 15, 0, 65535, 2,
   6, 101, 7, 0, 1, 0, 18446744073709551615, 18446744073709551615, 0, 0, 2, 100, 4, 0, 0, 0, 65535, 0,
   0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 255, 255>;
-def BRForm_scalar_base_instructions_MODU_b_w_l_q_z_rn_s_rn_d : BedrockScalarEncodingForm<
-  "base.instructions.MODU.b_w_l_q_z_rn_s_rn_d", "modu", "10011zz100ssssdddd", 0, "bwlq", 122, 15, 0, 65535, 2,
+def BRForm_scalar_base_MODU_b_w_l_q_z_rn_s_rn_d : BedrockScalarEncodingForm<
+  "base.MODU.b_w_l_q_z_rn_s_rn_d", "modu", "10011zz100ssssdddd", 0, "bwlq", 122, 15, 0, 65535, 2,
   2, 115, 4, 0, 0, 0, 65535, 0, 0, 0, 2, 100, 4, 0, 0, 0, 65535, 0,
   0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 255, 255>;
-def BRForm_scalar_base_instructions_MOV_q_rn_r_sp : BedrockScalarEncodingForm<
-  "base.instructions.MOV.q_rn_r_sp", "mov.q", "101rrrr", 0, "", 0, 1, 0, 65535, 2,
+def BRForm_scalar_base_MOV_q_rn_r_sp : BedrockScalarEncodingForm<
+  "base.MOV.q_rn_r_sp", "mov.q", "101rrrr", 0, "", 0, 1, 0, 65535, 2,
   2, 114, 4, 0, 0, 0, 65535, 0, 0, 0, 12, 0, 0, 0, 0, 0, 1, 0,
   0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 255, 255>;
-def BRForm_scalar_base_instructions_MOV_q_sp_rn_r : BedrockScalarEncodingForm<
-  "base.instructions.MOV.q_sp_rn_r", "mov.q", "110rrrr", 0, "", 0, 1, 0, 65535, 2,
+def BRForm_scalar_base_MOV_q_sp_rn_r : BedrockScalarEncodingForm<
+  "base.MOV.q_sp_rn_r", "mov.q", "110rrrr", 0, "", 0, 1, 0, 65535, 2,
   12, 0, 0, 0, 0, 0, 1, 0, 0, 0, 2, 114, 4, 0, 0, 0, 65535, 0,
   0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 255, 255>;
-def BRForm_scalar_base_instructions_MOV_l_q_z_rn_s_rn_d : BedrockScalarEncodingForm<
-  "base.instructions.MOV.l_q_z_rn_s_rn_d", "mov", "00000zssssdddd", 0, "lq", 122, 3, 0, 65535, 2,
+def BRForm_scalar_base_MOV_l_q_z_rn_s_rn_d : BedrockScalarEncodingForm<
+  "base.MOV.l_q_z_rn_s_rn_d", "mov", "00000zssssdddd", 0, "lq", 122, 3, 0, 65535, 2,
   2, 115, 4, 0, 0, 0, 65535, 0, 0, 0, 2, 100, 4, 0, 0, 0, 65535, 0,
   0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 255, 255>;
-def BRForm_scalar_base_instructions_MOV_b_rn_s_rn_d : BedrockScalarEncodingForm<
-  "base.instructions.MOV.b_rn_s_rn_d", "mov.b", "100110ssssdddd", 0, "", 0, 1, 0, 65535, 2,
+def BRForm_scalar_base_MOV_b_rn_s_rn_d : BedrockScalarEncodingForm<
+  "base.MOV.b_rn_s_rn_d", "mov.b", "100110ssssdddd", 0, "", 0, 1, 0, 65535, 2,
   2, 115, 4, 0, 0, 0, 65535, 0, 0, 0, 2, 100, 4, 0, 0, 0, 65535, 0,
   0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 255, 255>;
-def BRForm_scalar_base_instructions_MOV_w_rn_s_rn_d : BedrockScalarEncodingForm<
-  "base.instructions.MOV.w_rn_s_rn_d", "mov.w", "100111ssssdddd", 0, "", 0, 1, 0, 65535, 2,
+def BRForm_scalar_base_MOV_w_rn_s_rn_d : BedrockScalarEncodingForm<
+  "base.MOV.w_rn_s_rn_d", "mov.w", "100111ssssdddd", 0, "", 0, 1, 0, 65535, 2,
   2, 115, 4, 0, 0, 0, 65535, 0, 0, 0, 2, 100, 4, 0, 0, 0, 65535, 0,
   0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 255, 255>;
-def BRForm_scalar_base_instructions_MOV_b_w_l_q_z_rn_s_ea_e : BedrockScalarEncodingForm<
-  "base.instructions.MOV.b_w_l_q_z_rn_s_ea_e", "mov", "00000zzsssseeeeeee", 0, "bwlq", 122, 15, 0, 65535, 2,
+def BRForm_scalar_base_MOV_b_w_l_q_z_rn_s_ea_e : BedrockScalarEncodingForm<
+  "base.MOV.b_w_l_q_z_rn_s_ea_e", "mov", "00000zzsssseeeeeee", 0, "bwlq", 122, 15, 0, 65535, 2,
   2, 115, 4, 0, 0, 0, 65535, 0, 0, 0, 6, 101, 7, 0, 0, 0, 18446744073709551615, 18446744073709551615,
   0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 255, 255>;
-def BRForm_scalar_base_instructions_MOV_b_w_l_q_z_ea_e_rn_d : BedrockScalarEncodingForm<
-  "base.instructions.MOV.b_w_l_q_z_ea_e_rn_d", "mov", "01000zzddddeeeeeee", 0, "bwlq", 122, 15, 0, 65535, 2,
+def BRForm_scalar_base_MOV_b_w_l_q_z_ea_e_rn_d : BedrockScalarEncodingForm<
+  "base.MOV.b_w_l_q_z_ea_e_rn_d", "mov", "01000zzddddeeeeeee", 0, "bwlq", 122, 15, 0, 65535, 2,
   6, 101, 7, 0, 1, 0, 18446744073709551615, 18446744073709551615, 0, 0, 2, 100, 4, 0, 0, 0, 65535, 0,
   0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 255, 255>;
-def BRForm_scalar_base_instructions_MOV_b_w_l_q_z_ea_s_ea_d : BedrockScalarEncodingForm<
-  "base.instructions.MOV.b_w_l_q_z_ea_s_ea_d", "mov", "1111000100zzsssssssddddddd", 0, "bwlq", 122, 15, 0, 65535, 2,
+def BRForm_scalar_base_MOV_b_w_l_q_z_ea_s_ea_d : BedrockScalarEncodingForm<
+  "base.MOV.b_w_l_q_z_ea_s_ea_d", "mov", "1111000100zzsssssssddddddd", 0, "bwlq", 122, 15, 0, 65535, 2,
   6, 115, 7, 0, 1, 0, 18446744073709551615, 18446744073709551615, 0, 0, 6, 100, 7, 0, 0, 0, 18446744073709551615, 18446744073709551615,
   0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 255, 255>;
-def BRForm_scalar_base_instructions_MOVcc_b_w_l_q_z_rn_s_ea_e : BedrockScalarEncodingForm<
-  "base.instructions.MOVcc.b_w_l_q_z_rn_s_ea_e", "mov", "11111100010001zz011ccccsssseeeeeee", 0, "bwlq", 122, 15, 99, 65535, 2,
+def BRForm_scalar_base_MOVcc_b_w_l_q_z_rn_s_ea_e : BedrockScalarEncodingForm<
+  "base.MOVcc.b_w_l_q_z_rn_s_ea_e", "mov", "11111100010001zz011ccccsssseeeeeee", 0, "bwlq", 122, 15, 99, 65535, 2,
   2, 115, 4, 0, 0, 0, 65535, 0, 0, 0, 6, 101, 7, 0, 0, 0, 18446744073709551615, 18446744073709551615,
   0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 255, 255>;
-def BRForm_scalar_base_instructions_MOVcc_b_w_l_q_z_ea_e_rn_d : BedrockScalarEncodingForm<
-  "base.instructions.MOVcc.b_w_l_q_z_ea_e_rn_d", "mov", "11111100010001zz010ccccddddeeeeeee", 0, "bwlq", 122, 15, 99, 65535, 2,
+def BRForm_scalar_base_MOVcc_b_w_l_q_z_ea_e_rn_d : BedrockScalarEncodingForm<
+  "base.MOVcc.b_w_l_q_z_ea_e_rn_d", "mov", "11111100010001zz010ccccddddeeeeeee", 0, "bwlq", 122, 15, 99, 65535, 2,
   6, 101, 7, 0, 1, 0, 18446744073709551615, 18446744073709551615, 0, 0, 2, 100, 4, 0, 0, 0, 65535, 0,
   0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 255, 255>;
-def BRForm_scalar_base_instructions_MOVcc_b_w_l_q_z_rn_s_rn_d : BedrockScalarEncodingForm<
-  "base.instructions.MOVcc.b_w_l_q_z_rn_s_rn_d", "mov", "111101000101zzccccssssdddd", 0, "bwlq", 122, 15, 99, 65535, 2,
+def BRForm_scalar_base_MOVcc_b_w_l_q_z_rn_s_rn_d : BedrockScalarEncodingForm<
+  "base.MOVcc.b_w_l_q_z_rn_s_rn_d", "mov", "111101000101zzccccssssdddd", 0, "bwlq", 122, 15, 99, 65535, 2,
   2, 115, 4, 0, 0, 0, 65535, 0, 0, 0, 2, 100, 4, 0, 0, 0, 65535, 0,
   0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 255, 255>;
-def BRForm_scalar_base_instructions_MOVCU_b_w_l_q_z_ea_s_ea_d : BedrockScalarEncodingForm<
-  "base.instructions.MOVCU.b_w_l_q_z_ea_s_ea_d", "movcu", "1111000101zzsssssssddddddd", 0, "bwlq", 122, 15, 0, 65535, 2,
+def BRForm_scalar_base_MOVCU_b_w_l_q_z_ea_s_ea_d : BedrockScalarEncodingForm<
+  "base.MOVCU.b_w_l_q_z_ea_s_ea_d", "movcu", "1111000101zzsssssssddddddd", 0, "bwlq", 122, 15, 0, 65535, 2,
   6, 115, 7, 0, 1, 0, 18446744073709551615, 18446744073709551615, 0, 0, 6, 100, 7, 0, 0, 0, 18446744073709551615, 18446744073709551615,
   0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 255, 255>;
-def BRForm_scalar_base_instructions_MOVCU_b_w_l_q_z_rn_s_rn_d : BedrockScalarEncodingForm<
-  "base.instructions.MOVCU.b_w_l_q_z_rn_s_rn_d", "movcu", "10010zz000ssssdddd", 0, "bwlq", 122, 15, 0, 65535, 2,
+def BRForm_scalar_base_MOVCU_b_w_l_q_z_rn_s_rn_d : BedrockScalarEncodingForm<
+  "base.MOVCU.b_w_l_q_z_rn_s_rn_d", "movcu", "10010zz000ssssdddd", 0, "bwlq", 122, 15, 0, 65535, 2,
   2, 115, 4, 0, 0, 0, 65535, 0, 0, 0, 2, 100, 4, 0, 0, 0, 65535, 0,
   0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 255, 255>;
-def BRForm_scalar_base_instructions_MOVCU_b_w_l_q_z_rn_s_ea_d : BedrockScalarEncodingForm<
-  "base.instructions.MOVCU.b_w_l_q_z_rn_s_ea_d", "movcu", "1111001110zz000ssssddddddd", 0, "bwlq", 122, 15, 0, 65535, 2,
+def BRForm_scalar_base_MOVCU_b_w_l_q_z_rn_s_ea_d : BedrockScalarEncodingForm<
+  "base.MOVCU.b_w_l_q_z_rn_s_ea_d", "movcu", "1111001110zz000ssssddddddd", 0, "bwlq", 122, 15, 0, 65535, 2,
   2, 115, 4, 0, 0, 0, 65535, 0, 0, 0, 6, 100, 7, 0, 0, 0, 18446744073709551615, 18446744073709551615,
   0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 255, 255>;
-def BRForm_scalar_base_instructions_MOVCU_b_w_l_q_z_ea_s_rn_d : BedrockScalarEncodingForm<
-  "base.instructions.MOVCU.b_w_l_q_z_ea_s_rn_d", "movcu", "1111001010zz000ddddsssssss", 0, "bwlq", 122, 15, 0, 65535, 2,
+def BRForm_scalar_base_MOVCU_b_w_l_q_z_ea_s_rn_d : BedrockScalarEncodingForm<
+  "base.MOVCU.b_w_l_q_z_ea_s_rn_d", "movcu", "1111001010zz000ddddsssssss", 0, "bwlq", 122, 15, 0, 65535, 2,
   6, 115, 7, 0, 1, 0, 18446744073709551615, 18446744073709551615, 0, 0, 2, 100, 4, 0, 0, 0, 65535, 0,
   0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 255, 255>;
-def BRForm_scalar_base_instructions_MOVNT_b_w_l_q_z_rn_s_ea_e : BedrockScalarEncodingForm<
-  "base.instructions.MOVNT.b_w_l_q_z_rn_s_ea_e", "movnt", "1111001110zz100sssseeeeeee", 0, "bwlq", 122, 15, 0, 65535, 2,
+def BRForm_scalar_base_MOVNT_b_w_l_q_z_rn_s_ea_e : BedrockScalarEncodingForm<
+  "base.MOVNT.b_w_l_q_z_rn_s_ea_e", "movnt", "1111001110zz100sssseeeeeee", 0, "bwlq", 122, 15, 0, 65535, 2,
   2, 115, 4, 0, 0, 0, 65535, 0, 0, 0, 6, 101, 7, 0, 0, 0, 18446744073709551615, 18446744073709551615,
   0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 255, 255>;
-def BRForm_scalar_base_instructions_MOVUC_b_w_l_q_z_ea_s_ea_d : BedrockScalarEncodingForm<
-  "base.instructions.MOVUC.b_w_l_q_z_ea_s_ea_d", "movuc", "1111000110zzsssssssddddddd", 0, "bwlq", 122, 15, 0, 65535, 2,
+def BRForm_scalar_base_MOVUC_b_w_l_q_z_ea_s_ea_d : BedrockScalarEncodingForm<
+  "base.MOVUC.b_w_l_q_z_ea_s_ea_d", "movuc", "1111000110zzsssssssddddddd", 0, "bwlq", 122, 15, 0, 65535, 2,
   6, 115, 7, 0, 0, 0, 18446744073709551615, 18446744073709551615, 0, 0, 6, 100, 7, 0, 0, 0, 18446744073709551615, 18446744073709551615,
   0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 255, 255>;
-def BRForm_scalar_base_instructions_MOVUC_b_w_l_q_z_rn_s_rn_d : BedrockScalarEncodingForm<
-  "base.instructions.MOVUC.b_w_l_q_z_rn_s_rn_d", "movuc", "10010zz001ssssdddd", 0, "bwlq", 122, 15, 0, 65535, 2,
+def BRForm_scalar_base_MOVUC_b_w_l_q_z_rn_s_rn_d : BedrockScalarEncodingForm<
+  "base.MOVUC.b_w_l_q_z_rn_s_rn_d", "movuc", "10010zz001ssssdddd", 0, "bwlq", 122, 15, 0, 65535, 2,
   2, 115, 4, 0, 0, 0, 65535, 0, 0, 0, 2, 100, 4, 0, 0, 0, 65535, 0,
   0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 255, 255>;
-def BRForm_scalar_base_instructions_MOVUC_b_w_l_q_z_rn_s_ea_d : BedrockScalarEncodingForm<
-  "base.instructions.MOVUC.b_w_l_q_z_rn_s_ea_d", "movuc", "1111001110zz001ssssddddddd", 0, "bwlq", 122, 15, 0, 65535, 2,
+def BRForm_scalar_base_MOVUC_b_w_l_q_z_rn_s_ea_d : BedrockScalarEncodingForm<
+  "base.MOVUC.b_w_l_q_z_rn_s_ea_d", "movuc", "1111001110zz001ssssddddddd", 0, "bwlq", 122, 15, 0, 65535, 2,
   2, 115, 4, 0, 0, 0, 65535, 0, 0, 0, 6, 100, 7, 0, 0, 0, 18446744073709551615, 18446744073709551615,
   0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 255, 255>;
-def BRForm_scalar_base_instructions_MOVUC_b_w_l_q_z_ea_s_rn_d : BedrockScalarEncodingForm<
-  "base.instructions.MOVUC.b_w_l_q_z_ea_s_rn_d", "movuc", "1111001010zz001ddddsssssss", 0, "bwlq", 122, 15, 0, 65535, 2,
+def BRForm_scalar_base_MOVUC_b_w_l_q_z_ea_s_rn_d : BedrockScalarEncodingForm<
+  "base.MOVUC.b_w_l_q_z_ea_s_rn_d", "movuc", "1111001010zz001ddddsssssss", 0, "bwlq", 122, 15, 0, 65535, 2,
   6, 115, 7, 0, 0, 0, 18446744073709551615, 18446744073709551615, 0, 0, 2, 100, 4, 0, 0, 0, 65535, 0,
   0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 255, 255>;
-def BRForm_scalar_base_instructions_MOVUU_b_w_l_q_z_ea_s_ea_d : BedrockScalarEncodingForm<
-  "base.instructions.MOVUU.b_w_l_q_z_ea_s_ea_d", "movuu", "1111000111zzsssssssddddddd", 0, "bwlq", 122, 15, 0, 65535, 2,
+def BRForm_scalar_base_MOVUU_b_w_l_q_z_ea_s_ea_d : BedrockScalarEncodingForm<
+  "base.MOVUU.b_w_l_q_z_ea_s_ea_d", "movuu", "1111000111zzsssssssddddddd", 0, "bwlq", 122, 15, 0, 65535, 2,
   6, 115, 7, 0, 0, 0, 18446744073709551615, 18446744073709551615, 0, 0, 6, 100, 7, 0, 0, 0, 18446744073709551615, 18446744073709551615,
   0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 255, 255>;
-def BRForm_scalar_base_instructions_MUL_b_w_l_q_z_ea_e_rn_d : BedrockScalarEncodingForm<
-  "base.instructions.MUL.b_w_l_q_z_ea_e_rn_d", "mul", "1111001011zz101ddddeeeeeee", 0, "bwlq", 122, 15, 0, 65535, 2,
+def BRForm_scalar_base_MUL_b_w_l_q_z_ea_e_rn_d : BedrockScalarEncodingForm<
+  "base.MUL.b_w_l_q_z_ea_e_rn_d", "mul", "1111001011zz101ddddeeeeeee", 0, "bwlq", 122, 15, 0, 65535, 2,
   6, 101, 7, 0, 1, 0, 18446744073709551615, 18446744073709551615, 0, 0, 2, 100, 4, 0, 0, 0, 65535, 0,
   0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 255, 255>;
-def BRForm_scalar_base_instructions_MUL_b_w_l_q_z_rn_s_rn_d : BedrockScalarEncodingForm<
-  "base.instructions.MUL.b_w_l_q_z_rn_s_rn_d", "mul", "10011zz101ssssdddd", 0, "bwlq", 122, 15, 0, 65535, 2,
+def BRForm_scalar_base_MUL_b_w_l_q_z_rn_s_rn_d : BedrockScalarEncodingForm<
+  "base.MUL.b_w_l_q_z_rn_s_rn_d", "mul", "10011zz101ssssdddd", 0, "bwlq", 122, 15, 0, 65535, 2,
   2, 115, 4, 0, 0, 0, 65535, 0, 0, 0, 2, 100, 4, 0, 0, 0, 65535, 0,
   0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 255, 255>;
-def BRForm_scalar_base_instructions_MULHS_q_rn_s_rn_d : BedrockScalarEncodingForm<
-  "base.instructions.MULHS.q_rn_s_rn_d", "mulhs.q", "1100011011ssssdddd", 0, "", 0, 1, 0, 65535, 2,
+def BRForm_scalar_base_MULHS_q_rn_s_rn_d : BedrockScalarEncodingForm<
+  "base.MULHS.q_rn_s_rn_d", "mulhs.q", "1100011011ssssdddd", 0, "", 0, 1, 0, 65535, 2,
   2, 115, 4, 0, 0, 0, 65535, 0, 0, 0, 2, 100, 4, 0, 0, 0, 65535, 0,
   0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 255, 255>;
-def BRForm_scalar_base_instructions_MULHSU_q_rn_s_rn_d : BedrockScalarEncodingForm<
-  "base.instructions.MULHSU.q_rn_s_rn_d", "mulhsu.q", "1100011100ssssdddd", 0, "", 0, 1, 0, 65535, 2,
+def BRForm_scalar_base_MULHSU_q_rn_s_rn_d : BedrockScalarEncodingForm<
+  "base.MULHSU.q_rn_s_rn_d", "mulhsu.q", "1100011100ssssdddd", 0, "", 0, 1, 0, 65535, 2,
   2, 115, 4, 0, 0, 0, 65535, 0, 0, 0, 2, 100, 4, 0, 0, 0, 65535, 0,
   0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 255, 255>;
-def BRForm_scalar_base_instructions_MULHU_q_rn_s_rn_d : BedrockScalarEncodingForm<
-  "base.instructions.MULHU.q_rn_s_rn_d", "mulhu.q", "1100011101ssssdddd", 0, "", 0, 1, 0, 65535, 2,
+def BRForm_scalar_base_MULHU_q_rn_s_rn_d : BedrockScalarEncodingForm<
+  "base.MULHU.q_rn_s_rn_d", "mulhu.q", "1100011101ssssdddd", 0, "", 0, 1, 0, 65535, 2,
   2, 115, 4, 0, 0, 0, 65535, 0, 0, 0, 2, 100, 4, 0, 0, 0, 65535, 0,
   0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 255, 255>;
-def BRForm_scalar_base_instructions_NEG_l_q_z_rn_r : BedrockScalarEncodingForm<
-  "base.instructions.NEG.l_q_z_rn_r", "neg", "10100z0010rrrr", 0, "lq", 122, 3, 0, 65535, 1,
+def BRForm_scalar_base_NEG_l_q_z_rn_r : BedrockScalarEncodingForm<
+  "base.NEG.l_q_z_rn_r", "neg", "10100z0010rrrr", 0, "lq", 122, 3, 0, 65535, 1,
   2, 114, 4, 0, 0, 0, 65535, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0,
   0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 255, 255>;
-def BRForm_scalar_base_instructions_NEG_b_w_l_q_z_ea_e : BedrockScalarEncodingForm<
-  "base.instructions.NEG.b_w_l_q_z_ea_e", "neg", "11100zz1011eeeeeee", 0, "bwlq", 122, 15, 0, 65535, 1,
+def BRForm_scalar_base_NEG_b_w_l_q_z_ea_e : BedrockScalarEncodingForm<
+  "base.NEG.b_w_l_q_z_ea_e", "neg", "11100zz1011eeeeeee", 0, "bwlq", 122, 15, 0, 65535, 1,
   6, 101, 7, 0, 0, 0, 18446744073709551615, 18446744073709551615, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0,
   0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 255, 255>;
-def BRForm_scalar_base_instructions_NOP_plain : BedrockScalarEncodingForm<
-  "base.instructions.NOP.plain", "nop", "0000001", 0, "", 0, 1, 0, 65535, 0,
+def BRForm_scalar_base_NOP_plain : BedrockScalarEncodingForm<
+  "base.NOP.plain", "nop", "0000001", 0, "", 0, 1, 0, 65535, 0,
   0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0,
   0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 255, 255>;
-def BRForm_scalar_base_instructions_NOT_l_q_z_rn_r : BedrockScalarEncodingForm<
-  "base.instructions.NOT.l_q_z_rn_r", "not", "10100z0101rrrr", 0, "lq", 122, 3, 0, 65535, 1,
+def BRForm_scalar_base_NOT_l_q_z_rn_r : BedrockScalarEncodingForm<
+  "base.NOT.l_q_z_rn_r", "not", "10100z0101rrrr", 0, "lq", 122, 3, 0, 65535, 1,
   2, 114, 4, 0, 0, 0, 65535, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0,
   0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 255, 255>;
-def BRForm_scalar_base_instructions_NOT_b_w_l_q_z_ea_e : BedrockScalarEncodingForm<
-  "base.instructions.NOT.b_w_l_q_z_ea_e", "not", "11100zz1100eeeeeee", 0, "bwlq", 122, 15, 0, 65535, 1,
+def BRForm_scalar_base_NOT_b_w_l_q_z_ea_e : BedrockScalarEncodingForm<
+  "base.NOT.b_w_l_q_z_ea_e", "not", "11100zz1100eeeeeee", 0, "bwlq", 122, 15, 0, 65535, 1,
   6, 101, 7, 0, 0, 0, 18446744073709551615, 18446744073709551615, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0,
   0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 255, 255>;
-def BRForm_scalar_base_instructions_OR_l_q_z_rn_s_rn_d : BedrockScalarEncodingForm<
-  "base.instructions.OR.l_q_z_rn_s_rn_d", "or", "00101zssssdddd", 0, "lq", 122, 3, 0, 65535, 2,
+def BRForm_scalar_base_OR_l_q_z_rn_s_rn_d : BedrockScalarEncodingForm<
+  "base.OR.l_q_z_rn_s_rn_d", "or", "00101zssssdddd", 0, "lq", 122, 3, 0, 65535, 2,
   2, 115, 4, 0, 0, 0, 65535, 0, 0, 0, 2, 100, 4, 0, 0, 0, 65535, 0,
   0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 255, 255>;
-def BRForm_scalar_base_instructions_OR_b_w_l_q_z_rn_s_ea_e : BedrockScalarEncodingForm<
-  "base.instructions.OR.b_w_l_q_z_rn_s_ea_e", "or", "00101zzsssseeeeeee", 0, "bwlq", 122, 15, 0, 65535, 2,
+def BRForm_scalar_base_OR_b_w_l_q_z_rn_s_ea_e : BedrockScalarEncodingForm<
+  "base.OR.b_w_l_q_z_rn_s_ea_e", "or", "00101zzsssseeeeeee", 0, "bwlq", 122, 15, 0, 65535, 2,
   2, 115, 4, 0, 0, 0, 65535, 0, 0, 0, 6, 101, 7, 0, 0, 0, 18446744073709551615, 18446744073709551615,
   0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 255, 255>;
-def BRForm_scalar_base_instructions_OR_b_w_l_q_z_ea_e_rn_d : BedrockScalarEncodingForm<
-  "base.instructions.OR.b_w_l_q_z_ea_e_rn_d", "or", "01101zzddddeeeeeee", 0, "bwlq", 122, 15, 0, 65535, 2,
+def BRForm_scalar_base_OR_b_w_l_q_z_ea_e_rn_d : BedrockScalarEncodingForm<
+  "base.OR.b_w_l_q_z_ea_e_rn_d", "or", "01101zzddddeeeeeee", 0, "bwlq", 122, 15, 0, 65535, 2,
   6, 101, 7, 0, 1, 0, 18446744073709551615, 18446744073709551615, 0, 0, 2, 100, 4, 0, 0, 0, 65535, 0,
   0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 255, 255>;
-def BRForm_scalar_base_instructions_OR_b_w_l_q_z_imm8s_ea_e : BedrockScalarEncodingForm<
-  "base.instructions.OR.b_w_l_q_z_imm8s_ea_e", "or", "11100zz1101eeeeeee", 1, "bwlq", 122, 15, 0, 65535, 2,
+def BRForm_scalar_base_OR_b_w_l_q_z_imm8s_ea_e : BedrockScalarEncodingForm<
+  "base.OR.b_w_l_q_z_imm8s_ea_e", "or", "11100zz1101eeeeeee", 1, "bwlq", 122, 15, 0, 65535, 2,
   9, 0, 8, 1, 0, 0, 1, 0, 0, 0, 6, 101, 7, 0, 0, 0, 18446744073709551615, 18446744073709551615,
   0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 255, 255>;
-def BRForm_scalar_base_instructions_OR_w_l_q_z_imm16s_ea_e : BedrockScalarEncodingForm<
-  "base.instructions.OR.w_l_q_z_imm16s_ea_e", "or", "11100zz1110eeeeeee", 2, "?wlq", 122, 14, 0, 65535, 2,
+def BRForm_scalar_base_OR_w_l_q_z_imm16s_ea_e : BedrockScalarEncodingForm<
+  "base.OR.w_l_q_z_imm16s_ea_e", "or", "11100zz1110eeeeeee", 2, "?wlq", 122, 14, 0, 65535, 2,
   9, 0, 16, 1, 0, 0, 1, 0, 0, 0, 6, 101, 7, 0, 0, 0, 18446744073709551615, 18446744073709551615,
   0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 255, 255>;
-def BRForm_scalar_base_instructions_OR_l_q_z_imm32s_ea_e : BedrockScalarEncodingForm<
-  "base.instructions.OR.l_q_z_imm32s_ea_e", "or", "111001z1111eeeeeee", 4, "lq", 122, 3, 0, 65535, 2,
+def BRForm_scalar_base_OR_l_q_z_imm32s_ea_e : BedrockScalarEncodingForm<
+  "base.OR.l_q_z_imm32s_ea_e", "or", "111001z1111eeeeeee", 4, "lq", 122, 3, 0, 65535, 2,
   9, 0, 32, 1, 0, 0, 1, 0, 0, 0, 6, 101, 7, 0, 0, 0, 18446744073709551615, 18446744073709551615,
   0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 255, 255>;
-def BRForm_scalar_base_instructions_OR_q_imm64_ea_e : BedrockScalarEncodingForm<
-  "base.instructions.OR.q_imm64_ea_e", "or.q", "11101000111eeeeeee", 8, "", 0, 1, 0, 65535, 2,
+def BRForm_scalar_base_OR_q_imm64_ea_e : BedrockScalarEncodingForm<
+  "base.OR.q_imm64_ea_e", "or.q", "11101000111eeeeeee", 8, "", 0, 1, 0, 65535, 2,
   9, 0, 64, 1, 0, 0, 1, 0, 0, 0, 6, 101, 7, 0, 0, 0, 18446744073709551615, 18446744073709551615,
   0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 255, 255>;
-def BRForm_scalar_base_instructions_PARITY_b_w_l_q_z_ea_e_rn_d : BedrockScalarEncodingForm<
-  "base.instructions.PARITY.b_w_l_q_z_ea_e_rn_d", "parity", "1111001011zz110ddddeeeeeee", 0, "bwlq", 122, 15, 0, 65535, 2,
+def BRForm_scalar_base_PARITY_b_w_l_q_z_ea_e_rn_d : BedrockScalarEncodingForm<
+  "base.PARITY.b_w_l_q_z_ea_e_rn_d", "parity", "1111001011zz110ddddeeeeeee", 0, "bwlq", 122, 15, 0, 65535, 2,
   6, 101, 7, 0, 1, 0, 18446744073709551615, 18446744073709551615, 0, 0, 2, 100, 4, 0, 0, 0, 65535, 0,
   0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 255, 255>;
-def BRForm_scalar_base_instructions_PARITY_b_w_l_q_z_rn_s_rn_d : BedrockScalarEncodingForm<
-  "base.instructions.PARITY.b_w_l_q_z_rn_s_rn_d", "parity", "10011zz110ssssdddd", 0, "bwlq", 122, 15, 0, 65535, 2,
+def BRForm_scalar_base_PARITY_b_w_l_q_z_rn_s_rn_d : BedrockScalarEncodingForm<
+  "base.PARITY.b_w_l_q_z_rn_s_rn_d", "parity", "10011zz110ssssdddd", 0, "bwlq", 122, 15, 0, 65535, 2,
   2, 115, 4, 0, 0, 0, 65535, 0, 0, 0, 2, 100, 4, 0, 0, 0, 65535, 0,
   0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 255, 255>;
-def BRForm_scalar_base_instructions_POP_rn_r : BedrockScalarEncodingForm<
-  "base.instructions.POP.rn_r", "pop", "100rrrr", 0, "", 0, 1, 0, 65535, 1,
+def BRForm_scalar_base_POP_rn_r : BedrockScalarEncodingForm<
+  "base.POP.rn_r", "pop", "100rrrr", 0, "", 0, 1, 0, 65535, 1,
   2, 114, 4, 0, 0, 0, 65535, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0,
   0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 255, 255>;
-def BRForm_scalar_base_instructions_POP_sreg_s : BedrockScalarEncodingForm<
-  "base.instructions.POP.sreg_s", "pop", "10111000010sss", 0, "", 0, 1, 0, 65535, 1,
+def BRForm_scalar_base_POP_sreg_s : BedrockScalarEncodingForm<
+  "base.POP.sreg_s", "pop", "10111000010sss", 0, "", 0, 1, 0, 65535, 1,
   11, 115, 3, 0, 0, 0, 255, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0,
   0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 255, 255>;
-def BRForm_scalar_base_instructions_POPCNT_b_w_l_q_z_ea_e_rn_d : BedrockScalarEncodingForm<
-  "base.instructions.POPCNT.b_w_l_q_z_ea_e_rn_d", "popcnt", "1111001011zz111ddddeeeeeee", 0, "bwlq", 122, 15, 0, 65535, 2,
+def BRForm_scalar_base_POPCNT_b_w_l_q_z_ea_e_rn_d : BedrockScalarEncodingForm<
+  "base.POPCNT.b_w_l_q_z_ea_e_rn_d", "popcnt", "1111001011zz111ddddeeeeeee", 0, "bwlq", 122, 15, 0, 65535, 2,
   6, 101, 7, 0, 1, 0, 18446744073709551615, 18446744073709551615, 0, 0, 2, 100, 4, 0, 0, 0, 65535, 0,
   0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 255, 255>;
-def BRForm_scalar_base_instructions_POPCNT_b_w_l_q_z_rn_s_rn_d : BedrockScalarEncodingForm<
-  "base.instructions.POPCNT.b_w_l_q_z_rn_s_rn_d", "popcnt", "10011zz111ssssdddd", 0, "bwlq", 122, 15, 0, 65535, 2,
+def BRForm_scalar_base_POPCNT_b_w_l_q_z_rn_s_rn_d : BedrockScalarEncodingForm<
+  "base.POPCNT.b_w_l_q_z_rn_s_rn_d", "popcnt", "10011zz111ssssdddd", 0, "bwlq", 122, 15, 0, 65535, 2,
   2, 115, 4, 0, 0, 0, 65535, 0, 0, 0, 2, 100, 4, 0, 0, 0, 65535, 0,
   0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 255, 255>;
-def BRForm_scalar_base_instructions_POPP_pairn_i : BedrockScalarEncodingForm<
-  "base.instructions.POPP.pairn_i", "popp", "0011iii", 0, "", 0, 1, 0, 65535, 1,
+def BRForm_scalar_base_POPP_pairn_i : BedrockScalarEncodingForm<
+  "base.POPP.pairn_i", "popp", "0011iii", 0, "", 0, 1, 0, 65535, 1,
   8, 105, 3, 0, 0, 0, 255, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0,
   0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 255, 255>;
-def BRForm_scalar_base_instructions_PREFETCH_ea_e : BedrockScalarEncodingForm<
-  "base.instructions.PREFETCH.ea_e", "prefetch", "11101001000eeeeeee", 0, "", 0, 1, 0, 65535, 1,
+def BRForm_scalar_base_PREFETCH_ea_e : BedrockScalarEncodingForm<
+  "base.PREFETCH.ea_e", "prefetch", "11101001000eeeeeee", 0, "", 0, 1, 0, 65535, 1,
   6, 101, 7, 0, 1, 0, 18446744073709551615, 18446744073709551615, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0,
   0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 255, 255>;
-def BRForm_scalar_base_instructions_PREFETCHNT_ea_e : BedrockScalarEncodingForm<
-  "base.instructions.PREFETCHNT.ea_e", "prefetchnt", "11101001001eeeeeee", 0, "", 0, 1, 0, 65535, 1,
+def BRForm_scalar_base_PREFETCHNT_ea_e : BedrockScalarEncodingForm<
+  "base.PREFETCHNT.ea_e", "prefetchnt", "11101001001eeeeeee", 0, "", 0, 1, 0, 65535, 1,
   6, 101, 7, 0, 1, 0, 18446744073709551615, 18446744073709551615, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0,
   0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 255, 255>;
-def BRForm_scalar_base_instructions_PTQUERY_pt_level_i_ea_e_rn_d : BedrockScalarEncodingForm<
-  "base.instructions.PTQUERY.pt_level_i_ea_e_rn_d", "ptquery", "111101101100iiiddddeeeeeee", 0, "", 0, 1, 0, 65535, 3,
+def BRForm_scalar_base_PTQUERY_pt_level_i_ea_e_rn_d : BedrockScalarEncodingForm<
+  "base.PTQUERY.pt_level_i_ea_e_rn_d", "ptquery", "111101101100iiiddddeeeeeee", 0, "", 0, 1, 0, 65535, 3,
   8, 105, 3, 0, 0, 0, 255, 0, 0, 0, 6, 101, 7, 0, 1, 0, 18446744073709551615, 18446744073709551615,
   0, 0, 2, 100, 4, 0, 0, 0, 65535, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 255, 255>;
-def BRForm_scalar_base_instructions_PTQUERY_pt_level_i_rn_s_rn_d : BedrockScalarEncodingForm<
-  "base.instructions.PTQUERY.pt_level_i_rn_s_rn_d", "ptquery", "111101100111000iiissssdddd", 0, "", 0, 1, 0, 65535, 3,
+def BRForm_scalar_base_PTQUERY_pt_level_i_rn_s_rn_d : BedrockScalarEncodingForm<
+  "base.PTQUERY.pt_level_i_rn_s_rn_d", "ptquery", "111101100111000iiissssdddd", 0, "", 0, 1, 0, 65535, 3,
   8, 105, 3, 0, 0, 0, 255, 0, 0, 0, 2, 115, 4, 0, 0, 0, 65535, 0,
   0, 0, 2, 100, 4, 0, 0, 0, 65535, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 255, 255>;
-def BRForm_scalar_base_instructions_PUSH_cs : BedrockScalarEncodingForm<
-  "base.instructions.PUSH.cs", "push", "0001101", 0, "", 0, 1, 0, 65535, 1,
+def BRForm_scalar_base_PUSH_cs : BedrockScalarEncodingForm<
+  "base.PUSH.cs", "push", "0001101", 0, "", 0, 1, 0, 65535, 1,
   13, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0,
   0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 255, 255>;
-def BRForm_scalar_base_instructions_PUSH_rn_r : BedrockScalarEncodingForm<
-  "base.instructions.PUSH.rn_r", "push", "011rrrr", 0, "", 0, 1, 0, 65535, 1,
+def BRForm_scalar_base_PUSH_rn_r : BedrockScalarEncodingForm<
+  "base.PUSH.rn_r", "push", "011rrrr", 0, "", 0, 1, 0, 65535, 1,
   2, 114, 4, 0, 0, 0, 65535, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0,
   0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 255, 255>;
-def BRForm_scalar_base_instructions_PUSH_sreg_s : BedrockScalarEncodingForm<
-  "base.instructions.PUSH.sreg_s", "push", "10111000001sss", 0, "", 0, 1, 0, 65535, 1,
+def BRForm_scalar_base_PUSH_sreg_s : BedrockScalarEncodingForm<
+  "base.PUSH.sreg_s", "push", "10111000001sss", 0, "", 0, 1, 0, 65535, 1,
   11, 115, 3, 0, 0, 0, 255, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0,
   0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 255, 255>;
-def BRForm_scalar_base_instructions_PUSHP_pairn_i : BedrockScalarEncodingForm<
-  "base.instructions.PUSHP.pairn_i", "pushp", "0010iii", 0, "", 0, 1, 0, 65535, 1,
+def BRForm_scalar_base_PUSHP_pairn_i : BedrockScalarEncodingForm<
+  "base.PUSHP.pairn_i", "pushp", "0010iii", 0, "", 0, 1, 0, 65535, 1,
   8, 105, 3, 0, 0, 0, 255, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0,
   0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 255, 255>;
-def BRForm_scalar_base_instructions_RDCR_imm16_rn_d : BedrockScalarEncodingForm<
-  "base.instructions.RDCR.imm16_rn_d", "rdcr", "11101101000001dddd", 2, "", 0, 1, 0, 65535, 2,
+def BRForm_scalar_base_RDCR_imm16_rn_d : BedrockScalarEncodingForm<
+  "base.RDCR.imm16_rn_d", "rdcr", "11101101000001dddd", 2, "", 0, 1, 0, 65535, 2,
   17, 0, 16, 0, 0, 1, 1, 0, 0, 0, 2, 100, 4, 0, 0, 0, 65535, 0,
   0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 255, 255>;
-def BRForm_scalar_base_instructions_RDFLAGS_rn_d : BedrockScalarEncodingForm<
-  "base.instructions.RDFLAGS.rn_d", "rdflags", "11101101000011dddd", 0, "", 0, 1, 0, 65535, 1,
+def BRForm_scalar_base_RDFLAGS_rn_d : BedrockScalarEncodingForm<
+  "base.RDFLAGS.rn_d", "rdflags", "11101101000011dddd", 0, "", 0, 1, 0, 65535, 1,
   2, 100, 4, 0, 0, 0, 65535, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0,
   0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 255, 255>;
-def BRForm_scalar_base_instructions_RDPMC_imm16_rn_d : BedrockScalarEncodingForm<
-  "base.instructions.RDPMC.imm16_rn_d", "rdpmc", "11101101000101dddd", 2, "", 0, 1, 0, 65535, 2,
+def BRForm_scalar_base_RDPMC_imm16_rn_d : BedrockScalarEncodingForm<
+  "base.RDPMC.imm16_rn_d", "rdpmc", "11101101000101dddd", 2, "", 0, 1, 0, 65535, 2,
   17, 0, 16, 0, 0, 2, 1, 0, 0, 0, 2, 100, 4, 0, 0, 0, 65535, 0,
   0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 255, 255>;
-def BRForm_scalar_base_instructions_RDSEG_sreg_s_rn_d : BedrockScalarEncodingForm<
-  "base.instructions.RDSEG.sreg_s_rn_d", "rdseg", "11101111111sssdddd", 0, "", 0, 1, 0, 65535, 2,
+def BRForm_scalar_base_RDSEG_sreg_s_rn_d : BedrockScalarEncodingForm<
+  "base.RDSEG.sreg_s_rn_d", "rdseg", "11101111111sssdddd", 0, "", 0, 1, 0, 65535, 2,
   11, 115, 3, 0, 0, 0, 255, 0, 0, 0, 2, 100, 4, 0, 0, 0, 65535, 0,
   0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 255, 255>;
-def BRForm_scalar_base_instructions_RDSEG_cs_rn_d : BedrockScalarEncodingForm<
-  "base.instructions.RDSEG.cs_rn_d", "rdseg", "11101101010000dddd", 0, "", 0, 1, 0, 65535, 2,
+def BRForm_scalar_base_RDSEG_cs_rn_d : BedrockScalarEncodingForm<
+  "base.RDSEG.cs_rn_d", "rdseg", "11101101010000dddd", 0, "", 0, 1, 0, 65535, 2,
   13, 0, 0, 0, 0, 0, 1, 0, 0, 0, 2, 100, 4, 0, 0, 0, 65535, 0,
   0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 255, 255>;
-def BRForm_scalar_base_instructions_RDSTATUS_rn_d : BedrockScalarEncodingForm<
-  "base.instructions.RDSTATUS.rn_d", "rdstatus", "11101101000111dddd", 0, "", 0, 1, 0, 65535, 1,
+def BRForm_scalar_base_RDSTATUS_rn_d : BedrockScalarEncodingForm<
+  "base.RDSTATUS.rn_d", "rdstatus", "11101101000111dddd", 0, "", 0, 1, 0, 65535, 1,
   2, 100, 4, 0, 0, 0, 65535, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0,
   0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 255, 255>;
-def BRForm_scalar_base_instructions_RESET_plain : BedrockScalarEncodingForm<
-  "base.instructions.RESET.plain", "reset", "10111000000001", 0, "", 0, 1, 0, 65535, 0,
+def BRForm_scalar_base_RESET_plain : BedrockScalarEncodingForm<
+  "base.RESET.plain", "reset", "10111000000001", 0, "", 0, 1, 0, 65535, 0,
   0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0,
   0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 255, 255>;
-def BRForm_scalar_base_instructions_RESTORE_ea_e : BedrockScalarEncodingForm<
-  "base.instructions.RESTORE.ea_e", "restore", "11101001010eeeeeee", 0, "", 0, 1, 0, 65535, 1,
+def BRForm_scalar_base_RESTORE_ea_e : BedrockScalarEncodingForm<
+  "base.RESTORE.ea_e", "restore", "11101001010eeeeeee", 0, "", 0, 1, 0, 65535, 1,
   6, 101, 7, 0, 1, 0, 18446744073709551615, 18446744073709551615, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0,
   0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 255, 255>;
-def BRForm_scalar_base_instructions_RESTORE_rn_r : BedrockScalarEncodingForm<
-  "base.instructions.RESTORE.rn_r", "restore", "11101101001010rrrr", 0, "", 0, 1, 0, 65535, 1,
+def BRForm_scalar_base_RESTORE_rn_r : BedrockScalarEncodingForm<
+  "base.RESTORE.rn_r", "restore", "11101101001010rrrr", 0, "", 0, 1, 0, 65535, 1,
   2, 114, 4, 0, 0, 0, 65535, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0,
   0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 255, 255>;
-def BRForm_scalar_base_instructions_RET_plain : BedrockScalarEncodingForm<
-  "base.instructions.RET.plain", "ret", "0000010", 0, "", 0, 1, 0, 65535, 0,
+def BRForm_scalar_base_RET_plain : BedrockScalarEncodingForm<
+  "base.RET.plain", "ret", "0000010", 0, "", 0, 1, 0, 65535, 0,
   0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0,
   0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 255, 255>;
-def BRForm_scalar_base_instructions_REVBYTE_w_rn_r : BedrockScalarEncodingForm<
-  "base.instructions.REVBYTE.w_rn_r", "revbyte.w", "1011000001rrrr", 0, "", 0, 1, 0, 65535, 1,
+def BRForm_scalar_base_REVBYTE_w_rn_r : BedrockScalarEncodingForm<
+  "base.REVBYTE.w_rn_r", "revbyte.w", "1011000001rrrr", 0, "", 0, 1, 0, 65535, 1,
   2, 114, 4, 0, 0, 0, 65535, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0,
   0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 255, 255>;
-def BRForm_scalar_base_instructions_REVBYTE_l_rn_r : BedrockScalarEncodingForm<
-  "base.instructions.REVBYTE.l_rn_r", "revbyte.l", "1011000010rrrr", 0, "", 0, 1, 0, 65535, 1,
+def BRForm_scalar_base_REVBYTE_l_rn_r : BedrockScalarEncodingForm<
+  "base.REVBYTE.l_rn_r", "revbyte.l", "1011000010rrrr", 0, "", 0, 1, 0, 65535, 1,
   2, 114, 4, 0, 0, 0, 65535, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0,
   0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 255, 255>;
-def BRForm_scalar_base_instructions_REVBYTE_q_rn_r : BedrockScalarEncodingForm<
-  "base.instructions.REVBYTE.q_rn_r", "revbyte.q", "1011000011rrrr", 0, "", 0, 1, 0, 65535, 1,
+def BRForm_scalar_base_REVBYTE_q_rn_r : BedrockScalarEncodingForm<
+  "base.REVBYTE.q_rn_r", "revbyte.q", "1011000011rrrr", 0, "", 0, 1, 0, 65535, 1,
   2, 114, 4, 0, 0, 0, 65535, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0,
   0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 255, 255>;
-def BRForm_scalar_base_instructions_REVBYTE_w_ea_e : BedrockScalarEncodingForm<
-  "base.instructions.REVBYTE.w_ea_e", "revbyte.w", "11101001011eeeeeee", 0, "", 0, 1, 0, 65535, 1,
+def BRForm_scalar_base_REVBYTE_w_ea_e : BedrockScalarEncodingForm<
+  "base.REVBYTE.w_ea_e", "revbyte.w", "11101001011eeeeeee", 0, "", 0, 1, 0, 65535, 1,
   6, 101, 7, 0, 0, 0, 18446744073709551615, 18446744073709551615, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0,
   0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 255, 255>;
-def BRForm_scalar_base_instructions_REVBYTE_l_ea_e : BedrockScalarEncodingForm<
-  "base.instructions.REVBYTE.l_ea_e", "revbyte.l", "11101001100eeeeeee", 0, "", 0, 1, 0, 65535, 1,
+def BRForm_scalar_base_REVBYTE_l_ea_e : BedrockScalarEncodingForm<
+  "base.REVBYTE.l_ea_e", "revbyte.l", "11101001100eeeeeee", 0, "", 0, 1, 0, 65535, 1,
   6, 101, 7, 0, 0, 0, 18446744073709551615, 18446744073709551615, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0,
   0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 255, 255>;
-def BRForm_scalar_base_instructions_REVBYTE_q_ea_e : BedrockScalarEncodingForm<
-  "base.instructions.REVBYTE.q_ea_e", "revbyte.q", "11101001101eeeeeee", 0, "", 0, 1, 0, 65535, 1,
+def BRForm_scalar_base_REVBYTE_q_ea_e : BedrockScalarEncodingForm<
+  "base.REVBYTE.q_ea_e", "revbyte.q", "11101001101eeeeeee", 0, "", 0, 1, 0, 65535, 1,
   6, 101, 7, 0, 0, 0, 18446744073709551615, 18446744073709551615, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0,
   0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 255, 255>;
-def BRForm_scalar_base_instructions_RFENCE_plain : BedrockScalarEncodingForm<
-  "base.instructions.RFENCE.plain", "rfence", "0001010", 0, "", 0, 1, 0, 65535, 0,
+def BRForm_scalar_base_RFENCE_plain : BedrockScalarEncodingForm<
+  "base.RFENCE.plain", "rfence", "0001010", 0, "", 0, 1, 0, 65535, 0,
   0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0,
   0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 255, 255>;
-def BRForm_scalar_base_instructions_ROL_l_q_z_rn_s_rn_d : BedrockScalarEncodingForm<
-  "base.instructions.ROL.l_q_z_rn_s_rn_d", "rol", "01100zssssdddd", 0, "lq", 122, 3, 0, 65535, 2,
+def BRForm_scalar_base_ROL_l_q_z_rn_s_rn_d : BedrockScalarEncodingForm<
+  "base.ROL.l_q_z_rn_s_rn_d", "rol", "01100zssssdddd", 0, "lq", 122, 3, 0, 65535, 2,
   2, 115, 4, 0, 0, 0, 65535, 0, 0, 0, 2, 100, 4, 0, 0, 0, 65535, 0,
   0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 255, 255>;
-def BRForm_scalar_base_instructions_ROL_b_w_l_q_z_rn_s_ea_e : BedrockScalarEncodingForm<
-  "base.instructions.ROL.b_w_l_q_z_rn_s_ea_e", "rol", "1111001110zz101sssseeeeeee", 0, "bwlq", 122, 15, 0, 65535, 2,
+def BRForm_scalar_base_ROL_b_w_l_q_z_rn_s_ea_e : BedrockScalarEncodingForm<
+  "base.ROL.b_w_l_q_z_rn_s_ea_e", "rol", "1111001110zz101sssseeeeeee", 0, "bwlq", 122, 15, 0, 65535, 2,
   2, 115, 4, 0, 0, 0, 65535, 0, 0, 0, 6, 101, 7, 0, 0, 0, 18446744073709551615, 18446744073709551615,
   0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 255, 255>;
-def BRForm_scalar_base_instructions_ROL_b_w_l_q_z_imm6_i_ea_e : BedrockScalarEncodingForm<
-  "base.instructions.ROL.b_w_l_q_z_imm6_i_ea_e", "rol", "1111010100zz0iiiiiieeeeeee", 0, "bwlq", 122, 15, 0, 65535, 2,
+def BRForm_scalar_base_ROL_b_w_l_q_z_imm6_i_ea_e : BedrockScalarEncodingForm<
+  "base.ROL.b_w_l_q_z_imm6_i_ea_e", "rol", "1111010100zz0iiiiiieeeeeee", 0, "bwlq", 122, 15, 0, 65535, 2,
   8, 105, 6, 0, 0, 0, 18446744073709551615, 0, 0, 0, 6, 101, 7, 0, 0, 0, 18446744073709551615, 18446744073709551615,
   0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 255, 255>;
-def BRForm_scalar_base_instructions_ROR_l_q_z_rn_s_rn_d : BedrockScalarEncodingForm<
-  "base.instructions.ROR.l_q_z_rn_s_rn_d", "ror", "01011zssssdddd", 0, "lq", 122, 3, 0, 65535, 2,
+def BRForm_scalar_base_ROR_l_q_z_rn_s_rn_d : BedrockScalarEncodingForm<
+  "base.ROR.l_q_z_rn_s_rn_d", "ror", "01011zssssdddd", 0, "lq", 122, 3, 0, 65535, 2,
   2, 115, 4, 0, 0, 0, 65535, 0, 0, 0, 2, 100, 4, 0, 0, 0, 65535, 0,
   0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 255, 255>;
-def BRForm_scalar_base_instructions_ROR_b_w_l_q_z_rn_s_ea_e : BedrockScalarEncodingForm<
-  "base.instructions.ROR.b_w_l_q_z_rn_s_ea_e", "ror", "1111001110zz110sssseeeeeee", 0, "bwlq", 122, 15, 0, 65535, 2,
+def BRForm_scalar_base_ROR_b_w_l_q_z_rn_s_ea_e : BedrockScalarEncodingForm<
+  "base.ROR.b_w_l_q_z_rn_s_ea_e", "ror", "1111001110zz110sssseeeeeee", 0, "bwlq", 122, 15, 0, 65535, 2,
   2, 115, 4, 0, 0, 0, 65535, 0, 0, 0, 6, 101, 7, 0, 0, 0, 18446744073709551615, 18446744073709551615,
   0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 255, 255>;
-def BRForm_scalar_base_instructions_ROR_b_w_l_q_z_imm6_i_ea_e : BedrockScalarEncodingForm<
-  "base.instructions.ROR.b_w_l_q_z_imm6_i_ea_e", "ror", "1111010100zz1iiiiiieeeeeee", 0, "bwlq", 122, 15, 0, 65535, 2,
+def BRForm_scalar_base_ROR_b_w_l_q_z_imm6_i_ea_e : BedrockScalarEncodingForm<
+  "base.ROR.b_w_l_q_z_imm6_i_ea_e", "ror", "1111010100zz1iiiiiieeeeeee", 0, "bwlq", 122, 15, 0, 65535, 2,
   8, 105, 6, 0, 0, 0, 18446744073709551615, 0, 0, 0, 6, 101, 7, 0, 0, 0, 18446744073709551615, 18446744073709551615,
   0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 255, 255>;
-def BRForm_scalar_base_instructions_SAR_l_q_z_rn_s_rn_d : BedrockScalarEncodingForm<
-  "base.instructions.SAR.l_q_z_rn_s_rn_d", "sar", "01101zssssdddd", 0, "lq", 122, 3, 0, 65535, 2,
+def BRForm_scalar_base_SAR_l_q_z_rn_s_rn_d : BedrockScalarEncodingForm<
+  "base.SAR.l_q_z_rn_s_rn_d", "sar", "01101zssssdddd", 0, "lq", 122, 3, 0, 65535, 2,
   2, 115, 4, 0, 0, 0, 65535, 0, 0, 0, 2, 100, 4, 0, 0, 0, 65535, 0,
   0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 255, 255>;
-def BRForm_scalar_base_instructions_SAR_b_w_l_q_z_rn_s_ea_e : BedrockScalarEncodingForm<
-  "base.instructions.SAR.b_w_l_q_z_rn_s_ea_e", "sar", "1111001110zz111sssseeeeeee", 0, "bwlq", 122, 15, 0, 65535, 2,
+def BRForm_scalar_base_SAR_b_w_l_q_z_rn_s_ea_e : BedrockScalarEncodingForm<
+  "base.SAR.b_w_l_q_z_rn_s_ea_e", "sar", "1111001110zz111sssseeeeeee", 0, "bwlq", 122, 15, 0, 65535, 2,
   2, 115, 4, 0, 0, 0, 65535, 0, 0, 0, 6, 101, 7, 0, 0, 0, 18446744073709551615, 18446744073709551615,
   0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 255, 255>;
-def BRForm_scalar_base_instructions_SAR_b_w_l_q_z_imm6_i_ea_e : BedrockScalarEncodingForm<
-  "base.instructions.SAR.b_w_l_q_z_imm6_i_ea_e", "sar", "1111010101zz0iiiiiieeeeeee", 0, "bwlq", 122, 15, 0, 65535, 2,
+def BRForm_scalar_base_SAR_b_w_l_q_z_imm6_i_ea_e : BedrockScalarEncodingForm<
+  "base.SAR.b_w_l_q_z_imm6_i_ea_e", "sar", "1111010101zz0iiiiiieeeeeee", 0, "bwlq", 122, 15, 0, 65535, 2,
   8, 105, 6, 0, 0, 0, 18446744073709551615, 0, 0, 0, 6, 101, 7, 0, 0, 0, 18446744073709551615, 18446744073709551615,
   0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 255, 255>;
-def BRForm_scalar_base_instructions_SAVE_ea_e : BedrockScalarEncodingForm<
-  "base.instructions.SAVE.ea_e", "save", "11101001110eeeeeee", 0, "", 0, 1, 0, 65535, 1,
+def BRForm_scalar_base_SAVE_ea_e : BedrockScalarEncodingForm<
+  "base.SAVE.ea_e", "save", "11101001110eeeeeee", 0, "", 0, 1, 0, 65535, 1,
   6, 101, 7, 0, 1, 0, 18446744073709551615, 18446744073709551615, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0,
   0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 255, 255>;
-def BRForm_scalar_base_instructions_SAVE_rn_r : BedrockScalarEncodingForm<
-  "base.instructions.SAVE.rn_r", "save", "11101101001110rrrr", 0, "", 0, 1, 0, 65535, 1,
+def BRForm_scalar_base_SAVE_rn_r : BedrockScalarEncodingForm<
+  "base.SAVE.rn_r", "save", "11101101001110rrrr", 0, "", 0, 1, 0, 65535, 1,
   2, 114, 4, 0, 0, 0, 65535, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0,
   0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 255, 255>;
-def BRForm_scalar_base_instructions_SBB_b_w_l_q_z_rn_s_rn_d : BedrockScalarEncodingForm<
-  "base.instructions.SBB.b_w_l_q_z_rn_s_rn_d", "sbb", "10000zz101ssssdddd", 0, "bwlq", 122, 15, 0, 65535, 2,
+def BRForm_scalar_base_SBB_b_w_l_q_z_rn_s_rn_d : BedrockScalarEncodingForm<
+  "base.SBB.b_w_l_q_z_rn_s_rn_d", "sbb", "10000zz101ssssdddd", 0, "bwlq", 122, 15, 0, 65535, 2,
   2, 115, 4, 0, 0, 0, 65535, 0, 0, 0, 2, 100, 4, 0, 0, 0, 65535, 0,
   0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 255, 255>;
-def BRForm_scalar_base_instructions_SBB_b_w_l_q_z_rn_s_ea_e : BedrockScalarEncodingForm<
-  "base.instructions.SBB.b_w_l_q_z_rn_s_ea_e", "sbb", "1111001100zz101sssseeeeeee", 0, "bwlq", 122, 15, 0, 65535, 2,
+def BRForm_scalar_base_SBB_b_w_l_q_z_rn_s_ea_e : BedrockScalarEncodingForm<
+  "base.SBB.b_w_l_q_z_rn_s_ea_e", "sbb", "1111001100zz101sssseeeeeee", 0, "bwlq", 122, 15, 0, 65535, 2,
   2, 115, 4, 0, 0, 0, 65535, 0, 0, 0, 6, 101, 7, 0, 0, 0, 18446744073709551615, 18446744073709551615,
   0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 255, 255>;
-def BRForm_scalar_base_instructions_SBB_b_w_l_q_z_ea_e_rn_d : BedrockScalarEncodingForm<
-  "base.instructions.SBB.b_w_l_q_z_ea_e_rn_d", "sbb", "1111001000zz101ddddeeeeeee", 0, "bwlq", 122, 15, 0, 65535, 2,
+def BRForm_scalar_base_SBB_b_w_l_q_z_ea_e_rn_d : BedrockScalarEncodingForm<
+  "base.SBB.b_w_l_q_z_ea_e_rn_d", "sbb", "1111001000zz101ddddeeeeeee", 0, "bwlq", 122, 15, 0, 65535, 2,
   6, 101, 7, 0, 1, 0, 18446744073709551615, 18446744073709551615, 0, 0, 2, 100, 4, 0, 0, 0, 65535, 0,
   0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 255, 255>;
-def BRForm_scalar_base_instructions_SEGLEA_b_w_l_q_z_ea_e_rn_d : BedrockScalarEncodingForm<
-  "base.instructions.SEGLEA.b_w_l_q_z_ea_e_rn_d", "seglea", "1111001000zz000ddddeeeeeee", 0, "bwlq", 122, 15, 0, 65535, 2,
+def BRForm_scalar_base_SEGLEA_b_w_l_q_z_ea_e_rn_d : BedrockScalarEncodingForm<
+  "base.SEGLEA.b_w_l_q_z_ea_e_rn_d", "seglea", "1111001000zz000ddddeeeeeee", 0, "bwlq", 122, 15, 0, 65535, 2,
   6, 101, 7, 0, 1, 0, 18446744073709551615, 18446744073709551615, 0, 0, 2, 100, 4, 0, 0, 0, 65535, 0,
   0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 255, 255>;
-def BRForm_scalar_base_instructions_SEGLEA_b_w_l_q_z_rn_s_rn_d : BedrockScalarEncodingForm<
-  "base.instructions.SEGLEA.b_w_l_q_z_rn_s_rn_d", "seglea", "11000zz000ssssdddd", 0, "bwlq", 122, 15, 0, 65535, 2,
+def BRForm_scalar_base_SEGLEA_b_w_l_q_z_rn_s_rn_d : BedrockScalarEncodingForm<
+  "base.SEGLEA.b_w_l_q_z_rn_s_rn_d", "seglea", "11000zz000ssssdddd", 0, "bwlq", 122, 15, 0, 65535, 2,
   2, 115, 4, 0, 0, 0, 65535, 0, 0, 0, 2, 100, 4, 0, 0, 0, 65535, 0,
   0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 255, 255>;
-def BRForm_scalar_base_instructions_SET_rn_r : BedrockScalarEncodingForm<
-  "base.instructions.SET.rn_r", "set", "1000000000rrrr", 0, "", 0, 1, 0, 65535, 1,
+def BRForm_scalar_base_SET_rn_r : BedrockScalarEncodingForm<
+  "base.SET.rn_r", "set", "1000000000rrrr", 0, "", 0, 1, 0, 65535, 1,
   2, 114, 4, 0, 0, 0, 65535, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0,
   0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 255, 255>;
-def BRForm_scalar_base_instructions_SETcc_rn_r : BedrockScalarEncodingForm<
-  "base.instructions.SETcc.rn_r", "set", "100000ccccrrrr", 0, "", 0, 1, 99, 65532, 1,
+def BRForm_scalar_base_SETcc_rn_r : BedrockScalarEncodingForm<
+  "base.SETcc.rn_r", "set", "100000ccccrrrr", 0, "", 0, 1, 99, 65532, 1,
   2, 114, 4, 0, 0, 0, 65535, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0,
   0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 255, 255>;
-def BRForm_scalar_base_instructions_SETF_flags_bitmap_m : BedrockScalarEncodingForm<
-  "base.instructions.SETF.flags_bitmap_m", "setf", "11101110010001mmmm", 0, "", 0, 1, 0, 65535, 1,
+def BRForm_scalar_base_SETF_flags_bitmap_m : BedrockScalarEncodingForm<
+  "base.SETF.flags_bitmap_m", "setf", "11101110010001mmmm", 0, "", 0, 1, 0, 65535, 1,
   8, 109, 4, 0, 0, 0, 65535, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0,
   0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 255, 255>;
-def BRForm_scalar_base_instructions_SHL_l_q_z_rn_s_rn_d : BedrockScalarEncodingForm<
-  "base.instructions.SHL.l_q_z_rn_s_rn_d", "shl", "01010zssssdddd", 0, "lq", 122, 3, 0, 65535, 2,
+def BRForm_scalar_base_SHL_l_q_z_rn_s_rn_d : BedrockScalarEncodingForm<
+  "base.SHL.l_q_z_rn_s_rn_d", "shl", "01010zssssdddd", 0, "lq", 122, 3, 0, 65535, 2,
   2, 115, 4, 0, 0, 0, 65535, 0, 0, 0, 2, 100, 4, 0, 0, 0, 65535, 0,
   0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 255, 255>;
-def BRForm_scalar_base_instructions_SHL_b_w_l_q_z_rn_s_ea_e : BedrockScalarEncodingForm<
-  "base.instructions.SHL.b_w_l_q_z_rn_s_ea_e", "shl", "1111001111zz000sssseeeeeee", 0, "bwlq", 122, 15, 0, 65535, 2,
+def BRForm_scalar_base_SHL_b_w_l_q_z_rn_s_ea_e : BedrockScalarEncodingForm<
+  "base.SHL.b_w_l_q_z_rn_s_ea_e", "shl", "1111001111zz000sssseeeeeee", 0, "bwlq", 122, 15, 0, 65535, 2,
   2, 115, 4, 0, 0, 0, 65535, 0, 0, 0, 6, 101, 7, 0, 0, 0, 18446744073709551615, 18446744073709551615,
   0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 255, 255>;
-def BRForm_scalar_base_instructions_SHL_b_w_l_q_z_imm6_i_ea_e : BedrockScalarEncodingForm<
-  "base.instructions.SHL.b_w_l_q_z_imm6_i_ea_e", "shl", "1111010101zz1iiiiiieeeeeee", 0, "bwlq", 122, 15, 0, 65535, 2,
+def BRForm_scalar_base_SHL_b_w_l_q_z_imm6_i_ea_e : BedrockScalarEncodingForm<
+  "base.SHL.b_w_l_q_z_imm6_i_ea_e", "shl", "1111010101zz1iiiiiieeeeeee", 0, "bwlq", 122, 15, 0, 65535, 2,
   8, 105, 6, 0, 0, 0, 18446744073709551615, 0, 0, 0, 6, 101, 7, 0, 0, 0, 18446744073709551615, 18446744073709551615,
   0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 255, 255>;
-def BRForm_scalar_base_instructions_SHR_l_q_z_rn_s_rn_d : BedrockScalarEncodingForm<
-  "base.instructions.SHR.l_q_z_rn_s_rn_d", "shr", "01001zssssdddd", 0, "lq", 122, 3, 0, 65535, 2,
+def BRForm_scalar_base_SHR_l_q_z_rn_s_rn_d : BedrockScalarEncodingForm<
+  "base.SHR.l_q_z_rn_s_rn_d", "shr", "01001zssssdddd", 0, "lq", 122, 3, 0, 65535, 2,
   2, 115, 4, 0, 0, 0, 65535, 0, 0, 0, 2, 100, 4, 0, 0, 0, 65535, 0,
   0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 255, 255>;
-def BRForm_scalar_base_instructions_SHR_b_w_l_q_z_rn_s_ea_e : BedrockScalarEncodingForm<
-  "base.instructions.SHR.b_w_l_q_z_rn_s_ea_e", "shr", "1111001111zz001sssseeeeeee", 0, "bwlq", 122, 15, 0, 65535, 2,
+def BRForm_scalar_base_SHR_b_w_l_q_z_rn_s_ea_e : BedrockScalarEncodingForm<
+  "base.SHR.b_w_l_q_z_rn_s_ea_e", "shr", "1111001111zz001sssseeeeeee", 0, "bwlq", 122, 15, 0, 65535, 2,
   2, 115, 4, 0, 0, 0, 65535, 0, 0, 0, 6, 101, 7, 0, 0, 0, 18446744073709551615, 18446744073709551615,
   0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 255, 255>;
-def BRForm_scalar_base_instructions_SHR_b_w_l_q_z_imm6_i_ea_e : BedrockScalarEncodingForm<
-  "base.instructions.SHR.b_w_l_q_z_imm6_i_ea_e", "shr", "1111010110zz0iiiiiieeeeeee", 0, "bwlq", 122, 15, 0, 65535, 2,
+def BRForm_scalar_base_SHR_b_w_l_q_z_imm6_i_ea_e : BedrockScalarEncodingForm<
+  "base.SHR.b_w_l_q_z_imm6_i_ea_e", "shr", "1111010110zz0iiiiiieeeeeee", 0, "bwlq", 122, 15, 0, 65535, 2,
   8, 105, 6, 0, 0, 0, 18446744073709551615, 0, 0, 0, 6, 101, 7, 0, 0, 0, 18446744073709551615, 18446744073709551615,
   0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 255, 255>;
-def BRForm_scalar_base_instructions_SUB_q_8_sp : BedrockScalarEncodingForm<
-  "base.instructions.SUB.q_8_sp", "sub.q", "0001111", 0, "", 0, 1, 0, 65535, 2,
+def BRForm_scalar_base_SUB_q_8_sp : BedrockScalarEncodingForm<
+  "base.SUB.q_8_sp", "sub.q", "0001111", 0, "", 0, 1, 0, 65535, 2,
   14, 0, 0, 0, 0, 8, 1, 0, 0, 0, 12, 0, 0, 0, 0, 0, 1, 0,
   0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 255, 255>;
-def BRForm_scalar_base_instructions_SUB_l_q_z_rn_s_rn_d : BedrockScalarEncodingForm<
-  "base.instructions.SUB.l_q_z_rn_s_rn_d", "sub", "00010zssssdddd", 0, "lq", 122, 3, 0, 65535, 2,
+def BRForm_scalar_base_SUB_l_q_z_rn_s_rn_d : BedrockScalarEncodingForm<
+  "base.SUB.l_q_z_rn_s_rn_d", "sub", "00010zssssdddd", 0, "lq", 122, 3, 0, 65535, 2,
   2, 115, 4, 0, 0, 0, 65535, 0, 0, 0, 2, 100, 4, 0, 0, 0, 65535, 0,
   0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 255, 255>;
-def BRForm_scalar_base_instructions_SUB_q_imm8_i_sp : BedrockScalarEncodingForm<
-  "base.instructions.SUB.q_imm8_i_sp", "sub.q", "100101iiiiiiii", 0, "", 0, 1, 0, 65535, 2,
+def BRForm_scalar_base_SUB_q_imm8_i_sp : BedrockScalarEncodingForm<
+  "base.SUB.q_imm8_i_sp", "sub.q", "100101iiiiiiii", 0, "", 0, 1, 0, 65535, 2,
   8, 105, 8, 0, 0, 0, 18446744073709551614, 18446744073709551615, 18446744073709551615, 18446744073709551615, 12, 0, 0, 0, 0, 0, 1, 0,
   0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 255, 255>;
-def BRForm_scalar_base_instructions_SUB_q_imm16s_sp : BedrockScalarEncodingForm<
-  "base.instructions.SUB.q_imm16s_sp", "sub.q", "111011110000001000", 2, "", 0, 1, 0, 65535, 2,
+def BRForm_scalar_base_SUB_q_imm16s_sp : BedrockScalarEncodingForm<
+  "base.SUB.q_imm16s_sp", "sub.q", "111011110000001000", 2, "", 0, 1, 0, 65535, 2,
   9, 0, 16, 1, 0, 0, 1, 0, 0, 0, 12, 0, 0, 0, 0, 0, 1, 0,
   0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 255, 255>;
-def BRForm_scalar_base_instructions_SUB_q_imm32s_sp : BedrockScalarEncodingForm<
-  "base.instructions.SUB.q_imm32s_sp", "sub.q", "111011110000001001", 4, "", 0, 1, 0, 65535, 2,
+def BRForm_scalar_base_SUB_q_imm32s_sp : BedrockScalarEncodingForm<
+  "base.SUB.q_imm32s_sp", "sub.q", "111011110000001001", 4, "", 0, 1, 0, 65535, 2,
   9, 0, 32, 1, 0, 0, 1, 0, 0, 0, 12, 0, 0, 0, 0, 0, 1, 0,
   0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 255, 255>;
-def BRForm_scalar_base_instructions_SUB_b_w_l_q_z_rn_s_ea_e : BedrockScalarEncodingForm<
-  "base.instructions.SUB.b_w_l_q_z_rn_s_ea_e", "sub", "00010zzsssseeeeeee", 0, "bwlq", 122, 15, 0, 65535, 2,
+def BRForm_scalar_base_SUB_b_w_l_q_z_rn_s_ea_e : BedrockScalarEncodingForm<
+  "base.SUB.b_w_l_q_z_rn_s_ea_e", "sub", "00010zzsssseeeeeee", 0, "bwlq", 122, 15, 0, 65535, 2,
   2, 115, 4, 0, 0, 0, 65535, 0, 0, 0, 6, 101, 7, 0, 0, 0, 18446744073709551615, 18446744073709551615,
   0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 255, 255>;
-def BRForm_scalar_base_instructions_SUB_b_w_l_q_z_ea_e_rn_d : BedrockScalarEncodingForm<
-  "base.instructions.SUB.b_w_l_q_z_ea_e_rn_d", "sub", "01010zzddddeeeeeee", 0, "bwlq", 122, 15, 0, 65535, 2,
+def BRForm_scalar_base_SUB_b_w_l_q_z_ea_e_rn_d : BedrockScalarEncodingForm<
+  "base.SUB.b_w_l_q_z_ea_e_rn_d", "sub", "01010zzddddeeeeeee", 0, "bwlq", 122, 15, 0, 65535, 2,
   6, 101, 7, 0, 1, 0, 18446744073709551615, 18446744073709551615, 0, 0, 2, 100, 4, 0, 0, 0, 65535, 0,
   0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 255, 255>;
-def BRForm_scalar_base_instructions_SUB_b_w_l_q_z_imm8s_ea_e : BedrockScalarEncodingForm<
-  "base.instructions.SUB.b_w_l_q_z_imm8s_ea_e", "sub", "11110110000000001zzeeeeeee", 1, "bwlq", 122, 15, 0, 65535, 2,
+def BRForm_scalar_base_SUB_b_w_l_q_z_imm8s_ea_e : BedrockScalarEncodingForm<
+  "base.SUB.b_w_l_q_z_imm8s_ea_e", "sub", "11110110000000001zzeeeeeee", 1, "bwlq", 122, 15, 0, 65535, 2,
   9, 0, 8, 1, 0, 0, 1, 0, 0, 0, 6, 101, 7, 0, 0, 0, 18446744073709551615, 18446744073709551615,
   0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 255, 255>;
-def BRForm_scalar_base_instructions_SUB_w_l_q_z_imm16s_ea_e : BedrockScalarEncodingForm<
-  "base.instructions.SUB.w_l_q_z_imm16s_ea_e", "sub", "11110110000000010zzeeeeeee", 2, "?wlq", 122, 14, 0, 65535, 2,
+def BRForm_scalar_base_SUB_w_l_q_z_imm16s_ea_e : BedrockScalarEncodingForm<
+  "base.SUB.w_l_q_z_imm16s_ea_e", "sub", "11110110000000010zzeeeeeee", 2, "?wlq", 122, 14, 0, 65535, 2,
   9, 0, 16, 1, 0, 0, 1, 0, 0, 0, 6, 101, 7, 0, 0, 0, 18446744073709551615, 18446744073709551615,
   0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 255, 255>;
-def BRForm_scalar_base_instructions_SUB_l_q_z_imm32s_ea_e : BedrockScalarEncodingForm<
-  "base.instructions.SUB.l_q_z_imm32s_ea_e", "sub", "111101100000000110zeeeeeee", 4, "lq", 122, 3, 0, 65535, 2,
+def BRForm_scalar_base_SUB_l_q_z_imm32s_ea_e : BedrockScalarEncodingForm<
+  "base.SUB.l_q_z_imm32s_ea_e", "sub", "111101100000000110zeeeeeee", 4, "lq", 122, 3, 0, 65535, 2,
   9, 0, 32, 1, 0, 0, 1, 0, 0, 0, 6, 101, 7, 0, 0, 0, 18446744073709551615, 18446744073709551615,
   0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 255, 255>;
-def BRForm_scalar_base_instructions_SUB_q_imm64_ea_e : BedrockScalarEncodingForm<
-  "base.instructions.SUB.q_imm64_ea_e", "sub.q", "11101001111eeeeeee", 8, "", 0, 1, 0, 65535, 2,
+def BRForm_scalar_base_SUB_q_imm64_ea_e : BedrockScalarEncodingForm<
+  "base.SUB.q_imm64_ea_e", "sub.q", "11101001111eeeeeee", 8, "", 0, 1, 0, 65535, 2,
   9, 0, 64, 1, 0, 0, 1, 0, 0, 0, 6, 101, 7, 0, 0, 0, 18446744073709551615, 18446744073709551615,
   0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 255, 255>;
-def BRForm_scalar_base_instructions_SWPT_rn_p : BedrockScalarEncodingForm<
-  "base.instructions.SWPT.rn_p", "swpt", "11101101001001pppp", 0, "", 0, 1, 0, 65535, 1,
+def BRForm_scalar_base_SWPT_rn_p : BedrockScalarEncodingForm<
+  "base.SWPT.rn_p", "swpt", "11101101001001pppp", 0, "", 0, 1, 0, 65535, 1,
   2, 112, 4, 0, 0, 0, 65535, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0,
   0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 255, 255>;
-def BRForm_scalar_base_instructions_SWPTA_rn_p_rn_a : BedrockScalarEncodingForm<
-  "base.instructions.SWPTA.rn_p_rn_a", "swpta", "1100000110ppppaaaa", 0, "", 0, 1, 0, 65535, 2,
+def BRForm_scalar_base_SWPTA_rn_p_rn_a : BedrockScalarEncodingForm<
+  "base.SWPTA.rn_p_rn_a", "swpta", "1100000110ppppaaaa", 0, "", 0, 1, 0, 65535, 2,
   2, 112, 4, 0, 0, 0, 65535, 0, 0, 0, 2, 97, 4, 0, 0, 0, 65535, 0,
   0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 255, 255>;
-def BRForm_scalar_base_instructions_SYNCCACHE_ea_e : BedrockScalarEncodingForm<
-  "base.instructions.SYNCCACHE.ea_e", "synccache", "11101010000eeeeeee", 0, "", 0, 1, 0, 65535, 1,
+def BRForm_scalar_base_SYNCCACHE_ea_e : BedrockScalarEncodingForm<
+  "base.SYNCCACHE.ea_e", "synccache", "11101010000eeeeeee", 0, "", 0, 1, 0, 65535, 1,
   6, 101, 7, 0, 1, 0, 18446744073709551615, 18446744073709551615, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0,
   0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 255, 255>;
-def BRForm_scalar_base_instructions_SYSCALL_plain : BedrockScalarEncodingForm<
-  "base.instructions.SYSCALL.plain", "syscall", "0000101", 0, "", 0, 1, 0, 65535, 0,
+def BRForm_scalar_base_SYSCALL_plain : BedrockScalarEncodingForm<
+  "base.SYSCALL.plain", "syscall", "0000101", 0, "", 0, 1, 0, 65535, 0,
   0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0,
   0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 255, 255>;
-def BRForm_scalar_base_instructions_TEST_l_q_z_rn_s_rn_d : BedrockScalarEncodingForm<
-  "base.instructions.TEST.l_q_z_rn_s_rn_d", "test", "00111zssssdddd", 0, "lq", 122, 3, 0, 65535, 2,
+def BRForm_scalar_base_TEST_l_q_z_rn_s_rn_d : BedrockScalarEncodingForm<
+  "base.TEST.l_q_z_rn_s_rn_d", "test", "00111zssssdddd", 0, "lq", 122, 3, 0, 65535, 2,
   2, 115, 4, 0, 0, 0, 65535, 0, 0, 0, 2, 100, 4, 0, 0, 0, 65535, 0,
   0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 255, 255>;
-def BRForm_scalar_base_instructions_TEST_b_w_l_q_z_rn_s_ea_e : BedrockScalarEncodingForm<
-  "base.instructions.TEST.b_w_l_q_z_rn_s_ea_e", "test", "1111001111zz010sssseeeeeee", 0, "bwlq", 122, 15, 0, 65535, 2,
+def BRForm_scalar_base_TEST_b_w_l_q_z_rn_s_ea_e : BedrockScalarEncodingForm<
+  "base.TEST.b_w_l_q_z_rn_s_ea_e", "test", "1111001111zz010sssseeeeeee", 0, "bwlq", 122, 15, 0, 65535, 2,
   2, 115, 4, 0, 0, 0, 65535, 0, 0, 0, 6, 101, 7, 0, 1, 0, 18446744073709551615, 18446744073709551615,
   0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 255, 255>;
-def BRForm_scalar_base_instructions_TEST_b_w_l_q_z_ea_e_rn_d : BedrockScalarEncodingForm<
-  "base.instructions.TEST.b_w_l_q_z_ea_e_rn_d", "test", "01111zzddddeeeeeee", 0, "bwlq", 122, 15, 0, 65535, 2,
+def BRForm_scalar_base_TEST_b_w_l_q_z_ea_e_rn_d : BedrockScalarEncodingForm<
+  "base.TEST.b_w_l_q_z_ea_e_rn_d", "test", "01111zzddddeeeeeee", 0, "bwlq", 122, 15, 0, 65535, 2,
   6, 101, 7, 0, 1, 0, 18446744073709551615, 18446744073709551615, 0, 0, 2, 100, 4, 0, 0, 0, 65535, 0,
   0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 255, 255>;
-def BRForm_scalar_base_instructions_TESTJcc_b_w_l_q_z_rn_s_rn_d_imm8s : BedrockScalarEncodingForm<
-  "base.instructions.TESTJcc.b_w_l_q_z_rn_s_rn_d_imm8s", "testj", "111101000010zzccccssssdddd", 1, "bwlq", 122, 15, 99, 65532, 3,
+def BRForm_scalar_base_TESTJcc_b_w_l_q_z_rn_s_rn_d_imm8s : BedrockScalarEncodingForm<
+  "base.TESTJcc.b_w_l_q_z_rn_s_rn_d_imm8s", "testj", "111101000010zzccccssssdddd", 1, "bwlq", 122, 15, 99, 65532, 3,
   2, 115, 4, 0, 0, 0, 65535, 0, 0, 0, 2, 100, 4, 0, 0, 0, 65535, 0,
   0, 0, 9, 0, 8, 1, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 255, 255>;
-def BRForm_scalar_base_instructions_TESTJcc_b_w_l_q_z_rn_s_rn_d_imm16s : BedrockScalarEncodingForm<
-  "base.instructions.TESTJcc.b_w_l_q_z_rn_s_rn_d_imm16s", "testj", "111101000011zzccccssssdddd", 2, "bwlq", 122, 15, 99, 65532, 3,
+def BRForm_scalar_base_TESTJcc_b_w_l_q_z_rn_s_rn_d_imm16s : BedrockScalarEncodingForm<
+  "base.TESTJcc.b_w_l_q_z_rn_s_rn_d_imm16s", "testj", "111101000011zzccccssssdddd", 2, "bwlq", 122, 15, 99, 65532, 3,
   2, 115, 4, 0, 0, 0, 65535, 0, 0, 0, 2, 100, 4, 0, 0, 0, 65535, 0,
   0, 0, 9, 0, 16, 1, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 255, 255>;
-def BRForm_scalar_base_instructions_TRACE_imm16 : BedrockScalarEncodingForm<
-  "base.instructions.TRACE.imm16", "trace", "111011110000001010", 2, "", 0, 1, 0, 65535, 1,
+def BRForm_scalar_base_TRACE_imm16 : BedrockScalarEncodingForm<
+  "base.TRACE.imm16", "trace", "111011110000001010", 2, "", 0, 1, 0, 65535, 1,
   10, 0, 16, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0,
   0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 255, 255>;
-def BRForm_scalar_base_instructions_VTOP_rn_v_rn_p : BedrockScalarEncodingForm<
-  "base.instructions.VTOP.rn_v_rn_p", "vtop", "1100000111vvvvpppp", 0, "", 0, 1, 0, 65535, 2,
+def BRForm_scalar_base_VTOP_rn_v_rn_p : BedrockScalarEncodingForm<
+  "base.VTOP.rn_v_rn_p", "vtop", "1100000111vvvvpppp", 0, "", 0, 1, 0, 65535, 2,
   2, 118, 4, 0, 0, 0, 65535, 0, 0, 0, 2, 112, 4, 0, 0, 0, 65535, 0,
   0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 255, 255>;
-def BRForm_scalar_base_instructions_WAIT_plain : BedrockScalarEncodingForm<
-  "base.instructions.WAIT.plain", "wait", "0001000", 0, "", 0, 1, 0, 65535, 0,
+def BRForm_scalar_base_RELAX_plain : BedrockScalarEncodingForm<
+  "base.RELAX.plain", "relax", "0001000", 0, "", 0, 1, 0, 65535, 0,
   0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0,
   0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 255, 255>;
-def BRForm_scalar_base_instructions_WFENCE_plain : BedrockScalarEncodingForm<
-  "base.instructions.WFENCE.plain", "wfence", "0001011", 0, "", 0, 1, 0, 65535, 0,
+def BRForm_scalar_base_WFENCE_plain : BedrockScalarEncodingForm<
+  "base.WFENCE.plain", "wfence", "0001011", 0, "", 0, 1, 0, 65535, 0,
   0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0,
   0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 255, 255>;
-def BRForm_scalar_base_instructions_WRBKDCACHE_ea_e : BedrockScalarEncodingForm<
-  "base.instructions.WRBKDCACHE.ea_e", "wrbkdcache", "11101010001eeeeeee", 0, "", 0, 1, 0, 65535, 1,
+def BRForm_scalar_base_WRBKDCACHE_ea_e : BedrockScalarEncodingForm<
+  "base.WRBKDCACHE.ea_e", "wrbkdcache", "11101010001eeeeeee", 0, "", 0, 1, 0, 65535, 1,
   6, 101, 7, 0, 1, 0, 18446744073709551615, 18446744073709551615, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0,
   0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 255, 255>;
-def BRForm_scalar_base_instructions_WRCR_rn_s_imm16 : BedrockScalarEncodingForm<
-  "base.instructions.WRCR.rn_s_imm16", "wrcr", "11101101010001ssss", 2, "", 0, 1, 0, 65535, 2,
+def BRForm_scalar_base_WRCR_rn_s_imm16 : BedrockScalarEncodingForm<
+  "base.WRCR.rn_s_imm16", "wrcr", "11101101010001ssss", 2, "", 0, 1, 0, 65535, 2,
   2, 115, 4, 0, 0, 0, 65535, 0, 0, 0, 17, 0, 16, 0, 0, 1, 1, 0,
   0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 255, 255>;
-def BRForm_scalar_base_instructions_WRFLAGS_rn_s : BedrockScalarEncodingForm<
-  "base.instructions.WRFLAGS.rn_s", "wrflags", "11101101001100ssss", 0, "", 0, 1, 0, 65535, 1,
+def BRForm_scalar_base_WRFLAGS_rn_s : BedrockScalarEncodingForm<
+  "base.WRFLAGS.rn_s", "wrflags", "11101101001100ssss", 0, "", 0, 1, 0, 65535, 1,
   2, 115, 4, 0, 0, 0, 65535, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0,
   0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 255, 255>;
-def BRForm_scalar_base_instructions_WRSEG_rn_d_sreg_s : BedrockScalarEncodingForm<
-  "base.instructions.WRSEG.rn_d_sreg_s", "wrseg", "11101111110sssdddd", 0, "", 0, 1, 0, 65535, 2,
+def BRForm_scalar_base_WRSEG_rn_d_sreg_s : BedrockScalarEncodingForm<
+  "base.WRSEG.rn_d_sreg_s", "wrseg", "11101111110sssdddd", 0, "", 0, 1, 0, 65535, 2,
   2, 100, 4, 0, 0, 0, 65535, 0, 0, 0, 11, 115, 3, 0, 0, 0, 255, 0,
   0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 255, 255>;
-def BRForm_scalar_base_instructions_WRSTATUS_rn_s : BedrockScalarEncodingForm<
-  "base.instructions.WRSTATUS.rn_s", "wrstatus", "11101101010010ssss", 0, "", 0, 1, 0, 65535, 1,
+def BRForm_scalar_base_WRSTATUS_rn_s : BedrockScalarEncodingForm<
+  "base.WRSTATUS.rn_s", "wrstatus", "11101101010010ssss", 0, "", 0, 1, 0, 65535, 1,
   2, 115, 4, 0, 0, 0, 65535, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0,
   0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 255, 255>;
-def BRForm_scalar_base_instructions_XCHG_l_q_z_rn_s_rn_d : BedrockScalarEncodingForm<
-  "base.instructions.XCHG.l_q_z_rn_s_rn_d", "xchg", "01000zssssdddd", 0, "lq", 122, 3, 0, 65535, 2,
+def BRForm_scalar_base_XCHG_l_q_z_rn_s_rn_d : BedrockScalarEncodingForm<
+  "base.XCHG.l_q_z_rn_s_rn_d", "xchg", "01000zssssdddd", 0, "lq", 122, 3, 0, 65535, 2,
   2, 115, 4, 0, 0, 0, 65535, 0, 0, 0, 2, 100, 4, 0, 0, 0, 65535, 0,
   0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1>;
-def BRForm_scalar_base_instructions_XCHG_b_w_l_q_z_rn_s_ea_e : BedrockScalarEncodingForm<
-  "base.instructions.XCHG.b_w_l_q_z_rn_s_ea_e", "xchg", "1111001111zz011sssseeeeeee", 0, "bwlq", 122, 15, 0, 65535, 2,
+def BRForm_scalar_base_XCHG_b_w_l_q_z_rn_s_ea_e : BedrockScalarEncodingForm<
+  "base.XCHG.b_w_l_q_z_rn_s_ea_e", "xchg", "1111001111zz011sssseeeeeee", 0, "bwlq", 122, 15, 0, 65535, 2,
   2, 115, 4, 0, 0, 0, 65535, 0, 0, 0, 6, 101, 7, 0, 0, 0, 18446744073709551615, 18446744073709551615,
   0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 255, 255>;
-def BRForm_scalar_base_instructions_XCHG_b_w_l_q_z_ea_e_rn_d : BedrockScalarEncodingForm<
-  "base.instructions.XCHG.b_w_l_q_z_ea_e_rn_d", "xchg", "1111001000zz001ddddeeeeeee", 0, "bwlq", 122, 15, 0, 65535, 2,
+def BRForm_scalar_base_XCHG_b_w_l_q_z_ea_e_rn_d : BedrockScalarEncodingForm<
+  "base.XCHG.b_w_l_q_z_ea_e_rn_d", "xchg", "1111001000zz001ddddeeeeeee", 0, "bwlq", 122, 15, 0, 65535, 2,
   6, 101, 7, 0, 0, 0, 18446744073709551615, 18446744073709551615, 0, 0, 2, 100, 4, 0, 0, 0, 65535, 0,
   0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 255, 255>;
-def BRForm_scalar_base_instructions_XOR_l_q_z_rn_s_rn_d : BedrockScalarEncodingForm<
-  "base.instructions.XOR.l_q_z_rn_s_rn_d", "xor", "00110zssssdddd", 0, "lq", 122, 3, 0, 65535, 2,
+def BRForm_scalar_base_XOR_l_q_z_rn_s_rn_d : BedrockScalarEncodingForm<
+  "base.XOR.l_q_z_rn_s_rn_d", "xor", "00110zssssdddd", 0, "lq", 122, 3, 0, 65535, 2,
   2, 115, 4, 0, 0, 0, 65535, 0, 0, 0, 2, 100, 4, 0, 0, 0, 65535, 0,
   0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 255, 255>;
-def BRForm_scalar_base_instructions_XOR_b_w_l_q_z_rn_s_ea_e : BedrockScalarEncodingForm<
-  "base.instructions.XOR.b_w_l_q_z_rn_s_ea_e", "xor", "00110zzsssseeeeeee", 0, "bwlq", 122, 15, 0, 65535, 2,
+def BRForm_scalar_base_XOR_b_w_l_q_z_rn_s_ea_e : BedrockScalarEncodingForm<
+  "base.XOR.b_w_l_q_z_rn_s_ea_e", "xor", "00110zzsssseeeeeee", 0, "bwlq", 122, 15, 0, 65535, 2,
   2, 115, 4, 0, 0, 0, 65535, 0, 0, 0, 6, 101, 7, 0, 0, 0, 18446744073709551615, 18446744073709551615,
   0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 255, 255>;
-def BRForm_scalar_base_instructions_XOR_b_w_l_q_z_ea_e_rn_d : BedrockScalarEncodingForm<
-  "base.instructions.XOR.b_w_l_q_z_ea_e_rn_d", "xor", "01110zzddddeeeeeee", 0, "bwlq", 122, 15, 0, 65535, 2,
+def BRForm_scalar_base_XOR_b_w_l_q_z_ea_e_rn_d : BedrockScalarEncodingForm<
+  "base.XOR.b_w_l_q_z_ea_e_rn_d", "xor", "01110zzddddeeeeeee", 0, "bwlq", 122, 15, 0, 65535, 2,
   6, 101, 7, 0, 1, 0, 18446744073709551615, 18446744073709551615, 0, 0, 2, 100, 4, 0, 0, 0, 65535, 0,
   0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 255, 255>;
-def BRForm_scalar_base_instructions_XOR_b_w_l_q_z_imm8s_ea_e : BedrockScalarEncodingForm<
-  "base.instructions.XOR.b_w_l_q_z_imm8s_ea_e", "xor", "11110110000000100zzeeeeeee", 1, "bwlq", 122, 15, 0, 65535, 2,
+def BRForm_scalar_base_XOR_b_w_l_q_z_imm8s_ea_e : BedrockScalarEncodingForm<
+  "base.XOR.b_w_l_q_z_imm8s_ea_e", "xor", "11110110000000100zzeeeeeee", 1, "bwlq", 122, 15, 0, 65535, 2,
   9, 0, 8, 1, 0, 0, 1, 0, 0, 0, 6, 101, 7, 0, 0, 0, 18446744073709551615, 18446744073709551615,
   0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 255, 255>;
-def BRForm_scalar_base_instructions_XOR_w_l_q_z_imm16s_ea_e : BedrockScalarEncodingForm<
-  "base.instructions.XOR.w_l_q_z_imm16s_ea_e", "xor", "11110110000000101zzeeeeeee", 2, "?wlq", 122, 14, 0, 65535, 2,
+def BRForm_scalar_base_XOR_w_l_q_z_imm16s_ea_e : BedrockScalarEncodingForm<
+  "base.XOR.w_l_q_z_imm16s_ea_e", "xor", "11110110000000101zzeeeeeee", 2, "?wlq", 122, 14, 0, 65535, 2,
   9, 0, 16, 1, 0, 0, 1, 0, 0, 0, 6, 101, 7, 0, 0, 0, 18446744073709551615, 18446744073709551615,
   0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 255, 255>;
-def BRForm_scalar_base_instructions_XOR_l_q_z_imm32s_ea_e : BedrockScalarEncodingForm<
-  "base.instructions.XOR.l_q_z_imm32s_ea_e", "xor", "111101100000001100zeeeeeee", 4, "lq", 122, 3, 0, 65535, 2,
+def BRForm_scalar_base_XOR_l_q_z_imm32s_ea_e : BedrockScalarEncodingForm<
+  "base.XOR.l_q_z_imm32s_ea_e", "xor", "111101100000001100zeeeeeee", 4, "lq", 122, 3, 0, 65535, 2,
   9, 0, 32, 1, 0, 0, 1, 0, 0, 0, 6, 101, 7, 0, 0, 0, 18446744073709551615, 18446744073709551615,
   0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 255, 255>;
-def BRForm_scalar_base_instructions_XOR_q_imm64_ea_e : BedrockScalarEncodingForm<
-  "base.instructions.XOR.q_imm64_ea_e", "xor.q", "11101010010eeeeeee", 8, "", 0, 1, 0, 65535, 2,
+def BRForm_scalar_base_XOR_q_imm64_ea_e : BedrockScalarEncodingForm<
+  "base.XOR.q_imm64_ea_e", "xor.q", "11101010010eeeeeee", 8, "", 0, 1, 0, 65535, 2,
   9, 0, 64, 1, 0, 0, 1, 0, 0, 0, 6, 101, 7, 0, 0, 0, 18446744073709551615, 18446744073709551615,
   0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 255, 255>;
-def BRForm_scalar_base_instructions_YIELD_plain : BedrockScalarEncodingForm<
-  "base.instructions.YIELD.plain", "yield", "0001001", 0, "", 0, 1, 0, 65535, 0,
+def BRForm_scalar_base_YIELD_plain : BedrockScalarEncodingForm<
+  "base.YIELD.plain", "yield", "0001001", 0, "", 0, 1, 0, 65535, 0,
   0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0,
   0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 255, 255>;
-def BRForm_scalar_FP_instructions_FABS_s_d_z_fn_s_fn_d : BedrockScalarEncodingForm<
-  "FP.instructions.FABS.s_d_z_fn_s_fn_d", "fabs", "101000z000ssssdddd", 0, "sd", 122, 3, 0, 65535, 2,
+def BRForm_scalar_FP_FABS_s_d_z_fn_s_fn_d : BedrockScalarEncodingForm<
+  "FP.FABS.s_d_z_fn_s_fn_d", "fabs", "101000z000ssssdddd", 0, "sd", 122, 3, 0, 65535, 2,
   3, 115, 4, 0, 0, 0, 65535, 0, 0, 0, 3, 100, 4, 0, 0, 0, 65535, 0,
   0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 255, 255>;
-def BRForm_scalar_FP_instructions_FABS_s_d_z_ea_e_fn_d : BedrockScalarEncodingForm<
-  "FP.instructions.FABS.s_d_z_ea_e_fn_d", "fabs", "1111100100z0000ddddeeeeeee", 0, "sd", 122, 3, 0, 65535, 2,
+def BRForm_scalar_FP_FABS_s_d_z_ea_e_fn_d : BedrockScalarEncodingForm<
+  "FP.FABS.s_d_z_ea_e_fn_d", "fabs", "1111100100z0000ddddeeeeeee", 0, "sd", 122, 3, 0, 65535, 2,
   15, 101, 7, 0, 1, 0, 18446744073709551615, 18446744073709551615, 0, 0, 3, 100, 4, 0, 0, 0, 65535, 0,
   0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 255, 255>;
-def BRForm_scalar_FP_instructions_FABS_s_d_z_fn_s_ea_e : BedrockScalarEncodingForm<
-  "FP.instructions.FABS.s_d_z_fn_s_ea_e", "fabs", "1111100100z1000sssseeeeeee", 0, "sd", 122, 3, 0, 65535, 2,
+def BRForm_scalar_FP_FABS_s_d_z_fn_s_ea_e : BedrockScalarEncodingForm<
+  "FP.FABS.s_d_z_fn_s_ea_e", "fabs", "1111100100z1000sssseeeeeee", 0, "sd", 122, 3, 0, 65535, 2,
   3, 115, 4, 0, 0, 0, 65535, 0, 0, 0, 15, 101, 7, 0, 0, 0, 18446744073709551615, 18446744073709551615,
   0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 255, 255>;
-def BRForm_scalar_FP_instructions_FADD_s_d_z_fn_s_fn_d : BedrockScalarEncodingForm<
-  "FP.instructions.FADD.s_d_z_fn_s_fn_d", "fadd", "101000z010ssssdddd", 0, "sd", 122, 3, 0, 65535, 2,
+def BRForm_scalar_FP_FADD_s_d_z_fn_s_fn_d : BedrockScalarEncodingForm<
+  "FP.FADD.s_d_z_fn_s_fn_d", "fadd", "101000z010ssssdddd", 0, "sd", 122, 3, 0, 65535, 2,
   3, 115, 4, 0, 0, 0, 65535, 0, 0, 0, 3, 100, 4, 0, 0, 0, 65535, 0,
   0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 255, 255>;
-def BRForm_scalar_FP_instructions_FADD_s_d_z_ea_e_fn_d : BedrockScalarEncodingForm<
-  "FP.instructions.FADD.s_d_z_ea_e_fn_d", "fadd", "1111100100z0010ddddeeeeeee", 0, "sd", 122, 3, 0, 65535, 2,
+def BRForm_scalar_FP_FADD_s_d_z_ea_e_fn_d : BedrockScalarEncodingForm<
+  "FP.FADD.s_d_z_ea_e_fn_d", "fadd", "1111100100z0010ddddeeeeeee", 0, "sd", 122, 3, 0, 65535, 2,
   15, 101, 7, 0, 1, 0, 18446744073709551615, 18446744073709551615, 0, 0, 3, 100, 4, 0, 0, 0, 65535, 0,
   0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 255, 255>;
-def BRForm_scalar_FP_instructions_FBNDII_s_d_z_fn_l_fn_v_fn_h : BedrockScalarEncodingForm<
-  "FP.instructions.FBNDII.s_d_z_fn_l_fn_v_fn_h", "fbndii", "111111001100101000000zllllvvvvhhhh", 0, "sd", 122, 3, 0, 65535, 3,
+def BRForm_scalar_FP_FBNDII_s_d_z_fn_l_fn_v_fn_h : BedrockScalarEncodingForm<
+  "FP.FBNDII.s_d_z_fn_l_fn_v_fn_h", "fbndii", "111111001100101000000zllllvvvvhhhh", 0, "sd", 122, 3, 0, 65535, 3,
   3, 108, 4, 0, 0, 0, 65535, 0, 0, 0, 3, 118, 4, 0, 0, 0, 65535, 0,
   0, 0, 3, 104, 4, 0, 0, 0, 65535, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 255, 255>;
-def BRForm_scalar_FP_instructions_FBNDII_s_d_z_fn_l_ea_v_fn_h : BedrockScalarEncodingForm<
-  "FP.instructions.FBNDII.s_d_z_fn_l_ea_v_fn_h", "fbndii", "111111001100100000zllllhhhhvvvvvvv", 0, "sd", 122, 3, 0, 65535, 3,
+def BRForm_scalar_FP_FBNDII_s_d_z_fn_l_ea_v_fn_h : BedrockScalarEncodingForm<
+  "FP.FBNDII.s_d_z_fn_l_ea_v_fn_h", "fbndii", "111111001100100000zllllhhhhvvvvvvv", 0, "sd", 122, 3, 0, 65535, 3,
   3, 108, 4, 0, 0, 0, 65535, 0, 0, 0, 15, 118, 7, 0, 1, 0, 18446744073709551615, 18446744073709551615,
   0, 0, 3, 104, 4, 0, 0, 0, 65535, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 255, 255>;
-def BRForm_scalar_FP_instructions_FBNDII_s_d_z_ea_l_fn_v_ea_h : BedrockScalarEncodingForm<
-  "FP.instructions.FBNDII.s_d_z_ea_l_fn_v_ea_h", "fbndii", "111111001100000zvvvvlllllllhhhhhhh", 0, "sd", 122, 3, 0, 65535, 3,
+def BRForm_scalar_FP_FBNDII_s_d_z_ea_l_fn_v_ea_h : BedrockScalarEncodingForm<
+  "FP.FBNDII.s_d_z_ea_l_fn_v_ea_h", "fbndii", "111111001100000zvvvvlllllllhhhhhhh", 0, "sd", 122, 3, 0, 65535, 3,
   15, 108, 7, 0, 1, 0, 18446744073709551615, 18446744073709551615, 0, 0, 3, 118, 4, 0, 0, 0, 65535, 0,
   0, 0, 15, 104, 7, 0, 1, 0, 18446744073709551615, 18446744073709551615, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 255, 255>;
-def BRForm_scalar_FP_instructions_FBNDIX_s_d_z_fn_l_fn_v_fn_h : BedrockScalarEncodingForm<
-  "FP.instructions.FBNDIX.s_d_z_fn_l_fn_v_fn_h", "fbndix", "111111001100101000001zllllvvvvhhhh", 0, "sd", 122, 3, 0, 65535, 3,
+def BRForm_scalar_FP_FBNDIX_s_d_z_fn_l_fn_v_fn_h : BedrockScalarEncodingForm<
+  "FP.FBNDIX.s_d_z_fn_l_fn_v_fn_h", "fbndix", "111111001100101000001zllllvvvvhhhh", 0, "sd", 122, 3, 0, 65535, 3,
   3, 108, 4, 0, 0, 0, 65535, 0, 0, 0, 3, 118, 4, 0, 0, 0, 65535, 0,
   0, 0, 3, 104, 4, 0, 0, 0, 65535, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 255, 255>;
-def BRForm_scalar_FP_instructions_FBNDIX_s_d_z_fn_l_ea_v_fn_h : BedrockScalarEncodingForm<
-  "FP.instructions.FBNDIX.s_d_z_fn_l_ea_v_fn_h", "fbndix", "111111001100100001zllllhhhhvvvvvvv", 0, "sd", 122, 3, 0, 65535, 3,
+def BRForm_scalar_FP_FBNDIX_s_d_z_fn_l_ea_v_fn_h : BedrockScalarEncodingForm<
+  "FP.FBNDIX.s_d_z_fn_l_ea_v_fn_h", "fbndix", "111111001100100001zllllhhhhvvvvvvv", 0, "sd", 122, 3, 0, 65535, 3,
   3, 108, 4, 0, 0, 0, 65535, 0, 0, 0, 15, 118, 7, 0, 1, 0, 18446744073709551615, 18446744073709551615,
   0, 0, 3, 104, 4, 0, 0, 0, 65535, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 255, 255>;
-def BRForm_scalar_FP_instructions_FBNDIX_s_d_z_ea_l_fn_v_ea_h : BedrockScalarEncodingForm<
-  "FP.instructions.FBNDIX.s_d_z_ea_l_fn_v_ea_h", "fbndix", "111111001100001zvvvvlllllllhhhhhhh", 0, "sd", 122, 3, 0, 65535, 3,
+def BRForm_scalar_FP_FBNDIX_s_d_z_ea_l_fn_v_ea_h : BedrockScalarEncodingForm<
+  "FP.FBNDIX.s_d_z_ea_l_fn_v_ea_h", "fbndix", "111111001100001zvvvvlllllllhhhhhhh", 0, "sd", 122, 3, 0, 65535, 3,
   15, 108, 7, 0, 1, 0, 18446744073709551615, 18446744073709551615, 0, 0, 3, 118, 4, 0, 0, 0, 65535, 0,
   0, 0, 15, 104, 7, 0, 1, 0, 18446744073709551615, 18446744073709551615, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 255, 255>;
-def BRForm_scalar_FP_instructions_FBNDXI_s_d_z_fn_l_fn_v_fn_h : BedrockScalarEncodingForm<
-  "FP.instructions.FBNDXI.s_d_z_fn_l_fn_v_fn_h", "fbndxi", "111111001100101000010zllllvvvvhhhh", 0, "sd", 122, 3, 0, 65535, 3,
+def BRForm_scalar_FP_FBNDXI_s_d_z_fn_l_fn_v_fn_h : BedrockScalarEncodingForm<
+  "FP.FBNDXI.s_d_z_fn_l_fn_v_fn_h", "fbndxi", "111111001100101000010zllllvvvvhhhh", 0, "sd", 122, 3, 0, 65535, 3,
   3, 108, 4, 0, 0, 0, 65535, 0, 0, 0, 3, 118, 4, 0, 0, 0, 65535, 0,
   0, 0, 3, 104, 4, 0, 0, 0, 65535, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 255, 255>;
-def BRForm_scalar_FP_instructions_FBNDXI_s_d_z_fn_l_ea_v_fn_h : BedrockScalarEncodingForm<
-  "FP.instructions.FBNDXI.s_d_z_fn_l_ea_v_fn_h", "fbndxi", "111111001100100010zllllhhhhvvvvvvv", 0, "sd", 122, 3, 0, 65535, 3,
+def BRForm_scalar_FP_FBNDXI_s_d_z_fn_l_ea_v_fn_h : BedrockScalarEncodingForm<
+  "FP.FBNDXI.s_d_z_fn_l_ea_v_fn_h", "fbndxi", "111111001100100010zllllhhhhvvvvvvv", 0, "sd", 122, 3, 0, 65535, 3,
   3, 108, 4, 0, 0, 0, 65535, 0, 0, 0, 15, 118, 7, 0, 1, 0, 18446744073709551615, 18446744073709551615,
   0, 0, 3, 104, 4, 0, 0, 0, 65535, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 255, 255>;
-def BRForm_scalar_FP_instructions_FBNDXI_s_d_z_ea_l_fn_v_ea_h : BedrockScalarEncodingForm<
-  "FP.instructions.FBNDXI.s_d_z_ea_l_fn_v_ea_h", "fbndxi", "111111001100010zvvvvlllllllhhhhhhh", 0, "sd", 122, 3, 0, 65535, 3,
+def BRForm_scalar_FP_FBNDXI_s_d_z_ea_l_fn_v_ea_h : BedrockScalarEncodingForm<
+  "FP.FBNDXI.s_d_z_ea_l_fn_v_ea_h", "fbndxi", "111111001100010zvvvvlllllllhhhhhhh", 0, "sd", 122, 3, 0, 65535, 3,
   15, 108, 7, 0, 1, 0, 18446744073709551615, 18446744073709551615, 0, 0, 3, 118, 4, 0, 0, 0, 65535, 0,
   0, 0, 15, 104, 7, 0, 1, 0, 18446744073709551615, 18446744073709551615, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 255, 255>;
-def BRForm_scalar_FP_instructions_FBNDXX_s_d_z_fn_l_fn_v_fn_h : BedrockScalarEncodingForm<
-  "FP.instructions.FBNDXX.s_d_z_fn_l_fn_v_fn_h", "fbndxx", "111111001100101000011zllllvvvvhhhh", 0, "sd", 122, 3, 0, 65535, 3,
+def BRForm_scalar_FP_FBNDXX_s_d_z_fn_l_fn_v_fn_h : BedrockScalarEncodingForm<
+  "FP.FBNDXX.s_d_z_fn_l_fn_v_fn_h", "fbndxx", "111111001100101000011zllllvvvvhhhh", 0, "sd", 122, 3, 0, 65535, 3,
   3, 108, 4, 0, 0, 0, 65535, 0, 0, 0, 3, 118, 4, 0, 0, 0, 65535, 0,
   0, 0, 3, 104, 4, 0, 0, 0, 65535, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 255, 255>;
-def BRForm_scalar_FP_instructions_FBNDXX_s_d_z_fn_l_ea_v_fn_h : BedrockScalarEncodingForm<
-  "FP.instructions.FBNDXX.s_d_z_fn_l_ea_v_fn_h", "fbndxx", "111111001100100011zllllhhhhvvvvvvv", 0, "sd", 122, 3, 0, 65535, 3,
+def BRForm_scalar_FP_FBNDXX_s_d_z_fn_l_ea_v_fn_h : BedrockScalarEncodingForm<
+  "FP.FBNDXX.s_d_z_fn_l_ea_v_fn_h", "fbndxx", "111111001100100011zllllhhhhvvvvvvv", 0, "sd", 122, 3, 0, 65535, 3,
   3, 108, 4, 0, 0, 0, 65535, 0, 0, 0, 15, 118, 7, 0, 1, 0, 18446744073709551615, 18446744073709551615,
   0, 0, 3, 104, 4, 0, 0, 0, 65535, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 255, 255>;
-def BRForm_scalar_FP_instructions_FBNDXX_s_d_z_ea_l_fn_v_ea_h : BedrockScalarEncodingForm<
-  "FP.instructions.FBNDXX.s_d_z_ea_l_fn_v_ea_h", "fbndxx", "111111001100011zvvvvlllllllhhhhhhh", 0, "sd", 122, 3, 0, 65535, 3,
+def BRForm_scalar_FP_FBNDXX_s_d_z_ea_l_fn_v_ea_h : BedrockScalarEncodingForm<
+  "FP.FBNDXX.s_d_z_ea_l_fn_v_ea_h", "fbndxx", "111111001100011zvvvvlllllllhhhhhhh", 0, "sd", 122, 3, 0, 65535, 3,
   15, 108, 7, 0, 1, 0, 18446744073709551615, 18446744073709551615, 0, 0, 3, 118, 4, 0, 0, 0, 65535, 0,
   0, 0, 15, 104, 7, 0, 1, 0, 18446744073709551615, 18446744073709551615, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 255, 255>;
-def BRForm_scalar_FP_instructions_FCEIL_s_d_z_fn_s_fn_d : BedrockScalarEncodingForm<
-  "FP.instructions.FCEIL.s_d_z_fn_s_fn_d", "fceil", "101000z110ssssdddd", 0, "sd", 122, 3, 0, 65535, 2,
+def BRForm_scalar_FP_FCEIL_s_d_z_fn_s_fn_d : BedrockScalarEncodingForm<
+  "FP.FCEIL.s_d_z_fn_s_fn_d", "fceil", "101000z110ssssdddd", 0, "sd", 122, 3, 0, 65535, 2,
   3, 115, 4, 0, 0, 0, 65535, 0, 0, 0, 3, 100, 4, 0, 0, 0, 65535, 0,
   0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 255, 255>;
-def BRForm_scalar_FP_instructions_FCEIL_s_d_z_ea_e_fn_d : BedrockScalarEncodingForm<
-  "FP.instructions.FCEIL.s_d_z_ea_e_fn_d", "fceil", "1111100100z0110ddddeeeeeee", 0, "sd", 122, 3, 0, 65535, 2,
+def BRForm_scalar_FP_FCEIL_s_d_z_ea_e_fn_d : BedrockScalarEncodingForm<
+  "FP.FCEIL.s_d_z_ea_e_fn_d", "fceil", "1111100100z0110ddddeeeeeee", 0, "sd", 122, 3, 0, 65535, 2,
   15, 101, 7, 0, 1, 0, 18446744073709551615, 18446744073709551615, 0, 0, 3, 100, 4, 0, 0, 0, 65535, 0,
   0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 255, 255>;
-def BRForm_scalar_FP_instructions_FCEIL_s_d_z_fn_s_ea_e : BedrockScalarEncodingForm<
-  "FP.instructions.FCEIL.s_d_z_fn_s_ea_e", "fceil", "1111100100z1001sssseeeeeee", 0, "sd", 122, 3, 0, 65535, 2,
+def BRForm_scalar_FP_FCEIL_s_d_z_fn_s_ea_e : BedrockScalarEncodingForm<
+  "FP.FCEIL.s_d_z_fn_s_ea_e", "fceil", "1111100100z1001sssseeeeeee", 0, "sd", 122, 3, 0, 65535, 2,
   3, 115, 4, 0, 0, 0, 65535, 0, 0, 0, 15, 101, 7, 0, 0, 0, 18446744073709551615, 18446744073709551615,
   0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 255, 255>;
-def BRForm_scalar_FP_instructions_FCLASS_s_d_z_fn_s_rn_d : BedrockScalarEncodingForm<
-  "FP.instructions.FCLASS.s_d_z_fn_s_rn_d", "fclass", "11111000111z000000ssssdddd", 0, "sd", 122, 3, 0, 65535, 2,
+def BRForm_scalar_FP_FCLASS_s_d_z_fn_s_rn_d : BedrockScalarEncodingForm<
+  "FP.FCLASS.s_d_z_fn_s_rn_d", "fclass", "11111000111z000000ssssdddd", 0, "sd", 122, 3, 0, 65535, 2,
   3, 115, 4, 0, 0, 0, 65535, 0, 0, 0, 2, 100, 4, 0, 0, 0, 65535, 0,
   0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 255, 255>;
-def BRForm_scalar_FP_instructions_FCLR_fn_d : BedrockScalarEncodingForm<
-  "FP.instructions.FCLR.fn_d", "fclr", "11101101100000dddd", 0, "", 0, 1, 0, 65535, 1,
+def BRForm_scalar_FP_FCLR_fn_d : BedrockScalarEncodingForm<
+  "FP.FCLR.fn_d", "fclr", "11101101100000dddd", 0, "", 0, 1, 0, 65535, 1,
   3, 100, 4, 0, 0, 0, 65535, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0,
   0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 255, 255>;
-def BRForm_scalar_FP_instructions_FCMP_s_d_z_fn_s_fn_d : BedrockScalarEncodingForm<
-  "FP.instructions.FCMP.s_d_z_fn_s_fn_d", "fcmp", "101000z111ssssdddd", 0, "sd", 122, 3, 0, 65535, 2,
+def BRForm_scalar_FP_FCMP_s_d_z_fn_s_fn_d : BedrockScalarEncodingForm<
+  "FP.FCMP.s_d_z_fn_s_fn_d", "fcmp", "101000z111ssssdddd", 0, "sd", 122, 3, 0, 65535, 2,
   3, 115, 4, 0, 0, 0, 65535, 0, 0, 0, 3, 100, 4, 0, 0, 0, 65535, 0,
   0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 255, 255>;
-def BRForm_scalar_FP_instructions_FCMP_s_d_z_ea_e_fn_d : BedrockScalarEncodingForm<
-  "FP.instructions.FCMP.s_d_z_ea_e_fn_d", "fcmp", "1111100100z0111ddddeeeeeee", 0, "sd", 122, 3, 0, 65535, 2,
+def BRForm_scalar_FP_FCMP_s_d_z_ea_e_fn_d : BedrockScalarEncodingForm<
+  "FP.FCMP.s_d_z_ea_e_fn_d", "fcmp", "1111100100z0111ddddeeeeeee", 0, "sd", 122, 3, 0, 65535, 2,
   15, 101, 7, 0, 1, 0, 18446744073709551615, 18446744073709551615, 0, 0, 3, 100, 4, 0, 0, 0, 65535, 0,
   0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 255, 255>;
-def BRForm_scalar_FP_instructions_FCOPYSIGN_s_d_z_fn_s_fn_m_fn_d : BedrockScalarEncodingForm<
-  "FP.instructions.FCOPYSIGN.s_d_z_fn_s_fn_m_fn_d", "fcopysign", "1111100110z100ssssmmmmdddd", 0, "sd", 122, 3, 0, 65535, 3,
+def BRForm_scalar_FP_FCOPYSIGN_s_d_z_fn_s_fn_m_fn_d : BedrockScalarEncodingForm<
+  "FP.FCOPYSIGN.s_d_z_fn_s_fn_m_fn_d", "fcopysign", "1111100110z100ssssmmmmdddd", 0, "sd", 122, 3, 0, 65535, 3,
   3, 115, 4, 0, 0, 0, 65535, 0, 0, 0, 3, 109, 4, 0, 0, 0, 65535, 0,
   0, 0, 3, 100, 4, 0, 0, 0, 65535, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 255, 255>;
-def BRForm_scalar_FP_instructions_FCVT_s_d_z_fn_s_fn_d : BedrockScalarEncodingForm<
-  "FP.instructions.FCVT.s_d_z_fn_s_fn_d", "fcvt", "101010z010ssssdddd", 0, "sd", 122, 3, 0, 65535, 2,
+def BRForm_scalar_FP_FCVT_s_d_z_fn_s_fn_d : BedrockScalarEncodingForm<
+  "FP.FCVT.s_d_z_fn_s_fn_d", "fcvt", "101010z010ssssdddd", 0, "sd", 122, 3, 0, 65535, 2,
   3, 115, 4, 0, 0, 0, 65535, 0, 0, 0, 3, 100, 4, 0, 0, 0, 65535, 0,
   0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 255, 255>;
-def BRForm_scalar_FP_instructions_FCVT_s_d_z_fn_s_rn_d : BedrockScalarEncodingForm<
-  "FP.instructions.FCVT.s_d_z_fn_s_rn_d", "fcvt", "11111000111z001010ssssdddd", 0, "sd", 122, 3, 0, 65535, 2,
+def BRForm_scalar_FP_FCVT_s_d_z_fn_s_rn_d : BedrockScalarEncodingForm<
+  "FP.FCVT.s_d_z_fn_s_rn_d", "fcvt", "11111000111z001010ssssdddd", 0, "sd", 122, 3, 0, 65535, 2,
   3, 115, 4, 0, 0, 0, 65535, 0, 0, 0, 2, 100, 4, 0, 0, 0, 65535, 0,
   0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 255, 255>;
-def BRForm_scalar_FP_instructions_FCVT_s_d_z_rn_s_fn_d : BedrockScalarEncodingForm<
-  "FP.instructions.FCVT.s_d_z_rn_s_fn_d", "fcvt", "11111000100z001010ssssdddd", 0, "sd", 122, 3, 0, 65535, 2,
+def BRForm_scalar_FP_FCVT_s_d_z_rn_s_fn_d : BedrockScalarEncodingForm<
+  "FP.FCVT.s_d_z_rn_s_fn_d", "fcvt", "11111000100z001010ssssdddd", 0, "sd", 122, 3, 0, 65535, 2,
   2, 115, 4, 0, 0, 0, 65535, 0, 0, 0, 3, 100, 4, 0, 0, 0, 65535, 0,
   0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 255, 255>;
-def BRForm_scalar_FP_instructions_FCVTU_s_d_z_fn_s_fn_d : BedrockScalarEncodingForm<
-  "FP.instructions.FCVTU.s_d_z_fn_s_fn_d", "fcvtu", "101010z011ssssdddd", 0, "sd", 122, 3, 0, 65535, 2,
+def BRForm_scalar_FP_FCVTU_s_d_z_fn_s_fn_d : BedrockScalarEncodingForm<
+  "FP.FCVTU.s_d_z_fn_s_fn_d", "fcvtu", "101010z011ssssdddd", 0, "sd", 122, 3, 0, 65535, 2,
   3, 115, 4, 0, 0, 0, 65535, 0, 0, 0, 3, 100, 4, 0, 0, 0, 65535, 0,
   0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 255, 255>;
-def BRForm_scalar_FP_instructions_FCVTU_s_d_z_fn_s_rn_d : BedrockScalarEncodingForm<
-  "FP.instructions.FCVTU.s_d_z_fn_s_rn_d", "fcvtu", "11111000111z001011ssssdddd", 0, "sd", 122, 3, 0, 65535, 2,
+def BRForm_scalar_FP_FCVTU_s_d_z_fn_s_rn_d : BedrockScalarEncodingForm<
+  "FP.FCVTU.s_d_z_fn_s_rn_d", "fcvtu", "11111000111z001011ssssdddd", 0, "sd", 122, 3, 0, 65535, 2,
   3, 115, 4, 0, 0, 0, 65535, 0, 0, 0, 2, 100, 4, 0, 0, 0, 65535, 0,
   0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 255, 255>;
-def BRForm_scalar_FP_instructions_FCVTU_s_d_z_rn_s_fn_d : BedrockScalarEncodingForm<
-  "FP.instructions.FCVTU.s_d_z_rn_s_fn_d", "fcvtu", "11111000100z001011ssssdddd", 0, "sd", 122, 3, 0, 65535, 2,
+def BRForm_scalar_FP_FCVTU_s_d_z_rn_s_fn_d : BedrockScalarEncodingForm<
+  "FP.FCVTU.s_d_z_rn_s_fn_d", "fcvtu", "11111000100z001011ssssdddd", 0, "sd", 122, 3, 0, 65535, 2,
   2, 115, 4, 0, 0, 0, 65535, 0, 0, 0, 3, 100, 4, 0, 0, 0, 65535, 0,
   0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 255, 255>;
-def BRForm_scalar_FP_instructions_FDIV_s_d_z_fn_s_fn_d : BedrockScalarEncodingForm<
-  "FP.instructions.FDIV.s_d_z_fn_s_fn_d", "fdiv", "101010z100ssssdddd", 0, "sd", 122, 3, 0, 65535, 2,
+def BRForm_scalar_FP_FDIV_s_d_z_fn_s_fn_d : BedrockScalarEncodingForm<
+  "FP.FDIV.s_d_z_fn_s_fn_d", "fdiv", "101010z100ssssdddd", 0, "sd", 122, 3, 0, 65535, 2,
   3, 115, 4, 0, 0, 0, 65535, 0, 0, 0, 3, 100, 4, 0, 0, 0, 65535, 0,
   0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 255, 255>;
-def BRForm_scalar_FP_instructions_FDIV_s_d_z_ea_e_fn_d : BedrockScalarEncodingForm<
-  "FP.instructions.FDIV.s_d_z_ea_e_fn_d", "fdiv", "1111100100z1100ddddeeeeeee", 0, "sd", 122, 3, 0, 65535, 2,
+def BRForm_scalar_FP_FDIV_s_d_z_ea_e_fn_d : BedrockScalarEncodingForm<
+  "FP.FDIV.s_d_z_ea_e_fn_d", "fdiv", "1111100100z1100ddddeeeeeee", 0, "sd", 122, 3, 0, 65535, 2,
   15, 101, 7, 0, 1, 0, 18446744073709551615, 18446744073709551615, 0, 0, 3, 100, 4, 0, 0, 0, 65535, 0,
   0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 255, 255>;
-def BRForm_scalar_FP_instructions_FFLOOR_s_d_z_fn_s_fn_d : BedrockScalarEncodingForm<
-  "FP.instructions.FFLOOR.s_d_z_fn_s_fn_d", "ffloor", "101010z111ssssdddd", 0, "sd", 122, 3, 0, 65535, 2,
+def BRForm_scalar_FP_FFLOOR_s_d_z_fn_s_fn_d : BedrockScalarEncodingForm<
+  "FP.FFLOOR.s_d_z_fn_s_fn_d", "ffloor", "101010z111ssssdddd", 0, "sd", 122, 3, 0, 65535, 2,
   3, 115, 4, 0, 0, 0, 65535, 0, 0, 0, 3, 100, 4, 0, 0, 0, 65535, 0,
   0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 255, 255>;
-def BRForm_scalar_FP_instructions_FFLOOR_s_d_z_ea_e_fn_d : BedrockScalarEncodingForm<
-  "FP.instructions.FFLOOR.s_d_z_ea_e_fn_d", "ffloor", "1111100100z1111ddddeeeeeee", 0, "sd", 122, 3, 0, 65535, 2,
+def BRForm_scalar_FP_FFLOOR_s_d_z_ea_e_fn_d : BedrockScalarEncodingForm<
+  "FP.FFLOOR.s_d_z_ea_e_fn_d", "ffloor", "1111100100z1111ddddeeeeeee", 0, "sd", 122, 3, 0, 65535, 2,
   15, 101, 7, 0, 1, 0, 18446744073709551615, 18446744073709551615, 0, 0, 3, 100, 4, 0, 0, 0, 65535, 0,
   0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 255, 255>;
-def BRForm_scalar_FP_instructions_FFLOOR_s_d_z_fn_s_ea_e : BedrockScalarEncodingForm<
-  "FP.instructions.FFLOOR.s_d_z_fn_s_ea_e", "ffloor", "1111100100z1010sssseeeeeee", 0, "sd", 122, 3, 0, 65535, 2,
+def BRForm_scalar_FP_FFLOOR_s_d_z_fn_s_ea_e : BedrockScalarEncodingForm<
+  "FP.FFLOOR.s_d_z_fn_s_ea_e", "ffloor", "1111100100z1010sssseeeeeee", 0, "sd", 122, 3, 0, 65535, 2,
   3, 115, 4, 0, 0, 0, 65535, 0, 0, 0, 15, 101, 7, 0, 0, 0, 18446744073709551615, 18446744073709551615,
   0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 255, 255>;
-def BRForm_scalar_FP_instructions_FGETEXP_s_d_z_ea_e_fn_d : BedrockScalarEncodingForm<
-  "FP.instructions.FGETEXP.s_d_z_ea_e_fn_d", "fgetexp", "1111100101z0000ddddeeeeeee", 0, "sd", 122, 3, 0, 65535, 2,
+def BRForm_scalar_FP_FGETEXP_s_d_z_ea_e_fn_d : BedrockScalarEncodingForm<
+  "FP.FGETEXP.s_d_z_ea_e_fn_d", "fgetexp", "1111100101z0000ddddeeeeeee", 0, "sd", 122, 3, 0, 65535, 2,
   15, 101, 7, 0, 1, 0, 18446744073709551615, 18446744073709551615, 0, 0, 3, 100, 4, 0, 0, 0, 65535, 0,
   0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 255, 255>;
-def BRForm_scalar_FP_instructions_FGETEXP_s_d_z_fn_s_fn_d : BedrockScalarEncodingForm<
-  "FP.instructions.FGETEXP.s_d_z_fn_s_fn_d", "fgetexp", "101100z000ssssdddd", 0, "sd", 122, 3, 0, 65535, 2,
+def BRForm_scalar_FP_FGETEXP_s_d_z_fn_s_fn_d : BedrockScalarEncodingForm<
+  "FP.FGETEXP.s_d_z_fn_s_fn_d", "fgetexp", "101100z000ssssdddd", 0, "sd", 122, 3, 0, 65535, 2,
   3, 115, 4, 0, 0, 0, 65535, 0, 0, 0, 3, 100, 4, 0, 0, 0, 65535, 0,
   0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 255, 255>;
-def BRForm_scalar_FP_instructions_FGETMAN_s_d_z_ea_e_fn_d : BedrockScalarEncodingForm<
-  "FP.instructions.FGETMAN.s_d_z_ea_e_fn_d", "fgetman", "1111100101z0001ddddeeeeeee", 0, "sd", 122, 3, 0, 65535, 2,
+def BRForm_scalar_FP_FGETMAN_s_d_z_ea_e_fn_d : BedrockScalarEncodingForm<
+  "FP.FGETMAN.s_d_z_ea_e_fn_d", "fgetman", "1111100101z0001ddddeeeeeee", 0, "sd", 122, 3, 0, 65535, 2,
   15, 101, 7, 0, 1, 0, 18446744073709551615, 18446744073709551615, 0, 0, 3, 100, 4, 0, 0, 0, 65535, 0,
   0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 255, 255>;
-def BRForm_scalar_FP_instructions_FGETMAN_s_d_z_fn_s_fn_d : BedrockScalarEncodingForm<
-  "FP.instructions.FGETMAN.s_d_z_fn_s_fn_d", "fgetman", "101100z001ssssdddd", 0, "sd", 122, 3, 0, 65535, 2,
+def BRForm_scalar_FP_FGETMAN_s_d_z_fn_s_fn_d : BedrockScalarEncodingForm<
+  "FP.FGETMAN.s_d_z_fn_s_fn_d", "fgetman", "101100z001ssssdddd", 0, "sd", 122, 3, 0, 65535, 2,
   3, 115, 4, 0, 0, 0, 65535, 0, 0, 0, 3, 100, 4, 0, 0, 0, 65535, 0,
   0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 255, 255>;
-def BRForm_scalar_FP_instructions_FINT_s_d_z_ea_e_fn_d : BedrockScalarEncodingForm<
-  "FP.instructions.FINT.s_d_z_ea_e_fn_d", "fint", "1111100101z0010ddddeeeeeee", 0, "sd", 122, 3, 0, 65535, 2,
+def BRForm_scalar_FP_FINT_s_d_z_ea_e_fn_d : BedrockScalarEncodingForm<
+  "FP.FINT.s_d_z_ea_e_fn_d", "fint", "1111100101z0010ddddeeeeeee", 0, "sd", 122, 3, 0, 65535, 2,
   15, 101, 7, 0, 1, 0, 18446744073709551615, 18446744073709551615, 0, 0, 3, 100, 4, 0, 0, 0, 65535, 0,
   0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 255, 255>;
-def BRForm_scalar_FP_instructions_FINT_s_d_z_fn_s_fn_d : BedrockScalarEncodingForm<
-  "FP.instructions.FINT.s_d_z_fn_s_fn_d", "fint", "101100z010ssssdddd", 0, "sd", 122, 3, 0, 65535, 2,
+def BRForm_scalar_FP_FINT_s_d_z_fn_s_fn_d : BedrockScalarEncodingForm<
+  "FP.FINT.s_d_z_fn_s_fn_d", "fint", "101100z010ssssdddd", 0, "sd", 122, 3, 0, 65535, 2,
   3, 115, 4, 0, 0, 0, 65535, 0, 0, 0, 3, 100, 4, 0, 0, 0, 65535, 0,
   0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 255, 255>;
-def BRForm_scalar_FP_instructions_FINT_s_d_z_fn_s_ea_e : BedrockScalarEncodingForm<
-  "FP.instructions.FINT.s_d_z_fn_s_ea_e", "fint", "1111100100z1011sssseeeeeee", 0, "sd", 122, 3, 0, 65535, 2,
+def BRForm_scalar_FP_FINT_s_d_z_fn_s_ea_e : BedrockScalarEncodingForm<
+  "FP.FINT.s_d_z_fn_s_ea_e", "fint", "1111100100z1011sssseeeeeee", 0, "sd", 122, 3, 0, 65535, 2,
   3, 115, 4, 0, 0, 0, 65535, 0, 0, 0, 15, 101, 7, 0, 0, 0, 18446744073709551615, 18446744073709551615,
   0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 255, 255>;
-def BRForm_scalar_FP_instructions_FINTRZ_s_d_z_ea_e_fn_d : BedrockScalarEncodingForm<
-  "FP.instructions.FINTRZ.s_d_z_ea_e_fn_d", "fintrz", "1111100101z0011ddddeeeeeee", 0, "sd", 122, 3, 0, 65535, 2,
+def BRForm_scalar_FP_FINTRZ_s_d_z_ea_e_fn_d : BedrockScalarEncodingForm<
+  "FP.FINTRZ.s_d_z_ea_e_fn_d", "fintrz", "1111100101z0011ddddeeeeeee", 0, "sd", 122, 3, 0, 65535, 2,
   15, 101, 7, 0, 1, 0, 18446744073709551615, 18446744073709551615, 0, 0, 3, 100, 4, 0, 0, 0, 65535, 0,
   0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 255, 255>;
-def BRForm_scalar_FP_instructions_FINTRZ_s_d_z_fn_s_fn_d : BedrockScalarEncodingForm<
-  "FP.instructions.FINTRZ.s_d_z_fn_s_fn_d", "fintrz", "101100z011ssssdddd", 0, "sd", 122, 3, 0, 65535, 2,
+def BRForm_scalar_FP_FINTRZ_s_d_z_fn_s_fn_d : BedrockScalarEncodingForm<
+  "FP.FINTRZ.s_d_z_fn_s_fn_d", "fintrz", "101100z011ssssdddd", 0, "sd", 122, 3, 0, 65535, 2,
   3, 115, 4, 0, 0, 0, 65535, 0, 0, 0, 3, 100, 4, 0, 0, 0, 65535, 0,
   0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 255, 255>;
-def BRForm_scalar_FP_instructions_FINTRZ_s_d_z_fn_s_ea_e : BedrockScalarEncodingForm<
-  "FP.instructions.FINTRZ.s_d_z_fn_s_ea_e", "fintrz", "1111100100z1101sssseeeeeee", 0, "sd", 122, 3, 0, 65535, 2,
+def BRForm_scalar_FP_FINTRZ_s_d_z_fn_s_ea_e : BedrockScalarEncodingForm<
+  "FP.FINTRZ.s_d_z_fn_s_ea_e", "fintrz", "1111100100z1101sssseeeeeee", 0, "sd", 122, 3, 0, 65535, 2,
   3, 115, 4, 0, 0, 0, 65535, 0, 0, 0, 15, 101, 7, 0, 0, 0, 18446744073709551615, 18446744073709551615,
   0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 255, 255>;
-def BRForm_scalar_FP_instructions_FMADD_s_d_z_fn_l_fn_r_fn_d : BedrockScalarEncodingForm<
-  "FP.instructions.FMADD.s_d_z_fn_l_fn_r_fn_d", "fmadd", "1111100110z101llllrrrrdddd", 0, "sd", 122, 3, 0, 65535, 3,
+def BRForm_scalar_FP_FMADD_s_d_z_fn_l_fn_r_fn_d : BedrockScalarEncodingForm<
+  "FP.FMADD.s_d_z_fn_l_fn_r_fn_d", "fmadd", "1111100110z101llllrrrrdddd", 0, "sd", 122, 3, 0, 65535, 3,
   3, 108, 4, 0, 0, 0, 65535, 0, 0, 0, 3, 114, 4, 0, 0, 0, 65535, 0,
   0, 0, 3, 100, 4, 0, 0, 0, 65535, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 255, 255>;
-def BRForm_scalar_FP_instructions_FMADD_s_d_z_ea_l_fn_r_fn_d : BedrockScalarEncodingForm<
-  "FP.instructions.FMADD.s_d_z_ea_l_fn_r_fn_d", "fmadd", "111111001000000z000rrrrddddlllllll", 0, "sd", 122, 3, 0, 65535, 3,
+def BRForm_scalar_FP_FMADD_s_d_z_ea_l_fn_r_fn_d : BedrockScalarEncodingForm<
+  "FP.FMADD.s_d_z_ea_l_fn_r_fn_d", "fmadd", "111111001000000z000rrrrddddlllllll", 0, "sd", 122, 3, 0, 65535, 3,
   15, 108, 7, 0, 1, 0, 18446744073709551615, 18446744073709551615, 0, 0, 3, 114, 4, 0, 0, 0, 65535, 0,
   0, 0, 3, 100, 4, 0, 0, 0, 65535, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 255, 255>;
-def BRForm_scalar_FP_instructions_FMADD_s_d_z_fn_l_ea_r_fn_d : BedrockScalarEncodingForm<
-  "FP.instructions.FMADD.s_d_z_fn_l_ea_r_fn_d", "fmadd", "111111001000000z100llllddddrrrrrrr", 0, "sd", 122, 3, 0, 65535, 3,
+def BRForm_scalar_FP_FMADD_s_d_z_fn_l_ea_r_fn_d : BedrockScalarEncodingForm<
+  "FP.FMADD.s_d_z_fn_l_ea_r_fn_d", "fmadd", "111111001000000z100llllddddrrrrrrr", 0, "sd", 122, 3, 0, 65535, 3,
   3, 108, 4, 0, 0, 0, 65535, 0, 0, 0, 15, 114, 7, 0, 1, 0, 18446744073709551615, 18446744073709551615,
   0, 0, 3, 100, 4, 0, 0, 0, 65535, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 255, 255>;
-def BRForm_scalar_FP_instructions_FMAX_s_d_z_fn_s_fn_d : BedrockScalarEncodingForm<
-  "FP.instructions.FMAX.s_d_z_fn_s_fn_d", "fmax", "101110z000ssssdddd", 0, "sd", 122, 3, 0, 65535, 2,
+def BRForm_scalar_FP_FMAX_s_d_z_fn_s_fn_d : BedrockScalarEncodingForm<
+  "FP.FMAX.s_d_z_fn_s_fn_d", "fmax", "101110z000ssssdddd", 0, "sd", 122, 3, 0, 65535, 2,
   3, 115, 4, 0, 0, 0, 65535, 0, 0, 0, 3, 100, 4, 0, 0, 0, 65535, 0,
   0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 255, 255>;
-def BRForm_scalar_FP_instructions_FMAX_s_d_z_ea_e_fn_d : BedrockScalarEncodingForm<
-  "FP.instructions.FMAX.s_d_z_ea_e_fn_d", "fmax", "1111100101z1000ddddeeeeeee", 0, "sd", 122, 3, 0, 65535, 2,
+def BRForm_scalar_FP_FMAX_s_d_z_ea_e_fn_d : BedrockScalarEncodingForm<
+  "FP.FMAX.s_d_z_ea_e_fn_d", "fmax", "1111100101z1000ddddeeeeeee", 0, "sd", 122, 3, 0, 65535, 2,
   15, 101, 7, 0, 1, 0, 18446744073709551615, 18446744073709551615, 0, 0, 3, 100, 4, 0, 0, 0, 65535, 0,
   0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 255, 255>;
-def BRForm_scalar_FP_instructions_FMIN_s_d_z_fn_s_fn_d : BedrockScalarEncodingForm<
-  "FP.instructions.FMIN.s_d_z_fn_s_fn_d", "fmin", "101110z001ssssdddd", 0, "sd", 122, 3, 0, 65535, 2,
+def BRForm_scalar_FP_FMIN_s_d_z_fn_s_fn_d : BedrockScalarEncodingForm<
+  "FP.FMIN.s_d_z_fn_s_fn_d", "fmin", "101110z001ssssdddd", 0, "sd", 122, 3, 0, 65535, 2,
   3, 115, 4, 0, 0, 0, 65535, 0, 0, 0, 3, 100, 4, 0, 0, 0, 65535, 0,
   0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 255, 255>;
-def BRForm_scalar_FP_instructions_FMIN_s_d_z_ea_e_fn_d : BedrockScalarEncodingForm<
-  "FP.instructions.FMIN.s_d_z_ea_e_fn_d", "fmin", "1111100101z1001ddddeeeeeee", 0, "sd", 122, 3, 0, 65535, 2,
+def BRForm_scalar_FP_FMIN_s_d_z_ea_e_fn_d : BedrockScalarEncodingForm<
+  "FP.FMIN.s_d_z_ea_e_fn_d", "fmin", "1111100101z1001ddddeeeeeee", 0, "sd", 122, 3, 0, 65535, 2,
   15, 101, 7, 0, 1, 0, 18446744073709551615, 18446744073709551615, 0, 0, 3, 100, 4, 0, 0, 0, 65535, 0,
   0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 255, 255>;
-def BRForm_scalar_FP_instructions_FMOD_s_d_z_ea_e_fn_d : BedrockScalarEncodingForm<
-  "FP.instructions.FMOD.s_d_z_ea_e_fn_d", "fmod", "1111100101z1010ddddeeeeeee", 0, "sd", 122, 3, 0, 65535, 2,
+def BRForm_scalar_FP_FMOD_s_d_z_ea_e_fn_d : BedrockScalarEncodingForm<
+  "FP.FMOD.s_d_z_ea_e_fn_d", "fmod", "1111100101z1010ddddeeeeeee", 0, "sd", 122, 3, 0, 65535, 2,
   15, 101, 7, 0, 1, 0, 18446744073709551615, 18446744073709551615, 0, 0, 3, 100, 4, 0, 0, 0, 65535, 0,
   0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 255, 255>;
-def BRForm_scalar_FP_instructions_FMOD_s_d_z_fn_s_fn_d : BedrockScalarEncodingForm<
-  "FP.instructions.FMOD.s_d_z_fn_s_fn_d", "fmod", "101110z010ssssdddd", 0, "sd", 122, 3, 0, 65535, 2,
+def BRForm_scalar_FP_FMOD_s_d_z_fn_s_fn_d : BedrockScalarEncodingForm<
+  "FP.FMOD.s_d_z_fn_s_fn_d", "fmod", "101110z010ssssdddd", 0, "sd", 122, 3, 0, 65535, 2,
   3, 115, 4, 0, 0, 0, 65535, 0, 0, 0, 3, 100, 4, 0, 0, 0, 65535, 0,
   0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 255, 255>;
-def BRForm_scalar_FP_instructions_FMOV_s_d_z_fn_s_fn_d : BedrockScalarEncodingForm<
-  "FP.instructions.FMOV.s_d_z_fn_s_fn_d", "fmov", "101110z011ssssdddd", 0, "sd", 122, 3, 0, 65535, 2,
+def BRForm_scalar_FP_FMOV_s_d_z_fn_s_fn_d : BedrockScalarEncodingForm<
+  "FP.FMOV.s_d_z_fn_s_fn_d", "fmov", "101110z011ssssdddd", 0, "sd", 122, 3, 0, 65535, 2,
   3, 115, 4, 0, 0, 0, 65535, 0, 0, 0, 3, 100, 4, 0, 0, 0, 65535, 0,
   0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 255, 255>;
-def BRForm_scalar_FP_instructions_FMOV_s_d_z_ea_e_fn_d : BedrockScalarEncodingForm<
-  "FP.instructions.FMOV.s_d_z_ea_e_fn_d", "fmov", "1111100101z1011ddddeeeeeee", 0, "sd", 122, 3, 0, 65535, 2,
+def BRForm_scalar_FP_FMOV_s_d_z_ea_e_fn_d : BedrockScalarEncodingForm<
+  "FP.FMOV.s_d_z_ea_e_fn_d", "fmov", "1111100101z1011ddddeeeeeee", 0, "sd", 122, 3, 0, 65535, 2,
   15, 101, 7, 0, 1, 0, 18446744073709551615, 18446744073709551615, 0, 0, 3, 100, 4, 0, 0, 0, 65535, 0,
   0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 255, 255>;
-def BRForm_scalar_FP_instructions_FMOV_s_d_z_fn_s_ea_e : BedrockScalarEncodingForm<
-  "FP.instructions.FMOV.s_d_z_fn_s_ea_e", "fmov", "1111100100z1110sssseeeeeee", 0, "sd", 122, 3, 0, 65535, 2,
+def BRForm_scalar_FP_FMOV_s_d_z_fn_s_ea_e : BedrockScalarEncodingForm<
+  "FP.FMOV.s_d_z_fn_s_ea_e", "fmov", "1111100100z1110sssseeeeeee", 0, "sd", 122, 3, 0, 65535, 2,
   3, 115, 4, 0, 0, 0, 65535, 0, 0, 0, 15, 101, 7, 0, 0, 0, 18446744073709551615, 18446744073709551615,
   0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 255, 255>;
-def BRForm_scalar_FP_instructions_FMOVcc_fn_s_fn_d : BedrockScalarEncodingForm<
-  "FP.instructions.FMOVcc.fn_s_fn_d", "fmov", "11111000101000ccccssssdddd", 0, "", 0, 1, 99, 65535, 2,
+def BRForm_scalar_FP_FMOVcc_fn_s_fn_d : BedrockScalarEncodingForm<
+  "FP.FMOVcc.fn_s_fn_d", "fmov", "11111000101000ccccssssdddd", 0, "", 0, 1, 99, 65535, 2,
   3, 115, 4, 0, 0, 0, 65535, 0, 0, 0, 3, 100, 4, 0, 0, 0, 65535, 0,
   0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 255, 255>;
-def BRForm_scalar_FP_instructions_FMOVcc_s_d_z_ea_e_fn_d : BedrockScalarEncodingForm<
-  "FP.instructions.FMOVcc.s_d_z_ea_e_fn_d", "fmov", "1111100000zccccddddeeeeeee", 0, "sd", 122, 3, 99, 65535, 2,
+def BRForm_scalar_FP_FMOVcc_s_d_z_ea_e_fn_d : BedrockScalarEncodingForm<
+  "FP.FMOVcc.s_d_z_ea_e_fn_d", "fmov", "1111100000zccccddddeeeeeee", 0, "sd", 122, 3, 99, 65535, 2,
   15, 101, 7, 0, 1, 0, 18446744073709551615, 18446744073709551615, 0, 0, 3, 100, 4, 0, 0, 0, 65535, 0,
   0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 255, 255>;
-def BRForm_scalar_FP_instructions_FMOVcc_s_d_z_fn_s_ea_e : BedrockScalarEncodingForm<
-  "FP.instructions.FMOVcc.s_d_z_fn_s_ea_e", "fmov", "1111100001zccccsssseeeeeee", 0, "sd", 122, 3, 99, 65535, 2,
+def BRForm_scalar_FP_FMOVcc_s_d_z_fn_s_ea_e : BedrockScalarEncodingForm<
+  "FP.FMOVcc.s_d_z_fn_s_ea_e", "fmov", "1111100001zccccsssseeeeeee", 0, "sd", 122, 3, 99, 65535, 2,
   3, 115, 4, 0, 0, 0, 65535, 0, 0, 0, 15, 101, 7, 0, 0, 0, 18446744073709551615, 18446744073709551615,
   0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 255, 255>;
-def BRForm_scalar_FP_instructions_FMOVCR_s_d_z_fconst_id_fn_d : BedrockScalarEncodingForm<
-  "FP.instructions.FMOVCR.s_d_z_fconst_id_fn_d", "fmovcr", "11101100100z00dddd", 2, "sd", 122, 3, 0, 65535, 2,
+def BRForm_scalar_FP_FMOVCR_s_d_z_fconst_id_fn_d : BedrockScalarEncodingForm<
+  "FP.FMOVCR.s_d_z_fconst_id_fn_d", "fmovcr", "11101100100z00dddd", 2, "sd", 122, 3, 0, 65535, 2,
   10, 0, 16, 0, 0, 0, 1, 0, 0, 0, 3, 100, 4, 0, 0, 0, 65535, 0,
   0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 255, 255>;
-def BRForm_scalar_FP_instructions_FMSUB_s_d_z_fn_l_fn_r_fn_d : BedrockScalarEncodingForm<
-  "FP.instructions.FMSUB.s_d_z_fn_l_fn_r_fn_d", "fmsub", "1111100110z110llllrrrrdddd", 0, "sd", 122, 3, 0, 65535, 3,
+def BRForm_scalar_FP_FMSUB_s_d_z_fn_l_fn_r_fn_d : BedrockScalarEncodingForm<
+  "FP.FMSUB.s_d_z_fn_l_fn_r_fn_d", "fmsub", "1111100110z110llllrrrrdddd", 0, "sd", 122, 3, 0, 65535, 3,
   3, 108, 4, 0, 0, 0, 65535, 0, 0, 0, 3, 114, 4, 0, 0, 0, 65535, 0,
   0, 0, 3, 100, 4, 0, 0, 0, 65535, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 255, 255>;
-def BRForm_scalar_FP_instructions_FMSUB_s_d_z_ea_l_fn_r_fn_d : BedrockScalarEncodingForm<
-  "FP.instructions.FMSUB.s_d_z_ea_l_fn_r_fn_d", "fmsub", "111111001000000z001rrrrddddlllllll", 0, "sd", 122, 3, 0, 65535, 3,
+def BRForm_scalar_FP_FMSUB_s_d_z_ea_l_fn_r_fn_d : BedrockScalarEncodingForm<
+  "FP.FMSUB.s_d_z_ea_l_fn_r_fn_d", "fmsub", "111111001000000z001rrrrddddlllllll", 0, "sd", 122, 3, 0, 65535, 3,
   15, 108, 7, 0, 1, 0, 18446744073709551615, 18446744073709551615, 0, 0, 3, 114, 4, 0, 0, 0, 65535, 0,
   0, 0, 3, 100, 4, 0, 0, 0, 65535, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 255, 255>;
-def BRForm_scalar_FP_instructions_FMSUB_s_d_z_fn_l_ea_r_fn_d : BedrockScalarEncodingForm<
-  "FP.instructions.FMSUB.s_d_z_fn_l_ea_r_fn_d", "fmsub", "111111001000000z101llllddddrrrrrrr", 0, "sd", 122, 3, 0, 65535, 3,
+def BRForm_scalar_FP_FMSUB_s_d_z_fn_l_ea_r_fn_d : BedrockScalarEncodingForm<
+  "FP.FMSUB.s_d_z_fn_l_ea_r_fn_d", "fmsub", "111111001000000z101llllddddrrrrrrr", 0, "sd", 122, 3, 0, 65535, 3,
   3, 108, 4, 0, 0, 0, 65535, 0, 0, 0, 15, 114, 7, 0, 1, 0, 18446744073709551615, 18446744073709551615,
   0, 0, 3, 100, 4, 0, 0, 0, 65535, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 255, 255>;
-def BRForm_scalar_FP_instructions_FMUL_s_d_z_fn_s_fn_d : BedrockScalarEncodingForm<
-  "FP.instructions.FMUL.s_d_z_fn_s_fn_d", "fmul", "101110z100ssssdddd", 0, "sd", 122, 3, 0, 65535, 2,
+def BRForm_scalar_FP_FMUL_s_d_z_fn_s_fn_d : BedrockScalarEncodingForm<
+  "FP.FMUL.s_d_z_fn_s_fn_d", "fmul", "101110z100ssssdddd", 0, "sd", 122, 3, 0, 65535, 2,
   3, 115, 4, 0, 0, 0, 65535, 0, 0, 0, 3, 100, 4, 0, 0, 0, 65535, 0,
   0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 255, 255>;
-def BRForm_scalar_FP_instructions_FMUL_s_d_z_ea_e_fn_d : BedrockScalarEncodingForm<
-  "FP.instructions.FMUL.s_d_z_ea_e_fn_d", "fmul", "1111100101z1100ddddeeeeeee", 0, "sd", 122, 3, 0, 65535, 2,
+def BRForm_scalar_FP_FMUL_s_d_z_ea_e_fn_d : BedrockScalarEncodingForm<
+  "FP.FMUL.s_d_z_ea_e_fn_d", "fmul", "1111100101z1100ddddeeeeeee", 0, "sd", 122, 3, 0, 65535, 2,
   15, 101, 7, 0, 1, 0, 18446744073709551615, 18446744073709551615, 0, 0, 3, 100, 4, 0, 0, 0, 65535, 0,
   0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 255, 255>;
-def BRForm_scalar_FP_instructions_FNEG_s_d_z_fn_s_fn_d : BedrockScalarEncodingForm<
-  "FP.instructions.FNEG.s_d_z_fn_s_fn_d", "fneg", "101110z101ssssdddd", 0, "sd", 122, 3, 0, 65535, 2,
+def BRForm_scalar_FP_FNEG_s_d_z_fn_s_fn_d : BedrockScalarEncodingForm<
+  "FP.FNEG.s_d_z_fn_s_fn_d", "fneg", "101110z101ssssdddd", 0, "sd", 122, 3, 0, 65535, 2,
   3, 115, 4, 0, 0, 0, 65535, 0, 0, 0, 3, 100, 4, 0, 0, 0, 65535, 0,
   0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 255, 255>;
-def BRForm_scalar_FP_instructions_FNEG_s_d_z_ea_e_fn_d : BedrockScalarEncodingForm<
-  "FP.instructions.FNEG.s_d_z_ea_e_fn_d", "fneg", "1111100101z1101ddddeeeeeee", 0, "sd", 122, 3, 0, 65535, 2,
+def BRForm_scalar_FP_FNEG_s_d_z_ea_e_fn_d : BedrockScalarEncodingForm<
+  "FP.FNEG.s_d_z_ea_e_fn_d", "fneg", "1111100101z1101ddddeeeeeee", 0, "sd", 122, 3, 0, 65535, 2,
   15, 101, 7, 0, 1, 0, 18446744073709551615, 18446744073709551615, 0, 0, 3, 100, 4, 0, 0, 0, 65535, 0,
   0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 255, 255>;
-def BRForm_scalar_FP_instructions_FNEG_s_d_z_fn_s_ea_e : BedrockScalarEncodingForm<
-  "FP.instructions.FNEG.s_d_z_fn_s_ea_e", "fneg", "1111100101z0100sssseeeeeee", 0, "sd", 122, 3, 0, 65535, 2,
+def BRForm_scalar_FP_FNEG_s_d_z_fn_s_ea_e : BedrockScalarEncodingForm<
+  "FP.FNEG.s_d_z_fn_s_ea_e", "fneg", "1111100101z0100sssseeeeeee", 0, "sd", 122, 3, 0, 65535, 2,
   3, 115, 4, 0, 0, 0, 65535, 0, 0, 0, 15, 101, 7, 0, 0, 0, 18446744073709551615, 18446744073709551615,
   0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 255, 255>;
-def BRForm_scalar_FP_instructions_FNMADD_s_d_z_fn_l_fn_r_fn_d : BedrockScalarEncodingForm<
-  "FP.instructions.FNMADD.s_d_z_fn_l_fn_r_fn_d", "fnmadd", "1111100110z111llllrrrrdddd", 0, "sd", 122, 3, 0, 65535, 3,
+def BRForm_scalar_FP_FNMADD_s_d_z_fn_l_fn_r_fn_d : BedrockScalarEncodingForm<
+  "FP.FNMADD.s_d_z_fn_l_fn_r_fn_d", "fnmadd", "1111100110z111llllrrrrdddd", 0, "sd", 122, 3, 0, 65535, 3,
   3, 108, 4, 0, 0, 0, 65535, 0, 0, 0, 3, 114, 4, 0, 0, 0, 65535, 0,
   0, 0, 3, 100, 4, 0, 0, 0, 65535, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 255, 255>;
-def BRForm_scalar_FP_instructions_FNMADD_s_d_z_ea_l_fn_r_fn_d : BedrockScalarEncodingForm<
-  "FP.instructions.FNMADD.s_d_z_ea_l_fn_r_fn_d", "fnmadd", "111111001000000z010rrrrddddlllllll", 0, "sd", 122, 3, 0, 65535, 3,
+def BRForm_scalar_FP_FNMADD_s_d_z_ea_l_fn_r_fn_d : BedrockScalarEncodingForm<
+  "FP.FNMADD.s_d_z_ea_l_fn_r_fn_d", "fnmadd", "111111001000000z010rrrrddddlllllll", 0, "sd", 122, 3, 0, 65535, 3,
   15, 108, 7, 0, 1, 0, 18446744073709551615, 18446744073709551615, 0, 0, 3, 114, 4, 0, 0, 0, 65535, 0,
   0, 0, 3, 100, 4, 0, 0, 0, 65535, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 255, 255>;
-def BRForm_scalar_FP_instructions_FNMADD_s_d_z_fn_l_ea_r_fn_d : BedrockScalarEncodingForm<
-  "FP.instructions.FNMADD.s_d_z_fn_l_ea_r_fn_d", "fnmadd", "111111001000000z110llllddddrrrrrrr", 0, "sd", 122, 3, 0, 65535, 3,
+def BRForm_scalar_FP_FNMADD_s_d_z_fn_l_ea_r_fn_d : BedrockScalarEncodingForm<
+  "FP.FNMADD.s_d_z_fn_l_ea_r_fn_d", "fnmadd", "111111001000000z110llllddddrrrrrrr", 0, "sd", 122, 3, 0, 65535, 3,
   3, 108, 4, 0, 0, 0, 65535, 0, 0, 0, 15, 114, 7, 0, 1, 0, 18446744073709551615, 18446744073709551615,
   0, 0, 3, 100, 4, 0, 0, 0, 65535, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 255, 255>;
-def BRForm_scalar_FP_instructions_FNMSUB_s_d_z_fn_l_fn_r_fn_d : BedrockScalarEncodingForm<
-  "FP.instructions.FNMSUB.s_d_z_fn_l_fn_r_fn_d", "fnmsub", "1111100111z000llllrrrrdddd", 0, "sd", 122, 3, 0, 65535, 3,
+def BRForm_scalar_FP_FNMSUB_s_d_z_fn_l_fn_r_fn_d : BedrockScalarEncodingForm<
+  "FP.FNMSUB.s_d_z_fn_l_fn_r_fn_d", "fnmsub", "1111100111z000llllrrrrdddd", 0, "sd", 122, 3, 0, 65535, 3,
   3, 108, 4, 0, 0, 0, 65535, 0, 0, 0, 3, 114, 4, 0, 0, 0, 65535, 0,
   0, 0, 3, 100, 4, 0, 0, 0, 65535, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 255, 255>;
-def BRForm_scalar_FP_instructions_FNMSUB_s_d_z_ea_l_fn_r_fn_d : BedrockScalarEncodingForm<
-  "FP.instructions.FNMSUB.s_d_z_ea_l_fn_r_fn_d", "fnmsub", "111111001000000z011rrrrddddlllllll", 0, "sd", 122, 3, 0, 65535, 3,
+def BRForm_scalar_FP_FNMSUB_s_d_z_ea_l_fn_r_fn_d : BedrockScalarEncodingForm<
+  "FP.FNMSUB.s_d_z_ea_l_fn_r_fn_d", "fnmsub", "111111001000000z011rrrrddddlllllll", 0, "sd", 122, 3, 0, 65535, 3,
   15, 108, 7, 0, 1, 0, 18446744073709551615, 18446744073709551615, 0, 0, 3, 114, 4, 0, 0, 0, 65535, 0,
   0, 0, 3, 100, 4, 0, 0, 0, 65535, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 255, 255>;
-def BRForm_scalar_FP_instructions_FNMSUB_s_d_z_fn_l_ea_r_fn_d : BedrockScalarEncodingForm<
-  "FP.instructions.FNMSUB.s_d_z_fn_l_ea_r_fn_d", "fnmsub", "111111001000000z111llllddddrrrrrrr", 0, "sd", 122, 3, 0, 65535, 3,
+def BRForm_scalar_FP_FNMSUB_s_d_z_fn_l_ea_r_fn_d : BedrockScalarEncodingForm<
+  "FP.FNMSUB.s_d_z_fn_l_ea_r_fn_d", "fnmsub", "111111001000000z111llllddddrrrrrrr", 0, "sd", 122, 3, 0, 65535, 3,
   3, 108, 4, 0, 0, 0, 65535, 0, 0, 0, 15, 114, 7, 0, 1, 0, 18446744073709551615, 18446744073709551615,
   0, 0, 3, 100, 4, 0, 0, 0, 65535, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 255, 255>;
-def BRForm_scalar_FP_instructions_FPOPP_fpairn_i : BedrockScalarEncodingForm<
-  "FP.instructions.FPOPP.fpairn_i", "fpopp", "0101iii", 0, "", 0, 1, 0, 65535, 1,
+def BRForm_scalar_FP_FPOPP_fpairn_i : BedrockScalarEncodingForm<
+  "FP.FPOPP.fpairn_i", "fpopp", "0101iii", 0, "", 0, 1, 0, 65535, 1,
   8, 105, 3, 0, 0, 0, 255, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0,
   0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 255, 255>;
-def BRForm_scalar_FP_instructions_FPUSHP_fpairn_i : BedrockScalarEncodingForm<
-  "FP.instructions.FPUSHP.fpairn_i", "fpushp", "0100iii", 0, "", 0, 1, 0, 65535, 1,
+def BRForm_scalar_FP_FPUSHP_fpairn_i : BedrockScalarEncodingForm<
+  "FP.FPUSHP.fpairn_i", "fpushp", "0100iii", 0, "", 0, 1, 0, 65535, 1,
   8, 105, 3, 0, 0, 0, 255, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0,
   0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 255, 255>;
-def BRForm_scalar_FP_instructions_FREM_s_d_z_ea_e_fn_d : BedrockScalarEncodingForm<
-  "FP.instructions.FREM.s_d_z_ea_e_fn_d", "frem", "1111100101z1110ddddeeeeeee", 0, "sd", 122, 3, 0, 65535, 2,
+def BRForm_scalar_FP_FREM_s_d_z_ea_e_fn_d : BedrockScalarEncodingForm<
+  "FP.FREM.s_d_z_ea_e_fn_d", "frem", "1111100101z1110ddddeeeeeee", 0, "sd", 122, 3, 0, 65535, 2,
   15, 101, 7, 0, 1, 0, 18446744073709551615, 18446744073709551615, 0, 0, 3, 100, 4, 0, 0, 0, 65535, 0,
   0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 255, 255>;
-def BRForm_scalar_FP_instructions_FREM_s_d_z_fn_s_fn_d : BedrockScalarEncodingForm<
-  "FP.instructions.FREM.s_d_z_fn_s_fn_d", "frem", "101110z110ssssdddd", 0, "sd", 122, 3, 0, 65535, 2,
+def BRForm_scalar_FP_FREM_s_d_z_fn_s_fn_d : BedrockScalarEncodingForm<
+  "FP.FREM.s_d_z_fn_s_fn_d", "frem", "101110z110ssssdddd", 0, "sd", 122, 3, 0, 65535, 2,
   3, 115, 4, 0, 0, 0, 65535, 0, 0, 0, 3, 100, 4, 0, 0, 0, 65535, 0,
   0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 255, 255>;
-def BRForm_scalar_FP_instructions_FROUND_s_d_z_fn_s_fn_d : BedrockScalarEncodingForm<
-  "FP.instructions.FROUND.s_d_z_fn_s_fn_d", "fround", "101110z111ssssdddd", 0, "sd", 122, 3, 0, 65535, 2,
+def BRForm_scalar_FP_FROUND_s_d_z_fn_s_fn_d : BedrockScalarEncodingForm<
+  "FP.FROUND.s_d_z_fn_s_fn_d", "fround", "101110z111ssssdddd", 0, "sd", 122, 3, 0, 65535, 2,
   3, 115, 4, 0, 0, 0, 65535, 0, 0, 0, 3, 100, 4, 0, 0, 0, 65535, 0,
   0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 255, 255>;
-def BRForm_scalar_FP_instructions_FROUND_s_d_z_ea_e_fn_d : BedrockScalarEncodingForm<
-  "FP.instructions.FROUND.s_d_z_ea_e_fn_d", "fround", "1111100101z1111ddddeeeeeee", 0, "sd", 122, 3, 0, 65535, 2,
+def BRForm_scalar_FP_FROUND_s_d_z_ea_e_fn_d : BedrockScalarEncodingForm<
+  "FP.FROUND.s_d_z_ea_e_fn_d", "fround", "1111100101z1111ddddeeeeeee", 0, "sd", 122, 3, 0, 65535, 2,
   15, 101, 7, 0, 1, 0, 18446744073709551615, 18446744073709551615, 0, 0, 3, 100, 4, 0, 0, 0, 65535, 0,
   0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 255, 255>;
-def BRForm_scalar_FP_instructions_FROUND_s_d_z_fn_s_ea_e : BedrockScalarEncodingForm<
-  "FP.instructions.FROUND.s_d_z_fn_s_ea_e", "fround", "1111100101z0101sssseeeeeee", 0, "sd", 122, 3, 0, 65535, 2,
+def BRForm_scalar_FP_FROUND_s_d_z_fn_s_ea_e : BedrockScalarEncodingForm<
+  "FP.FROUND.s_d_z_fn_s_ea_e", "fround", "1111100101z0101sssseeeeeee", 0, "sd", 122, 3, 0, 65535, 2,
   3, 115, 4, 0, 0, 0, 65535, 0, 0, 0, 15, 101, 7, 0, 0, 0, 18446744073709551615, 18446744073709551615,
   0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 255, 255>;
-def BRForm_scalar_FP_instructions_FSCALE_s_d_z_ea_e_fn_d : BedrockScalarEncodingForm<
-  "FP.instructions.FSCALE.s_d_z_ea_e_fn_d", "fscale", "1111100100z0001ddddeeeeeee", 0, "sd", 122, 3, 0, 65535, 2,
+def BRForm_scalar_FP_FSCALE_s_d_z_ea_e_fn_d : BedrockScalarEncodingForm<
+  "FP.FSCALE.s_d_z_ea_e_fn_d", "fscale", "1111100100z0001ddddeeeeeee", 0, "sd", 122, 3, 0, 65535, 2,
   15, 101, 7, 0, 1, 0, 18446744073709551615, 18446744073709551615, 0, 0, 3, 100, 4, 0, 0, 0, 65535, 0,
   0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 255, 255>;
-def BRForm_scalar_FP_instructions_FSCALE_s_d_z_fn_s_fn_d : BedrockScalarEncodingForm<
-  "FP.instructions.FSCALE.s_d_z_fn_s_fn_d", "fscale", "101000z001ssssdddd", 0, "sd", 122, 3, 0, 65535, 2,
+def BRForm_scalar_FP_FSCALE_s_d_z_fn_s_fn_d : BedrockScalarEncodingForm<
+  "FP.FSCALE.s_d_z_fn_s_fn_d", "fscale", "101000z001ssssdddd", 0, "sd", 122, 3, 0, 65535, 2,
   3, 115, 4, 0, 0, 0, 65535, 0, 0, 0, 3, 100, 4, 0, 0, 0, 65535, 0,
   0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 255, 255>;
-def BRForm_scalar_FP_instructions_FSQRT_s_d_z_fn_s_fn_d : BedrockScalarEncodingForm<
-  "FP.instructions.FSQRT.s_d_z_fn_s_fn_d", "fsqrt", "101000z011ssssdddd", 0, "sd", 122, 3, 0, 65535, 2,
+def BRForm_scalar_FP_FSQRT_s_d_z_fn_s_fn_d : BedrockScalarEncodingForm<
+  "FP.FSQRT.s_d_z_fn_s_fn_d", "fsqrt", "101000z011ssssdddd", 0, "sd", 122, 3, 0, 65535, 2,
   3, 115, 4, 0, 0, 0, 65535, 0, 0, 0, 3, 100, 4, 0, 0, 0, 65535, 0,
   0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 255, 255>;
-def BRForm_scalar_FP_instructions_FSQRT_s_d_z_ea_e_fn_d : BedrockScalarEncodingForm<
-  "FP.instructions.FSQRT.s_d_z_ea_e_fn_d", "fsqrt", "1111100100z0011ddddeeeeeee", 0, "sd", 122, 3, 0, 65535, 2,
+def BRForm_scalar_FP_FSQRT_s_d_z_ea_e_fn_d : BedrockScalarEncodingForm<
+  "FP.FSQRT.s_d_z_ea_e_fn_d", "fsqrt", "1111100100z0011ddddeeeeeee", 0, "sd", 122, 3, 0, 65535, 2,
   15, 101, 7, 0, 1, 0, 18446744073709551615, 18446744073709551615, 0, 0, 3, 100, 4, 0, 0, 0, 65535, 0,
   0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 255, 255>;
-def BRForm_scalar_FP_instructions_FSQRT_s_d_z_fn_s_ea_e : BedrockScalarEncodingForm<
-  "FP.instructions.FSQRT.s_d_z_fn_s_ea_e", "fsqrt", "1111100101z0110sssseeeeeee", 0, "sd", 122, 3, 0, 65535, 2,
+def BRForm_scalar_FP_FSQRT_s_d_z_fn_s_ea_e : BedrockScalarEncodingForm<
+  "FP.FSQRT.s_d_z_fn_s_ea_e", "fsqrt", "1111100101z0110sssseeeeeee", 0, "sd", 122, 3, 0, 65535, 2,
   3, 115, 4, 0, 0, 0, 65535, 0, 0, 0, 15, 101, 7, 0, 0, 0, 18446744073709551615, 18446744073709551615,
   0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 255, 255>;
-def BRForm_scalar_FP_instructions_FSUB_s_d_z_fn_s_fn_d : BedrockScalarEncodingForm<
-  "FP.instructions.FSUB.s_d_z_fn_s_fn_d", "fsub", "101000z100ssssdddd", 0, "sd", 122, 3, 0, 65535, 2,
+def BRForm_scalar_FP_FSUB_s_d_z_fn_s_fn_d : BedrockScalarEncodingForm<
+  "FP.FSUB.s_d_z_fn_s_fn_d", "fsub", "101000z100ssssdddd", 0, "sd", 122, 3, 0, 65535, 2,
   3, 115, 4, 0, 0, 0, 65535, 0, 0, 0, 3, 100, 4, 0, 0, 0, 65535, 0,
   0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 255, 255>;
-def BRForm_scalar_FP_instructions_FSUB_s_d_z_ea_e_fn_d : BedrockScalarEncodingForm<
-  "FP.instructions.FSUB.s_d_z_ea_e_fn_d", "fsub", "1111100100z0100ddddeeeeeee", 0, "sd", 122, 3, 0, 65535, 2,
+def BRForm_scalar_FP_FSUB_s_d_z_ea_e_fn_d : BedrockScalarEncodingForm<
+  "FP.FSUB.s_d_z_ea_e_fn_d", "fsub", "1111100100z0100ddddeeeeeee", 0, "sd", 122, 3, 0, 65535, 2,
   15, 101, 7, 0, 1, 0, 18446744073709551615, 18446744073709551615, 0, 0, 3, 100, 4, 0, 0, 0, 65535, 0,
   0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 255, 255>;
-def BRForm_scalar_FP_instructions_FTEST_s_d_z_ea_e : BedrockScalarEncodingForm<
-  "FP.instructions.FTEST.s_d_z_ea_e", "ftest", "111101100000000000zeeeeeee", 0, "sd", 122, 3, 0, 65535, 1,
+def BRForm_scalar_FP_FTEST_s_d_z_ea_e : BedrockScalarEncodingForm<
+  "FP.FTEST.s_d_z_ea_e", "ftest", "111101100000000000zeeeeeee", 0, "sd", 122, 3, 0, 65535, 1,
   15, 101, 7, 0, 1, 0, 18446744073709551615, 18446744073709551615, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0,
   0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 255, 255>;
-def BRForm_scalar_FP_instructions_FTEST_s_d_z_fn_s : BedrockScalarEncodingForm<
-  "FP.instructions.FTEST.s_d_z_fn_s", "ftest", "11101100100z01ssss", 0, "sd", 122, 3, 0, 65535, 1,
+def BRForm_scalar_FP_FTEST_s_d_z_fn_s : BedrockScalarEncodingForm<
+  "FP.FTEST.s_d_z_fn_s", "ftest", "11101100100z01ssss", 0, "sd", 122, 3, 0, 65535, 1,
   3, 115, 4, 0, 0, 0, 65535, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0,
   0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 255, 255>;
-def BRForm_scalar_FP_instructions_FTRUNC_s_d_z_fn_s_fn_d : BedrockScalarEncodingForm<
-  "FP.instructions.FTRUNC.s_d_z_fn_s_fn_d", "ftrunc", "101000z101ssssdddd", 0, "sd", 122, 3, 0, 65535, 2,
+def BRForm_scalar_FP_FTRUNC_s_d_z_fn_s_fn_d : BedrockScalarEncodingForm<
+  "FP.FTRUNC.s_d_z_fn_s_fn_d", "ftrunc", "101000z101ssssdddd", 0, "sd", 122, 3, 0, 65535, 2,
   3, 115, 4, 0, 0, 0, 65535, 0, 0, 0, 3, 100, 4, 0, 0, 0, 65535, 0,
   0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 255, 255>;
-def BRForm_scalar_FP_instructions_FTRUNC_s_d_z_ea_e_fn_d : BedrockScalarEncodingForm<
-  "FP.instructions.FTRUNC.s_d_z_ea_e_fn_d", "ftrunc", "1111100100z0101ddddeeeeeee", 0, "sd", 122, 3, 0, 65535, 2,
+def BRForm_scalar_FP_FTRUNC_s_d_z_ea_e_fn_d : BedrockScalarEncodingForm<
+  "FP.FTRUNC.s_d_z_ea_e_fn_d", "ftrunc", "1111100100z0101ddddeeeeeee", 0, "sd", 122, 3, 0, 65535, 2,
   15, 101, 7, 0, 1, 0, 18446744073709551615, 18446744073709551615, 0, 0, 3, 100, 4, 0, 0, 0, 65535, 0,
   0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 255, 255>;
-def BRForm_scalar_FP_instructions_FTRUNC_s_d_z_fn_s_ea_e : BedrockScalarEncodingForm<
-  "FP.instructions.FTRUNC.s_d_z_fn_s_ea_e", "ftrunc", "1111100101z0111sssseeeeeee", 0, "sd", 122, 3, 0, 65535, 2,
+def BRForm_scalar_FP_FTRUNC_s_d_z_fn_s_ea_e : BedrockScalarEncodingForm<
+  "FP.FTRUNC.s_d_z_fn_s_ea_e", "ftrunc", "1111100101z0111sssseeeeeee", 0, "sd", 122, 3, 0, 65535, 2,
   3, 115, 4, 0, 0, 0, 65535, 0, 0, 0, 15, 101, 7, 0, 0, 0, 18446744073709551615, 18446744073709551615,
   0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 255, 255>;
-def BRForm_scalar_FP_instructions_FXCHG_fn_l_fn_r : BedrockScalarEncodingForm<
-  "FP.instructions.FXCHG.fn_l_fn_r", "fxchg", "1010100000llllrrrr", 0, "", 0, 1, 0, 65535, 2,
+def BRForm_scalar_FP_FXCHG_fn_l_fn_r : BedrockScalarEncodingForm<
+  "FP.FXCHG.fn_l_fn_r", "fxchg", "1010100000llllrrrr", 0, "", 0, 1, 0, 65535, 2,
   3, 108, 4, 0, 0, 0, 65535, 0, 0, 0, 3, 114, 4, 0, 0, 0, 65535, 0,
   0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1>;
-def BRForm_scalar_FP_instructions_RDFFLAGS_rn_d : BedrockScalarEncodingForm<
-  "FP.instructions.RDFFLAGS.rn_d", "rdfflags", "11101101001111dddd", 0, "", 0, 1, 0, 65535, 1,
+def BRForm_scalar_FP_RDFFLAGS_rn_d : BedrockScalarEncodingForm<
+  "FP.RDFFLAGS.rn_d", "rdfflags", "11101101001111dddd", 0, "", 0, 1, 0, 65535, 1,
   2, 100, 4, 0, 0, 0, 65535, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0,
   0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 255, 255>;
-def BRForm_scalar_FP_instructions_RDFSTATUS_rn_d : BedrockScalarEncodingForm<
-  "FP.instructions.RDFSTATUS.rn_d", "rdfstatus", "11101101000100dddd", 0, "", 0, 1, 0, 65535, 1,
+def BRForm_scalar_FP_RDFSTATUS_rn_d : BedrockScalarEncodingForm<
+  "FP.RDFSTATUS.rn_d", "rdfstatus", "11101101000100dddd", 0, "", 0, 1, 0, 65535, 1,
   2, 100, 4, 0, 0, 0, 65535, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0,
   0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 255, 255>;
-def BRForm_scalar_FP_instructions_WRFFLAGS_rn_s : BedrockScalarEncodingForm<
-  "FP.instructions.WRFFLAGS.rn_s", "wrfflags", "11101101001011ssss", 0, "", 0, 1, 0, 65535, 1,
+def BRForm_scalar_FP_WRFFLAGS_rn_s : BedrockScalarEncodingForm<
+  "FP.WRFFLAGS.rn_s", "wrfflags", "11101101001011ssss", 0, "", 0, 1, 0, 65535, 1,
   2, 115, 4, 0, 0, 0, 65535, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0,
   0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 255, 255>;
-def BRForm_scalar_FP_instructions_WRFSTATUS_rn_s : BedrockScalarEncodingForm<
-  "FP.instructions.WRFSTATUS.rn_s", "wrfstatus", "11101101001101ssss", 0, "", 0, 1, 0, 65535, 1,
+def BRForm_scalar_FP_WRFSTATUS_rn_s : BedrockScalarEncodingForm<
+  "FP.WRFSTATUS.rn_s", "wrfstatus", "11101101001101ssss", 0, "", 0, 1, 0, 65535, 1,
   2, 115, 4, 0, 0, 0, 65535, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0,
   0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 255, 255>;
-def BRForm_scalar_FPTRANSA_instructions_FACOSA_s_d_z_fn_s_fn_d : BedrockScalarEncodingForm<
-  "FPTRANSA.instructions.FACOSA.s_d_z_fn_s_fn_d", "facosa", "1111100111z0101000ssssdddd", 0, "sd", 122, 3, 0, 65535, 2,
+def BRForm_scalar_FPTRANSA_FACOSA_s_d_z_fn_s_fn_d : BedrockScalarEncodingForm<
+  "FPTRANSA.FACOSA.s_d_z_fn_s_fn_d", "facosa", "1111100111z0101000ssssdddd", 0, "sd", 122, 3, 0, 65535, 2,
   3, 115, 4, 0, 0, 0, 65535, 0, 0, 0, 3, 100, 4, 0, 0, 0, 65535, 0,
   0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 255, 255>;
-def BRForm_scalar_FPTRANSA_instructions_FASINA_s_d_z_fn_s_fn_d : BedrockScalarEncodingForm<
-  "FPTRANSA.instructions.FASINA.s_d_z_fn_s_fn_d", "fasina", "1111100111z0101011ssssdddd", 0, "sd", 122, 3, 0, 65535, 2,
+def BRForm_scalar_FPTRANSA_FASINA_s_d_z_fn_s_fn_d : BedrockScalarEncodingForm<
+  "FPTRANSA.FASINA.s_d_z_fn_s_fn_d", "fasina", "1111100111z0101011ssssdddd", 0, "sd", 122, 3, 0, 65535, 2,
   3, 115, 4, 0, 0, 0, 65535, 0, 0, 0, 3, 100, 4, 0, 0, 0, 65535, 0,
   0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 255, 255>;
-def BRForm_scalar_FPTRANSA_instructions_FATANA_s_d_z_fn_s_fn_d : BedrockScalarEncodingForm<
-  "FPTRANSA.instructions.FATANA.s_d_z_fn_s_fn_d", "fatana", "1111100111z0101100ssssdddd", 0, "sd", 122, 3, 0, 65535, 2,
+def BRForm_scalar_FPTRANSA_FATANA_s_d_z_fn_s_fn_d : BedrockScalarEncodingForm<
+  "FPTRANSA.FATANA.s_d_z_fn_s_fn_d", "fatana", "1111100111z0101100ssssdddd", 0, "sd", 122, 3, 0, 65535, 2,
   3, 115, 4, 0, 0, 0, 65535, 0, 0, 0, 3, 100, 4, 0, 0, 0, 65535, 0,
   0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 255, 255>;
-def BRForm_scalar_FPTRANSA_instructions_FATANHA_s_d_z_fn_s_fn_d : BedrockScalarEncodingForm<
-  "FPTRANSA.instructions.FATANHA.s_d_z_fn_s_fn_d", "fatanha", "1111100111z0110000ssssdddd", 0, "sd", 122, 3, 0, 65535, 2,
+def BRForm_scalar_FPTRANSA_FATANHA_s_d_z_fn_s_fn_d : BedrockScalarEncodingForm<
+  "FPTRANSA.FATANHA.s_d_z_fn_s_fn_d", "fatanha", "1111100111z0110000ssssdddd", 0, "sd", 122, 3, 0, 65535, 2,
   3, 115, 4, 0, 0, 0, 65535, 0, 0, 0, 3, 100, 4, 0, 0, 0, 65535, 0,
   0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 255, 255>;
-def BRForm_scalar_FPTRANSA_instructions_FCOSA_s_d_z_fn_s_fn_d : BedrockScalarEncodingForm<
-  "FPTRANSA.instructions.FCOSA.s_d_z_fn_s_fn_d", "fcosa", "1111100111z0100000ssssdddd", 0, "sd", 122, 3, 0, 65535, 2,
+def BRForm_scalar_FPTRANSA_FCOSA_s_d_z_fn_s_fn_d : BedrockScalarEncodingForm<
+  "FPTRANSA.FCOSA.s_d_z_fn_s_fn_d", "fcosa", "1111100111z0100000ssssdddd", 0, "sd", 122, 3, 0, 65535, 2,
   3, 115, 4, 0, 0, 0, 65535, 0, 0, 0, 3, 100, 4, 0, 0, 0, 65535, 0,
   0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 255, 255>;
-def BRForm_scalar_FPTRANSA_instructions_FCOSHA_s_d_z_fn_s_fn_d : BedrockScalarEncodingForm<
-  "FPTRANSA.instructions.FCOSHA.s_d_z_fn_s_fn_d", "fcosha", "1111100111z0100001ssssdddd", 0, "sd", 122, 3, 0, 65535, 2,
+def BRForm_scalar_FPTRANSA_FCOSHA_s_d_z_fn_s_fn_d : BedrockScalarEncodingForm<
+  "FPTRANSA.FCOSHA.s_d_z_fn_s_fn_d", "fcosha", "1111100111z0100001ssssdddd", 0, "sd", 122, 3, 0, 65535, 2,
   3, 115, 4, 0, 0, 0, 65535, 0, 0, 0, 3, 100, 4, 0, 0, 0, 65535, 0,
   0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 255, 255>;
-def BRForm_scalar_FPTRANSA_instructions_FETOXA_s_d_z_fn_s_fn_d : BedrockScalarEncodingForm<
-  "FPTRANSA.instructions.FETOXA.s_d_z_fn_s_fn_d", "fetoxa", "1111100111z0100010ssssdddd", 0, "sd", 122, 3, 0, 65535, 2,
+def BRForm_scalar_FPTRANSA_FETOXA_s_d_z_fn_s_fn_d : BedrockScalarEncodingForm<
+  "FPTRANSA.FETOXA.s_d_z_fn_s_fn_d", "fetoxa", "1111100111z0100010ssssdddd", 0, "sd", 122, 3, 0, 65535, 2,
   3, 115, 4, 0, 0, 0, 65535, 0, 0, 0, 3, 100, 4, 0, 0, 0, 65535, 0,
   0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 255, 255>;
-def BRForm_scalar_FPTRANSA_instructions_FETOXM1A_s_d_z_fn_s_fn_d : BedrockScalarEncodingForm<
-  "FPTRANSA.instructions.FETOXM1A.s_d_z_fn_s_fn_d", "fetoxm1a", "1111100111z0100011ssssdddd", 0, "sd", 122, 3, 0, 65535, 2,
+def BRForm_scalar_FPTRANSA_FETOXM1A_s_d_z_fn_s_fn_d : BedrockScalarEncodingForm<
+  "FPTRANSA.FETOXM1A.s_d_z_fn_s_fn_d", "fetoxm1a", "1111100111z0100011ssssdddd", 0, "sd", 122, 3, 0, 65535, 2,
   3, 115, 4, 0, 0, 0, 65535, 0, 0, 0, 3, 100, 4, 0, 0, 0, 65535, 0,
   0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 255, 255>;
-def BRForm_scalar_FPTRANSA_instructions_FLOG10A_s_d_z_fn_s_fn_d : BedrockScalarEncodingForm<
-  "FPTRANSA.instructions.FLOG10A.s_d_z_fn_s_fn_d", "flog10a", "1111100111z0100100ssssdddd", 0, "sd", 122, 3, 0, 65535, 2,
+def BRForm_scalar_FPTRANSA_FLOG10A_s_d_z_fn_s_fn_d : BedrockScalarEncodingForm<
+  "FPTRANSA.FLOG10A.s_d_z_fn_s_fn_d", "flog10a", "1111100111z0100100ssssdddd", 0, "sd", 122, 3, 0, 65535, 2,
   3, 115, 4, 0, 0, 0, 65535, 0, 0, 0, 3, 100, 4, 0, 0, 0, 65535, 0,
   0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 255, 255>;
-def BRForm_scalar_FPTRANSA_instructions_FLOG2A_s_d_z_fn_s_fn_d : BedrockScalarEncodingForm<
-  "FPTRANSA.instructions.FLOG2A.s_d_z_fn_s_fn_d", "flog2a", "1111100111z0100101ssssdddd", 0, "sd", 122, 3, 0, 65535, 2,
+def BRForm_scalar_FPTRANSA_FLOG2A_s_d_z_fn_s_fn_d : BedrockScalarEncodingForm<
+  "FPTRANSA.FLOG2A.s_d_z_fn_s_fn_d", "flog2a", "1111100111z0100101ssssdddd", 0, "sd", 122, 3, 0, 65535, 2,
   3, 115, 4, 0, 0, 0, 65535, 0, 0, 0, 3, 100, 4, 0, 0, 0, 65535, 0,
   0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 255, 255>;
-def BRForm_scalar_FPTRANSA_instructions_FLOGNA_s_d_z_fn_s_fn_d : BedrockScalarEncodingForm<
-  "FPTRANSA.instructions.FLOGNA.s_d_z_fn_s_fn_d", "flogna", "1111100111z0100110ssssdddd", 0, "sd", 122, 3, 0, 65535, 2,
+def BRForm_scalar_FPTRANSA_FLOGNA_s_d_z_fn_s_fn_d : BedrockScalarEncodingForm<
+  "FPTRANSA.FLOGNA.s_d_z_fn_s_fn_d", "flogna", "1111100111z0100110ssssdddd", 0, "sd", 122, 3, 0, 65535, 2,
   3, 115, 4, 0, 0, 0, 65535, 0, 0, 0, 3, 100, 4, 0, 0, 0, 65535, 0,
   0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 255, 255>;
-def BRForm_scalar_FPTRANSA_instructions_FLOGNP1A_s_d_z_fn_s_fn_d : BedrockScalarEncodingForm<
-  "FPTRANSA.instructions.FLOGNP1A.s_d_z_fn_s_fn_d", "flognp1a", "1111100111z0100111ssssdddd", 0, "sd", 122, 3, 0, 65535, 2,
+def BRForm_scalar_FPTRANSA_FLOGNP1A_s_d_z_fn_s_fn_d : BedrockScalarEncodingForm<
+  "FPTRANSA.FLOGNP1A.s_d_z_fn_s_fn_d", "flognp1a", "1111100111z0100111ssssdddd", 0, "sd", 122, 3, 0, 65535, 2,
   3, 115, 4, 0, 0, 0, 65535, 0, 0, 0, 3, 100, 4, 0, 0, 0, 65535, 0,
   0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 255, 255>;
-def BRForm_scalar_FPTRANSA_instructions_FSINA_s_d_z_fn_s_fn_d : BedrockScalarEncodingForm<
-  "FPTRANSA.instructions.FSINA.s_d_z_fn_s_fn_d", "fsina", "1111100111z0101001ssssdddd", 0, "sd", 122, 3, 0, 65535, 2,
+def BRForm_scalar_FPTRANSA_FSINA_s_d_z_fn_s_fn_d : BedrockScalarEncodingForm<
+  "FPTRANSA.FSINA.s_d_z_fn_s_fn_d", "fsina", "1111100111z0101001ssssdddd", 0, "sd", 122, 3, 0, 65535, 2,
   3, 115, 4, 0, 0, 0, 65535, 0, 0, 0, 3, 100, 4, 0, 0, 0, 65535, 0,
   0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 255, 255>;
-def BRForm_scalar_FPTRANSA_instructions_FSINCOSA_s_d_z_fn_s_fn_d_fn_c : BedrockScalarEncodingForm<
-  "FPTRANSA.instructions.FSINCOSA.s_d_z_fn_s_fn_d_fn_c", "fsincosa", "1111100111z001ssssddddcccc", 0, "sd", 122, 3, 0, 65535, 3,
+def BRForm_scalar_FPTRANSA_FSINCOSA_s_d_z_fn_s_fn_d_fn_c : BedrockScalarEncodingForm<
+  "FPTRANSA.FSINCOSA.s_d_z_fn_s_fn_d_fn_c", "fsincosa", "1111100111z001ssssddddcccc", 0, "sd", 122, 3, 0, 65535, 3,
   3, 115, 4, 0, 0, 0, 65535, 0, 0, 0, 3, 100, 4, 0, 0, 0, 65535, 0,
   0, 0, 3, 99, 4, 0, 0, 0, 65535, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 1, 2>;
-def BRForm_scalar_FPTRANSA_instructions_FSINHA_s_d_z_fn_s_fn_d : BedrockScalarEncodingForm<
-  "FPTRANSA.instructions.FSINHA.s_d_z_fn_s_fn_d", "fsinha", "1111100111z0101010ssssdddd", 0, "sd", 122, 3, 0, 65535, 2,
+def BRForm_scalar_FPTRANSA_FSINHA_s_d_z_fn_s_fn_d : BedrockScalarEncodingForm<
+  "FPTRANSA.FSINHA.s_d_z_fn_s_fn_d", "fsinha", "1111100111z0101010ssssdddd", 0, "sd", 122, 3, 0, 65535, 2,
   3, 115, 4, 0, 0, 0, 65535, 0, 0, 0, 3, 100, 4, 0, 0, 0, 65535, 0,
   0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 255, 255>;
-def BRForm_scalar_FPTRANSA_instructions_FTANA_s_d_z_fn_s_fn_d : BedrockScalarEncodingForm<
-  "FPTRANSA.instructions.FTANA.s_d_z_fn_s_fn_d", "ftana", "1111100111z0101101ssssdddd", 0, "sd", 122, 3, 0, 65535, 2,
+def BRForm_scalar_FPTRANSA_FTANA_s_d_z_fn_s_fn_d : BedrockScalarEncodingForm<
+  "FPTRANSA.FTANA.s_d_z_fn_s_fn_d", "ftana", "1111100111z0101101ssssdddd", 0, "sd", 122, 3, 0, 65535, 2,
   3, 115, 4, 0, 0, 0, 65535, 0, 0, 0, 3, 100, 4, 0, 0, 0, 65535, 0,
   0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 255, 255>;
-def BRForm_scalar_FPTRANSA_instructions_FTANHA_s_d_z_fn_s_fn_d : BedrockScalarEncodingForm<
-  "FPTRANSA.instructions.FTANHA.s_d_z_fn_s_fn_d", "ftanha", "1111100111z0101110ssssdddd", 0, "sd", 122, 3, 0, 65535, 2,
+def BRForm_scalar_FPTRANSA_FTANHA_s_d_z_fn_s_fn_d : BedrockScalarEncodingForm<
+  "FPTRANSA.FTANHA.s_d_z_fn_s_fn_d", "ftanha", "1111100111z0101110ssssdddd", 0, "sd", 122, 3, 0, 65535, 2,
   3, 115, 4, 0, 0, 0, 65535, 0, 0, 0, 3, 100, 4, 0, 0, 0, 65535, 0,
   0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 255, 255>;
-def BRForm_scalar_FPTRANSA_instructions_FTENTOXA_s_d_z_fn_s_fn_d : BedrockScalarEncodingForm<
-  "FPTRANSA.instructions.FTENTOXA.s_d_z_fn_s_fn_d", "ftentoxa", "1111100111z0101111ssssdddd", 0, "sd", 122, 3, 0, 65535, 2,
+def BRForm_scalar_FPTRANSA_FTENTOXA_s_d_z_fn_s_fn_d : BedrockScalarEncodingForm<
+  "FPTRANSA.FTENTOXA.s_d_z_fn_s_fn_d", "ftentoxa", "1111100111z0101111ssssdddd", 0, "sd", 122, 3, 0, 65535, 2,
   3, 115, 4, 0, 0, 0, 65535, 0, 0, 0, 3, 100, 4, 0, 0, 0, 65535, 0,
   0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 255, 255>;
-def BRForm_scalar_FPTRANSA_instructions_FTWOTOXA_s_d_z_fn_s_fn_d : BedrockScalarEncodingForm<
-  "FPTRANSA.instructions.FTWOTOXA.s_d_z_fn_s_fn_d", "ftwotoxa", "1111100111z0110001ssssdddd", 0, "sd", 122, 3, 0, 65535, 2,
+def BRForm_scalar_FPTRANSA_FTWOTOXA_s_d_z_fn_s_fn_d : BedrockScalarEncodingForm<
+  "FPTRANSA.FTWOTOXA.s_d_z_fn_s_fn_d", "ftwotoxa", "1111100111z0110001ssssdddd", 0, "sd", 122, 3, 0, 65535, 2,
   3, 115, 4, 0, 0, 0, 65535, 0, 0, 0, 3, 100, 4, 0, 0, 0, 65535, 0,
   0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 255, 255>;
 
@@ -4697,7 +4757,7 @@ def BRRegisterSelector_25 : BedrockRegisterSelector<2, "instret", 2>;
 def BRRegisterSelector_26 : BedrockRegisterSelector<2, "ptwalk", 3>;
 
 class BedrockVectorEncodingForm<
-    string id, string mnemonic, string pattern, string suffixes,
+    string id, string mnemonic, string owner, string pattern, string suffixes,
     bits<8> encodingClass, bits<8> suffixField,
     bits<8> allowedSuffixMask, bits<16> allowedConditionMask,
     bit hasCondition, bit hasWidthOnlyAliases, bits<8> operandCount,
@@ -4705,6 +4765,7 @@ class BedrockVectorEncodingForm<
     bits<8> distinctOperandA, bits<8> distinctOperandB> {
   string Id = id;
   string Mnemonic = mnemonic;
+  string Owner = owner;
   string Pattern = pattern;
   string Suffixes = suffixes;
   bits<8> EncodingClass = encodingClass;
@@ -4745,7 +4806,7 @@ class BedrockVectorEncodingForm<
 def BedrockVectorEncodingForms : GenericTable {
   let FilterClass = "BedrockVectorEncodingForm";
   let CppTypeName = "VectorEncodingForm";
-  let Fields = ["Id", "Mnemonic", "Pattern", "Suffixes",
+  let Fields = ["Id", "Mnemonic", "Owner", "Pattern", "Suffixes",
                 "EncodingClass", "SuffixField",
                 "AllowedSuffixMask", "AllowedConditionMask",
                 "HasCondition", "HasWidthOnlyAliases",
@@ -4754,1041 +4815,1101 @@ def BedrockVectorEncodingForms : GenericTable {
                 "DistinctOperandA", "DistinctOperandB"];
 }
 
-def BRForm_vector_VECTOR_instructions_VDUP_b_w_l_q_z_rn_r_vn_v : BedrockVectorEncodingForm<
-  "VECTOR.instructions.VDUP.b_w_l_q_z_rn_r_vn_v", "vdup", "11111010010010zz0rrrrvvvvv", "bwlq", 0, 122, 15, 65535, 0, 0, 2,
+def BRForm_vector_VECTOR_VDUP_b_w_l_q_z_rn_r_vn_v : BedrockVectorEncodingForm<
+  "VECTOR.VDUP.b_w_l_q_z_rn_r_vn_v", "vdup", "VECTOR", "11111010010010zz0rrrrvvvvv", "bwlq", 0, 122, 15, 65535, 0, 0, 2,
   2, 114, 0, 0, 4, 118, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
   0, 0, 0, 0, 0, 0, 0, 0, 255, 255>;
-def BRForm_vector_VECTOR_instructions_VDUP_h_s_d_z_fn_r_vn_v : BedrockVectorEncodingForm<
-  "VECTOR.instructions.VDUP.h_s_d_z_fn_r_vn_v", "vdup", "11111010010010zz1rrrrvvvvv", "?hsd", 0, 122, 14, 65535, 0, 0, 2,
-  3, 114, 0, 0, 4, 118, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-  0, 0, 0, 0, 0, 0, 0, 0, 255, 255>;
-def BRForm_vector_VECTOR_instructions_VDUP_b_imm8_vn_v : BedrockVectorEncodingForm<
-  "VECTOR.instructions.VDUP.b_imm8_vn_v", "vdup.b", "111110100110100000010vvvvv", "", 0, 0, 1, 65535, 0, 0, 2,
+def BRForm_vector_VECTOR_VDUP_b_imm8_vn_v : BedrockVectorEncodingForm<
+  "VECTOR.VDUP.b_imm8_vn_v", "vdup.b", "VECTOR", "111110100110100000010vvvvv", "", 0, 0, 1, 65535, 0, 0, 2,
   10, 0, 8, 0, 4, 118, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
   0, 0, 0, 0, 0, 0, 0, 0, 255, 255>;
-def BRForm_vector_VECTOR_instructions_VDUP_w_imm16_vn_v : BedrockVectorEncodingForm<
-  "VECTOR.instructions.VDUP.w_imm16_vn_v", "vdup.w", "111110100110100100010vvvvv", "", 0, 0, 1, 65535, 0, 0, 2,
+def BRForm_vector_VECTOR_VDUP_w_imm16_vn_v : BedrockVectorEncodingForm<
+  "VECTOR.VDUP.w_imm16_vn_v", "vdup.w", "VECTOR", "111110100110100100010vvvvv", "", 0, 0, 1, 65535, 0, 0, 2,
   10, 0, 16, 0, 4, 118, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
   0, 0, 0, 0, 0, 0, 0, 0, 255, 255>;
-def BRForm_vector_VECTOR_instructions_VDUP_l_imm32_vn_v : BedrockVectorEncodingForm<
-  "VECTOR.instructions.VDUP.l_imm32_vn_v", "vdup.l", "111110100110101000010vvvvv", "", 0, 0, 1, 65535, 0, 0, 2,
+def BRForm_vector_VECTOR_VDUP_l_imm32_vn_v : BedrockVectorEncodingForm<
+  "VECTOR.VDUP.l_imm32_vn_v", "vdup.l", "VECTOR", "111110100110101000010vvvvv", "", 0, 0, 1, 65535, 0, 0, 2,
   10, 0, 32, 0, 4, 118, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
   0, 0, 0, 0, 0, 0, 0, 0, 255, 255>;
-def BRForm_vector_VECTOR_instructions_VDUP_q_imm64_vn_v : BedrockVectorEncodingForm<
-  "VECTOR.instructions.VDUP.q_imm64_vn_v", "vdup.q", "111110100110101100010vvvvv", "", 0, 0, 1, 65535, 0, 0, 2,
+def BRForm_vector_VECTOR_VDUP_q_imm64_vn_v : BedrockVectorEncodingForm<
+  "VECTOR.VDUP.q_imm64_vn_v", "vdup.q", "VECTOR", "111110100110101100010vvvvv", "", 0, 0, 1, 65535, 0, 0, 2,
   10, 0, 64, 0, 4, 118, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
   0, 0, 0, 0, 0, 0, 0, 0, 255, 255>;
-def BRForm_vector_VECTOR_instructions_VMOV_vn_v_vn_w : BedrockVectorEncodingForm<
-  "VECTOR.instructions.VMOV.vn_v_vn_w", "vmov", "1111101001000000vvvvvwwwww", "", 0, 0, 1, 65535, 0, 1, 2,
+def BRForm_vector_VECTOR_VMOV_vn_v_vn_w : BedrockVectorEncodingForm<
+  "VECTOR.VMOV.vn_v_vn_w", "vmov", "VECTOR", "1111101001000000vvvvvwwwww", "", 0, 0, 1, 65535, 0, 0, 2,
   4, 118, 0, 0, 4, 119, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
   0, 0, 0, 0, 0, 0, 0, 0, 255, 255>;
-def BRForm_vector_VECTOR_instructions_VMOV_b_w_l_q_z_pn_p_vn_v_vn_w : BedrockVectorEncodingForm<
-  "VECTOR.instructions.VMOV.b_w_l_q_z_pn_p_vn_v_vn_w", "vmov", "11111101111010110zz0ppppvvvvvwwwww", "bwlq", 1, 122, 15, 65535, 0, 1, 3,
+def BRForm_vector_VECTOR_VMOV_b_w_l_q_z_pn_p_vn_v_vn_w : BedrockVectorEncodingForm<
+  "VECTOR.VMOV.b_w_l_q_z_pn_p_vn_v_vn_w", "vmov", "VECTOR", "11111101111010110zz0ppppvvvvvwwwww", "bwlq", 1, 122, 15, 65535, 0, 0, 3,
   5, 112, 0, 0, 4, 118, 0, 0, 4, 119, 0, 0, 0, 0, 0, 0,
   0, 0, 0, 0, 0, 0, 0, 0, 255, 255>;
-def BRForm_vector_VECTOR_instructions_VMOV_b_w_l_q_z_pn_p_ea_e_vn_v : BedrockVectorEncodingForm<
-  "VECTOR.instructions.VMOV.b_w_l_q_z_pn_p_ea_e_vn_v", "vmov", "11111111000000100000zz0000ppppvvvvveeeeeee", "bwlq", 2, 122, 15, 65535, 0, 1, 3,
+def BRForm_vector_VECTOR_VMOV_b_w_l_q_z_pn_p_ea_e_vn_v : BedrockVectorEncodingForm<
+  "VECTOR.VMOV.b_w_l_q_z_pn_p_ea_e_vn_v", "vmov", "VECTOR", "11111111000000100000zz0000ppppvvvvveeeeeee", "bwlq", 2, 122, 15, 65535, 0, 0, 3,
   5, 112, 0, 0, 7, 101, 0, 0, 4, 118, 0, 0, 0, 0, 0, 0,
   0, 0, 0, 0, 0, 0, 0, 0, 255, 255>;
-def BRForm_vector_VECTOR_instructions_VMOV_b_w_l_q_z_pn_p_vn_v_ea_e : BedrockVectorEncodingForm<
-  "VECTOR.instructions.VMOV.b_w_l_q_z_pn_p_vn_v_ea_e", "vmov", "11111111000000100000zz0001ppppvvvvveeeeeee", "bwlq", 2, 122, 15, 65535, 0, 1, 3,
+def BRForm_vector_VECTOR_VMOV_b_w_l_q_z_pn_p_vn_v_ea_e : BedrockVectorEncodingForm<
+  "VECTOR.VMOV.b_w_l_q_z_pn_p_vn_v_ea_e", "vmov", "VECTOR", "11111111000000100000zz0001ppppvvvvveeeeeee", "bwlq", 2, 122, 15, 65535, 0, 0, 3,
   5, 112, 0, 0, 4, 118, 0, 0, 7, 101, 0, 0, 0, 0, 0, 0,
   0, 0, 0, 0, 0, 0, 0, 0, 255, 255>;
-def BRForm_vector_VECTOR_instructions_PHEAD_b_w_l_q_z_rn_r_pn_p : BedrockVectorEncodingForm<
-  "VECTOR.instructions.PHEAD.b_w_l_q_z_rn_r_pn_p", "phead", "11111010010100zz00rrrrpppp", "bwlq", 0, 122, 15, 65535, 0, 1, 2,
+def BRForm_vector_VECTOR_PHEAD_b_w_l_q_z_rn_r_pn_p : BedrockVectorEncodingForm<
+  "VECTOR.PHEAD.b_w_l_q_z_rn_r_pn_p", "phead", "VECTOR", "11111010010100zz00rrrrpppp", "bwlq", 0, 122, 15, 65535, 0, 0, 2,
   2, 114, 0, 0, 5, 112, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
   0, 0, 0, 0, 0, 0, 0, 0, 255, 255>;
-def BRForm_vector_VECTOR_instructions_PTAIL_b_w_l_q_z_rn_r_pn_p : BedrockVectorEncodingForm<
-  "VECTOR.instructions.PTAIL.b_w_l_q_z_rn_r_pn_p", "ptail", "11111010010100zz01rrrrpppp", "bwlq", 0, 122, 15, 65535, 0, 1, 2,
+def BRForm_vector_VECTOR_PTAIL_b_w_l_q_z_rn_r_pn_p : BedrockVectorEncodingForm<
+  "VECTOR.PTAIL.b_w_l_q_z_rn_r_pn_p", "ptail", "VECTOR", "11111010010100zz01rrrrpppp", "bwlq", 0, 122, 15, 65535, 0, 0, 2,
   2, 114, 0, 0, 5, 112, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
   0, 0, 0, 0, 0, 0, 0, 0, 255, 255>;
-def BRForm_vector_VECTOR_instructions_PFIRST_b_w_l_q_z_pn_p_rn_r : BedrockVectorEncodingForm<
-  "VECTOR.instructions.PFIRST.b_w_l_q_z_pn_p_rn_r", "pfirst", "11111010010100zz10rrrrpppp", "bwlq", 0, 122, 15, 65535, 0, 1, 2,
+def BRForm_vector_VECTOR_PFIRST_b_w_l_q_z_pn_p_rn_r : BedrockVectorEncodingForm<
+  "VECTOR.PFIRST.b_w_l_q_z_pn_p_rn_r", "pfirst", "VECTOR", "11111010010100zz10rrrrpppp", "bwlq", 0, 122, 15, 65535, 0, 0, 2,
   5, 112, 0, 0, 2, 114, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
   0, 0, 0, 0, 0, 0, 0, 0, 255, 255>;
-def BRForm_vector_VECTOR_instructions_PLAST_b_w_l_q_z_pn_p_rn_r : BedrockVectorEncodingForm<
-  "VECTOR.instructions.PLAST.b_w_l_q_z_pn_p_rn_r", "plast", "11111010010100zz11rrrrpppp", "bwlq", 0, 122, 15, 65535, 0, 1, 2,
+def BRForm_vector_VECTOR_PLAST_b_w_l_q_z_pn_p_rn_r : BedrockVectorEncodingForm<
+  "VECTOR.PLAST.b_w_l_q_z_pn_p_rn_r", "plast", "VECTOR", "11111010010100zz11rrrrpppp", "bwlq", 0, 122, 15, 65535, 0, 0, 2,
   5, 112, 0, 0, 2, 114, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
   0, 0, 0, 0, 0, 0, 0, 0, 255, 255>;
-def BRForm_vector_VECTOR_instructions_PCOUNT_b_w_l_q_z_pn_p_rn_r : BedrockVectorEncodingForm<
-  "VECTOR.instructions.PCOUNT.b_w_l_q_z_pn_p_rn_r", "pcount", "11111010010101zz00rrrrpppp", "bwlq", 0, 122, 15, 65535, 0, 1, 2,
+def BRForm_vector_VECTOR_PCOUNT_b_w_l_q_z_pn_p_rn_r : BedrockVectorEncodingForm<
+  "VECTOR.PCOUNT.b_w_l_q_z_pn_p_rn_r", "pcount", "VECTOR", "11111010010101zz00rrrrpppp", "bwlq", 0, 122, 15, 65535, 0, 0, 2,
   5, 112, 0, 0, 2, 114, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
   0, 0, 0, 0, 0, 0, 0, 0, 255, 255>;
-def BRForm_vector_VECTOR_instructions_PAND_pn_p_pn_q : BedrockVectorEncodingForm<
-  "VECTOR.instructions.PAND.pn_p_pn_q", "pand", "111110100101100000ppppqqqq", "", 0, 0, 1, 65535, 0, 0, 2,
+def BRForm_vector_VECTOR_PAND_pn_p_pn_q : BedrockVectorEncodingForm<
+  "VECTOR.PAND.pn_p_pn_q", "pand", "VECTOR", "111110100101100000ppppqqqq", "", 0, 0, 1, 65535, 0, 0, 2,
   5, 112, 0, 0, 5, 113, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
   0, 0, 0, 0, 0, 0, 0, 0, 255, 255>;
-def BRForm_vector_VECTOR_instructions_POR_pn_p_pn_q : BedrockVectorEncodingForm<
-  "VECTOR.instructions.POR.pn_p_pn_q", "por", "111110100101100001ppppqqqq", "", 0, 0, 1, 65535, 0, 0, 2,
+def BRForm_vector_VECTOR_POR_pn_p_pn_q : BedrockVectorEncodingForm<
+  "VECTOR.POR.pn_p_pn_q", "por", "VECTOR", "111110100101100001ppppqqqq", "", 0, 0, 1, 65535, 0, 0, 2,
   5, 112, 0, 0, 5, 113, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
   0, 0, 0, 0, 0, 0, 0, 0, 255, 255>;
-def BRForm_vector_VECTOR_instructions_PXOR_pn_p_pn_q : BedrockVectorEncodingForm<
-  "VECTOR.instructions.PXOR.pn_p_pn_q", "pxor", "111110100101100010ppppqqqq", "", 0, 0, 1, 65535, 0, 0, 2,
+def BRForm_vector_VECTOR_PXOR_pn_p_pn_q : BedrockVectorEncodingForm<
+  "VECTOR.PXOR.pn_p_pn_q", "pxor", "VECTOR", "111110100101100010ppppqqqq", "", 0, 0, 1, 65535, 0, 0, 2,
   5, 112, 0, 0, 5, 113, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
   0, 0, 0, 0, 0, 0, 0, 0, 255, 255>;
-def BRForm_vector_VECTOR_instructions_PUNPKLO_b_w_l_z_pn_p_pn_q : BedrockVectorEncodingForm<
-  "VECTOR.instructions.PUNPKLO.b_w_l_z_pn_p_pn_q", "punpklo", "11111010010110zz11ppppqqqq", "bwl", 0, 122, 7, 65535, 0, 1, 2,
+def BRForm_vector_VECTOR_PUNPKLO_b_w_l_z_pn_p_pn_q : BedrockVectorEncodingForm<
+  "VECTOR.PUNPKLO.b_w_l_z_pn_p_pn_q", "punpklo", "VECTOR", "11111010010110zz11ppppqqqq", "bwl", 0, 122, 7, 65535, 0, 0, 2,
   5, 112, 0, 0, 5, 113, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
   0, 0, 0, 0, 0, 0, 0, 0, 255, 255>;
-def BRForm_vector_VECTOR_instructions_PUNPKHI_b_w_l_z_pn_p_pn_q : BedrockVectorEncodingForm<
-  "VECTOR.instructions.PUNPKHI.b_w_l_z_pn_p_pn_q", "punpkhi", "11111010010111zz00ppppqqqq", "bwl", 0, 122, 7, 65535, 0, 1, 2,
+def BRForm_vector_VECTOR_PUNPKHI_b_w_l_z_pn_p_pn_q : BedrockVectorEncodingForm<
+  "VECTOR.PUNPKHI.b_w_l_z_pn_p_pn_q", "punpkhi", "VECTOR", "11111010010111zz00ppppqqqq", "bwl", 0, 122, 7, 65535, 0, 0, 2,
   5, 112, 0, 0, 5, 113, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
   0, 0, 0, 0, 0, 0, 0, 0, 255, 255>;
-def BRForm_vector_VECTOR_instructions_PPACKLO_w_l_q_z_pn_p_pn_q : BedrockVectorEncodingForm<
-  "VECTOR.instructions.PPACKLO.w_l_q_z_pn_p_pn_q", "ppacklo", "11111010010111zz01ppppqqqq", "?wlq", 0, 122, 14, 65535, 0, 1, 2,
+def BRForm_vector_VECTOR_PPACKLO_w_l_q_z_pn_p_pn_q : BedrockVectorEncodingForm<
+  "VECTOR.PPACKLO.w_l_q_z_pn_p_pn_q", "ppacklo", "VECTOR", "11111010010111zz01ppppqqqq", "?wlq", 0, 122, 14, 65535, 0, 0, 2,
   5, 112, 0, 0, 5, 113, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
   0, 0, 0, 0, 0, 0, 0, 0, 255, 255>;
-def BRForm_vector_VECTOR_instructions_PPACKHI_w_l_q_z_pn_p_pn_q : BedrockVectorEncodingForm<
-  "VECTOR.instructions.PPACKHI.w_l_q_z_pn_p_pn_q", "ppackhi", "11111010010111zz10ppppqqqq", "?wlq", 0, 122, 14, 65535, 0, 1, 2,
+def BRForm_vector_VECTOR_PPACKHI_w_l_q_z_pn_p_pn_q : BedrockVectorEncodingForm<
+  "VECTOR.PPACKHI.w_l_q_z_pn_p_pn_q", "ppackhi", "VECTOR", "11111010010111zz10ppppqqqq", "?wlq", 0, 122, 14, 65535, 0, 0, 2,
   5, 112, 0, 0, 5, 113, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
   0, 0, 0, 0, 0, 0, 0, 0, 255, 255>;
-def BRForm_vector_VECTOR_instructions_VCLR_vn_v : BedrockVectorEncodingForm<
-  "VECTOR.instructions.VCLR.vn_v", "vclr", "111110100110100000000vvvvv", "", 0, 0, 1, 65535, 0, 0, 1,
+def BRForm_vector_VECTOR_VCLR_vn_v : BedrockVectorEncodingForm<
+  "VECTOR.VCLR.vn_v", "vclr", "VECTOR", "111110100110100000000vvvvv", "", 0, 0, 1, 65535, 0, 0, 1,
   4, 118, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
   0, 0, 0, 0, 0, 0, 0, 0, 255, 255>;
-def BRForm_vector_VECTOR_instructions_VINDEX_b_w_l_q_z_vn_v : BedrockVectorEncodingForm<
-  "VECTOR.instructions.VINDEX.b_w_l_q_z_vn_v", "vindex", "11111010011010zz00001vvvvv", "bwlq", 0, 122, 15, 65535, 0, 0, 1,
+def BRForm_vector_VECTOR_VINDEX_b_w_l_q_z_vn_v : BedrockVectorEncodingForm<
+  "VECTOR.VINDEX.b_w_l_q_z_vn_v", "vindex", "VECTOR", "11111010011010zz00001vvvvv", "bwlq", 0, 122, 15, 65535, 0, 0, 1,
   4, 118, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
   0, 0, 0, 0, 0, 0, 0, 0, 255, 255>;
-def BRForm_vector_VECTOR_instructions_VLCNT_b_w_l_q_z_rn_r : BedrockVectorEncodingForm<
-  "VECTOR.instructions.VLCNT.b_w_l_q_z_rn_r", "vlcnt", "11111010011000zz000001rrrr", "bwlq", 0, 122, 15, 65535, 0, 1, 1,
+def BRForm_vector_VECTOR_VLCNT_b_w_l_q_z_rn_r : BedrockVectorEncodingForm<
+  "VECTOR.VLCNT.b_w_l_q_z_rn_r", "vlcnt", "VECTOR", "11111010011000zz000001rrrr", "bwlq", 0, 122, 15, 65535, 0, 0, 1,
   2, 114, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
   0, 0, 0, 0, 0, 0, 0, 0, 255, 255>;
-def BRForm_vector_VECTOR_instructions_VLCADD_b_w_l_q_z_imm8s_rn_r : BedrockVectorEncodingForm<
-  "VECTOR.instructions.VLCADD.b_w_l_q_z_imm8s_rn_r", "vlcadd", "11111010011000zz000010rrrr", "bwlq", 0, 122, 15, 65535, 0, 1, 2,
+def BRForm_vector_VECTOR_VLCADD_b_w_l_q_z_imm8s_rn_r : BedrockVectorEncodingForm<
+  "VECTOR.VLCADD.b_w_l_q_z_imm8s_rn_r", "vlcadd", "VECTOR", "11111010011000zz000010rrrr", "bwlq", 0, 122, 15, 65535, 0, 0, 2,
   9, 0, 8, 0, 2, 114, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
   0, 0, 0, 0, 0, 0, 0, 0, 255, 255>;
-def BRForm_vector_VECTOR_instructions_VGATHER1_b_w_l_q_z_pn_p_rn_b_add_rn_i_mul_rn_s_vn_v : BedrockVectorEncodingForm<
-  "VECTOR.instructions.VGATHER1.b_w_l_q_z_pn_p_rn_b_add_rn_i_mul_rn_s_vn_v", "vgather1", "111111110000010000zz0bbbbppppiiiissssvvvvv", "bwlq", 2, 122, 15, 65535, 0, 1, 5,
-  5, 112, 0, 0, 2, 98, 0, 0, 2, 105, 0, 0, 2, 115, 0, 0,
-  4, 118, 0, 0, 0, 0, 0, 0, 255, 255>;
-def BRForm_vector_VECTOR_instructions_VGATHER1_l_pn_p_vn_x_rn_i_vn_v : BedrockVectorEncodingForm<
-  "VECTOR.instructions.VGATHER1.l_pn_p_vn_x_rn_i_vn_v", "vgather1.l", "111111110000010001000000ppppiiiivvvvvxxxxx", "", 2, 0, 1, 65535, 0, 1, 4,
-  5, 112, 0, 0, 4, 120, 0, 0, 2, 105, 0, 0, 4, 118, 0, 0,
-  0, 0, 0, 0, 0, 0, 0, 0, 255, 255>;
-def BRForm_vector_VECTOR_instructions_VGATHER1_q_pn_p_vn_x_rn_i_vn_v : BedrockVectorEncodingForm<
-  "VECTOR.instructions.VGATHER1.q_pn_p_vn_x_rn_i_vn_v", "vgather1.q", "111111110000010001000001ppppiiiivvvvvxxxxx", "", 2, 0, 1, 65535, 0, 1, 4,
-  5, 112, 0, 0, 4, 120, 0, 0, 2, 105, 0, 0, 4, 118, 0, 0,
-  0, 0, 0, 0, 0, 0, 0, 0, 255, 255>;
-def BRForm_vector_VECTOR_instructions_VGATHER1_b_w_l_q_z_pn_p_rn_b_add_vn_x_rn_i_vn_v : BedrockVectorEncodingForm<
-  "VECTOR.instructions.VGATHER1.b_w_l_q_z_pn_p_rn_b_add_vn_x_rn_i_vn_v", "vgather1", "111111110000010010zzbbbbppppiiiivvvvvxxxxx", "bwlq", 2, 122, 15, 65535, 0, 1, 5,
-  5, 112, 0, 0, 2, 98, 0, 0, 4, 120, 0, 0, 2, 105, 0, 0,
-  4, 118, 0, 0, 0, 0, 0, 0, 255, 255>;
-def BRForm_vector_VECTOR_instructions_VGATHER1_b_w_l_q_z_pn_p_rn_b_add_vn_x_rn_i_mul_scale_vn_v : BedrockVectorEncodingForm<
-  "VECTOR.instructions.VGATHER1.b_w_l_q_z_pn_p_rn_b_add_vn_x_rn_i_mul_scale_vn_v", "vgather1", "111111110000010011zzbbbbppppiiiivvvvvxxxxx", "bwlq", 2, 122, 15, 65535, 0, 1, 5,
-  5, 112, 0, 0, 2, 98, 0, 0, 4, 120, 0, 0, 2, 105, 0, 0,
-  4, 118, 0, 0, 0, 0, 0, 0, 255, 255>;
-def BRForm_vector_VECTOR_instructions_VGATHER1_b_w_l_q_z_pn_p_rn_b_add_vn_x_rn_i_mul_scale_add_disp8s_vn_v : BedrockVectorEncodingForm<
-  "VECTOR.instructions.VGATHER1.b_w_l_q_z_pn_p_rn_b_add_vn_x_rn_i_mul_scale_add_disp8s_vn_v", "vgather1", "111111110000010100zzbbbbppppiiiivvvvvxxxxx", "bwlq", 2, 122, 15, 65535, 0, 1, 6,
-  5, 112, 0, 0, 2, 98, 0, 0, 4, 120, 0, 0, 2, 105, 0, 0,
-  9, 0, 8, 0, 4, 118, 0, 0, 255, 255>;
-def BRForm_vector_VECTOR_instructions_VGATHER1_b_w_l_q_z_pn_p_rn_b_add_vn_x_rn_i_mul_scale_add_disp16s_vn_v : BedrockVectorEncodingForm<
-  "VECTOR.instructions.VGATHER1.b_w_l_q_z_pn_p_rn_b_add_vn_x_rn_i_mul_scale_add_disp16s_vn_v", "vgather1", "111111110000010101zzbbbbppppiiiivvvvvxxxxx", "bwlq", 2, 122, 15, 65535, 0, 1, 6,
-  5, 112, 0, 0, 2, 98, 0, 0, 4, 120, 0, 0, 2, 105, 0, 0,
-  9, 0, 16, 0, 4, 118, 0, 0, 255, 255>;
-def BRForm_vector_VECTOR_instructions_VGATHER1_b_w_l_q_z_pn_p_rn_b_add_vn_x_rn_i_mul_scale_add_disp32s_vn_v : BedrockVectorEncodingForm<
-  "VECTOR.instructions.VGATHER1.b_w_l_q_z_pn_p_rn_b_add_vn_x_rn_i_mul_scale_add_disp32s_vn_v", "vgather1", "111111110000010110zzbbbbppppiiiivvvvvxxxxx", "bwlq", 2, 122, 15, 65535, 0, 1, 6,
-  5, 112, 0, 0, 2, 98, 0, 0, 4, 120, 0, 0, 2, 105, 0, 0,
-  9, 0, 32, 0, 4, 118, 0, 0, 255, 255>;
-def BRForm_vector_VECTOR_instructions_VGATHER1_b_w_l_q_z_pn_p_rn_b_add_vn_x_rn_i_mul_scale_add_disp64_vn_v : BedrockVectorEncodingForm<
-  "VECTOR.instructions.VGATHER1.b_w_l_q_z_pn_p_rn_b_add_vn_x_rn_i_mul_scale_add_disp64_vn_v", "vgather1", "111111110000010111zzbbbbppppiiiivvvvvxxxxx", "bwlq", 2, 122, 15, 65535, 0, 1, 6,
-  5, 112, 0, 0, 2, 98, 0, 0, 4, 120, 0, 0, 2, 105, 0, 0,
-  10, 0, 64, 0, 4, 118, 0, 0, 255, 255>;
-def BRForm_vector_VECTOR_instructions_VSCATTER1_b_w_l_q_z_pn_p_vn_v_rn_b_add_rn_i_mul_rn_s : BedrockVectorEncodingForm<
-  "VECTOR.instructions.VSCATTER1.b_w_l_q_z_pn_p_vn_v_rn_b_add_rn_i_mul_rn_s", "vscatter1", "111111110000011000zz0bbbbppppiiiissssvvvvv", "bwlq", 2, 122, 15, 65535, 0, 1, 5,
-  5, 112, 0, 0, 4, 118, 0, 0, 2, 98, 0, 0, 2, 105, 0, 0,
-  2, 115, 0, 0, 0, 0, 0, 0, 255, 255>;
-def BRForm_vector_VECTOR_instructions_VSCATTER1_l_pn_p_vn_v_vn_x_rn_i : BedrockVectorEncodingForm<
-  "VECTOR.instructions.VSCATTER1.l_pn_p_vn_v_vn_x_rn_i", "vscatter1.l", "111111110000011001000000ppppiiiivvvvvxxxxx", "", 2, 0, 1, 65535, 0, 1, 4,
-  5, 112, 0, 0, 4, 118, 0, 0, 4, 120, 0, 0, 2, 105, 0, 0,
-  0, 0, 0, 0, 0, 0, 0, 0, 255, 255>;
-def BRForm_vector_VECTOR_instructions_VSCATTER1_q_pn_p_vn_v_vn_x_rn_i : BedrockVectorEncodingForm<
-  "VECTOR.instructions.VSCATTER1.q_pn_p_vn_v_vn_x_rn_i", "vscatter1.q", "111111110000011001000001ppppiiiivvvvvxxxxx", "", 2, 0, 1, 65535, 0, 1, 4,
-  5, 112, 0, 0, 4, 118, 0, 0, 4, 120, 0, 0, 2, 105, 0, 0,
-  0, 0, 0, 0, 0, 0, 0, 0, 255, 255>;
-def BRForm_vector_VECTOR_instructions_VSCATTER1_b_w_l_q_z_pn_p_vn_v_rn_b_add_vn_x_rn_i : BedrockVectorEncodingForm<
-  "VECTOR.instructions.VSCATTER1.b_w_l_q_z_pn_p_vn_v_rn_b_add_vn_x_rn_i", "vscatter1", "111111110000011010zzbbbbppppiiiivvvvvxxxxx", "bwlq", 2, 122, 15, 65535, 0, 1, 5,
-  5, 112, 0, 0, 4, 118, 0, 0, 2, 98, 0, 0, 4, 120, 0, 0,
-  2, 105, 0, 0, 0, 0, 0, 0, 255, 255>;
-def BRForm_vector_VECTOR_instructions_VSCATTER1_b_w_l_q_z_pn_p_vn_v_rn_b_add_vn_x_rn_i_mul_scale : BedrockVectorEncodingForm<
-  "VECTOR.instructions.VSCATTER1.b_w_l_q_z_pn_p_vn_v_rn_b_add_vn_x_rn_i_mul_scale", "vscatter1", "111111110000011011zzbbbbppppiiiivvvvvxxxxx", "bwlq", 2, 122, 15, 65535, 0, 1, 5,
-  5, 112, 0, 0, 4, 118, 0, 0, 2, 98, 0, 0, 4, 120, 0, 0,
-  2, 105, 0, 0, 0, 0, 0, 0, 255, 255>;
-def BRForm_vector_VECTOR_instructions_VSCATTER1_b_w_l_q_z_pn_p_vn_v_rn_b_add_vn_x_rn_i_mul_scale_add_disp8s : BedrockVectorEncodingForm<
-  "VECTOR.instructions.VSCATTER1.b_w_l_q_z_pn_p_vn_v_rn_b_add_vn_x_rn_i_mul_scale_add_disp8s", "vscatter1", "111111110000011100zzbbbbppppiiiivvvvvxxxxx", "bwlq", 2, 122, 15, 65535, 0, 1, 6,
-  5, 112, 0, 0, 4, 118, 0, 0, 2, 98, 0, 0, 4, 120, 0, 0,
-  2, 105, 0, 0, 9, 0, 8, 0, 255, 255>;
-def BRForm_vector_VECTOR_instructions_VSCATTER1_b_w_l_q_z_pn_p_vn_v_rn_b_add_vn_x_rn_i_mul_scale_add_disp16s : BedrockVectorEncodingForm<
-  "VECTOR.instructions.VSCATTER1.b_w_l_q_z_pn_p_vn_v_rn_b_add_vn_x_rn_i_mul_scale_add_disp16s", "vscatter1", "111111110000011101zzbbbbppppiiiivvvvvxxxxx", "bwlq", 2, 122, 15, 65535, 0, 1, 6,
-  5, 112, 0, 0, 4, 118, 0, 0, 2, 98, 0, 0, 4, 120, 0, 0,
-  2, 105, 0, 0, 9, 0, 16, 0, 255, 255>;
-def BRForm_vector_VECTOR_instructions_VSCATTER1_b_w_l_q_z_pn_p_vn_v_rn_b_add_vn_x_rn_i_mul_scale_add_disp32s : BedrockVectorEncodingForm<
-  "VECTOR.instructions.VSCATTER1.b_w_l_q_z_pn_p_vn_v_rn_b_add_vn_x_rn_i_mul_scale_add_disp32s", "vscatter1", "111111110000011110zzbbbbppppiiiivvvvvxxxxx", "bwlq", 2, 122, 15, 65535, 0, 1, 6,
-  5, 112, 0, 0, 4, 118, 0, 0, 2, 98, 0, 0, 4, 120, 0, 0,
-  2, 105, 0, 0, 9, 0, 32, 0, 255, 255>;
-def BRForm_vector_VECTOR_instructions_VSCATTER1_b_w_l_q_z_pn_p_vn_v_rn_b_add_vn_x_rn_i_mul_scale_add_disp64 : BedrockVectorEncodingForm<
-  "VECTOR.instructions.VSCATTER1.b_w_l_q_z_pn_p_vn_v_rn_b_add_vn_x_rn_i_mul_scale_add_disp64", "vscatter1", "111111110000011111zzbbbbppppiiiivvvvvxxxxx", "bwlq", 2, 122, 15, 65535, 0, 1, 6,
-  5, 112, 0, 0, 4, 118, 0, 0, 2, 98, 0, 0, 4, 120, 0, 0,
-  2, 105, 0, 0, 10, 0, 64, 0, 255, 255>;
-def BRForm_vector_VECTOR_instructions_PTRUE_b_w_l_q_z_pn_p : BedrockVectorEncodingForm<
-  "VECTOR.instructions.PTRUE.b_w_l_q_z_pn_p", "ptrue", "11111010011100zz000000pppp", "bwlq", 0, 122, 15, 65535, 0, 1, 1,
+def BRForm_vector_VECTOR_VGATHER_b_w_l_q_z_pn_p_pn_c_rn_b_add_rn_s_vn_v : BedrockVectorEncodingForm<
+  "VECTOR.VGATHER.b_w_l_q_z_pn_p_pn_c_rn_b_add_rn_s_vn_v", "vgather", "VECTOR", "111111110000010000zz0bbbbppppccccssssvvvvv", "bwlq", 2, 122, 15, 65535, 0, 0, 5,
+  5, 112, 0, 0, 5, 99, 0, 0, 2, 98, 0, 0, 2, 115, 0, 0,
+  4, 118, 0, 0, 0, 0, 0, 0, 0, 1>;
+def BRForm_vector_VECTOR_VGATHER_l_pn_p_pn_c_vn_x_vn_v : BedrockVectorEncodingForm<
+  "VECTOR.VGATHER.l_pn_p_pn_c_vn_x_vn_v", "vgather.l", "VECTOR", "111111110000010001000000ppppccccvvvvvxxxxx", "", 2, 0, 1, 65535, 0, 0, 4,
+  5, 112, 0, 0, 5, 99, 0, 0, 4, 120, 0, 0, 4, 118, 0, 0,
+  0, 0, 0, 0, 0, 0, 0, 0, 0, 1>;
+def BRForm_vector_VECTOR_VGATHER_q_pn_p_pn_c_vn_x_vn_v : BedrockVectorEncodingForm<
+  "VECTOR.VGATHER.q_pn_p_pn_c_vn_x_vn_v", "vgather.q", "VECTOR", "111111110000010001000001ppppccccvvvvvxxxxx", "", 2, 0, 1, 65535, 0, 0, 4,
+  5, 112, 0, 0, 5, 99, 0, 0, 4, 120, 0, 0, 4, 118, 0, 0,
+  0, 0, 0, 0, 0, 0, 0, 0, 0, 1>;
+def BRForm_vector_VECTOR_VGATHER_b_w_l_q_z_pn_p_pn_c_rn_b_add_vn_x_vn_v : BedrockVectorEncodingForm<
+  "VECTOR.VGATHER.b_w_l_q_z_pn_p_pn_c_rn_b_add_vn_x_vn_v", "vgather", "VECTOR", "111111110000010010zzbbbbppppccccvvvvvxxxxx", "bwlq", 2, 122, 15, 65535, 0, 0, 5,
+  5, 112, 0, 0, 5, 99, 0, 0, 2, 98, 0, 0, 4, 120, 0, 0,
+  4, 118, 0, 0, 0, 0, 0, 0, 0, 1>;
+def BRForm_vector_VECTOR_VGATHER_b_w_l_q_z_pn_p_pn_c_rn_b_add_vn_x_mul_scale_vn_v : BedrockVectorEncodingForm<
+  "VECTOR.VGATHER.b_w_l_q_z_pn_p_pn_c_rn_b_add_vn_x_mul_scale_vn_v", "vgather", "VECTOR", "111111110000010011zzbbbbppppccccvvvvvxxxxx", "bwlq", 2, 122, 15, 65535, 0, 0, 5,
+  5, 112, 0, 0, 5, 99, 0, 0, 2, 98, 0, 0, 4, 120, 0, 0,
+  4, 118, 0, 0, 0, 0, 0, 0, 0, 1>;
+def BRForm_vector_VECTOR_VGATHER_b_w_l_q_z_pn_p_pn_c_rn_b_add_vn_x_mul_scale_add_disp8s_vn_v : BedrockVectorEncodingForm<
+  "VECTOR.VGATHER.b_w_l_q_z_pn_p_pn_c_rn_b_add_vn_x_mul_scale_add_disp8s_vn_v", "vgather", "VECTOR", "111111110000010100zzbbbbppppccccvvvvvxxxxx", "bwlq", 2, 122, 15, 65535, 0, 0, 6,
+  5, 112, 0, 0, 5, 99, 0, 0, 2, 98, 0, 0, 4, 120, 0, 0,
+  9, 0, 8, 0, 4, 118, 0, 0, 0, 1>;
+def BRForm_vector_VECTOR_VGATHER_b_w_l_q_z_pn_p_pn_c_rn_b_add_vn_x_mul_scale_add_disp16s_vn_v : BedrockVectorEncodingForm<
+  "VECTOR.VGATHER.b_w_l_q_z_pn_p_pn_c_rn_b_add_vn_x_mul_scale_add_disp16s_vn_v", "vgather", "VECTOR", "111111110000010101zzbbbbppppccccvvvvvxxxxx", "bwlq", 2, 122, 15, 65535, 0, 0, 6,
+  5, 112, 0, 0, 5, 99, 0, 0, 2, 98, 0, 0, 4, 120, 0, 0,
+  9, 0, 16, 0, 4, 118, 0, 0, 0, 1>;
+def BRForm_vector_VECTOR_VGATHER_b_w_l_q_z_pn_p_pn_c_rn_b_add_vn_x_mul_scale_add_disp32s_vn_v : BedrockVectorEncodingForm<
+  "VECTOR.VGATHER.b_w_l_q_z_pn_p_pn_c_rn_b_add_vn_x_mul_scale_add_disp32s_vn_v", "vgather", "VECTOR", "111111110000010110zzbbbbppppccccvvvvvxxxxx", "bwlq", 2, 122, 15, 65535, 0, 0, 6,
+  5, 112, 0, 0, 5, 99, 0, 0, 2, 98, 0, 0, 4, 120, 0, 0,
+  9, 0, 32, 0, 4, 118, 0, 0, 0, 1>;
+def BRForm_vector_VECTOR_VGATHER_b_w_l_q_z_pn_p_pn_c_rn_b_add_vn_x_mul_scale_add_disp64_vn_v : BedrockVectorEncodingForm<
+  "VECTOR.VGATHER.b_w_l_q_z_pn_p_pn_c_rn_b_add_vn_x_mul_scale_add_disp64_vn_v", "vgather", "VECTOR", "111111110000010111zzbbbbppppccccvvvvvxxxxx", "bwlq", 2, 122, 15, 65535, 0, 0, 6,
+  5, 112, 0, 0, 5, 99, 0, 0, 2, 98, 0, 0, 4, 120, 0, 0,
+  10, 0, 64, 0, 4, 118, 0, 0, 0, 1>;
+def BRForm_vector_VECTOR_VSCATTER_b_w_l_q_z_pn_p_pn_c_vn_v_rn_b_add_rn_s : BedrockVectorEncodingForm<
+  "VECTOR.VSCATTER.b_w_l_q_z_pn_p_pn_c_vn_v_rn_b_add_rn_s", "vscatter", "VECTOR", "111111110000011000zz0bbbbppppccccssssvvvvv", "bwlq", 2, 122, 15, 65535, 0, 0, 5,
+  5, 112, 0, 0, 5, 99, 0, 0, 4, 118, 0, 0, 2, 98, 0, 0,
+  2, 115, 0, 0, 0, 0, 0, 0, 0, 1>;
+def BRForm_vector_VECTOR_VSCATTER_l_pn_p_pn_c_vn_v_vn_x : BedrockVectorEncodingForm<
+  "VECTOR.VSCATTER.l_pn_p_pn_c_vn_v_vn_x", "vscatter.l", "VECTOR", "111111110000011001000000ppppccccvvvvvxxxxx", "", 2, 0, 1, 65535, 0, 0, 4,
+  5, 112, 0, 0, 5, 99, 0, 0, 4, 118, 0, 0, 4, 120, 0, 0,
+  0, 0, 0, 0, 0, 0, 0, 0, 0, 1>;
+def BRForm_vector_VECTOR_VSCATTER_q_pn_p_pn_c_vn_v_vn_x : BedrockVectorEncodingForm<
+  "VECTOR.VSCATTER.q_pn_p_pn_c_vn_v_vn_x", "vscatter.q", "VECTOR", "111111110000011001000001ppppccccvvvvvxxxxx", "", 2, 0, 1, 65535, 0, 0, 4,
+  5, 112, 0, 0, 5, 99, 0, 0, 4, 118, 0, 0, 4, 120, 0, 0,
+  0, 0, 0, 0, 0, 0, 0, 0, 0, 1>;
+def BRForm_vector_VECTOR_VSCATTER_b_w_l_q_z_pn_p_pn_c_vn_v_rn_b_add_vn_x : BedrockVectorEncodingForm<
+  "VECTOR.VSCATTER.b_w_l_q_z_pn_p_pn_c_vn_v_rn_b_add_vn_x", "vscatter", "VECTOR", "111111110000011010zzbbbbppppccccvvvvvxxxxx", "bwlq", 2, 122, 15, 65535, 0, 0, 5,
+  5, 112, 0, 0, 5, 99, 0, 0, 4, 118, 0, 0, 2, 98, 0, 0,
+  4, 120, 0, 0, 0, 0, 0, 0, 0, 1>;
+def BRForm_vector_VECTOR_VSCATTER_b_w_l_q_z_pn_p_pn_c_vn_v_rn_b_add_vn_x_mul_scale : BedrockVectorEncodingForm<
+  "VECTOR.VSCATTER.b_w_l_q_z_pn_p_pn_c_vn_v_rn_b_add_vn_x_mul_scale", "vscatter", "VECTOR", "111111110000011011zzbbbbppppccccvvvvvxxxxx", "bwlq", 2, 122, 15, 65535, 0, 0, 5,
+  5, 112, 0, 0, 5, 99, 0, 0, 4, 118, 0, 0, 2, 98, 0, 0,
+  4, 120, 0, 0, 0, 0, 0, 0, 0, 1>;
+def BRForm_vector_VECTOR_VSCATTER_b_w_l_q_z_pn_p_pn_c_vn_v_rn_b_add_vn_x_mul_scale_add_disp8s : BedrockVectorEncodingForm<
+  "VECTOR.VSCATTER.b_w_l_q_z_pn_p_pn_c_vn_v_rn_b_add_vn_x_mul_scale_add_disp8s", "vscatter", "VECTOR", "111111110000011100zzbbbbppppccccvvvvvxxxxx", "bwlq", 2, 122, 15, 65535, 0, 0, 6,
+  5, 112, 0, 0, 5, 99, 0, 0, 4, 118, 0, 0, 2, 98, 0, 0,
+  4, 120, 0, 0, 9, 0, 8, 0, 0, 1>;
+def BRForm_vector_VECTOR_VSCATTER_b_w_l_q_z_pn_p_pn_c_vn_v_rn_b_add_vn_x_mul_scale_add_disp16s : BedrockVectorEncodingForm<
+  "VECTOR.VSCATTER.b_w_l_q_z_pn_p_pn_c_vn_v_rn_b_add_vn_x_mul_scale_add_disp16s", "vscatter", "VECTOR", "111111110000011101zzbbbbppppccccvvvvvxxxxx", "bwlq", 2, 122, 15, 65535, 0, 0, 6,
+  5, 112, 0, 0, 5, 99, 0, 0, 4, 118, 0, 0, 2, 98, 0, 0,
+  4, 120, 0, 0, 9, 0, 16, 0, 0, 1>;
+def BRForm_vector_VECTOR_VSCATTER_b_w_l_q_z_pn_p_pn_c_vn_v_rn_b_add_vn_x_mul_scale_add_disp32s : BedrockVectorEncodingForm<
+  "VECTOR.VSCATTER.b_w_l_q_z_pn_p_pn_c_vn_v_rn_b_add_vn_x_mul_scale_add_disp32s", "vscatter", "VECTOR", "111111110000011110zzbbbbppppccccvvvvvxxxxx", "bwlq", 2, 122, 15, 65535, 0, 0, 6,
+  5, 112, 0, 0, 5, 99, 0, 0, 4, 118, 0, 0, 2, 98, 0, 0,
+  4, 120, 0, 0, 9, 0, 32, 0, 0, 1>;
+def BRForm_vector_VECTOR_VSCATTER_b_w_l_q_z_pn_p_pn_c_vn_v_rn_b_add_vn_x_mul_scale_add_disp64 : BedrockVectorEncodingForm<
+  "VECTOR.VSCATTER.b_w_l_q_z_pn_p_pn_c_vn_v_rn_b_add_vn_x_mul_scale_add_disp64", "vscatter", "VECTOR", "111111110000011111zzbbbbppppccccvvvvvxxxxx", "bwlq", 2, 122, 15, 65535, 0, 0, 6,
+  5, 112, 0, 0, 5, 99, 0, 0, 4, 118, 0, 0, 2, 98, 0, 0,
+  4, 120, 0, 0, 10, 0, 64, 0, 0, 1>;
+def BRForm_vector_VECTOR_PTRUE_b_w_l_q_z_pn_p : BedrockVectorEncodingForm<
+  "VECTOR.PTRUE.b_w_l_q_z_pn_p", "ptrue", "VECTOR", "11111010011100zz000000pppp", "bwlq", 0, 122, 15, 65535, 0, 0, 1,
   5, 112, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
   0, 0, 0, 0, 0, 0, 0, 0, 255, 255>;
-def BRForm_vector_VECTOR_instructions_PFALSE_pn_p : BedrockVectorEncodingForm<
-  "VECTOR.instructions.PFALSE.pn_p", "pfalse", "1111101001110000000001pppp", "", 0, 0, 1, 65535, 0, 0, 1,
+def BRForm_vector_VECTOR_PFALSE_pn_p : BedrockVectorEncodingForm<
+  "VECTOR.PFALSE.pn_p", "pfalse", "VECTOR", "1111101001110000000001pppp", "", 0, 0, 1, 65535, 0, 0, 1,
   5, 112, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
   0, 0, 0, 0, 0, 0, 0, 0, 255, 255>;
-def BRForm_vector_VECTOR_instructions_PNOT_pn_p : BedrockVectorEncodingForm<
-  "VECTOR.instructions.PNOT.pn_p", "pnot", "1111101001110000000010pppp", "", 0, 0, 1, 65535, 0, 0, 1,
+def BRForm_vector_VECTOR_PNOT_pn_p : BedrockVectorEncodingForm<
+  "VECTOR.PNOT.pn_p", "pnot", "VECTOR", "1111101001110000000010pppp", "", 0, 0, 1, 65535, 0, 0, 1,
   5, 112, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
   0, 0, 0, 0, 0, 0, 0, 0, 255, 255>;
-def BRForm_vector_VECTOR_instructions_BPANY_pn_p_imm32s : BedrockVectorEncodingForm<
-  "VECTOR.instructions.BPANY.pn_p_imm32s", "bpany", "1111101001110000000011pppp", "", 0, 0, 1, 65535, 0, 0, 2,
+def BRForm_vector_VECTOR_BPANY_pn_p_imm32s : BedrockVectorEncodingForm<
+  "VECTOR.BPANY.pn_p_imm32s", "bpany", "VECTOR", "1111101001110000000011pppp", "", 0, 0, 1, 65535, 0, 0, 2,
   5, 112, 0, 0, 9, 0, 32, 0, 0, 0, 0, 0, 0, 0, 0, 0,
   0, 0, 0, 0, 0, 0, 0, 0, 255, 255>;
-def BRForm_vector_VECTOR_instructions_BPANY_pn_p_ea_e : BedrockVectorEncodingForm<
-  "VECTOR.instructions.BPANY.pn_p_ea_e", "bpany", "1111111100000011000000000000010ppppeeeeeee", "", 2, 0, 1, 65535, 0, 0, 2,
+def BRForm_vector_VECTOR_BPANY_pn_p_ea_e : BedrockVectorEncodingForm<
+  "VECTOR.BPANY.pn_p_ea_e", "bpany", "VECTOR", "1111111100000011000000000000010ppppeeeeeee", "", 2, 0, 1, 65535, 0, 0, 2,
   5, 112, 0, 0, 6, 101, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0,
   0, 0, 0, 0, 0, 0, 0, 0, 255, 255>;
-def BRForm_vector_VECTOR_instructions_BPNONE_pn_p_imm32s : BedrockVectorEncodingForm<
-  "VECTOR.instructions.BPNONE.pn_p_imm32s", "bpnone", "1111101001110000000100pppp", "", 0, 0, 1, 65535, 0, 0, 2,
+def BRForm_vector_VECTOR_BPNONE_pn_p_imm32s : BedrockVectorEncodingForm<
+  "VECTOR.BPNONE.pn_p_imm32s", "bpnone", "VECTOR", "1111101001110000000100pppp", "", 0, 0, 1, 65535, 0, 0, 2,
   5, 112, 0, 0, 9, 0, 32, 0, 0, 0, 0, 0, 0, 0, 0, 0,
   0, 0, 0, 0, 0, 0, 0, 0, 255, 255>;
-def BRForm_vector_VECTOR_instructions_BPNONE_pn_p_ea_e : BedrockVectorEncodingForm<
-  "VECTOR.instructions.BPNONE.pn_p_ea_e", "bpnone", "1111111100000011000000000000011ppppeeeeeee", "", 2, 0, 1, 65535, 0, 0, 2,
+def BRForm_vector_VECTOR_BPNONE_pn_p_ea_e : BedrockVectorEncodingForm<
+  "VECTOR.BPNONE.pn_p_ea_e", "bpnone", "VECTOR", "1111111100000011000000000000011ppppeeeeeee", "", 2, 0, 1, 65535, 0, 0, 2,
   5, 112, 0, 0, 6, 101, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0,
   0, 0, 0, 0, 0, 0, 0, 0, 255, 255>;
-def BRForm_vector_VECTOR_instructions_BPALL_b_w_l_q_z_pn_p_imm32s : BedrockVectorEncodingForm<
-  "VECTOR.instructions.BPALL.b_w_l_q_z_pn_p_imm32s", "bpall", "11111010011100zz000101pppp", "bwlq", 0, 122, 15, 65535, 0, 0, 2,
+def BRForm_vector_VECTOR_BPALL_b_w_l_q_z_pn_p_imm32s : BedrockVectorEncodingForm<
+  "VECTOR.BPALL.b_w_l_q_z_pn_p_imm32s", "bpall", "VECTOR", "11111010011100zz000101pppp", "bwlq", 0, 122, 15, 65535, 0, 0, 2,
   5, 112, 0, 0, 9, 0, 32, 0, 0, 0, 0, 0, 0, 0, 0, 0,
   0, 0, 0, 0, 0, 0, 0, 0, 255, 255>;
-def BRForm_vector_VECTOR_instructions_BPALL_b_w_l_q_z_pn_p_ea_e : BedrockVectorEncodingForm<
-  "VECTOR.instructions.BPALL.b_w_l_q_z_pn_p_ea_e", "bpall", "11111111000000110000zz000000100ppppeeeeeee", "bwlq", 2, 122, 15, 65535, 0, 0, 2,
+def BRForm_vector_VECTOR_BPALL_b_w_l_q_z_pn_p_ea_e : BedrockVectorEncodingForm<
+  "VECTOR.BPALL.b_w_l_q_z_pn_p_ea_e", "bpall", "VECTOR", "11111111000000110000zz000000100ppppeeeeeee", "bwlq", 2, 122, 15, 65535, 0, 0, 2,
   5, 112, 0, 0, 6, 101, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0,
   0, 0, 0, 0, 0, 0, 0, 0, 255, 255>;
-def BRForm_vector_VECTOR_instructions_VNEG_b_w_l_q_h_s_d_x_pn_p_vn_v : BedrockVectorEncodingForm<
-  "VECTOR.instructions.VNEG.b_w_l_q_h_s_d_x_pn_p_vn_v", "vneg", "1111101000000xxx0ppppvvvvv", "bwlq?hsd", 0, 120, 239, 65535, 0, 0, 2,
+def BRForm_vector_VECTOR_VNEG_b_w_l_q_x_pn_p_vn_v : BedrockVectorEncodingForm<
+  "VECTOR.VNEG.b_w_l_q_x_pn_p_vn_v", "vneg", "VECTOR", "1111101000000xxx0ppppvvvvv", "bwlq????", 0, 120, 15, 65535, 0, 0, 2,
   5, 112, 0, 0, 4, 118, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
   0, 0, 0, 0, 0, 0, 0, 0, 255, 255>;
-def BRForm_vector_VECTOR_instructions_VNEG_b_w_l_q_h_s_d_x_pn_p_ea_e_vn_v : BedrockVectorEncodingForm<
-  "VECTOR.instructions.VNEG.b_w_l_q_h_s_d_x_pn_p_ea_e_vn_v", "vneg", "1111111100000010010xxx0000ppppvvvvveeeeeee", "bwlq?hsd", 2, 120, 239, 65535, 0, 0, 3,
+def BRForm_vector_VECTOR_VNEG_b_w_l_q_x_pn_p_ea_e_vn_v : BedrockVectorEncodingForm<
+  "VECTOR.VNEG.b_w_l_q_x_pn_p_ea_e_vn_v", "vneg", "VECTOR", "1111111100000010010xxx0000ppppvvvvveeeeeee", "bwlq????", 2, 120, 15, 65535, 0, 0, 3,
   5, 112, 0, 0, 7, 101, 0, 0, 4, 118, 0, 0, 0, 0, 0, 0,
   0, 0, 0, 0, 0, 0, 0, 0, 255, 255>;
-def BRForm_vector_VECTOR_instructions_VNEG_b_w_l_q_h_s_d_x_pn_p_vn_v_ea_e : BedrockVectorEncodingForm<
-  "VECTOR.instructions.VNEG.b_w_l_q_h_s_d_x_pn_p_vn_v_ea_e", "vneg", "1111111100000010010xxx0001ppppvvvvveeeeeee", "bwlq?hsd", 2, 120, 239, 65535, 0, 0, 3,
+def BRForm_vector_VECTOR_VNEG_b_w_l_q_x_pn_p_vn_v_ea_e : BedrockVectorEncodingForm<
+  "VECTOR.VNEG.b_w_l_q_x_pn_p_vn_v_ea_e", "vneg", "VECTOR", "1111111100000010010xxx0001ppppvvvvveeeeeee", "bwlq????", 2, 120, 15, 65535, 0, 0, 3,
   5, 112, 0, 0, 4, 118, 0, 0, 7, 101, 0, 0, 0, 0, 0, 0,
   0, 0, 0, 0, 0, 0, 0, 0, 255, 255>;
-def BRForm_vector_VECTOR_instructions_VABS_b_w_l_q_h_s_d_x_pn_p_vn_v : BedrockVectorEncodingForm<
-  "VECTOR.instructions.VABS.b_w_l_q_h_s_d_x_pn_p_vn_v", "vabs", "1111101000000xxx1ppppvvvvv", "bwlq?hsd", 0, 120, 239, 65535, 0, 0, 2,
+def BRForm_vector_VECTOR_VABS_b_w_l_q_x_pn_p_vn_v : BedrockVectorEncodingForm<
+  "VECTOR.VABS.b_w_l_q_x_pn_p_vn_v", "vabs", "VECTOR", "1111101000000xxx1ppppvvvvv", "bwlq????", 0, 120, 15, 65535, 0, 0, 2,
   5, 112, 0, 0, 4, 118, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
   0, 0, 0, 0, 0, 0, 0, 0, 255, 255>;
-def BRForm_vector_VECTOR_instructions_VABS_b_w_l_q_h_s_d_x_pn_p_ea_e_vn_v : BedrockVectorEncodingForm<
-  "VECTOR.instructions.VABS.b_w_l_q_h_s_d_x_pn_p_ea_e_vn_v", "vabs", "1111111100000010010xxx0010ppppvvvvveeeeeee", "bwlq?hsd", 2, 120, 239, 65535, 0, 0, 3,
+def BRForm_vector_VECTOR_VABS_b_w_l_q_x_pn_p_ea_e_vn_v : BedrockVectorEncodingForm<
+  "VECTOR.VABS.b_w_l_q_x_pn_p_ea_e_vn_v", "vabs", "VECTOR", "1111111100000010010xxx0010ppppvvvvveeeeeee", "bwlq????", 2, 120, 15, 65535, 0, 0, 3,
   5, 112, 0, 0, 7, 101, 0, 0, 4, 118, 0, 0, 0, 0, 0, 0,
   0, 0, 0, 0, 0, 0, 0, 0, 255, 255>;
-def BRForm_vector_VECTOR_instructions_VABS_b_w_l_q_h_s_d_x_pn_p_vn_v_ea_e : BedrockVectorEncodingForm<
-  "VECTOR.instructions.VABS.b_w_l_q_h_s_d_x_pn_p_vn_v_ea_e", "vabs", "1111111100000010010xxx0011ppppvvvvveeeeeee", "bwlq?hsd", 2, 120, 239, 65535, 0, 0, 3,
+def BRForm_vector_VECTOR_VABS_b_w_l_q_x_pn_p_vn_v_ea_e : BedrockVectorEncodingForm<
+  "VECTOR.VABS.b_w_l_q_x_pn_p_vn_v_ea_e", "vabs", "VECTOR", "1111111100000010010xxx0011ppppvvvvveeeeeee", "bwlq????", 2, 120, 15, 65535, 0, 0, 3,
   5, 112, 0, 0, 4, 118, 0, 0, 7, 101, 0, 0, 0, 0, 0, 0,
   0, 0, 0, 0, 0, 0, 0, 0, 255, 255>;
-def BRForm_vector_VECTOR_instructions_VNOT_b_w_l_q_z_pn_p_vn_v : BedrockVectorEncodingForm<
-  "VECTOR.instructions.VNOT.b_w_l_q_z_pn_p_vn_v", "vnot", "11111010000010zz0ppppvvvvv", "bwlq", 0, 122, 15, 65535, 0, 0, 2,
+def BRForm_vector_VECTOR_VNOT_b_w_l_q_z_pn_p_vn_v : BedrockVectorEncodingForm<
+  "VECTOR.VNOT.b_w_l_q_z_pn_p_vn_v", "vnot", "VECTOR", "11111010000010zz0ppppvvvvv", "bwlq", 0, 122, 15, 65535, 0, 0, 2,
   5, 112, 0, 0, 4, 118, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
   0, 0, 0, 0, 0, 0, 0, 0, 255, 255>;
-def BRForm_vector_VECTOR_instructions_VNOT_b_w_l_q_z_pn_p_ea_e_vn_v : BedrockVectorEncodingForm<
-  "VECTOR.instructions.VNOT.b_w_l_q_z_pn_p_ea_e_vn_v", "vnot", "11111111000000100011zz0101ppppvvvvveeeeeee", "bwlq", 2, 122, 15, 65535, 0, 0, 3,
+def BRForm_vector_VECTOR_VNOT_b_w_l_q_z_pn_p_ea_e_vn_v : BedrockVectorEncodingForm<
+  "VECTOR.VNOT.b_w_l_q_z_pn_p_ea_e_vn_v", "vnot", "VECTOR", "11111111000000100011zz0101ppppvvvvveeeeeee", "bwlq", 2, 122, 15, 65535, 0, 0, 3,
   5, 112, 0, 0, 7, 101, 0, 0, 4, 118, 0, 0, 0, 0, 0, 0,
   0, 0, 0, 0, 0, 0, 0, 0, 255, 255>;
-def BRForm_vector_VECTOR_instructions_VNOT_b_w_l_q_z_pn_p_vn_v_ea_e : BedrockVectorEncodingForm<
-  "VECTOR.instructions.VNOT.b_w_l_q_z_pn_p_vn_v_ea_e", "vnot", "11111111000000100011zz0110ppppvvvvveeeeeee", "bwlq", 2, 122, 15, 65535, 0, 0, 3,
+def BRForm_vector_VECTOR_VNOT_b_w_l_q_z_pn_p_vn_v_ea_e : BedrockVectorEncodingForm<
+  "VECTOR.VNOT.b_w_l_q_z_pn_p_vn_v_ea_e", "vnot", "VECTOR", "11111111000000100011zz0110ppppvvvvveeeeeee", "bwlq", 2, 122, 15, 65535, 0, 0, 3,
   5, 112, 0, 0, 4, 118, 0, 0, 7, 101, 0, 0, 0, 0, 0, 0,
   0, 0, 0, 0, 0, 0, 0, 0, 255, 255>;
-def BRForm_vector_VECTOR_instructions_VCLZ_b_w_l_q_z_pn_p_vn_v : BedrockVectorEncodingForm<
-  "VECTOR.instructions.VCLZ.b_w_l_q_z_pn_p_vn_v", "vclz", "11111010000010zz1ppppvvvvv", "bwlq", 0, 122, 15, 65535, 0, 0, 2,
+def BRForm_vector_VECTOR_VCLZ_b_w_l_q_z_pn_p_vn_v : BedrockVectorEncodingForm<
+  "VECTOR.VCLZ.b_w_l_q_z_pn_p_vn_v", "vclz", "VECTOR", "11111010000010zz1ppppvvvvv", "bwlq", 0, 122, 15, 65535, 0, 0, 2,
   5, 112, 0, 0, 4, 118, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
   0, 0, 0, 0, 0, 0, 0, 0, 255, 255>;
-def BRForm_vector_VECTOR_instructions_VCLZ_b_w_l_q_z_pn_p_ea_e_vn_v : BedrockVectorEncodingForm<
-  "VECTOR.instructions.VCLZ.b_w_l_q_z_pn_p_ea_e_vn_v", "vclz", "11111111000000100011zz0111ppppvvvvveeeeeee", "bwlq", 2, 122, 15, 65535, 0, 0, 3,
+def BRForm_vector_VECTOR_VCLZ_b_w_l_q_z_pn_p_ea_e_vn_v : BedrockVectorEncodingForm<
+  "VECTOR.VCLZ.b_w_l_q_z_pn_p_ea_e_vn_v", "vclz", "VECTOR", "11111111000000100011zz0111ppppvvvvveeeeeee", "bwlq", 2, 122, 15, 65535, 0, 0, 3,
   5, 112, 0, 0, 7, 101, 0, 0, 4, 118, 0, 0, 0, 0, 0, 0,
   0, 0, 0, 0, 0, 0, 0, 0, 255, 255>;
-def BRForm_vector_VECTOR_instructions_VCLZ_b_w_l_q_z_pn_p_vn_v_ea_e : BedrockVectorEncodingForm<
-  "VECTOR.instructions.VCLZ.b_w_l_q_z_pn_p_vn_v_ea_e", "vclz", "11111111000000100011zz1000ppppvvvvveeeeeee", "bwlq", 2, 122, 15, 65535, 0, 0, 3,
+def BRForm_vector_VECTOR_VCLZ_b_w_l_q_z_pn_p_vn_v_ea_e : BedrockVectorEncodingForm<
+  "VECTOR.VCLZ.b_w_l_q_z_pn_p_vn_v_ea_e", "vclz", "VECTOR", "11111111000000100011zz1000ppppvvvvveeeeeee", "bwlq", 2, 122, 15, 65535, 0, 0, 3,
   5, 112, 0, 0, 4, 118, 0, 0, 7, 101, 0, 0, 0, 0, 0, 0,
   0, 0, 0, 0, 0, 0, 0, 0, 255, 255>;
-def BRForm_vector_VECTOR_instructions_VCTZ_b_w_l_q_z_pn_p_vn_v : BedrockVectorEncodingForm<
-  "VECTOR.instructions.VCTZ.b_w_l_q_z_pn_p_vn_v", "vctz", "11111010000011zz0ppppvvvvv", "bwlq", 0, 122, 15, 65535, 0, 0, 2,
+def BRForm_vector_VECTOR_VCTZ_b_w_l_q_z_pn_p_vn_v : BedrockVectorEncodingForm<
+  "VECTOR.VCTZ.b_w_l_q_z_pn_p_vn_v", "vctz", "VECTOR", "11111010000011zz0ppppvvvvv", "bwlq", 0, 122, 15, 65535, 0, 0, 2,
   5, 112, 0, 0, 4, 118, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
   0, 0, 0, 0, 0, 0, 0, 0, 255, 255>;
-def BRForm_vector_VECTOR_instructions_VCTZ_b_w_l_q_z_pn_p_ea_e_vn_v : BedrockVectorEncodingForm<
-  "VECTOR.instructions.VCTZ.b_w_l_q_z_pn_p_ea_e_vn_v", "vctz", "11111111000000100011zz1001ppppvvvvveeeeeee", "bwlq", 2, 122, 15, 65535, 0, 0, 3,
+def BRForm_vector_VECTOR_VCTZ_b_w_l_q_z_pn_p_ea_e_vn_v : BedrockVectorEncodingForm<
+  "VECTOR.VCTZ.b_w_l_q_z_pn_p_ea_e_vn_v", "vctz", "VECTOR", "11111111000000100011zz1001ppppvvvvveeeeeee", "bwlq", 2, 122, 15, 65535, 0, 0, 3,
   5, 112, 0, 0, 7, 101, 0, 0, 4, 118, 0, 0, 0, 0, 0, 0,
   0, 0, 0, 0, 0, 0, 0, 0, 255, 255>;
-def BRForm_vector_VECTOR_instructions_VCTZ_b_w_l_q_z_pn_p_vn_v_ea_e : BedrockVectorEncodingForm<
-  "VECTOR.instructions.VCTZ.b_w_l_q_z_pn_p_vn_v_ea_e", "vctz", "11111111000000100011zz1010ppppvvvvveeeeeee", "bwlq", 2, 122, 15, 65535, 0, 0, 3,
+def BRForm_vector_VECTOR_VCTZ_b_w_l_q_z_pn_p_vn_v_ea_e : BedrockVectorEncodingForm<
+  "VECTOR.VCTZ.b_w_l_q_z_pn_p_vn_v_ea_e", "vctz", "VECTOR", "11111111000000100011zz1010ppppvvvvveeeeeee", "bwlq", 2, 122, 15, 65535, 0, 0, 3,
   5, 112, 0, 0, 4, 118, 0, 0, 7, 101, 0, 0, 0, 0, 0, 0,
   0, 0, 0, 0, 0, 0, 0, 0, 255, 255>;
-def BRForm_vector_VECTOR_instructions_VCLS_b_w_l_q_z_pn_p_vn_v : BedrockVectorEncodingForm<
-  "VECTOR.instructions.VCLS.b_w_l_q_z_pn_p_vn_v", "vcls", "11111010000011zz1ppppvvvvv", "bwlq", 0, 122, 15, 65535, 0, 0, 2,
+def BRForm_vector_VECTOR_VCLS_b_w_l_q_z_pn_p_vn_v : BedrockVectorEncodingForm<
+  "VECTOR.VCLS.b_w_l_q_z_pn_p_vn_v", "vcls", "VECTOR", "11111010000011zz1ppppvvvvv", "bwlq", 0, 122, 15, 65535, 0, 0, 2,
   5, 112, 0, 0, 4, 118, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
   0, 0, 0, 0, 0, 0, 0, 0, 255, 255>;
-def BRForm_vector_VECTOR_instructions_VCLS_b_w_l_q_z_pn_p_ea_e_vn_v : BedrockVectorEncodingForm<
-  "VECTOR.instructions.VCLS.b_w_l_q_z_pn_p_ea_e_vn_v", "vcls", "11111111000000100011zz1011ppppvvvvveeeeeee", "bwlq", 2, 122, 15, 65535, 0, 0, 3,
+def BRForm_vector_VECTOR_VCLS_b_w_l_q_z_pn_p_ea_e_vn_v : BedrockVectorEncodingForm<
+  "VECTOR.VCLS.b_w_l_q_z_pn_p_ea_e_vn_v", "vcls", "VECTOR", "11111111000000100011zz1011ppppvvvvveeeeeee", "bwlq", 2, 122, 15, 65535, 0, 0, 3,
   5, 112, 0, 0, 7, 101, 0, 0, 4, 118, 0, 0, 0, 0, 0, 0,
   0, 0, 0, 0, 0, 0, 0, 0, 255, 255>;
-def BRForm_vector_VECTOR_instructions_VCLS_b_w_l_q_z_pn_p_vn_v_ea_e : BedrockVectorEncodingForm<
-  "VECTOR.instructions.VCLS.b_w_l_q_z_pn_p_vn_v_ea_e", "vcls", "11111111000000100011zz1100ppppvvvvveeeeeee", "bwlq", 2, 122, 15, 65535, 0, 0, 3,
+def BRForm_vector_VECTOR_VCLS_b_w_l_q_z_pn_p_vn_v_ea_e : BedrockVectorEncodingForm<
+  "VECTOR.VCLS.b_w_l_q_z_pn_p_vn_v_ea_e", "vcls", "VECTOR", "11111111000000100011zz1100ppppvvvvveeeeeee", "bwlq", 2, 122, 15, 65535, 0, 0, 3,
   5, 112, 0, 0, 4, 118, 0, 0, 7, 101, 0, 0, 0, 0, 0, 0,
   0, 0, 0, 0, 0, 0, 0, 0, 255, 255>;
-def BRForm_vector_VECTOR_instructions_VCTS_b_w_l_q_z_pn_p_vn_v : BedrockVectorEncodingForm<
-  "VECTOR.instructions.VCTS.b_w_l_q_z_pn_p_vn_v", "vcts", "11111010000100zz0ppppvvvvv", "bwlq", 0, 122, 15, 65535, 0, 0, 2,
+def BRForm_vector_VECTOR_VCTS_b_w_l_q_z_pn_p_vn_v : BedrockVectorEncodingForm<
+  "VECTOR.VCTS.b_w_l_q_z_pn_p_vn_v", "vcts", "VECTOR", "11111010000100zz0ppppvvvvv", "bwlq", 0, 122, 15, 65535, 0, 0, 2,
   5, 112, 0, 0, 4, 118, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
   0, 0, 0, 0, 0, 0, 0, 0, 255, 255>;
-def BRForm_vector_VECTOR_instructions_VCTS_b_w_l_q_z_pn_p_ea_e_vn_v : BedrockVectorEncodingForm<
-  "VECTOR.instructions.VCTS.b_w_l_q_z_pn_p_ea_e_vn_v", "vcts", "11111111000000100011zz1101ppppvvvvveeeeeee", "bwlq", 2, 122, 15, 65535, 0, 0, 3,
+def BRForm_vector_VECTOR_VCTS_b_w_l_q_z_pn_p_ea_e_vn_v : BedrockVectorEncodingForm<
+  "VECTOR.VCTS.b_w_l_q_z_pn_p_ea_e_vn_v", "vcts", "VECTOR", "11111111000000100011zz1101ppppvvvvveeeeeee", "bwlq", 2, 122, 15, 65535, 0, 0, 3,
   5, 112, 0, 0, 7, 101, 0, 0, 4, 118, 0, 0, 0, 0, 0, 0,
   0, 0, 0, 0, 0, 0, 0, 0, 255, 255>;
-def BRForm_vector_VECTOR_instructions_VCTS_b_w_l_q_z_pn_p_vn_v_ea_e : BedrockVectorEncodingForm<
-  "VECTOR.instructions.VCTS.b_w_l_q_z_pn_p_vn_v_ea_e", "vcts", "11111111000000100011zz1110ppppvvvvveeeeeee", "bwlq", 2, 122, 15, 65535, 0, 0, 3,
+def BRForm_vector_VECTOR_VCTS_b_w_l_q_z_pn_p_vn_v_ea_e : BedrockVectorEncodingForm<
+  "VECTOR.VCTS.b_w_l_q_z_pn_p_vn_v_ea_e", "vcts", "VECTOR", "11111111000000100011zz1110ppppvvvvveeeeeee", "bwlq", 2, 122, 15, 65535, 0, 0, 3,
   5, 112, 0, 0, 4, 118, 0, 0, 7, 101, 0, 0, 0, 0, 0, 0,
   0, 0, 0, 0, 0, 0, 0, 0, 255, 255>;
-def BRForm_vector_VECTOR_instructions_VPOPCNT_b_w_l_q_z_pn_p_vn_v : BedrockVectorEncodingForm<
-  "VECTOR.instructions.VPOPCNT.b_w_l_q_z_pn_p_vn_v", "vpopcnt", "11111010000100zz1ppppvvvvv", "bwlq", 0, 122, 15, 65535, 0, 0, 2,
+def BRForm_vector_VECTOR_VPOPCNT_b_w_l_q_z_pn_p_vn_v : BedrockVectorEncodingForm<
+  "VECTOR.VPOPCNT.b_w_l_q_z_pn_p_vn_v", "vpopcnt", "VECTOR", "11111010000100zz1ppppvvvvv", "bwlq", 0, 122, 15, 65535, 0, 0, 2,
   5, 112, 0, 0, 4, 118, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
   0, 0, 0, 0, 0, 0, 0, 0, 255, 255>;
-def BRForm_vector_VECTOR_instructions_VPOPCNT_b_w_l_q_z_pn_p_ea_e_vn_v : BedrockVectorEncodingForm<
-  "VECTOR.instructions.VPOPCNT.b_w_l_q_z_pn_p_ea_e_vn_v", "vpopcnt", "11111111000000100011zz1111ppppvvvvveeeeeee", "bwlq", 2, 122, 15, 65535, 0, 0, 3,
+def BRForm_vector_VECTOR_VPOPCNT_b_w_l_q_z_pn_p_ea_e_vn_v : BedrockVectorEncodingForm<
+  "VECTOR.VPOPCNT.b_w_l_q_z_pn_p_ea_e_vn_v", "vpopcnt", "VECTOR", "11111111000000100011zz1111ppppvvvvveeeeeee", "bwlq", 2, 122, 15, 65535, 0, 0, 3,
   5, 112, 0, 0, 7, 101, 0, 0, 4, 118, 0, 0, 0, 0, 0, 0,
   0, 0, 0, 0, 0, 0, 0, 0, 255, 255>;
-def BRForm_vector_VECTOR_instructions_VPOPCNT_b_w_l_q_z_pn_p_vn_v_ea_e : BedrockVectorEncodingForm<
-  "VECTOR.instructions.VPOPCNT.b_w_l_q_z_pn_p_vn_v_ea_e", "vpopcnt", "11111111000000100100zz0100ppppvvvvveeeeeee", "bwlq", 2, 122, 15, 65535, 0, 0, 3,
+def BRForm_vector_VECTOR_VPOPCNT_b_w_l_q_z_pn_p_vn_v_ea_e : BedrockVectorEncodingForm<
+  "VECTOR.VPOPCNT.b_w_l_q_z_pn_p_vn_v_ea_e", "vpopcnt", "VECTOR", "11111111000000100100zz0100ppppvvvvveeeeeee", "bwlq", 2, 122, 15, 65535, 0, 0, 3,
   5, 112, 0, 0, 4, 118, 0, 0, 7, 101, 0, 0, 0, 0, 0, 0,
   0, 0, 0, 0, 0, 0, 0, 0, 255, 255>;
-def BRForm_vector_VECTOR_instructions_VREVBYTE_w_l_q_z_pn_p_vn_v : BedrockVectorEncodingForm<
-  "VECTOR.instructions.VREVBYTE.w_l_q_z_pn_p_vn_v", "vrevbyte", "11111010000101zz0ppppvvvvv", "?wlq", 0, 122, 14, 65535, 0, 0, 2,
+def BRForm_vector_VECTOR_VREVBYTE_w_l_q_z_pn_p_vn_v : BedrockVectorEncodingForm<
+  "VECTOR.VREVBYTE.w_l_q_z_pn_p_vn_v", "vrevbyte", "VECTOR", "11111010000101zz0ppppvvvvv", "?wlq", 0, 122, 14, 65535, 0, 0, 2,
   5, 112, 0, 0, 4, 118, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
   0, 0, 0, 0, 0, 0, 0, 0, 255, 255>;
-def BRForm_vector_VECTOR_instructions_VREVBYTE_w_l_q_z_pn_p_ea_e_vn_v : BedrockVectorEncodingForm<
-  "VECTOR.instructions.VREVBYTE.w_l_q_z_pn_p_ea_e_vn_v", "vrevbyte", "11111111000000100100zz0101ppppvvvvveeeeeee", "?wlq", 2, 122, 14, 65535, 0, 0, 3,
+def BRForm_vector_VECTOR_VREVBYTE_w_l_q_z_pn_p_ea_e_vn_v : BedrockVectorEncodingForm<
+  "VECTOR.VREVBYTE.w_l_q_z_pn_p_ea_e_vn_v", "vrevbyte", "VECTOR", "11111111000000100100zz0101ppppvvvvveeeeeee", "?wlq", 2, 122, 14, 65535, 0, 0, 3,
   5, 112, 0, 0, 7, 101, 0, 0, 4, 118, 0, 0, 0, 0, 0, 0,
   0, 0, 0, 0, 0, 0, 0, 0, 255, 255>;
-def BRForm_vector_VECTOR_instructions_VREVBYTE_w_l_q_z_pn_p_vn_v_ea_e : BedrockVectorEncodingForm<
-  "VECTOR.instructions.VREVBYTE.w_l_q_z_pn_p_vn_v_ea_e", "vrevbyte", "11111111000000100100zz0110ppppvvvvveeeeeee", "?wlq", 2, 122, 14, 65535, 0, 0, 3,
+def BRForm_vector_VECTOR_VREVBYTE_w_l_q_z_pn_p_vn_v_ea_e : BedrockVectorEncodingForm<
+  "VECTOR.VREVBYTE.w_l_q_z_pn_p_vn_v_ea_e", "vrevbyte", "VECTOR", "11111111000000100100zz0110ppppvvvvveeeeeee", "?wlq", 2, 122, 14, 65535, 0, 0, 3,
   5, 112, 0, 0, 4, 118, 0, 0, 7, 101, 0, 0, 0, 0, 0, 0,
   0, 0, 0, 0, 0, 0, 0, 0, 255, 255>;
-def BRForm_vector_VECTOR_instructions_VSQRT_h_s_d_z_pn_p_vn_v : BedrockVectorEncodingForm<
-  "VECTOR.instructions.VSQRT.h_s_d_z_pn_p_vn_v", "vsqrt", "11111010000101zz1ppppvvvvv", "?hsd", 0, 122, 14, 65535, 0, 0, 2,
-  5, 112, 0, 0, 4, 118, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-  0, 0, 0, 0, 0, 0, 0, 0, 255, 255>;
-def BRForm_vector_VECTOR_instructions_VSQRT_h_s_d_z_pn_p_ea_e_vn_v : BedrockVectorEncodingForm<
-  "VECTOR.instructions.VSQRT.h_s_d_z_pn_p_ea_e_vn_v", "vsqrt", "11111111000000100100zz0111ppppvvvvveeeeeee", "?hsd", 2, 122, 14, 65535, 0, 0, 3,
-  5, 112, 0, 0, 7, 101, 0, 0, 4, 118, 0, 0, 0, 0, 0, 0,
-  0, 0, 0, 0, 0, 0, 0, 0, 255, 255>;
-def BRForm_vector_VECTOR_instructions_VSQRT_h_s_d_z_pn_p_vn_v_ea_e : BedrockVectorEncodingForm<
-  "VECTOR.instructions.VSQRT.h_s_d_z_pn_p_vn_v_ea_e", "vsqrt", "11111111000000100100zz1000ppppvvvvveeeeeee", "?hsd", 2, 122, 14, 65535, 0, 0, 3,
-  5, 112, 0, 0, 4, 118, 0, 0, 7, 101, 0, 0, 0, 0, 0, 0,
-  0, 0, 0, 0, 0, 0, 0, 0, 255, 255>;
-def BRForm_vector_VECTOR_instructions_VROUND_h_s_d_z_pn_p_vn_v : BedrockVectorEncodingForm<
-  "VECTOR.instructions.VROUND.h_s_d_z_pn_p_vn_v", "vround", "11111010000110zz0ppppvvvvv", "?hsd", 0, 122, 14, 65535, 0, 0, 2,
-  5, 112, 0, 0, 4, 118, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-  0, 0, 0, 0, 0, 0, 0, 0, 255, 255>;
-def BRForm_vector_VECTOR_instructions_VROUND_h_s_d_z_pn_p_ea_e_vn_v : BedrockVectorEncodingForm<
-  "VECTOR.instructions.VROUND.h_s_d_z_pn_p_ea_e_vn_v", "vround", "11111111000000100100zz1001ppppvvvvveeeeeee", "?hsd", 2, 122, 14, 65535, 0, 0, 3,
-  5, 112, 0, 0, 7, 101, 0, 0, 4, 118, 0, 0, 0, 0, 0, 0,
-  0, 0, 0, 0, 0, 0, 0, 0, 255, 255>;
-def BRForm_vector_VECTOR_instructions_VROUND_h_s_d_z_pn_p_vn_v_ea_e : BedrockVectorEncodingForm<
-  "VECTOR.instructions.VROUND.h_s_d_z_pn_p_vn_v_ea_e", "vround", "11111111000000100100zz1010ppppvvvvveeeeeee", "?hsd", 2, 122, 14, 65535, 0, 0, 3,
-  5, 112, 0, 0, 4, 118, 0, 0, 7, 101, 0, 0, 0, 0, 0, 0,
-  0, 0, 0, 0, 0, 0, 0, 0, 255, 255>;
-def BRForm_vector_VECTOR_instructions_VTRUNC_h_s_d_z_pn_p_vn_v : BedrockVectorEncodingForm<
-  "VECTOR.instructions.VTRUNC.h_s_d_z_pn_p_vn_v", "vtrunc", "11111010000110zz1ppppvvvvv", "?hsd", 0, 122, 14, 65535, 0, 0, 2,
-  5, 112, 0, 0, 4, 118, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-  0, 0, 0, 0, 0, 0, 0, 0, 255, 255>;
-def BRForm_vector_VECTOR_instructions_VTRUNC_h_s_d_z_pn_p_ea_e_vn_v : BedrockVectorEncodingForm<
-  "VECTOR.instructions.VTRUNC.h_s_d_z_pn_p_ea_e_vn_v", "vtrunc", "11111111000000100100zz1011ppppvvvvveeeeeee", "?hsd", 2, 122, 14, 65535, 0, 0, 3,
-  5, 112, 0, 0, 7, 101, 0, 0, 4, 118, 0, 0, 0, 0, 0, 0,
-  0, 0, 0, 0, 0, 0, 0, 0, 255, 255>;
-def BRForm_vector_VECTOR_instructions_VTRUNC_h_s_d_z_pn_p_vn_v_ea_e : BedrockVectorEncodingForm<
-  "VECTOR.instructions.VTRUNC.h_s_d_z_pn_p_vn_v_ea_e", "vtrunc", "11111111000000100100zz1100ppppvvvvveeeeeee", "?hsd", 2, 122, 14, 65535, 0, 0, 3,
-  5, 112, 0, 0, 4, 118, 0, 0, 7, 101, 0, 0, 0, 0, 0, 0,
-  0, 0, 0, 0, 0, 0, 0, 0, 255, 255>;
-def BRForm_vector_VECTOR_instructions_VFLOOR_h_s_d_z_pn_p_vn_v : BedrockVectorEncodingForm<
-  "VECTOR.instructions.VFLOOR.h_s_d_z_pn_p_vn_v", "vfloor", "11111010000111zz0ppppvvvvv", "?hsd", 0, 122, 14, 65535, 0, 0, 2,
-  5, 112, 0, 0, 4, 118, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-  0, 0, 0, 0, 0, 0, 0, 0, 255, 255>;
-def BRForm_vector_VECTOR_instructions_VFLOOR_h_s_d_z_pn_p_ea_e_vn_v : BedrockVectorEncodingForm<
-  "VECTOR.instructions.VFLOOR.h_s_d_z_pn_p_ea_e_vn_v", "vfloor", "11111111000000100100zz1101ppppvvvvveeeeeee", "?hsd", 2, 122, 14, 65535, 0, 0, 3,
-  5, 112, 0, 0, 7, 101, 0, 0, 4, 118, 0, 0, 0, 0, 0, 0,
-  0, 0, 0, 0, 0, 0, 0, 0, 255, 255>;
-def BRForm_vector_VECTOR_instructions_VFLOOR_h_s_d_z_pn_p_vn_v_ea_e : BedrockVectorEncodingForm<
-  "VECTOR.instructions.VFLOOR.h_s_d_z_pn_p_vn_v_ea_e", "vfloor", "11111111000000100100zz1110ppppvvvvveeeeeee", "?hsd", 2, 122, 14, 65535, 0, 0, 3,
-  5, 112, 0, 0, 4, 118, 0, 0, 7, 101, 0, 0, 0, 0, 0, 0,
-  0, 0, 0, 0, 0, 0, 0, 0, 255, 255>;
-def BRForm_vector_VECTOR_instructions_VCEIL_h_s_d_z_pn_p_vn_v : BedrockVectorEncodingForm<
-  "VECTOR.instructions.VCEIL.h_s_d_z_pn_p_vn_v", "vceil", "11111010000111zz1ppppvvvvv", "?hsd", 0, 122, 14, 65535, 0, 0, 2,
-  5, 112, 0, 0, 4, 118, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-  0, 0, 0, 0, 0, 0, 0, 0, 255, 255>;
-def BRForm_vector_VECTOR_instructions_VCEIL_h_s_d_z_pn_p_ea_e_vn_v : BedrockVectorEncodingForm<
-  "VECTOR.instructions.VCEIL.h_s_d_z_pn_p_ea_e_vn_v", "vceil", "11111111000000100100zz1111ppppvvvvveeeeeee", "?hsd", 2, 122, 14, 65535, 0, 0, 3,
-  5, 112, 0, 0, 7, 101, 0, 0, 4, 118, 0, 0, 0, 0, 0, 0,
-  0, 0, 0, 0, 0, 0, 0, 0, 255, 255>;
-def BRForm_vector_VECTOR_instructions_VCEIL_h_s_d_z_pn_p_vn_v_ea_e : BedrockVectorEncodingForm<
-  "VECTOR.instructions.VCEIL.h_s_d_z_pn_p_vn_v_ea_e", "vceil", "11111111000000100101zz0100ppppvvvvveeeeeee", "?hsd", 2, 122, 14, 65535, 0, 0, 3,
-  5, 112, 0, 0, 4, 118, 0, 0, 7, 101, 0, 0, 0, 0, 0, 0,
-  0, 0, 0, 0, 0, 0, 0, 0, 255, 255>;
-def BRForm_vector_VECTOR_instructions_VCLASS_h_s_d_z_pn_p_vn_v : BedrockVectorEncodingForm<
-  "VECTOR.instructions.VCLASS.h_s_d_z_pn_p_vn_v", "vclass", "11111010001000zz0ppppvvvvv", "?hsd", 0, 122, 14, 65535, 0, 0, 2,
-  5, 112, 0, 0, 4, 118, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-  0, 0, 0, 0, 0, 0, 0, 0, 255, 255>;
-def BRForm_vector_VECTOR_instructions_VCLASS_h_s_d_z_pn_p_ea_e_vn_v : BedrockVectorEncodingForm<
-  "VECTOR.instructions.VCLASS.h_s_d_z_pn_p_ea_e_vn_v", "vclass", "11111111000000100101zz0101ppppvvvvveeeeeee", "?hsd", 2, 122, 14, 65535, 0, 0, 3,
-  5, 112, 0, 0, 7, 101, 0, 0, 4, 118, 0, 0, 0, 0, 0, 0,
-  0, 0, 0, 0, 0, 0, 0, 0, 255, 255>;
-def BRForm_vector_VECTOR_instructions_VCLASS_h_s_d_z_pn_p_vn_v_ea_e : BedrockVectorEncodingForm<
-  "VECTOR.instructions.VCLASS.h_s_d_z_pn_p_vn_v_ea_e", "vclass", "11111111000000100101zz0110ppppvvvvveeeeeee", "?hsd", 2, 122, 14, 65535, 0, 0, 3,
-  5, 112, 0, 0, 4, 118, 0, 0, 7, 101, 0, 0, 0, 0, 0, 0,
-  0, 0, 0, 0, 0, 0, 0, 0, 255, 255>;
-def BRForm_vector_VECTOR_instructions_PPERM_b_w_l_q_z_vn_v_pn_p : BedrockVectorEncodingForm<
-  "VECTOR.instructions.PPERM.b_w_l_q_z_vn_v_pn_p", "pperm", "11111010001000zz1ppppvvvvv", "bwlq", 0, 122, 15, 65535, 0, 1, 2,
+def BRForm_vector_VECTOR_PPERM_b_w_l_q_z_vn_v_pn_p : BedrockVectorEncodingForm<
+  "VECTOR.PPERM.b_w_l_q_z_vn_v_pn_p", "pperm", "VECTOR", "11111010001000zz1ppppvvvvv", "bwlq", 0, 122, 15, 65535, 0, 0, 2,
   4, 118, 0, 0, 5, 112, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
   0, 0, 0, 0, 0, 0, 0, 0, 255, 255>;
-def BRForm_vector_VECTOR_instructions_PSLIDEUP_b_w_l_q_z_imm6_i_pn_p : BedrockVectorEncodingForm<
-  "VECTOR.instructions.PSLIDEUP.b_w_l_q_z_imm6_i_pn_p", "pslideup", "11111010011110zzppppiiiiii", "bwlq", 0, 122, 15, 65535, 0, 1, 2,
+def BRForm_vector_VECTOR_PSLIDEUP_b_w_l_q_z_imm6_i_pn_p : BedrockVectorEncodingForm<
+  "VECTOR.PSLIDEUP.b_w_l_q_z_imm6_i_pn_p", "pslideup", "VECTOR", "11111010011110zzppppiiiiii", "bwlq", 0, 122, 15, 65535, 0, 0, 2,
   8, 105, 6, 0, 5, 112, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
   0, 0, 0, 0, 0, 0, 0, 0, 255, 255>;
-def BRForm_vector_VECTOR_instructions_PSLIDEDN_b_w_l_q_z_imm6_i_pn_p : BedrockVectorEncodingForm<
-  "VECTOR.instructions.PSLIDEDN.b_w_l_q_z_imm6_i_pn_p", "pslidedn", "11111010011111zzppppiiiiii", "bwlq", 0, 122, 15, 65535, 0, 1, 2,
+def BRForm_vector_VECTOR_PSLIDEDN_b_w_l_q_z_imm6_i_pn_p : BedrockVectorEncodingForm<
+  "VECTOR.PSLIDEDN.b_w_l_q_z_imm6_i_pn_p", "pslidedn", "VECTOR", "11111010011111zzppppiiiiii", "bwlq", 0, 122, 15, 65535, 0, 0, 2,
   8, 105, 6, 0, 5, 112, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
   0, 0, 0, 0, 0, 0, 0, 0, 255, 255>;
-def BRForm_vector_VECTOR_instructions_VCMPcc_b_w_l_q_x_pn_p_vn_v_vn_w_pn_q : BedrockVectorEncodingForm<
-  "VECTOR.instructions.VCMPcc.b_w_l_q_x_pn_p_vn_v_vn_w_pn_q", "vcmp", "111111010xxxccccppppqqqqvvvvvwwwww", "bwlq????", 1, 120, 15, 64572, 1, 0, 5,
+def BRForm_vector_VECTOR_VCMPcc_b_w_l_q_x_pn_p_vn_v_vn_w_pn_q : BedrockVectorEncodingForm<
+  "VECTOR.VCMPcc.b_w_l_q_x_pn_p_vn_v_vn_w_pn_q", "vcmp", "VECTOR", "111111010xxxccccppppqqqqvvvvvwwwww", "bwlq????", 1, 120, 15, 64572, 1, 0, 5,
   1, 99, 0, 0, 5, 112, 0, 0, 4, 118, 0, 0, 4, 119, 0, 0,
   5, 113, 0, 0, 0, 0, 0, 0, 255, 255>;
-def BRForm_vector_VECTOR_instructions_VCMPcc_h_s_d_x_pn_p_vn_v_vn_w_pn_q : BedrockVectorEncodingForm<
-  "VECTOR.instructions.VCMPcc.h_s_d_x_pn_p_vn_v_vn_w_pn_q", "vcmp", "111111010xxxccccppppqqqqvvvvvwwwww", "?????hsd", 1, 120, 224, 62220, 1, 0, 5,
-  1, 99, 0, 0, 5, 112, 0, 0, 4, 118, 0, 0, 4, 119, 0, 0,
-  5, 113, 0, 0, 0, 0, 0, 0, 255, 255>;
-def BRForm_vector_VECTOR_instructions_VCMPcc_b_w_l_q_x_pn_p_vn_v_ea_e_pn_q : BedrockVectorEncodingForm<
-  "VECTOR.instructions.VCMPcc.b_w_l_q_x_pn_p_vn_v_ea_e_pn_q", "vcmp", "111111110000000xxxccccppppqqqqvvvvveeeeeee", "bwlq????", 2, 120, 15, 64572, 1, 0, 5,
+def BRForm_vector_VECTOR_VCMPcc_b_w_l_q_x_pn_p_vn_v_ea_e_pn_q : BedrockVectorEncodingForm<
+  "VECTOR.VCMPcc.b_w_l_q_x_pn_p_vn_v_ea_e_pn_q", "vcmp", "VECTOR", "111111110000000xxxccccppppqqqqvvvvveeeeeee", "bwlq????", 2, 120, 15, 64572, 1, 0, 5,
   1, 99, 0, 0, 5, 112, 0, 0, 4, 118, 0, 0, 7, 101, 0, 0,
   5, 113, 0, 0, 0, 0, 0, 0, 255, 255>;
-def BRForm_vector_VECTOR_instructions_VCMPcc_h_s_d_x_pn_p_vn_v_ea_e_pn_q : BedrockVectorEncodingForm<
-  "VECTOR.instructions.VCMPcc.h_s_d_x_pn_p_vn_v_ea_e_pn_q", "vcmp", "111111110000000xxxccccppppqqqqvvvvveeeeeee", "?????hsd", 2, 120, 224, 62220, 1, 0, 5,
-  1, 99, 0, 0, 5, 112, 0, 0, 4, 118, 0, 0, 7, 101, 0, 0,
-  5, 113, 0, 0, 0, 0, 0, 0, 255, 255>;
-def BRForm_vector_VECTOR_instructions_VTESTZ_b_w_l_q_z_pn_p_vn_v_vn_w_pn_q : BedrockVectorEncodingForm<
-  "VECTOR.instructions.VTESTZ.b_w_l_q_z_pn_p_vn_v_vn_w_pn_q", "vtestz", "111111011000zz00ppppqqqqvvvvvwwwww", "bwlq", 1, 122, 15, 65535, 0, 0, 4,
+def BRForm_vector_VECTOR_VTESTZ_b_w_l_q_z_pn_p_vn_v_vn_w_pn_q : BedrockVectorEncodingForm<
+  "VECTOR.VTESTZ.b_w_l_q_z_pn_p_vn_v_vn_w_pn_q", "vtestz", "VECTOR", "111111011000zz00ppppqqqqvvvvvwwwww", "bwlq", 1, 122, 15, 65535, 0, 0, 4,
   5, 112, 0, 0, 4, 118, 0, 0, 4, 119, 0, 0, 5, 113, 0, 0,
   0, 0, 0, 0, 0, 0, 0, 0, 255, 255>;
-def BRForm_vector_VECTOR_instructions_VTESTZ_b_w_l_q_z_pn_p_vn_v_ea_e_pn_q : BedrockVectorEncodingForm<
-  "VECTOR.instructions.VTESTZ.b_w_l_q_z_pn_p_vn_v_ea_e_pn_q", "vtestz", "11111111000000101000zzppppqqqqvvvvveeeeeee", "bwlq", 2, 122, 15, 65535, 0, 0, 4,
+def BRForm_vector_VECTOR_VTESTZ_b_w_l_q_z_pn_p_vn_v_ea_e_pn_q : BedrockVectorEncodingForm<
+  "VECTOR.VTESTZ.b_w_l_q_z_pn_p_vn_v_ea_e_pn_q", "vtestz", "VECTOR", "11111111000000101000zzppppqqqqvvvvveeeeeee", "bwlq", 2, 122, 15, 65535, 0, 0, 4,
   5, 112, 0, 0, 4, 118, 0, 0, 7, 101, 0, 0, 5, 113, 0, 0,
   0, 0, 0, 0, 0, 0, 0, 0, 255, 255>;
-def BRForm_vector_VECTOR_instructions_VTESTNZ_b_w_l_q_z_pn_p_vn_v_vn_w_pn_q : BedrockVectorEncodingForm<
-  "VECTOR.instructions.VTESTNZ.b_w_l_q_z_pn_p_vn_v_vn_w_pn_q", "vtestnz", "111111011000zz01ppppqqqqvvvvvwwwww", "bwlq", 1, 122, 15, 65535, 0, 0, 4,
+def BRForm_vector_VECTOR_VTESTNZ_b_w_l_q_z_pn_p_vn_v_vn_w_pn_q : BedrockVectorEncodingForm<
+  "VECTOR.VTESTNZ.b_w_l_q_z_pn_p_vn_v_vn_w_pn_q", "vtestnz", "VECTOR", "111111011000zz01ppppqqqqvvvvvwwwww", "bwlq", 1, 122, 15, 65535, 0, 0, 4,
   5, 112, 0, 0, 4, 118, 0, 0, 4, 119, 0, 0, 5, 113, 0, 0,
   0, 0, 0, 0, 0, 0, 0, 0, 255, 255>;
-def BRForm_vector_VECTOR_instructions_VTESTNZ_b_w_l_q_z_pn_p_vn_v_ea_e_pn_q : BedrockVectorEncodingForm<
-  "VECTOR.instructions.VTESTNZ.b_w_l_q_z_pn_p_vn_v_ea_e_pn_q", "vtestnz", "11111111000000101001zzppppqqqqvvvvveeeeeee", "bwlq", 2, 122, 15, 65535, 0, 0, 4,
+def BRForm_vector_VECTOR_VTESTNZ_b_w_l_q_z_pn_p_vn_v_ea_e_pn_q : BedrockVectorEncodingForm<
+  "VECTOR.VTESTNZ.b_w_l_q_z_pn_p_vn_v_ea_e_pn_q", "vtestnz", "VECTOR", "11111111000000101001zzppppqqqqvvvvveeeeeee", "bwlq", 2, 122, 15, 65535, 0, 0, 4,
   5, 112, 0, 0, 4, 118, 0, 0, 7, 101, 0, 0, 5, 113, 0, 0,
   0, 0, 0, 0, 0, 0, 0, 0, 255, 255>;
-def BRForm_vector_VECTOR_instructions_VADD_b_w_l_q_h_s_d_x_pn_p_vn_v_vn_w : BedrockVectorEncodingForm<
-  "VECTOR.instructions.VADD.b_w_l_q_h_s_d_x_pn_p_vn_v_vn_w", "vadd", "1111110111100000xxx0ppppvvvvvwwwww", "bwlq?hsd", 1, 120, 239, 65535, 0, 0, 3,
+def BRForm_vector_VECTOR_VADD_b_w_l_q_x_pn_p_vn_v_vn_w : BedrockVectorEncodingForm<
+  "VECTOR.VADD.b_w_l_q_x_pn_p_vn_v_vn_w", "vadd", "VECTOR", "1111110111100000xxx0ppppvvvvvwwwww", "bwlq????", 1, 120, 15, 65535, 0, 0, 3,
   5, 112, 0, 0, 4, 118, 0, 0, 4, 119, 0, 0, 0, 0, 0, 0,
   0, 0, 0, 0, 0, 0, 0, 0, 255, 255>;
-def BRForm_vector_VECTOR_instructions_VADD_b_w_l_q_h_s_d_x_pn_p_ea_e_vn_v : BedrockVectorEncodingForm<
-  "VECTOR.instructions.VADD.b_w_l_q_h_s_d_x_pn_p_ea_e_vn_v", "vadd", "1111111100000010000xxx0011ppppvvvvveeeeeee", "bwlq?hsd", 2, 120, 239, 65535, 0, 0, 3,
+def BRForm_vector_VECTOR_VADD_b_w_l_q_x_pn_p_ea_e_vn_v : BedrockVectorEncodingForm<
+  "VECTOR.VADD.b_w_l_q_x_pn_p_ea_e_vn_v", "vadd", "VECTOR", "1111111100000010000xxx0011ppppvvvvveeeeeee", "bwlq????", 2, 120, 15, 65535, 0, 0, 3,
   5, 112, 0, 0, 7, 101, 0, 0, 4, 118, 0, 0, 0, 0, 0, 0,
   0, 0, 0, 0, 0, 0, 0, 0, 255, 255>;
-def BRForm_vector_VECTOR_instructions_VADD_b_w_l_q_h_s_d_x_pn_p_vn_v_ea_e : BedrockVectorEncodingForm<
-  "VECTOR.instructions.VADD.b_w_l_q_h_s_d_x_pn_p_vn_v_ea_e", "vadd", "1111111100000010000xxx0100ppppvvvvveeeeeee", "bwlq?hsd", 2, 120, 239, 65535, 0, 0, 3,
+def BRForm_vector_VECTOR_VADD_b_w_l_q_x_pn_p_vn_v_ea_e : BedrockVectorEncodingForm<
+  "VECTOR.VADD.b_w_l_q_x_pn_p_vn_v_ea_e", "vadd", "VECTOR", "1111111100000010000xxx0100ppppvvvvveeeeeee", "bwlq????", 2, 120, 15, 65535, 0, 0, 3,
   5, 112, 0, 0, 4, 118, 0, 0, 7, 101, 0, 0, 0, 0, 0, 0,
   0, 0, 0, 0, 0, 0, 0, 0, 255, 255>;
-def BRForm_vector_VECTOR_instructions_VSUB_b_w_l_q_h_s_d_x_pn_p_vn_v_vn_w : BedrockVectorEncodingForm<
-  "VECTOR.instructions.VSUB.b_w_l_q_h_s_d_x_pn_p_vn_v_vn_w", "vsub", "1111110111100000xxx1ppppvvvvvwwwww", "bwlq?hsd", 1, 120, 239, 65535, 0, 0, 3,
+def BRForm_vector_VECTOR_VSUB_b_w_l_q_x_pn_p_vn_v_vn_w : BedrockVectorEncodingForm<
+  "VECTOR.VSUB.b_w_l_q_x_pn_p_vn_v_vn_w", "vsub", "VECTOR", "1111110111100000xxx1ppppvvvvvwwwww", "bwlq????", 1, 120, 15, 65535, 0, 0, 3,
   5, 112, 0, 0, 4, 118, 0, 0, 4, 119, 0, 0, 0, 0, 0, 0,
   0, 0, 0, 0, 0, 0, 0, 0, 255, 255>;
-def BRForm_vector_VECTOR_instructions_VSUB_b_w_l_q_h_s_d_x_pn_p_ea_e_vn_v : BedrockVectorEncodingForm<
-  "VECTOR.instructions.VSUB.b_w_l_q_h_s_d_x_pn_p_ea_e_vn_v", "vsub", "1111111100000010000xxx0101ppppvvvvveeeeeee", "bwlq?hsd", 2, 120, 239, 65535, 0, 0, 3,
+def BRForm_vector_VECTOR_VSUB_b_w_l_q_x_pn_p_ea_e_vn_v : BedrockVectorEncodingForm<
+  "VECTOR.VSUB.b_w_l_q_x_pn_p_ea_e_vn_v", "vsub", "VECTOR", "1111111100000010000xxx0101ppppvvvvveeeeeee", "bwlq????", 2, 120, 15, 65535, 0, 0, 3,
   5, 112, 0, 0, 7, 101, 0, 0, 4, 118, 0, 0, 0, 0, 0, 0,
   0, 0, 0, 0, 0, 0, 0, 0, 255, 255>;
-def BRForm_vector_VECTOR_instructions_VSUB_b_w_l_q_h_s_d_x_pn_p_vn_v_ea_e : BedrockVectorEncodingForm<
-  "VECTOR.instructions.VSUB.b_w_l_q_h_s_d_x_pn_p_vn_v_ea_e", "vsub", "1111111100000010000xxx0110ppppvvvvveeeeeee", "bwlq?hsd", 2, 120, 239, 65535, 0, 0, 3,
+def BRForm_vector_VECTOR_VSUB_b_w_l_q_x_pn_p_vn_v_ea_e : BedrockVectorEncodingForm<
+  "VECTOR.VSUB.b_w_l_q_x_pn_p_vn_v_ea_e", "vsub", "VECTOR", "1111111100000010000xxx0110ppppvvvvveeeeeee", "bwlq????", 2, 120, 15, 65535, 0, 0, 3,
   5, 112, 0, 0, 4, 118, 0, 0, 7, 101, 0, 0, 0, 0, 0, 0,
   0, 0, 0, 0, 0, 0, 0, 0, 255, 255>;
-def BRForm_vector_VECTOR_instructions_VMUL_b_w_l_q_h_s_d_x_pn_p_vn_v_vn_w : BedrockVectorEncodingForm<
-  "VECTOR.instructions.VMUL.b_w_l_q_h_s_d_x_pn_p_vn_v_vn_w", "vmul", "1111110111100001xxx0ppppvvvvvwwwww", "bwlq?hsd", 1, 120, 239, 65535, 0, 0, 3,
+def BRForm_vector_VECTOR_VMUL_b_w_l_q_x_pn_p_vn_v_vn_w : BedrockVectorEncodingForm<
+  "VECTOR.VMUL.b_w_l_q_x_pn_p_vn_v_vn_w", "vmul", "VECTOR", "1111110111100001xxx0ppppvvvvvwwwww", "bwlq????", 1, 120, 15, 65535, 0, 0, 3,
   5, 112, 0, 0, 4, 118, 0, 0, 4, 119, 0, 0, 0, 0, 0, 0,
   0, 0, 0, 0, 0, 0, 0, 0, 255, 255>;
-def BRForm_vector_VECTOR_instructions_VMUL_b_w_l_q_h_s_d_x_pn_p_ea_e_vn_v : BedrockVectorEncodingForm<
-  "VECTOR.instructions.VMUL.b_w_l_q_h_s_d_x_pn_p_ea_e_vn_v", "vmul", "1111111100000010000xxx0111ppppvvvvveeeeeee", "bwlq?hsd", 2, 120, 239, 65535, 0, 0, 3,
+def BRForm_vector_VECTOR_VMUL_b_w_l_q_x_pn_p_ea_e_vn_v : BedrockVectorEncodingForm<
+  "VECTOR.VMUL.b_w_l_q_x_pn_p_ea_e_vn_v", "vmul", "VECTOR", "1111111100000010000xxx0111ppppvvvvveeeeeee", "bwlq????", 2, 120, 15, 65535, 0, 0, 3,
   5, 112, 0, 0, 7, 101, 0, 0, 4, 118, 0, 0, 0, 0, 0, 0,
   0, 0, 0, 0, 0, 0, 0, 0, 255, 255>;
-def BRForm_vector_VECTOR_instructions_VMUL_b_w_l_q_h_s_d_x_pn_p_vn_v_ea_e : BedrockVectorEncodingForm<
-  "VECTOR.instructions.VMUL.b_w_l_q_h_s_d_x_pn_p_vn_v_ea_e", "vmul", "1111111100000010000xxx1000ppppvvvvveeeeeee", "bwlq?hsd", 2, 120, 239, 65535, 0, 0, 3,
+def BRForm_vector_VECTOR_VMUL_b_w_l_q_x_pn_p_vn_v_ea_e : BedrockVectorEncodingForm<
+  "VECTOR.VMUL.b_w_l_q_x_pn_p_vn_v_ea_e", "vmul", "VECTOR", "1111111100000010000xxx1000ppppvvvvveeeeeee", "bwlq????", 2, 120, 15, 65535, 0, 0, 3,
   5, 112, 0, 0, 4, 118, 0, 0, 7, 101, 0, 0, 0, 0, 0, 0,
   0, 0, 0, 0, 0, 0, 0, 0, 255, 255>;
-def BRForm_vector_VECTOR_instructions_VAND_b_w_l_q_z_pn_p_vn_v_vn_w : BedrockVectorEncodingForm<
-  "VECTOR.instructions.VAND.b_w_l_q_z_pn_p_vn_v_vn_w", "vand", "11111101111000010zz1ppppvvvvvwwwww", "bwlq", 1, 122, 15, 65535, 0, 0, 3,
+def BRForm_vector_VECTOR_VAND_b_w_l_q_z_pn_p_vn_v_vn_w : BedrockVectorEncodingForm<
+  "VECTOR.VAND.b_w_l_q_z_pn_p_vn_v_vn_w", "vand", "VECTOR", "11111101111000010zz1ppppvvvvvwwwww", "bwlq", 1, 122, 15, 65535, 0, 0, 3,
   5, 112, 0, 0, 4, 118, 0, 0, 4, 119, 0, 0, 0, 0, 0, 0,
   0, 0, 0, 0, 0, 0, 0, 0, 255, 255>;
-def BRForm_vector_VECTOR_instructions_VAND_b_w_l_q_z_pn_p_ea_e_vn_v : BedrockVectorEncodingForm<
-  "VECTOR.instructions.VAND.b_w_l_q_z_pn_p_ea_e_vn_v", "vand", "11111111000000100000zz1001ppppvvvvveeeeeee", "bwlq", 2, 122, 15, 65535, 0, 0, 3,
+def BRForm_vector_VECTOR_VAND_b_w_l_q_z_pn_p_ea_e_vn_v : BedrockVectorEncodingForm<
+  "VECTOR.VAND.b_w_l_q_z_pn_p_ea_e_vn_v", "vand", "VECTOR", "11111111000000100000zz1001ppppvvvvveeeeeee", "bwlq", 2, 122, 15, 65535, 0, 0, 3,
   5, 112, 0, 0, 7, 101, 0, 0, 4, 118, 0, 0, 0, 0, 0, 0,
   0, 0, 0, 0, 0, 0, 0, 0, 255, 255>;
-def BRForm_vector_VECTOR_instructions_VAND_b_w_l_q_z_pn_p_vn_v_ea_e : BedrockVectorEncodingForm<
-  "VECTOR.instructions.VAND.b_w_l_q_z_pn_p_vn_v_ea_e", "vand", "11111111000000100000zz1010ppppvvvvveeeeeee", "bwlq", 2, 122, 15, 65535, 0, 0, 3,
+def BRForm_vector_VECTOR_VAND_b_w_l_q_z_pn_p_vn_v_ea_e : BedrockVectorEncodingForm<
+  "VECTOR.VAND.b_w_l_q_z_pn_p_vn_v_ea_e", "vand", "VECTOR", "11111111000000100000zz1010ppppvvvvveeeeeee", "bwlq", 2, 122, 15, 65535, 0, 0, 3,
   5, 112, 0, 0, 4, 118, 0, 0, 7, 101, 0, 0, 0, 0, 0, 0,
   0, 0, 0, 0, 0, 0, 0, 0, 255, 255>;
-def BRForm_vector_VECTOR_instructions_VOR_b_w_l_q_z_pn_p_vn_v_vn_w : BedrockVectorEncodingForm<
-  "VECTOR.instructions.VOR.b_w_l_q_z_pn_p_vn_v_vn_w", "vor", "11111101111000011zz1ppppvvvvvwwwww", "bwlq", 1, 122, 15, 65535, 0, 0, 3,
+def BRForm_vector_VECTOR_VOR_b_w_l_q_z_pn_p_vn_v_vn_w : BedrockVectorEncodingForm<
+  "VECTOR.VOR.b_w_l_q_z_pn_p_vn_v_vn_w", "vor", "VECTOR", "11111101111000011zz1ppppvvvvvwwwww", "bwlq", 1, 122, 15, 65535, 0, 0, 3,
   5, 112, 0, 0, 4, 118, 0, 0, 4, 119, 0, 0, 0, 0, 0, 0,
   0, 0, 0, 0, 0, 0, 0, 0, 255, 255>;
-def BRForm_vector_VECTOR_instructions_VOR_b_w_l_q_z_pn_p_ea_e_vn_v : BedrockVectorEncodingForm<
-  "VECTOR.instructions.VOR.b_w_l_q_z_pn_p_ea_e_vn_v", "vor", "11111111000000100000zz1011ppppvvvvveeeeeee", "bwlq", 2, 122, 15, 65535, 0, 0, 3,
+def BRForm_vector_VECTOR_VOR_b_w_l_q_z_pn_p_ea_e_vn_v : BedrockVectorEncodingForm<
+  "VECTOR.VOR.b_w_l_q_z_pn_p_ea_e_vn_v", "vor", "VECTOR", "11111111000000100000zz1011ppppvvvvveeeeeee", "bwlq", 2, 122, 15, 65535, 0, 0, 3,
   5, 112, 0, 0, 7, 101, 0, 0, 4, 118, 0, 0, 0, 0, 0, 0,
   0, 0, 0, 0, 0, 0, 0, 0, 255, 255>;
-def BRForm_vector_VECTOR_instructions_VOR_b_w_l_q_z_pn_p_vn_v_ea_e : BedrockVectorEncodingForm<
-  "VECTOR.instructions.VOR.b_w_l_q_z_pn_p_vn_v_ea_e", "vor", "11111111000000100000zz1100ppppvvvvveeeeeee", "bwlq", 2, 122, 15, 65535, 0, 0, 3,
+def BRForm_vector_VECTOR_VOR_b_w_l_q_z_pn_p_vn_v_ea_e : BedrockVectorEncodingForm<
+  "VECTOR.VOR.b_w_l_q_z_pn_p_vn_v_ea_e", "vor", "VECTOR", "11111111000000100000zz1100ppppvvvvveeeeeee", "bwlq", 2, 122, 15, 65535, 0, 0, 3,
   5, 112, 0, 0, 4, 118, 0, 0, 7, 101, 0, 0, 0, 0, 0, 0,
   0, 0, 0, 0, 0, 0, 0, 0, 255, 255>;
-def BRForm_vector_VECTOR_instructions_VXOR_b_w_l_q_z_pn_p_vn_v_vn_w : BedrockVectorEncodingForm<
-  "VECTOR.instructions.VXOR.b_w_l_q_z_pn_p_vn_v_vn_w", "vxor", "11111101111000100zz0ppppvvvvvwwwww", "bwlq", 1, 122, 15, 65535, 0, 0, 3,
+def BRForm_vector_VECTOR_VXOR_b_w_l_q_z_pn_p_vn_v_vn_w : BedrockVectorEncodingForm<
+  "VECTOR.VXOR.b_w_l_q_z_pn_p_vn_v_vn_w", "vxor", "VECTOR", "11111101111000100zz0ppppvvvvvwwwww", "bwlq", 1, 122, 15, 65535, 0, 0, 3,
   5, 112, 0, 0, 4, 118, 0, 0, 4, 119, 0, 0, 0, 0, 0, 0,
   0, 0, 0, 0, 0, 0, 0, 0, 255, 255>;
-def BRForm_vector_VECTOR_instructions_VXOR_b_w_l_q_z_pn_p_ea_e_vn_v : BedrockVectorEncodingForm<
-  "VECTOR.instructions.VXOR.b_w_l_q_z_pn_p_ea_e_vn_v", "vxor", "11111111000000100000zz1101ppppvvvvveeeeeee", "bwlq", 2, 122, 15, 65535, 0, 0, 3,
+def BRForm_vector_VECTOR_VXOR_b_w_l_q_z_pn_p_ea_e_vn_v : BedrockVectorEncodingForm<
+  "VECTOR.VXOR.b_w_l_q_z_pn_p_ea_e_vn_v", "vxor", "VECTOR", "11111111000000100000zz1101ppppvvvvveeeeeee", "bwlq", 2, 122, 15, 65535, 0, 0, 3,
   5, 112, 0, 0, 7, 101, 0, 0, 4, 118, 0, 0, 0, 0, 0, 0,
   0, 0, 0, 0, 0, 0, 0, 0, 255, 255>;
-def BRForm_vector_VECTOR_instructions_VXOR_b_w_l_q_z_pn_p_vn_v_ea_e : BedrockVectorEncodingForm<
-  "VECTOR.instructions.VXOR.b_w_l_q_z_pn_p_vn_v_ea_e", "vxor", "11111111000000100000zz1110ppppvvvvveeeeeee", "bwlq", 2, 122, 15, 65535, 0, 0, 3,
+def BRForm_vector_VECTOR_VXOR_b_w_l_q_z_pn_p_vn_v_ea_e : BedrockVectorEncodingForm<
+  "VECTOR.VXOR.b_w_l_q_z_pn_p_vn_v_ea_e", "vxor", "VECTOR", "11111111000000100000zz1110ppppvvvvveeeeeee", "bwlq", 2, 122, 15, 65535, 0, 0, 3,
   5, 112, 0, 0, 4, 118, 0, 0, 7, 101, 0, 0, 0, 0, 0, 0,
   0, 0, 0, 0, 0, 0, 0, 0, 255, 255>;
-def BRForm_vector_VECTOR_instructions_VMINS_b_w_l_q_z_pn_p_vn_v_vn_w : BedrockVectorEncodingForm<
-  "VECTOR.instructions.VMINS.b_w_l_q_z_pn_p_vn_v_vn_w", "vmins", "11111101111000100zz1ppppvvvvvwwwww", "bwlq", 1, 122, 15, 65535, 0, 0, 3,
+def BRForm_vector_VECTOR_VMINS_b_w_l_q_z_pn_p_vn_v_vn_w : BedrockVectorEncodingForm<
+  "VECTOR.VMINS.b_w_l_q_z_pn_p_vn_v_vn_w", "vmins", "VECTOR", "11111101111000100zz1ppppvvvvvwwwww", "bwlq", 1, 122, 15, 65535, 0, 0, 3,
   5, 112, 0, 0, 4, 118, 0, 0, 4, 119, 0, 0, 0, 0, 0, 0,
   0, 0, 0, 0, 0, 0, 0, 0, 255, 255>;
-def BRForm_vector_VECTOR_instructions_VMINS_b_w_l_q_z_pn_p_ea_e_vn_v : BedrockVectorEncodingForm<
-  "VECTOR.instructions.VMINS.b_w_l_q_z_pn_p_ea_e_vn_v", "vmins", "11111111000000100000zz1111ppppvvvvveeeeeee", "bwlq", 2, 122, 15, 65535, 0, 0, 3,
+def BRForm_vector_VECTOR_VMINS_b_w_l_q_z_pn_p_ea_e_vn_v : BedrockVectorEncodingForm<
+  "VECTOR.VMINS.b_w_l_q_z_pn_p_ea_e_vn_v", "vmins", "VECTOR", "11111111000000100000zz1111ppppvvvvveeeeeee", "bwlq", 2, 122, 15, 65535, 0, 0, 3,
   5, 112, 0, 0, 7, 101, 0, 0, 4, 118, 0, 0, 0, 0, 0, 0,
   0, 0, 0, 0, 0, 0, 0, 0, 255, 255>;
-def BRForm_vector_VECTOR_instructions_VMINS_b_w_l_q_z_pn_p_vn_v_ea_e : BedrockVectorEncodingForm<
-  "VECTOR.instructions.VMINS.b_w_l_q_z_pn_p_vn_v_ea_e", "vmins", "11111111000000100001zz0000ppppvvvvveeeeeee", "bwlq", 2, 122, 15, 65535, 0, 0, 3,
+def BRForm_vector_VECTOR_VMINS_b_w_l_q_z_pn_p_vn_v_ea_e : BedrockVectorEncodingForm<
+  "VECTOR.VMINS.b_w_l_q_z_pn_p_vn_v_ea_e", "vmins", "VECTOR", "11111111000000100001zz0000ppppvvvvveeeeeee", "bwlq", 2, 122, 15, 65535, 0, 0, 3,
   5, 112, 0, 0, 4, 118, 0, 0, 7, 101, 0, 0, 0, 0, 0, 0,
   0, 0, 0, 0, 0, 0, 0, 0, 255, 255>;
-def BRForm_vector_VECTOR_instructions_VMINU_b_w_l_q_z_pn_p_vn_v_vn_w : BedrockVectorEncodingForm<
-  "VECTOR.instructions.VMINU.b_w_l_q_z_pn_p_vn_v_vn_w", "vminu", "11111101111000101zz0ppppvvvvvwwwww", "bwlq", 1, 122, 15, 65535, 0, 0, 3,
+def BRForm_vector_VECTOR_VMINU_b_w_l_q_z_pn_p_vn_v_vn_w : BedrockVectorEncodingForm<
+  "VECTOR.VMINU.b_w_l_q_z_pn_p_vn_v_vn_w", "vminu", "VECTOR", "11111101111000101zz0ppppvvvvvwwwww", "bwlq", 1, 122, 15, 65535, 0, 0, 3,
   5, 112, 0, 0, 4, 118, 0, 0, 4, 119, 0, 0, 0, 0, 0, 0,
   0, 0, 0, 0, 0, 0, 0, 0, 255, 255>;
-def BRForm_vector_VECTOR_instructions_VMINU_b_w_l_q_z_pn_p_ea_e_vn_v : BedrockVectorEncodingForm<
-  "VECTOR.instructions.VMINU.b_w_l_q_z_pn_p_ea_e_vn_v", "vminu", "11111111000000100001zz0001ppppvvvvveeeeeee", "bwlq", 2, 122, 15, 65535, 0, 0, 3,
+def BRForm_vector_VECTOR_VMINU_b_w_l_q_z_pn_p_ea_e_vn_v : BedrockVectorEncodingForm<
+  "VECTOR.VMINU.b_w_l_q_z_pn_p_ea_e_vn_v", "vminu", "VECTOR", "11111111000000100001zz0001ppppvvvvveeeeeee", "bwlq", 2, 122, 15, 65535, 0, 0, 3,
   5, 112, 0, 0, 7, 101, 0, 0, 4, 118, 0, 0, 0, 0, 0, 0,
   0, 0, 0, 0, 0, 0, 0, 0, 255, 255>;
-def BRForm_vector_VECTOR_instructions_VMINU_b_w_l_q_z_pn_p_vn_v_ea_e : BedrockVectorEncodingForm<
-  "VECTOR.instructions.VMINU.b_w_l_q_z_pn_p_vn_v_ea_e", "vminu", "11111111000000100001zz0010ppppvvvvveeeeeee", "bwlq", 2, 122, 15, 65535, 0, 0, 3,
+def BRForm_vector_VECTOR_VMINU_b_w_l_q_z_pn_p_vn_v_ea_e : BedrockVectorEncodingForm<
+  "VECTOR.VMINU.b_w_l_q_z_pn_p_vn_v_ea_e", "vminu", "VECTOR", "11111111000000100001zz0010ppppvvvvveeeeeee", "bwlq", 2, 122, 15, 65535, 0, 0, 3,
   5, 112, 0, 0, 4, 118, 0, 0, 7, 101, 0, 0, 0, 0, 0, 0,
   0, 0, 0, 0, 0, 0, 0, 0, 255, 255>;
-def BRForm_vector_VECTOR_instructions_VMAXS_b_w_l_q_z_pn_p_vn_v_vn_w : BedrockVectorEncodingForm<
-  "VECTOR.instructions.VMAXS.b_w_l_q_z_pn_p_vn_v_vn_w", "vmaxs", "11111101111000101zz1ppppvvvvvwwwww", "bwlq", 1, 122, 15, 65535, 0, 0, 3,
+def BRForm_vector_VECTOR_VMAXS_b_w_l_q_z_pn_p_vn_v_vn_w : BedrockVectorEncodingForm<
+  "VECTOR.VMAXS.b_w_l_q_z_pn_p_vn_v_vn_w", "vmaxs", "VECTOR", "11111101111000101zz1ppppvvvvvwwwww", "bwlq", 1, 122, 15, 65535, 0, 0, 3,
   5, 112, 0, 0, 4, 118, 0, 0, 4, 119, 0, 0, 0, 0, 0, 0,
   0, 0, 0, 0, 0, 0, 0, 0, 255, 255>;
-def BRForm_vector_VECTOR_instructions_VMAXS_b_w_l_q_z_pn_p_ea_e_vn_v : BedrockVectorEncodingForm<
-  "VECTOR.instructions.VMAXS.b_w_l_q_z_pn_p_ea_e_vn_v", "vmaxs", "11111111000000100001zz1001ppppvvvvveeeeeee", "bwlq", 2, 122, 15, 65535, 0, 0, 3,
+def BRForm_vector_VECTOR_VMAXS_b_w_l_q_z_pn_p_ea_e_vn_v : BedrockVectorEncodingForm<
+  "VECTOR.VMAXS.b_w_l_q_z_pn_p_ea_e_vn_v", "vmaxs", "VECTOR", "11111111000000100001zz1001ppppvvvvveeeeeee", "bwlq", 2, 122, 15, 65535, 0, 0, 3,
   5, 112, 0, 0, 7, 101, 0, 0, 4, 118, 0, 0, 0, 0, 0, 0,
   0, 0, 0, 0, 0, 0, 0, 0, 255, 255>;
-def BRForm_vector_VECTOR_instructions_VMAXS_b_w_l_q_z_pn_p_vn_v_ea_e : BedrockVectorEncodingForm<
-  "VECTOR.instructions.VMAXS.b_w_l_q_z_pn_p_vn_v_ea_e", "vmaxs", "11111111000000100001zz1010ppppvvvvveeeeeee", "bwlq", 2, 122, 15, 65535, 0, 0, 3,
+def BRForm_vector_VECTOR_VMAXS_b_w_l_q_z_pn_p_vn_v_ea_e : BedrockVectorEncodingForm<
+  "VECTOR.VMAXS.b_w_l_q_z_pn_p_vn_v_ea_e", "vmaxs", "VECTOR", "11111111000000100001zz1010ppppvvvvveeeeeee", "bwlq", 2, 122, 15, 65535, 0, 0, 3,
   5, 112, 0, 0, 4, 118, 0, 0, 7, 101, 0, 0, 0, 0, 0, 0,
   0, 0, 0, 0, 0, 0, 0, 0, 255, 255>;
-def BRForm_vector_VECTOR_instructions_VMAXU_b_w_l_q_z_pn_p_vn_v_vn_w : BedrockVectorEncodingForm<
-  "VECTOR.instructions.VMAXU.b_w_l_q_z_pn_p_vn_v_vn_w", "vmaxu", "11111101111000110zz0ppppvvvvvwwwww", "bwlq", 1, 122, 15, 65535, 0, 0, 3,
+def BRForm_vector_VECTOR_VMAXU_b_w_l_q_z_pn_p_vn_v_vn_w : BedrockVectorEncodingForm<
+  "VECTOR.VMAXU.b_w_l_q_z_pn_p_vn_v_vn_w", "vmaxu", "VECTOR", "11111101111000110zz0ppppvvvvvwwwww", "bwlq", 1, 122, 15, 65535, 0, 0, 3,
   5, 112, 0, 0, 4, 118, 0, 0, 4, 119, 0, 0, 0, 0, 0, 0,
   0, 0, 0, 0, 0, 0, 0, 0, 255, 255>;
-def BRForm_vector_VECTOR_instructions_VMAXU_b_w_l_q_z_pn_p_ea_e_vn_v : BedrockVectorEncodingForm<
-  "VECTOR.instructions.VMAXU.b_w_l_q_z_pn_p_ea_e_vn_v", "vmaxu", "11111111000000100001zz1011ppppvvvvveeeeeee", "bwlq", 2, 122, 15, 65535, 0, 0, 3,
+def BRForm_vector_VECTOR_VMAXU_b_w_l_q_z_pn_p_ea_e_vn_v : BedrockVectorEncodingForm<
+  "VECTOR.VMAXU.b_w_l_q_z_pn_p_ea_e_vn_v", "vmaxu", "VECTOR", "11111111000000100001zz1011ppppvvvvveeeeeee", "bwlq", 2, 122, 15, 65535, 0, 0, 3,
   5, 112, 0, 0, 7, 101, 0, 0, 4, 118, 0, 0, 0, 0, 0, 0,
   0, 0, 0, 0, 0, 0, 0, 0, 255, 255>;
-def BRForm_vector_VECTOR_instructions_VMAXU_b_w_l_q_z_pn_p_vn_v_ea_e : BedrockVectorEncodingForm<
-  "VECTOR.instructions.VMAXU.b_w_l_q_z_pn_p_vn_v_ea_e", "vmaxu", "11111111000000100001zz1100ppppvvvvveeeeeee", "bwlq", 2, 122, 15, 65535, 0, 0, 3,
+def BRForm_vector_VECTOR_VMAXU_b_w_l_q_z_pn_p_vn_v_ea_e : BedrockVectorEncodingForm<
+  "VECTOR.VMAXU.b_w_l_q_z_pn_p_vn_v_ea_e", "vmaxu", "VECTOR", "11111111000000100001zz1100ppppvvvvveeeeeee", "bwlq", 2, 122, 15, 65535, 0, 0, 3,
   5, 112, 0, 0, 4, 118, 0, 0, 7, 101, 0, 0, 0, 0, 0, 0,
   0, 0, 0, 0, 0, 0, 0, 0, 255, 255>;
-def BRForm_vector_VECTOR_instructions_VMULHS_b_w_l_q_z_pn_p_vn_v_vn_w : BedrockVectorEncodingForm<
-  "VECTOR.instructions.VMULHS.b_w_l_q_z_pn_p_vn_v_vn_w", "vmulhs", "11111101111000110zz1ppppvvvvvwwwww", "bwlq", 1, 122, 15, 65535, 0, 0, 3,
+def BRForm_vector_VECTOR_VMULHS_b_w_l_q_z_pn_p_vn_v_vn_w : BedrockVectorEncodingForm<
+  "VECTOR.VMULHS.b_w_l_q_z_pn_p_vn_v_vn_w", "vmulhs", "VECTOR", "11111101111000110zz1ppppvvvvvwwwww", "bwlq", 1, 122, 15, 65535, 0, 0, 3,
   5, 112, 0, 0, 4, 118, 0, 0, 4, 119, 0, 0, 0, 0, 0, 0,
   0, 0, 0, 0, 0, 0, 0, 0, 255, 255>;
-def BRForm_vector_VECTOR_instructions_VMULHS_b_w_l_q_z_pn_p_ea_e_vn_v : BedrockVectorEncodingForm<
-  "VECTOR.instructions.VMULHS.b_w_l_q_z_pn_p_ea_e_vn_v", "vmulhs", "11111111000000100001zz1101ppppvvvvveeeeeee", "bwlq", 2, 122, 15, 65535, 0, 0, 3,
+def BRForm_vector_VECTOR_VMULHS_b_w_l_q_z_pn_p_ea_e_vn_v : BedrockVectorEncodingForm<
+  "VECTOR.VMULHS.b_w_l_q_z_pn_p_ea_e_vn_v", "vmulhs", "VECTOR", "11111111000000100001zz1101ppppvvvvveeeeeee", "bwlq", 2, 122, 15, 65535, 0, 0, 3,
   5, 112, 0, 0, 7, 101, 0, 0, 4, 118, 0, 0, 0, 0, 0, 0,
   0, 0, 0, 0, 0, 0, 0, 0, 255, 255>;
-def BRForm_vector_VECTOR_instructions_VMULHS_b_w_l_q_z_pn_p_vn_v_ea_e : BedrockVectorEncodingForm<
-  "VECTOR.instructions.VMULHS.b_w_l_q_z_pn_p_vn_v_ea_e", "vmulhs", "11111111000000100001zz1110ppppvvvvveeeeeee", "bwlq", 2, 122, 15, 65535, 0, 0, 3,
+def BRForm_vector_VECTOR_VMULHS_b_w_l_q_z_pn_p_vn_v_ea_e : BedrockVectorEncodingForm<
+  "VECTOR.VMULHS.b_w_l_q_z_pn_p_vn_v_ea_e", "vmulhs", "VECTOR", "11111111000000100001zz1110ppppvvvvveeeeeee", "bwlq", 2, 122, 15, 65535, 0, 0, 3,
   5, 112, 0, 0, 4, 118, 0, 0, 7, 101, 0, 0, 0, 0, 0, 0,
   0, 0, 0, 0, 0, 0, 0, 0, 255, 255>;
-def BRForm_vector_VECTOR_instructions_VMULHU_b_w_l_q_z_pn_p_vn_v_vn_w : BedrockVectorEncodingForm<
-  "VECTOR.instructions.VMULHU.b_w_l_q_z_pn_p_vn_v_vn_w", "vmulhu", "11111101111000111zz0ppppvvvvvwwwww", "bwlq", 1, 122, 15, 65535, 0, 0, 3,
+def BRForm_vector_VECTOR_VMULHU_b_w_l_q_z_pn_p_vn_v_vn_w : BedrockVectorEncodingForm<
+  "VECTOR.VMULHU.b_w_l_q_z_pn_p_vn_v_vn_w", "vmulhu", "VECTOR", "11111101111000111zz0ppppvvvvvwwwww", "bwlq", 1, 122, 15, 65535, 0, 0, 3,
   5, 112, 0, 0, 4, 118, 0, 0, 4, 119, 0, 0, 0, 0, 0, 0,
   0, 0, 0, 0, 0, 0, 0, 0, 255, 255>;
-def BRForm_vector_VECTOR_instructions_VMULHU_b_w_l_q_z_pn_p_ea_e_vn_v : BedrockVectorEncodingForm<
-  "VECTOR.instructions.VMULHU.b_w_l_q_z_pn_p_ea_e_vn_v", "vmulhu", "11111111000000100001zz1111ppppvvvvveeeeeee", "bwlq", 2, 122, 15, 65535, 0, 0, 3,
+def BRForm_vector_VECTOR_VMULHU_b_w_l_q_z_pn_p_ea_e_vn_v : BedrockVectorEncodingForm<
+  "VECTOR.VMULHU.b_w_l_q_z_pn_p_ea_e_vn_v", "vmulhu", "VECTOR", "11111111000000100001zz1111ppppvvvvveeeeeee", "bwlq", 2, 122, 15, 65535, 0, 0, 3,
   5, 112, 0, 0, 7, 101, 0, 0, 4, 118, 0, 0, 0, 0, 0, 0,
   0, 0, 0, 0, 0, 0, 0, 0, 255, 255>;
-def BRForm_vector_VECTOR_instructions_VMULHU_b_w_l_q_z_pn_p_vn_v_ea_e : BedrockVectorEncodingForm<
-  "VECTOR.instructions.VMULHU.b_w_l_q_z_pn_p_vn_v_ea_e", "vmulhu", "11111111000000100010zz0000ppppvvvvveeeeeee", "bwlq", 2, 122, 15, 65535, 0, 0, 3,
+def BRForm_vector_VECTOR_VMULHU_b_w_l_q_z_pn_p_vn_v_ea_e : BedrockVectorEncodingForm<
+  "VECTOR.VMULHU.b_w_l_q_z_pn_p_vn_v_ea_e", "vmulhu", "VECTOR", "11111111000000100010zz0000ppppvvvvveeeeeee", "bwlq", 2, 122, 15, 65535, 0, 0, 3,
   5, 112, 0, 0, 4, 118, 0, 0, 7, 101, 0, 0, 0, 0, 0, 0,
   0, 0, 0, 0, 0, 0, 0, 0, 255, 255>;
-def BRForm_vector_VECTOR_instructions_VMULHSU_b_w_l_q_z_pn_p_vn_v_vn_w : BedrockVectorEncodingForm<
-  "VECTOR.instructions.VMULHSU.b_w_l_q_z_pn_p_vn_v_vn_w", "vmulhsu", "11111101111000111zz1ppppvvvvvwwwww", "bwlq", 1, 122, 15, 65535, 0, 0, 3,
+def BRForm_vector_VECTOR_VMULHSU_b_w_l_q_z_pn_p_vn_v_vn_w : BedrockVectorEncodingForm<
+  "VECTOR.VMULHSU.b_w_l_q_z_pn_p_vn_v_vn_w", "vmulhsu", "VECTOR", "11111101111000111zz1ppppvvvvvwwwww", "bwlq", 1, 122, 15, 65535, 0, 0, 3,
   5, 112, 0, 0, 4, 118, 0, 0, 4, 119, 0, 0, 0, 0, 0, 0,
   0, 0, 0, 0, 0, 0, 0, 0, 255, 255>;
-def BRForm_vector_VECTOR_instructions_VMULHSU_b_w_l_q_z_pn_p_ea_e_vn_v : BedrockVectorEncodingForm<
-  "VECTOR.instructions.VMULHSU.b_w_l_q_z_pn_p_ea_e_vn_v", "vmulhsu", "11111111000000100010zz0001ppppvvvvveeeeeee", "bwlq", 2, 122, 15, 65535, 0, 0, 3,
+def BRForm_vector_VECTOR_VMULHSU_b_w_l_q_z_pn_p_ea_e_vn_v : BedrockVectorEncodingForm<
+  "VECTOR.VMULHSU.b_w_l_q_z_pn_p_ea_e_vn_v", "vmulhsu", "VECTOR", "11111111000000100010zz0001ppppvvvvveeeeeee", "bwlq", 2, 122, 15, 65535, 0, 0, 3,
   5, 112, 0, 0, 7, 101, 0, 0, 4, 118, 0, 0, 0, 0, 0, 0,
   0, 0, 0, 0, 0, 0, 0, 0, 255, 255>;
-def BRForm_vector_VECTOR_instructions_VMULHSU_b_w_l_q_z_pn_p_vn_v_ea_e : BedrockVectorEncodingForm<
-  "VECTOR.instructions.VMULHSU.b_w_l_q_z_pn_p_vn_v_ea_e", "vmulhsu", "11111111000000100010zz0010ppppvvvvveeeeeee", "bwlq", 2, 122, 15, 65535, 0, 0, 3,
+def BRForm_vector_VECTOR_VMULHSU_b_w_l_q_z_pn_p_vn_v_ea_e : BedrockVectorEncodingForm<
+  "VECTOR.VMULHSU.b_w_l_q_z_pn_p_vn_v_ea_e", "vmulhsu", "VECTOR", "11111111000000100010zz0010ppppvvvvveeeeeee", "bwlq", 2, 122, 15, 65535, 0, 0, 3,
   5, 112, 0, 0, 4, 118, 0, 0, 7, 101, 0, 0, 0, 0, 0, 0,
   0, 0, 0, 0, 0, 0, 0, 0, 255, 255>;
-def BRForm_vector_VECTOR_instructions_VSHL_b_w_l_q_z_pn_p_vn_v_vn_w : BedrockVectorEncodingForm<
-  "VECTOR.instructions.VSHL.b_w_l_q_z_pn_p_vn_v_vn_w", "vshl", "11111101111001000zz0ppppvvvvvwwwww", "bwlq", 1, 122, 15, 65535, 0, 0, 3,
+def BRForm_vector_VECTOR_VSHL_b_w_l_q_z_pn_p_vn_v_vn_w : BedrockVectorEncodingForm<
+  "VECTOR.VSHL.b_w_l_q_z_pn_p_vn_v_vn_w", "vshl", "VECTOR", "11111101111001000zz0ppppvvvvvwwwww", "bwlq", 1, 122, 15, 65535, 0, 0, 3,
   5, 112, 0, 0, 4, 118, 0, 0, 4, 119, 0, 0, 0, 0, 0, 0,
   0, 0, 0, 0, 0, 0, 0, 0, 255, 255>;
-def BRForm_vector_VECTOR_instructions_VSHL_b_w_l_q_z_pn_p_imm6_i_vn_v : BedrockVectorEncodingForm<
-  "VECTOR.instructions.VSHL.b_w_l_q_z_pn_p_imm6_i_vn_v", "vshl", "11111101111100000zzppppvvvvviiiiii", "bwlq", 1, 122, 15, 65535, 0, 0, 3,
+def BRForm_vector_VECTOR_VSHL_b_w_l_q_z_pn_p_imm6_i_vn_v : BedrockVectorEncodingForm<
+  "VECTOR.VSHL.b_w_l_q_z_pn_p_imm6_i_vn_v", "vshl", "VECTOR", "11111101111100000zzppppvvvvviiiiii", "bwlq", 1, 122, 15, 65535, 0, 0, 3,
   5, 112, 0, 0, 8, 105, 6, 0, 4, 118, 0, 0, 0, 0, 0, 0,
   0, 0, 0, 0, 0, 0, 0, 0, 255, 255>;
-def BRForm_vector_VECTOR_instructions_VSHL_b_w_l_q_z_pn_p_ea_e_vn_v : BedrockVectorEncodingForm<
-  "VECTOR.instructions.VSHL.b_w_l_q_z_pn_p_ea_e_vn_v", "vshl", "11111111000000100010zz0011ppppvvvvveeeeeee", "bwlq", 2, 122, 15, 65535, 0, 0, 3,
+def BRForm_vector_VECTOR_VSHL_b_w_l_q_z_pn_p_ea_e_vn_v : BedrockVectorEncodingForm<
+  "VECTOR.VSHL.b_w_l_q_z_pn_p_ea_e_vn_v", "vshl", "VECTOR", "11111111000000100010zz0011ppppvvvvveeeeeee", "bwlq", 2, 122, 15, 65535, 0, 0, 3,
   5, 112, 0, 0, 7, 101, 0, 0, 4, 118, 0, 0, 0, 0, 0, 0,
   0, 0, 0, 0, 0, 0, 0, 0, 255, 255>;
-def BRForm_vector_VECTOR_instructions_VSHL_b_w_l_q_z_pn_p_vn_v_ea_e : BedrockVectorEncodingForm<
-  "VECTOR.instructions.VSHL.b_w_l_q_z_pn_p_vn_v_ea_e", "vshl", "11111111000000100010zz0100ppppvvvvveeeeeee", "bwlq", 2, 122, 15, 65535, 0, 0, 3,
+def BRForm_vector_VECTOR_VSHL_b_w_l_q_z_pn_p_vn_v_ea_e : BedrockVectorEncodingForm<
+  "VECTOR.VSHL.b_w_l_q_z_pn_p_vn_v_ea_e", "vshl", "VECTOR", "11111111000000100010zz0100ppppvvvvveeeeeee", "bwlq", 2, 122, 15, 65535, 0, 0, 3,
   5, 112, 0, 0, 4, 118, 0, 0, 7, 101, 0, 0, 0, 0, 0, 0,
   0, 0, 0, 0, 0, 0, 0, 0, 255, 255>;
-def BRForm_vector_VECTOR_instructions_VSHL_b_w_l_q_z_pn_p_imm6_i_ea_e : BedrockVectorEncodingForm<
-  "VECTOR.instructions.VSHL.b_w_l_q_z_pn_p_imm6_i_ea_e", "vshl", "11111111000000101100zz000ppppiiiiiieeeeeee", "bwlq", 2, 122, 15, 65535, 0, 0, 3,
+def BRForm_vector_VECTOR_VSHL_b_w_l_q_z_pn_p_imm6_i_ea_e : BedrockVectorEncodingForm<
+  "VECTOR.VSHL.b_w_l_q_z_pn_p_imm6_i_ea_e", "vshl", "VECTOR", "11111111000000101100zz000ppppiiiiiieeeeeee", "bwlq", 2, 122, 15, 65535, 0, 0, 3,
   5, 112, 0, 0, 8, 105, 6, 0, 7, 101, 0, 0, 0, 0, 0, 0,
   0, 0, 0, 0, 0, 0, 0, 0, 255, 255>;
-def BRForm_vector_VECTOR_instructions_VSHR_b_w_l_q_z_pn_p_vn_v_vn_w : BedrockVectorEncodingForm<
-  "VECTOR.instructions.VSHR.b_w_l_q_z_pn_p_vn_v_vn_w", "vshr", "11111101111001000zz1ppppvvvvvwwwww", "bwlq", 1, 122, 15, 65535, 0, 0, 3,
+def BRForm_vector_VECTOR_VSHR_b_w_l_q_z_pn_p_vn_v_vn_w : BedrockVectorEncodingForm<
+  "VECTOR.VSHR.b_w_l_q_z_pn_p_vn_v_vn_w", "vshr", "VECTOR", "11111101111001000zz1ppppvvvvvwwwww", "bwlq", 1, 122, 15, 65535, 0, 0, 3,
   5, 112, 0, 0, 4, 118, 0, 0, 4, 119, 0, 0, 0, 0, 0, 0,
   0, 0, 0, 0, 0, 0, 0, 0, 255, 255>;
-def BRForm_vector_VECTOR_instructions_VSHR_b_w_l_q_z_pn_p_imm6_i_vn_v : BedrockVectorEncodingForm<
-  "VECTOR.instructions.VSHR.b_w_l_q_z_pn_p_imm6_i_vn_v", "vshr", "11111101111100001zzppppvvvvviiiiii", "bwlq", 1, 122, 15, 65535, 0, 0, 3,
+def BRForm_vector_VECTOR_VSHR_b_w_l_q_z_pn_p_imm6_i_vn_v : BedrockVectorEncodingForm<
+  "VECTOR.VSHR.b_w_l_q_z_pn_p_imm6_i_vn_v", "vshr", "VECTOR", "11111101111100001zzppppvvvvviiiiii", "bwlq", 1, 122, 15, 65535, 0, 0, 3,
   5, 112, 0, 0, 8, 105, 6, 0, 4, 118, 0, 0, 0, 0, 0, 0,
   0, 0, 0, 0, 0, 0, 0, 0, 255, 255>;
-def BRForm_vector_VECTOR_instructions_VSHR_b_w_l_q_z_pn_p_ea_e_vn_v : BedrockVectorEncodingForm<
-  "VECTOR.instructions.VSHR.b_w_l_q_z_pn_p_ea_e_vn_v", "vshr", "11111111000000100010zz0101ppppvvvvveeeeeee", "bwlq", 2, 122, 15, 65535, 0, 0, 3,
+def BRForm_vector_VECTOR_VSHR_b_w_l_q_z_pn_p_ea_e_vn_v : BedrockVectorEncodingForm<
+  "VECTOR.VSHR.b_w_l_q_z_pn_p_ea_e_vn_v", "vshr", "VECTOR", "11111111000000100010zz0101ppppvvvvveeeeeee", "bwlq", 2, 122, 15, 65535, 0, 0, 3,
   5, 112, 0, 0, 7, 101, 0, 0, 4, 118, 0, 0, 0, 0, 0, 0,
   0, 0, 0, 0, 0, 0, 0, 0, 255, 255>;
-def BRForm_vector_VECTOR_instructions_VSHR_b_w_l_q_z_pn_p_vn_v_ea_e : BedrockVectorEncodingForm<
-  "VECTOR.instructions.VSHR.b_w_l_q_z_pn_p_vn_v_ea_e", "vshr", "11111111000000100010zz0110ppppvvvvveeeeeee", "bwlq", 2, 122, 15, 65535, 0, 0, 3,
+def BRForm_vector_VECTOR_VSHR_b_w_l_q_z_pn_p_vn_v_ea_e : BedrockVectorEncodingForm<
+  "VECTOR.VSHR.b_w_l_q_z_pn_p_vn_v_ea_e", "vshr", "VECTOR", "11111111000000100010zz0110ppppvvvvveeeeeee", "bwlq", 2, 122, 15, 65535, 0, 0, 3,
   5, 112, 0, 0, 4, 118, 0, 0, 7, 101, 0, 0, 0, 0, 0, 0,
   0, 0, 0, 0, 0, 0, 0, 0, 255, 255>;
-def BRForm_vector_VECTOR_instructions_VSHR_b_w_l_q_z_pn_p_imm6_i_ea_e : BedrockVectorEncodingForm<
-  "VECTOR.instructions.VSHR.b_w_l_q_z_pn_p_imm6_i_ea_e", "vshr", "11111111000000101100zz001ppppiiiiiieeeeeee", "bwlq", 2, 122, 15, 65535, 0, 0, 3,
+def BRForm_vector_VECTOR_VSHR_b_w_l_q_z_pn_p_imm6_i_ea_e : BedrockVectorEncodingForm<
+  "VECTOR.VSHR.b_w_l_q_z_pn_p_imm6_i_ea_e", "vshr", "VECTOR", "11111111000000101100zz001ppppiiiiiieeeeeee", "bwlq", 2, 122, 15, 65535, 0, 0, 3,
   5, 112, 0, 0, 8, 105, 6, 0, 7, 101, 0, 0, 0, 0, 0, 0,
   0, 0, 0, 0, 0, 0, 0, 0, 255, 255>;
-def BRForm_vector_VECTOR_instructions_VSAR_b_w_l_q_z_pn_p_vn_v_vn_w : BedrockVectorEncodingForm<
-  "VECTOR.instructions.VSAR.b_w_l_q_z_pn_p_vn_v_vn_w", "vsar", "11111101111001001zz0ppppvvvvvwwwww", "bwlq", 1, 122, 15, 65535, 0, 0, 3,
+def BRForm_vector_VECTOR_VSAR_b_w_l_q_z_pn_p_vn_v_vn_w : BedrockVectorEncodingForm<
+  "VECTOR.VSAR.b_w_l_q_z_pn_p_vn_v_vn_w", "vsar", "VECTOR", "11111101111001001zz0ppppvvvvvwwwww", "bwlq", 1, 122, 15, 65535, 0, 0, 3,
   5, 112, 0, 0, 4, 118, 0, 0, 4, 119, 0, 0, 0, 0, 0, 0,
   0, 0, 0, 0, 0, 0, 0, 0, 255, 255>;
-def BRForm_vector_VECTOR_instructions_VSAR_b_w_l_q_z_pn_p_imm6_i_vn_v : BedrockVectorEncodingForm<
-  "VECTOR.instructions.VSAR.b_w_l_q_z_pn_p_imm6_i_vn_v", "vsar", "11111101111100010zzppppvvvvviiiiii", "bwlq", 1, 122, 15, 65535, 0, 0, 3,
+def BRForm_vector_VECTOR_VSAR_b_w_l_q_z_pn_p_imm6_i_vn_v : BedrockVectorEncodingForm<
+  "VECTOR.VSAR.b_w_l_q_z_pn_p_imm6_i_vn_v", "vsar", "VECTOR", "11111101111100010zzppppvvvvviiiiii", "bwlq", 1, 122, 15, 65535, 0, 0, 3,
   5, 112, 0, 0, 8, 105, 6, 0, 4, 118, 0, 0, 0, 0, 0, 0,
   0, 0, 0, 0, 0, 0, 0, 0, 255, 255>;
-def BRForm_vector_VECTOR_instructions_VSAR_b_w_l_q_z_pn_p_ea_e_vn_v : BedrockVectorEncodingForm<
-  "VECTOR.instructions.VSAR.b_w_l_q_z_pn_p_ea_e_vn_v", "vsar", "11111111000000100010zz0111ppppvvvvveeeeeee", "bwlq", 2, 122, 15, 65535, 0, 0, 3,
+def BRForm_vector_VECTOR_VSAR_b_w_l_q_z_pn_p_ea_e_vn_v : BedrockVectorEncodingForm<
+  "VECTOR.VSAR.b_w_l_q_z_pn_p_ea_e_vn_v", "vsar", "VECTOR", "11111111000000100010zz0111ppppvvvvveeeeeee", "bwlq", 2, 122, 15, 65535, 0, 0, 3,
   5, 112, 0, 0, 7, 101, 0, 0, 4, 118, 0, 0, 0, 0, 0, 0,
   0, 0, 0, 0, 0, 0, 0, 0, 255, 255>;
-def BRForm_vector_VECTOR_instructions_VSAR_b_w_l_q_z_pn_p_vn_v_ea_e : BedrockVectorEncodingForm<
-  "VECTOR.instructions.VSAR.b_w_l_q_z_pn_p_vn_v_ea_e", "vsar", "11111111000000100010zz1000ppppvvvvveeeeeee", "bwlq", 2, 122, 15, 65535, 0, 0, 3,
+def BRForm_vector_VECTOR_VSAR_b_w_l_q_z_pn_p_vn_v_ea_e : BedrockVectorEncodingForm<
+  "VECTOR.VSAR.b_w_l_q_z_pn_p_vn_v_ea_e", "vsar", "VECTOR", "11111111000000100010zz1000ppppvvvvveeeeeee", "bwlq", 2, 122, 15, 65535, 0, 0, 3,
   5, 112, 0, 0, 4, 118, 0, 0, 7, 101, 0, 0, 0, 0, 0, 0,
   0, 0, 0, 0, 0, 0, 0, 0, 255, 255>;
-def BRForm_vector_VECTOR_instructions_VSAR_b_w_l_q_z_pn_p_imm6_i_ea_e : BedrockVectorEncodingForm<
-  "VECTOR.instructions.VSAR.b_w_l_q_z_pn_p_imm6_i_ea_e", "vsar", "11111111000000101100zz010ppppiiiiiieeeeeee", "bwlq", 2, 122, 15, 65535, 0, 0, 3,
+def BRForm_vector_VECTOR_VSAR_b_w_l_q_z_pn_p_imm6_i_ea_e : BedrockVectorEncodingForm<
+  "VECTOR.VSAR.b_w_l_q_z_pn_p_imm6_i_ea_e", "vsar", "VECTOR", "11111111000000101100zz010ppppiiiiiieeeeeee", "bwlq", 2, 122, 15, 65535, 0, 0, 3,
   5, 112, 0, 0, 8, 105, 6, 0, 7, 101, 0, 0, 0, 0, 0, 0,
   0, 0, 0, 0, 0, 0, 0, 0, 255, 255>;
-def BRForm_vector_VECTOR_instructions_VROL_b_w_l_q_z_pn_p_vn_v_vn_w : BedrockVectorEncodingForm<
-  "VECTOR.instructions.VROL.b_w_l_q_z_pn_p_vn_v_vn_w", "vrol", "11111101111001001zz1ppppvvvvvwwwww", "bwlq", 1, 122, 15, 65535, 0, 0, 3,
+def BRForm_vector_VECTOR_VROL_b_w_l_q_z_pn_p_vn_v_vn_w : BedrockVectorEncodingForm<
+  "VECTOR.VROL.b_w_l_q_z_pn_p_vn_v_vn_w", "vrol", "VECTOR", "11111101111001001zz1ppppvvvvvwwwww", "bwlq", 1, 122, 15, 65535, 0, 0, 3,
   5, 112, 0, 0, 4, 118, 0, 0, 4, 119, 0, 0, 0, 0, 0, 0,
   0, 0, 0, 0, 0, 0, 0, 0, 255, 255>;
-def BRForm_vector_VECTOR_instructions_VROL_b_w_l_q_z_pn_p_imm6_i_vn_v : BedrockVectorEncodingForm<
-  "VECTOR.instructions.VROL.b_w_l_q_z_pn_p_imm6_i_vn_v", "vrol", "11111101111100011zzppppvvvvviiiiii", "bwlq", 1, 122, 15, 65535, 0, 0, 3,
+def BRForm_vector_VECTOR_VROL_b_w_l_q_z_pn_p_imm6_i_vn_v : BedrockVectorEncodingForm<
+  "VECTOR.VROL.b_w_l_q_z_pn_p_imm6_i_vn_v", "vrol", "VECTOR", "11111101111100011zzppppvvvvviiiiii", "bwlq", 1, 122, 15, 65535, 0, 0, 3,
   5, 112, 0, 0, 8, 105, 6, 0, 4, 118, 0, 0, 0, 0, 0, 0,
   0, 0, 0, 0, 0, 0, 0, 0, 255, 255>;
-def BRForm_vector_VECTOR_instructions_VROL_b_w_l_q_z_pn_p_ea_e_vn_v : BedrockVectorEncodingForm<
-  "VECTOR.instructions.VROL.b_w_l_q_z_pn_p_ea_e_vn_v", "vrol", "11111111000000100010zz1001ppppvvvvveeeeeee", "bwlq", 2, 122, 15, 65535, 0, 0, 3,
+def BRForm_vector_VECTOR_VROL_b_w_l_q_z_pn_p_ea_e_vn_v : BedrockVectorEncodingForm<
+  "VECTOR.VROL.b_w_l_q_z_pn_p_ea_e_vn_v", "vrol", "VECTOR", "11111111000000100010zz1001ppppvvvvveeeeeee", "bwlq", 2, 122, 15, 65535, 0, 0, 3,
   5, 112, 0, 0, 7, 101, 0, 0, 4, 118, 0, 0, 0, 0, 0, 0,
   0, 0, 0, 0, 0, 0, 0, 0, 255, 255>;
-def BRForm_vector_VECTOR_instructions_VROL_b_w_l_q_z_pn_p_vn_v_ea_e : BedrockVectorEncodingForm<
-  "VECTOR.instructions.VROL.b_w_l_q_z_pn_p_vn_v_ea_e", "vrol", "11111111000000100010zz1010ppppvvvvveeeeeee", "bwlq", 2, 122, 15, 65535, 0, 0, 3,
+def BRForm_vector_VECTOR_VROL_b_w_l_q_z_pn_p_vn_v_ea_e : BedrockVectorEncodingForm<
+  "VECTOR.VROL.b_w_l_q_z_pn_p_vn_v_ea_e", "vrol", "VECTOR", "11111111000000100010zz1010ppppvvvvveeeeeee", "bwlq", 2, 122, 15, 65535, 0, 0, 3,
   5, 112, 0, 0, 4, 118, 0, 0, 7, 101, 0, 0, 0, 0, 0, 0,
   0, 0, 0, 0, 0, 0, 0, 0, 255, 255>;
-def BRForm_vector_VECTOR_instructions_VROL_b_w_l_q_z_pn_p_imm6_i_ea_e : BedrockVectorEncodingForm<
-  "VECTOR.instructions.VROL.b_w_l_q_z_pn_p_imm6_i_ea_e", "vrol", "11111111000000101100zz011ppppiiiiiieeeeeee", "bwlq", 2, 122, 15, 65535, 0, 0, 3,
+def BRForm_vector_VECTOR_VROL_b_w_l_q_z_pn_p_imm6_i_ea_e : BedrockVectorEncodingForm<
+  "VECTOR.VROL.b_w_l_q_z_pn_p_imm6_i_ea_e", "vrol", "VECTOR", "11111111000000101100zz011ppppiiiiiieeeeeee", "bwlq", 2, 122, 15, 65535, 0, 0, 3,
   5, 112, 0, 0, 8, 105, 6, 0, 7, 101, 0, 0, 0, 0, 0, 0,
   0, 0, 0, 0, 0, 0, 0, 0, 255, 255>;
-def BRForm_vector_VECTOR_instructions_VROR_b_w_l_q_z_pn_p_vn_v_vn_w : BedrockVectorEncodingForm<
-  "VECTOR.instructions.VROR.b_w_l_q_z_pn_p_vn_v_vn_w", "vror", "11111101111001010zz0ppppvvvvvwwwww", "bwlq", 1, 122, 15, 65535, 0, 0, 3,
+def BRForm_vector_VECTOR_VROR_b_w_l_q_z_pn_p_vn_v_vn_w : BedrockVectorEncodingForm<
+  "VECTOR.VROR.b_w_l_q_z_pn_p_vn_v_vn_w", "vror", "VECTOR", "11111101111001010zz0ppppvvvvvwwwww", "bwlq", 1, 122, 15, 65535, 0, 0, 3,
   5, 112, 0, 0, 4, 118, 0, 0, 4, 119, 0, 0, 0, 0, 0, 0,
   0, 0, 0, 0, 0, 0, 0, 0, 255, 255>;
-def BRForm_vector_VECTOR_instructions_VROR_b_w_l_q_z_pn_p_imm6_i_vn_v : BedrockVectorEncodingForm<
-  "VECTOR.instructions.VROR.b_w_l_q_z_pn_p_imm6_i_vn_v", "vror", "11111101111100100zzppppvvvvviiiiii", "bwlq", 1, 122, 15, 65535, 0, 0, 3,
+def BRForm_vector_VECTOR_VROR_b_w_l_q_z_pn_p_imm6_i_vn_v : BedrockVectorEncodingForm<
+  "VECTOR.VROR.b_w_l_q_z_pn_p_imm6_i_vn_v", "vror", "VECTOR", "11111101111100100zzppppvvvvviiiiii", "bwlq", 1, 122, 15, 65535, 0, 0, 3,
   5, 112, 0, 0, 8, 105, 6, 0, 4, 118, 0, 0, 0, 0, 0, 0,
   0, 0, 0, 0, 0, 0, 0, 0, 255, 255>;
-def BRForm_vector_VECTOR_instructions_VROR_b_w_l_q_z_pn_p_ea_e_vn_v : BedrockVectorEncodingForm<
-  "VECTOR.instructions.VROR.b_w_l_q_z_pn_p_ea_e_vn_v", "vror", "11111111000000100010zz1011ppppvvvvveeeeeee", "bwlq", 2, 122, 15, 65535, 0, 0, 3,
+def BRForm_vector_VECTOR_VROR_b_w_l_q_z_pn_p_ea_e_vn_v : BedrockVectorEncodingForm<
+  "VECTOR.VROR.b_w_l_q_z_pn_p_ea_e_vn_v", "vror", "VECTOR", "11111111000000100010zz1011ppppvvvvveeeeeee", "bwlq", 2, 122, 15, 65535, 0, 0, 3,
   5, 112, 0, 0, 7, 101, 0, 0, 4, 118, 0, 0, 0, 0, 0, 0,
   0, 0, 0, 0, 0, 0, 0, 0, 255, 255>;
-def BRForm_vector_VECTOR_instructions_VROR_b_w_l_q_z_pn_p_vn_v_ea_e : BedrockVectorEncodingForm<
-  "VECTOR.instructions.VROR.b_w_l_q_z_pn_p_vn_v_ea_e", "vror", "11111111000000100010zz1100ppppvvvvveeeeeee", "bwlq", 2, 122, 15, 65535, 0, 0, 3,
+def BRForm_vector_VECTOR_VROR_b_w_l_q_z_pn_p_vn_v_ea_e : BedrockVectorEncodingForm<
+  "VECTOR.VROR.b_w_l_q_z_pn_p_vn_v_ea_e", "vror", "VECTOR", "11111111000000100010zz1100ppppvvvvveeeeeee", "bwlq", 2, 122, 15, 65535, 0, 0, 3,
   5, 112, 0, 0, 4, 118, 0, 0, 7, 101, 0, 0, 0, 0, 0, 0,
   0, 0, 0, 0, 0, 0, 0, 0, 255, 255>;
-def BRForm_vector_VECTOR_instructions_VROR_b_w_l_q_z_pn_p_imm6_i_ea_e : BedrockVectorEncodingForm<
-  "VECTOR.instructions.VROR.b_w_l_q_z_pn_p_imm6_i_ea_e", "vror", "11111111000000101100zz100ppppiiiiiieeeeeee", "bwlq", 2, 122, 15, 65535, 0, 0, 3,
+def BRForm_vector_VECTOR_VROR_b_w_l_q_z_pn_p_imm6_i_ea_e : BedrockVectorEncodingForm<
+  "VECTOR.VROR.b_w_l_q_z_pn_p_imm6_i_ea_e", "vror", "VECTOR", "11111111000000101100zz100ppppiiiiiieeeeeee", "bwlq", 2, 122, 15, 65535, 0, 0, 3,
   5, 112, 0, 0, 8, 105, 6, 0, 7, 101, 0, 0, 0, 0, 0, 0,
   0, 0, 0, 0, 0, 0, 0, 0, 255, 255>;
-def BRForm_vector_VECTOR_instructions_VMIN_h_s_d_z_pn_p_vn_v_vn_w : BedrockVectorEncodingForm<
-  "VECTOR.instructions.VMIN.h_s_d_z_pn_p_vn_v_vn_w", "vmin", "11111101111001010zz1ppppvvvvvwwwww", "?hsd", 1, 122, 14, 65535, 0, 0, 3,
+def BRForm_vector_VECTOR_VEXTZW_b_z_pn_p_vn_v_vn_w : BedrockVectorEncodingForm<
+  "VECTOR.VEXTZW.b_z_pn_p_vn_v_vn_w", "vextzw", "VECTOR", "11111101111001100zz1ppppvvvvvwwwww", "b", 1, 122, 1, 65535, 0, 0, 3,
   5, 112, 0, 0, 4, 118, 0, 0, 4, 119, 0, 0, 0, 0, 0, 0,
   0, 0, 0, 0, 0, 0, 0, 0, 255, 255>;
-def BRForm_vector_VECTOR_instructions_VMIN_h_s_d_z_pn_p_ea_e_vn_v : BedrockVectorEncodingForm<
-  "VECTOR.instructions.VMIN.h_s_d_z_pn_p_ea_e_vn_v", "vmin", "11111111000000100010zz1101ppppvvvvveeeeeee", "?hsd", 2, 122, 14, 65535, 0, 0, 3,
-  5, 112, 0, 0, 7, 101, 0, 0, 4, 118, 0, 0, 0, 0, 0, 0,
-  0, 0, 0, 0, 0, 0, 0, 0, 255, 255>;
-def BRForm_vector_VECTOR_instructions_VMIN_h_s_d_z_pn_p_vn_v_ea_e : BedrockVectorEncodingForm<
-  "VECTOR.instructions.VMIN.h_s_d_z_pn_p_vn_v_ea_e", "vmin", "11111111000000100010zz1110ppppvvvvveeeeeee", "?hsd", 2, 122, 14, 65535, 0, 0, 3,
-  5, 112, 0, 0, 4, 118, 0, 0, 7, 101, 0, 0, 0, 0, 0, 0,
-  0, 0, 0, 0, 0, 0, 0, 0, 255, 255>;
-def BRForm_vector_VECTOR_instructions_VMAX_h_s_d_z_pn_p_vn_v_vn_w : BedrockVectorEncodingForm<
-  "VECTOR.instructions.VMAX.h_s_d_z_pn_p_vn_v_vn_w", "vmax", "11111101111001011zz0ppppvvvvvwwwww", "?hsd", 1, 122, 14, 65535, 0, 0, 3,
+def BRForm_vector_VECTOR_VEXTSW_b_z_pn_p_vn_v_vn_w : BedrockVectorEncodingForm<
+  "VECTOR.VEXTSW.b_z_pn_p_vn_v_vn_w", "vextsw", "VECTOR", "11111101111001101zz0ppppvvvvvwwwww", "b", 1, 122, 1, 65535, 0, 0, 3,
   5, 112, 0, 0, 4, 118, 0, 0, 4, 119, 0, 0, 0, 0, 0, 0,
   0, 0, 0, 0, 0, 0, 0, 0, 255, 255>;
-def BRForm_vector_VECTOR_instructions_VMAX_h_s_d_z_pn_p_ea_e_vn_v : BedrockVectorEncodingForm<
-  "VECTOR.instructions.VMAX.h_s_d_z_pn_p_ea_e_vn_v", "vmax", "11111111000000100010zz1111ppppvvvvveeeeeee", "?hsd", 2, 122, 14, 65535, 0, 0, 3,
-  5, 112, 0, 0, 7, 101, 0, 0, 4, 118, 0, 0, 0, 0, 0, 0,
-  0, 0, 0, 0, 0, 0, 0, 0, 255, 255>;
-def BRForm_vector_VECTOR_instructions_VMAX_h_s_d_z_pn_p_vn_v_ea_e : BedrockVectorEncodingForm<
-  "VECTOR.instructions.VMAX.h_s_d_z_pn_p_vn_v_ea_e", "vmax", "11111111000000100011zz0000ppppvvvvveeeeeee", "?hsd", 2, 122, 14, 65535, 0, 0, 3,
-  5, 112, 0, 0, 4, 118, 0, 0, 7, 101, 0, 0, 0, 0, 0, 0,
-  0, 0, 0, 0, 0, 0, 0, 0, 255, 255>;
-def BRForm_vector_VECTOR_instructions_VDIV_h_s_d_z_pn_p_vn_v_vn_w : BedrockVectorEncodingForm<
-  "VECTOR.instructions.VDIV.h_s_d_z_pn_p_vn_v_vn_w", "vdiv", "11111101111001011zz1ppppvvvvvwwwww", "?hsd", 1, 122, 14, 65535, 0, 0, 3,
+def BRForm_vector_VECTOR_VEXTZL_b_w_z_pn_p_vn_v_vn_w : BedrockVectorEncodingForm<
+  "VECTOR.VEXTZL.b_w_z_pn_p_vn_v_vn_w", "vextzl", "VECTOR", "11111101111001101zz1ppppvvvvvwwwww", "bw", 1, 122, 3, 65535, 0, 0, 3,
   5, 112, 0, 0, 4, 118, 0, 0, 4, 119, 0, 0, 0, 0, 0, 0,
   0, 0, 0, 0, 0, 0, 0, 0, 255, 255>;
-def BRForm_vector_VECTOR_instructions_VDIV_h_s_d_z_pn_p_ea_e_vn_v : BedrockVectorEncodingForm<
-  "VECTOR.instructions.VDIV.h_s_d_z_pn_p_ea_e_vn_v", "vdiv", "11111111000000100011zz0001ppppvvvvveeeeeee", "?hsd", 2, 122, 14, 65535, 0, 0, 3,
-  5, 112, 0, 0, 7, 101, 0, 0, 4, 118, 0, 0, 0, 0, 0, 0,
-  0, 0, 0, 0, 0, 0, 0, 0, 255, 255>;
-def BRForm_vector_VECTOR_instructions_VDIV_h_s_d_z_pn_p_vn_v_ea_e : BedrockVectorEncodingForm<
-  "VECTOR.instructions.VDIV.h_s_d_z_pn_p_vn_v_ea_e", "vdiv", "11111111000000100011zz0010ppppvvvvveeeeeee", "?hsd", 2, 122, 14, 65535, 0, 0, 3,
-  5, 112, 0, 0, 4, 118, 0, 0, 7, 101, 0, 0, 0, 0, 0, 0,
-  0, 0, 0, 0, 0, 0, 0, 0, 255, 255>;
-def BRForm_vector_VECTOR_instructions_VCOPYSIGN_h_s_d_z_pn_p_vn_v_vn_w : BedrockVectorEncodingForm<
-  "VECTOR.instructions.VCOPYSIGN.h_s_d_z_pn_p_vn_v_vn_w", "vcopysign", "11111101111001100zz0ppppvvvvvwwwww", "?hsd", 1, 122, 14, 65535, 0, 0, 3,
+def BRForm_vector_VECTOR_VEXTSL_b_w_z_pn_p_vn_v_vn_w : BedrockVectorEncodingForm<
+  "VECTOR.VEXTSL.b_w_z_pn_p_vn_v_vn_w", "vextsl", "VECTOR", "11111101111001110zz0ppppvvvvvwwwww", "bw", 1, 122, 3, 65535, 0, 0, 3,
   5, 112, 0, 0, 4, 118, 0, 0, 4, 119, 0, 0, 0, 0, 0, 0,
   0, 0, 0, 0, 0, 0, 0, 0, 255, 255>;
-def BRForm_vector_VECTOR_instructions_VCOPYSIGN_h_s_d_z_pn_p_ea_e_vn_v : BedrockVectorEncodingForm<
-  "VECTOR.instructions.VCOPYSIGN.h_s_d_z_pn_p_ea_e_vn_v", "vcopysign", "11111111000000100011zz0011ppppvvvvveeeeeee", "?hsd", 2, 122, 14, 65535, 0, 0, 3,
-  5, 112, 0, 0, 7, 101, 0, 0, 4, 118, 0, 0, 0, 0, 0, 0,
-  0, 0, 0, 0, 0, 0, 0, 0, 255, 255>;
-def BRForm_vector_VECTOR_instructions_VCOPYSIGN_h_s_d_z_pn_p_vn_v_ea_e : BedrockVectorEncodingForm<
-  "VECTOR.instructions.VCOPYSIGN.h_s_d_z_pn_p_vn_v_ea_e", "vcopysign", "11111111000000100011zz0100ppppvvvvveeeeeee", "?hsd", 2, 122, 14, 65535, 0, 0, 3,
-  5, 112, 0, 0, 4, 118, 0, 0, 7, 101, 0, 0, 0, 0, 0, 0,
-  0, 0, 0, 0, 0, 0, 0, 0, 255, 255>;
-def BRForm_vector_VECTOR_instructions_VEXTZW_b_z_pn_p_vn_v_vn_w : BedrockVectorEncodingForm<
-  "VECTOR.instructions.VEXTZW.b_z_pn_p_vn_v_vn_w", "vextzw", "11111101111001100zz1ppppvvvvvwwwww", "b", 1, 122, 1, 65535, 0, 0, 3,
+def BRForm_vector_VECTOR_VEXTZQ_b_w_l_z_pn_p_vn_v_vn_w : BedrockVectorEncodingForm<
+  "VECTOR.VEXTZQ.b_w_l_z_pn_p_vn_v_vn_w", "vextzq", "VECTOR", "11111101111001110zz1ppppvvvvvwwwww", "bwl", 1, 122, 7, 65535, 0, 0, 3,
   5, 112, 0, 0, 4, 118, 0, 0, 4, 119, 0, 0, 0, 0, 0, 0,
   0, 0, 0, 0, 0, 0, 0, 0, 255, 255>;
-def BRForm_vector_VECTOR_instructions_VEXTSW_b_z_pn_p_vn_v_vn_w : BedrockVectorEncodingForm<
-  "VECTOR.instructions.VEXTSW.b_z_pn_p_vn_v_vn_w", "vextsw", "11111101111001101zz0ppppvvvvvwwwww", "b", 1, 122, 1, 65535, 0, 0, 3,
+def BRForm_vector_VECTOR_VEXTSQ_b_w_l_z_pn_p_vn_v_vn_w : BedrockVectorEncodingForm<
+  "VECTOR.VEXTSQ.b_w_l_z_pn_p_vn_v_vn_w", "vextsq", "VECTOR", "11111101111001111zz0ppppvvvvvwwwww", "bwl", 1, 122, 7, 65535, 0, 0, 3,
   5, 112, 0, 0, 4, 118, 0, 0, 4, 119, 0, 0, 0, 0, 0, 0,
   0, 0, 0, 0, 0, 0, 0, 0, 255, 255>;
-def BRForm_vector_VECTOR_instructions_VEXTZL_b_w_z_pn_p_vn_v_vn_w : BedrockVectorEncodingForm<
-  "VECTOR.instructions.VEXTZL.b_w_z_pn_p_vn_v_vn_w", "vextzl", "11111101111001101zz1ppppvvvvvwwwww", "bw", 1, 122, 3, 65535, 0, 0, 3,
+def BRForm_vector_VECTOR_VTRUNCB_w_l_q_z_pn_p_vn_v_vn_w : BedrockVectorEncodingForm<
+  "VECTOR.VTRUNCB.w_l_q_z_pn_p_vn_v_vn_w", "vtruncb", "VECTOR", "11111101111001111zz1ppppvvvvvwwwww", "?wlq", 1, 122, 14, 65535, 0, 0, 3,
   5, 112, 0, 0, 4, 118, 0, 0, 4, 119, 0, 0, 0, 0, 0, 0,
   0, 0, 0, 0, 0, 0, 0, 0, 255, 255>;
-def BRForm_vector_VECTOR_instructions_VEXTSL_b_w_z_pn_p_vn_v_vn_w : BedrockVectorEncodingForm<
-  "VECTOR.instructions.VEXTSL.b_w_z_pn_p_vn_v_vn_w", "vextsl", "11111101111001110zz0ppppvvvvvwwwww", "bw", 1, 122, 3, 65535, 0, 0, 3,
+def BRForm_vector_VECTOR_VTRUNCW_l_q_z_pn_p_vn_v_vn_w : BedrockVectorEncodingForm<
+  "VECTOR.VTRUNCW.l_q_z_pn_p_vn_v_vn_w", "vtruncw", "VECTOR", "11111101111010000zz0ppppvvvvvwwwww", "??lq", 1, 122, 12, 65535, 0, 0, 3,
   5, 112, 0, 0, 4, 118, 0, 0, 4, 119, 0, 0, 0, 0, 0, 0,
   0, 0, 0, 0, 0, 0, 0, 0, 255, 255>;
-def BRForm_vector_VECTOR_instructions_VEXTZQ_b_w_l_z_pn_p_vn_v_vn_w : BedrockVectorEncodingForm<
-  "VECTOR.instructions.VEXTZQ.b_w_l_z_pn_p_vn_v_vn_w", "vextzq", "11111101111001110zz1ppppvvvvvwwwww", "bwl", 1, 122, 7, 65535, 0, 0, 3,
+def BRForm_vector_VECTOR_VTRUNCL_q_z_pn_p_vn_v_vn_w : BedrockVectorEncodingForm<
+  "VECTOR.VTRUNCL.q_z_pn_p_vn_v_vn_w", "vtruncl", "VECTOR", "11111101111010000zz1ppppvvvvvwwwww", "???q", 1, 122, 8, 65535, 0, 0, 3,
   5, 112, 0, 0, 4, 118, 0, 0, 4, 119, 0, 0, 0, 0, 0, 0,
   0, 0, 0, 0, 0, 0, 0, 0, 255, 255>;
-def BRForm_vector_VECTOR_instructions_VEXTSQ_b_w_l_z_pn_p_vn_v_vn_w : BedrockVectorEncodingForm<
-  "VECTOR.instructions.VEXTSQ.b_w_l_z_pn_p_vn_v_vn_w", "vextsq", "11111101111001111zz0ppppvvvvvwwwww", "bwl", 1, 122, 7, 65535, 0, 0, 3,
+def BRForm_vector_VECTOR_VPERM_b_w_l_q_z_pn_p_vn_v_vn_w : BedrockVectorEncodingForm<
+  "VECTOR.VPERM.b_w_l_q_z_pn_p_vn_v_vn_w", "vperm", "VECTOR", "11111101111010110zz1ppppvvvvvwwwww", "bwlq", 1, 122, 15, 65535, 0, 0, 3,
   5, 112, 0, 0, 4, 118, 0, 0, 4, 119, 0, 0, 0, 0, 0, 0,
   0, 0, 0, 0, 0, 0, 0, 0, 255, 255>;
-def BRForm_vector_VECTOR_instructions_VTRUNCB_w_l_q_z_pn_p_vn_v_vn_w : BedrockVectorEncodingForm<
-  "VECTOR.instructions.VTRUNCB.w_l_q_z_pn_p_vn_v_vn_w", "vtruncb", "11111101111001111zz1ppppvvvvvwwwww", "?wlq", 1, 122, 14, 65535, 0, 0, 3,
+def BRForm_vector_VECTOR_VZIPLO_b_w_l_q_z_pn_p_vn_v_vn_w : BedrockVectorEncodingForm<
+  "VECTOR.VZIPLO.b_w_l_q_z_pn_p_vn_v_vn_w", "vziplo", "VECTOR", "11111101111010111zz0ppppvvvvvwwwww", "bwlq", 1, 122, 15, 65535, 0, 0, 3,
   5, 112, 0, 0, 4, 118, 0, 0, 4, 119, 0, 0, 0, 0, 0, 0,
   0, 0, 0, 0, 0, 0, 0, 0, 255, 255>;
-def BRForm_vector_VECTOR_instructions_VTRUNCW_l_q_z_pn_p_vn_v_vn_w : BedrockVectorEncodingForm<
-  "VECTOR.instructions.VTRUNCW.l_q_z_pn_p_vn_v_vn_w", "vtruncw", "11111101111010000zz0ppppvvvvvwwwww", "??lq", 1, 122, 12, 65535, 0, 0, 3,
+def BRForm_vector_VECTOR_VZIPHI_b_w_l_q_z_pn_p_vn_v_vn_w : BedrockVectorEncodingForm<
+  "VECTOR.VZIPHI.b_w_l_q_z_pn_p_vn_v_vn_w", "vziphi", "VECTOR", "11111101111010111zz1ppppvvvvvwwwww", "bwlq", 1, 122, 15, 65535, 0, 0, 3,
   5, 112, 0, 0, 4, 118, 0, 0, 4, 119, 0, 0, 0, 0, 0, 0,
   0, 0, 0, 0, 0, 0, 0, 0, 255, 255>;
-def BRForm_vector_VECTOR_instructions_VTRUNCL_q_z_pn_p_vn_v_vn_w : BedrockVectorEncodingForm<
-  "VECTOR.instructions.VTRUNCL.q_z_pn_p_vn_v_vn_w", "vtruncl", "11111101111010000zz1ppppvvvvvwwwww", "???q", 1, 122, 8, 65535, 0, 0, 3,
+def BRForm_vector_VECTOR_VUZIPLO_b_w_l_q_z_pn_p_vn_v_vn_w : BedrockVectorEncodingForm<
+  "VECTOR.VUZIPLO.b_w_l_q_z_pn_p_vn_v_vn_w", "vuziplo", "VECTOR", "11111101111011000zz0ppppvvvvvwwwww", "bwlq", 1, 122, 15, 65535, 0, 0, 3,
   5, 112, 0, 0, 4, 118, 0, 0, 4, 119, 0, 0, 0, 0, 0, 0,
   0, 0, 0, 0, 0, 0, 0, 0, 255, 255>;
-def BRForm_vector_VECTOR_instructions_VCVTS_h_d_z_pn_p_vn_v_vn_w : BedrockVectorEncodingForm<
-  "VECTOR.instructions.VCVTS.h_d_z_pn_p_vn_v_vn_w", "vcvts", "11111101111010001zz0ppppvvvvvwwwww", "?h?d", 1, 122, 10, 65535, 0, 0, 3,
+def BRForm_vector_VECTOR_VUZIPHI_b_w_l_q_z_pn_p_vn_v_vn_w : BedrockVectorEncodingForm<
+  "VECTOR.VUZIPHI.b_w_l_q_z_pn_p_vn_v_vn_w", "vuziphi", "VECTOR", "11111101111011000zz1ppppvvvvvwwwww", "bwlq", 1, 122, 15, 65535, 0, 0, 3,
   5, 112, 0, 0, 4, 118, 0, 0, 4, 119, 0, 0, 0, 0, 0, 0,
   0, 0, 0, 0, 0, 0, 0, 0, 255, 255>;
-def BRForm_vector_VECTOR_instructions_VCVTS_l_q_z_pn_p_vn_v_vn_w : BedrockVectorEncodingForm<
-  "VECTOR.instructions.VCVTS.l_q_z_pn_p_vn_v_vn_w", "vcvts", "11111101111010010zz0ppppvvvvvwwwww", "??lq", 1, 122, 12, 65535, 0, 0, 3,
+def BRForm_vector_VECTOR_VTRNLO_b_w_l_q_z_pn_p_vn_v_vn_w : BedrockVectorEncodingForm<
+  "VECTOR.VTRNLO.b_w_l_q_z_pn_p_vn_v_vn_w", "vtrnlo", "VECTOR", "11111101111011001zz0ppppvvvvvwwwww", "bwlq", 1, 122, 15, 65535, 0, 0, 3,
   5, 112, 0, 0, 4, 118, 0, 0, 4, 119, 0, 0, 0, 0, 0, 0,
   0, 0, 0, 0, 0, 0, 0, 0, 255, 255>;
-def BRForm_vector_VECTOR_instructions_VCVTD_h_s_z_pn_p_vn_v_vn_w : BedrockVectorEncodingForm<
-  "VECTOR.instructions.VCVTD.h_s_z_pn_p_vn_v_vn_w", "vcvtd", "11111101111010001zz1ppppvvvvvwwwww", "?hs", 1, 122, 6, 65535, 0, 0, 3,
+def BRForm_vector_VECTOR_VTRNHI_b_w_l_q_z_pn_p_vn_v_vn_w : BedrockVectorEncodingForm<
+  "VECTOR.VTRNHI.b_w_l_q_z_pn_p_vn_v_vn_w", "vtrnhi", "VECTOR", "11111101111011001zz1ppppvvvvvwwwww", "bwlq", 1, 122, 15, 65535, 0, 0, 3,
   5, 112, 0, 0, 4, 118, 0, 0, 4, 119, 0, 0, 0, 0, 0, 0,
   0, 0, 0, 0, 0, 0, 0, 0, 255, 255>;
-def BRForm_vector_VECTOR_instructions_VCVTD_l_q_z_pn_p_vn_v_vn_w : BedrockVectorEncodingForm<
-  "VECTOR.instructions.VCVTD.l_q_z_pn_p_vn_v_vn_w", "vcvtd", "11111101111010011zz0ppppvvvvvwwwww", "??lq", 1, 122, 12, 65535, 0, 0, 3,
-  5, 112, 0, 0, 4, 118, 0, 0, 4, 119, 0, 0, 0, 0, 0, 0,
-  0, 0, 0, 0, 0, 0, 0, 0, 255, 255>;
-def BRForm_vector_VECTOR_instructions_VCVTUS_l_q_z_pn_p_vn_v_vn_w : BedrockVectorEncodingForm<
-  "VECTOR.instructions.VCVTUS.l_q_z_pn_p_vn_v_vn_w", "vcvtus", "11111101111010010zz1ppppvvvvvwwwww", "??lq", 1, 122, 12, 65535, 0, 0, 3,
-  5, 112, 0, 0, 4, 118, 0, 0, 4, 119, 0, 0, 0, 0, 0, 0,
-  0, 0, 0, 0, 0, 0, 0, 0, 255, 255>;
-def BRForm_vector_VECTOR_instructions_VCVTUD_l_q_z_pn_p_vn_v_vn_w : BedrockVectorEncodingForm<
-  "VECTOR.instructions.VCVTUD.l_q_z_pn_p_vn_v_vn_w", "vcvtud", "11111101111010011zz1ppppvvvvvwwwww", "??lq", 1, 122, 12, 65535, 0, 0, 3,
-  5, 112, 0, 0, 4, 118, 0, 0, 4, 119, 0, 0, 0, 0, 0, 0,
-  0, 0, 0, 0, 0, 0, 0, 0, 255, 255>;
-def BRForm_vector_VECTOR_instructions_VCVTL_h_s_d_z_pn_p_vn_v_vn_w : BedrockVectorEncodingForm<
-  "VECTOR.instructions.VCVTL.h_s_d_z_pn_p_vn_v_vn_w", "vcvtl", "11111101111010100zz0ppppvvvvvwwwww", "?hsd", 1, 122, 14, 65535, 0, 0, 3,
-  5, 112, 0, 0, 4, 118, 0, 0, 4, 119, 0, 0, 0, 0, 0, 0,
-  0, 0, 0, 0, 0, 0, 0, 0, 255, 255>;
-def BRForm_vector_VECTOR_instructions_VCVTUL_h_s_d_z_pn_p_vn_v_vn_w : BedrockVectorEncodingForm<
-  "VECTOR.instructions.VCVTUL.h_s_d_z_pn_p_vn_v_vn_w", "vcvtul", "11111101111010100zz1ppppvvvvvwwwww", "?hsd", 1, 122, 14, 65535, 0, 0, 3,
-  5, 112, 0, 0, 4, 118, 0, 0, 4, 119, 0, 0, 0, 0, 0, 0,
-  0, 0, 0, 0, 0, 0, 0, 0, 255, 255>;
-def BRForm_vector_VECTOR_instructions_VCVTQ_h_s_d_z_pn_p_vn_v_vn_w : BedrockVectorEncodingForm<
-  "VECTOR.instructions.VCVTQ.h_s_d_z_pn_p_vn_v_vn_w", "vcvtq", "11111101111010101zz0ppppvvvvvwwwww", "?hsd", 1, 122, 14, 65535, 0, 0, 3,
-  5, 112, 0, 0, 4, 118, 0, 0, 4, 119, 0, 0, 0, 0, 0, 0,
-  0, 0, 0, 0, 0, 0, 0, 0, 255, 255>;
-def BRForm_vector_VECTOR_instructions_VCVTUQ_h_s_d_z_pn_p_vn_v_vn_w : BedrockVectorEncodingForm<
-  "VECTOR.instructions.VCVTUQ.h_s_d_z_pn_p_vn_v_vn_w", "vcvtuq", "11111101111010101zz1ppppvvvvvwwwww", "?hsd", 1, 122, 14, 65535, 0, 0, 3,
-  5, 112, 0, 0, 4, 118, 0, 0, 4, 119, 0, 0, 0, 0, 0, 0,
-  0, 0, 0, 0, 0, 0, 0, 0, 255, 255>;
-def BRForm_vector_VECTOR_instructions_VPERM_b_w_l_q_z_pn_p_vn_v_vn_w : BedrockVectorEncodingForm<
-  "VECTOR.instructions.VPERM.b_w_l_q_z_pn_p_vn_v_vn_w", "vperm", "11111101111010110zz1ppppvvvvvwwwww", "bwlq", 1, 122, 15, 65535, 0, 1, 3,
-  5, 112, 0, 0, 4, 118, 0, 0, 4, 119, 0, 0, 0, 0, 0, 0,
-  0, 0, 0, 0, 0, 0, 0, 0, 255, 255>;
-def BRForm_vector_VECTOR_instructions_VZIPLO_b_w_l_q_z_pn_p_vn_v_vn_w : BedrockVectorEncodingForm<
-  "VECTOR.instructions.VZIPLO.b_w_l_q_z_pn_p_vn_v_vn_w", "vziplo", "11111101111010111zz0ppppvvvvvwwwww", "bwlq", 1, 122, 15, 65535, 0, 1, 3,
-  5, 112, 0, 0, 4, 118, 0, 0, 4, 119, 0, 0, 0, 0, 0, 0,
-  0, 0, 0, 0, 0, 0, 0, 0, 255, 255>;
-def BRForm_vector_VECTOR_instructions_VZIPHI_b_w_l_q_z_pn_p_vn_v_vn_w : BedrockVectorEncodingForm<
-  "VECTOR.instructions.VZIPHI.b_w_l_q_z_pn_p_vn_v_vn_w", "vziphi", "11111101111010111zz1ppppvvvvvwwwww", "bwlq", 1, 122, 15, 65535, 0, 1, 3,
-  5, 112, 0, 0, 4, 118, 0, 0, 4, 119, 0, 0, 0, 0, 0, 0,
-  0, 0, 0, 0, 0, 0, 0, 0, 255, 255>;
-def BRForm_vector_VECTOR_instructions_VUZIPLO_b_w_l_q_z_pn_p_vn_v_vn_w : BedrockVectorEncodingForm<
-  "VECTOR.instructions.VUZIPLO.b_w_l_q_z_pn_p_vn_v_vn_w", "vuziplo", "11111101111011000zz0ppppvvvvvwwwww", "bwlq", 1, 122, 15, 65535, 0, 1, 3,
-  5, 112, 0, 0, 4, 118, 0, 0, 4, 119, 0, 0, 0, 0, 0, 0,
-  0, 0, 0, 0, 0, 0, 0, 0, 255, 255>;
-def BRForm_vector_VECTOR_instructions_VUZIPHI_b_w_l_q_z_pn_p_vn_v_vn_w : BedrockVectorEncodingForm<
-  "VECTOR.instructions.VUZIPHI.b_w_l_q_z_pn_p_vn_v_vn_w", "vuziphi", "11111101111011000zz1ppppvvvvvwwwww", "bwlq", 1, 122, 15, 65535, 0, 1, 3,
-  5, 112, 0, 0, 4, 118, 0, 0, 4, 119, 0, 0, 0, 0, 0, 0,
-  0, 0, 0, 0, 0, 0, 0, 0, 255, 255>;
-def BRForm_vector_VECTOR_instructions_VTRNLO_b_w_l_q_z_pn_p_vn_v_vn_w : BedrockVectorEncodingForm<
-  "VECTOR.instructions.VTRNLO.b_w_l_q_z_pn_p_vn_v_vn_w", "vtrnlo", "11111101111011001zz0ppppvvvvvwwwww", "bwlq", 1, 122, 15, 65535, 0, 1, 3,
-  5, 112, 0, 0, 4, 118, 0, 0, 4, 119, 0, 0, 0, 0, 0, 0,
-  0, 0, 0, 0, 0, 0, 0, 0, 255, 255>;
-def BRForm_vector_VECTOR_instructions_VTRNHI_b_w_l_q_z_pn_p_vn_v_vn_w : BedrockVectorEncodingForm<
-  "VECTOR.instructions.VTRNHI.b_w_l_q_z_pn_p_vn_v_vn_w", "vtrnhi", "11111101111011001zz1ppppvvvvvwwwww", "bwlq", 1, 122, 15, 65535, 0, 1, 3,
-  5, 112, 0, 0, 4, 118, 0, 0, 4, 119, 0, 0, 0, 0, 0, 0,
-  0, 0, 0, 0, 0, 0, 0, 0, 255, 255>;
-def BRForm_vector_VECTOR_instructions_VCVTH_s_d_z_pn_p_vn_v_vn_w : BedrockVectorEncodingForm<
-  "VECTOR.instructions.VCVTH.s_d_z_pn_p_vn_v_vn_w", "vcvth", "11111101111011010zz0ppppvvvvvwwwww", "??sd", 1, 122, 12, 65535, 0, 0, 3,
-  5, 112, 0, 0, 4, 118, 0, 0, 4, 119, 0, 0, 0, 0, 0, 0,
-  0, 0, 0, 0, 0, 0, 0, 0, 255, 255>;
-def BRForm_vector_VECTOR_instructions_VCVTH_l_q_z_pn_p_vn_v_vn_w : BedrockVectorEncodingForm<
-  "VECTOR.instructions.VCVTH.l_q_z_pn_p_vn_v_vn_w", "vcvth", "11111101111011011zz0ppppvvvvvwwwww", "??lq", 1, 122, 12, 65535, 0, 0, 3,
-  5, 112, 0, 0, 4, 118, 0, 0, 4, 119, 0, 0, 0, 0, 0, 0,
-  0, 0, 0, 0, 0, 0, 0, 0, 255, 255>;
-def BRForm_vector_VECTOR_instructions_VCVTUH_l_q_z_pn_p_vn_v_vn_w : BedrockVectorEncodingForm<
-  "VECTOR.instructions.VCVTUH.l_q_z_pn_p_vn_v_vn_w", "vcvtuh", "11111101111011011zz1ppppvvvvvwwwww", "??lq", 1, 122, 12, 65535, 0, 0, 3,
-  5, 112, 0, 0, 4, 118, 0, 0, 4, 119, 0, 0, 0, 0, 0, 0,
-  0, 0, 0, 0, 0, 0, 0, 0, 255, 255>;
-def BRForm_vector_VECTOR_instructions_VMADD_h_s_d_z_pn_p_vn_v_vn_w_vn_y : BedrockVectorEncodingForm<
-  "VECTOR.instructions.VMADD.h_s_d_z_pn_p_vn_v_vn_w_vn_y", "vmadd", "111111011100zz0ppppvvvvvwwwwwyyyyy", "?hsd", 1, 122, 14, 65535, 0, 0, 4,
-  5, 112, 0, 0, 4, 118, 0, 0, 4, 119, 0, 0, 4, 121, 0, 0,
-  0, 0, 0, 0, 0, 0, 0, 0, 255, 255>;
-def BRForm_vector_VECTOR_instructions_VMSUB_h_s_d_z_pn_p_vn_v_vn_w_vn_y : BedrockVectorEncodingForm<
-  "VECTOR.instructions.VMSUB.h_s_d_z_pn_p_vn_v_vn_w_vn_y", "vmsub", "111111011100zz1ppppvvvvvwwwwwyyyyy", "?hsd", 1, 122, 14, 65535, 0, 0, 4,
-  5, 112, 0, 0, 4, 118, 0, 0, 4, 119, 0, 0, 4, 121, 0, 0,
-  0, 0, 0, 0, 0, 0, 0, 0, 255, 255>;
-def BRForm_vector_VECTOR_instructions_VNMADD_h_s_d_z_pn_p_vn_v_vn_w_vn_y : BedrockVectorEncodingForm<
-  "VECTOR.instructions.VNMADD.h_s_d_z_pn_p_vn_v_vn_w_vn_y", "vnmadd", "111111011101zz0ppppvvvvvwwwwwyyyyy", "?hsd", 1, 122, 14, 65535, 0, 0, 4,
-  5, 112, 0, 0, 4, 118, 0, 0, 4, 119, 0, 0, 4, 121, 0, 0,
-  0, 0, 0, 0, 0, 0, 0, 0, 255, 255>;
-def BRForm_vector_VECTOR_instructions_VNMSUB_h_s_d_z_pn_p_vn_v_vn_w_vn_y : BedrockVectorEncodingForm<
-  "VECTOR.instructions.VNMSUB.h_s_d_z_pn_p_vn_v_vn_w_vn_y", "vnmsub", "111111011101zz1ppppvvvvvwwwwwyyyyy", "?hsd", 1, 122, 14, 65535, 0, 0, 4,
-  5, 112, 0, 0, 4, 118, 0, 0, 4, 119, 0, 0, 4, 121, 0, 0,
-  0, 0, 0, 0, 0, 0, 0, 0, 255, 255>;
-def BRForm_vector_VECTOR_instructions_VSLICE_b_w_l_q_z_pn_p_vn_v_imm6_i_vn_w : BedrockVectorEncodingForm<
-  "VECTOR.instructions.VSLICE.b_w_l_q_z_pn_p_vn_v_imm6_i_vn_w", "vslice", "111111011010zzppppvvvvvwwwwwiiiiii", "bwlq", 1, 122, 15, 65535, 0, 1, 4,
+def BRForm_vector_VECTOR_VSLICE_b_w_l_q_z_pn_p_vn_v_imm6_i_vn_w : BedrockVectorEncodingForm<
+  "VECTOR.VSLICE.b_w_l_q_z_pn_p_vn_v_imm6_i_vn_w", "vslice", "VECTOR", "111111011010zzppppvvvvvwwwwwiiiiii", "bwlq", 1, 122, 15, 65535, 0, 0, 4,
   5, 112, 0, 0, 4, 118, 0, 0, 8, 105, 6, 0, 4, 119, 0, 0,
   0, 0, 0, 0, 0, 0, 0, 0, 255, 255>;
-def BRForm_vector_VECTOR_instructions_VSLIDEUP_b_w_l_q_z_pn_p_imm6_i_vn_v : BedrockVectorEncodingForm<
-  "VECTOR.instructions.VSLIDEUP.b_w_l_q_z_pn_p_imm6_i_vn_v", "vslideup", "11111101111100101zzppppvvvvviiiiii", "bwlq", 1, 122, 15, 65535, 0, 1, 3,
+def BRForm_vector_VECTOR_VSLIDEUP_b_w_l_q_z_pn_p_imm6_i_vn_v : BedrockVectorEncodingForm<
+  "VECTOR.VSLIDEUP.b_w_l_q_z_pn_p_imm6_i_vn_v", "vslideup", "VECTOR", "11111101111100101zzppppvvvvviiiiii", "bwlq", 1, 122, 15, 65535, 0, 0, 3,
   5, 112, 0, 0, 8, 105, 6, 0, 4, 118, 0, 0, 0, 0, 0, 0,
   0, 0, 0, 0, 0, 0, 0, 0, 255, 255>;
-def BRForm_vector_VECTOR_instructions_VSLIDEDN_b_w_l_q_z_pn_p_imm6_i_vn_v : BedrockVectorEncodingForm<
-  "VECTOR.instructions.VSLIDEDN.b_w_l_q_z_pn_p_imm6_i_vn_v", "vslidedn", "11111101111100110zzppppvvvvviiiiii", "bwlq", 1, 122, 15, 65535, 0, 1, 3,
+def BRForm_vector_VECTOR_VSLIDEDN_b_w_l_q_z_pn_p_imm6_i_vn_v : BedrockVectorEncodingForm<
+  "VECTOR.VSLIDEDN.b_w_l_q_z_pn_p_imm6_i_vn_v", "vslidedn", "VECTOR", "11111101111100110zzppppvvvvviiiiii", "bwlq", 1, 122, 15, 65535, 0, 0, 3,
   5, 112, 0, 0, 8, 105, 6, 0, 4, 118, 0, 0, 0, 0, 0, 0,
   0, 0, 0, 0, 0, 0, 0, 0, 255, 255>;
-def BRForm_vector_VECTOR_instructions_VEXTRACT_b_w_l_q_z_vn_v_rn_r_rn_s : BedrockVectorEncodingForm<
-  "VECTOR.instructions.VEXTRACT.b_w_l_q_z_vn_v_rn_r_rn_s", "vextract", "11111101111110000zz00rrrrssssvvvvv", "bwlq", 1, 122, 15, 65535, 0, 0, 3,
+def BRForm_vector_VECTOR_VEXTRACT_b_w_l_q_z_vn_v_rn_r_rn_s : BedrockVectorEncodingForm<
+  "VECTOR.VEXTRACT.b_w_l_q_z_vn_v_rn_r_rn_s", "vextract", "VECTOR", "11111101111110000zz00rrrrssssvvvvv", "bwlq", 1, 122, 15, 65535, 0, 0, 3,
   4, 118, 0, 0, 2, 114, 0, 0, 2, 115, 0, 0, 0, 0, 0, 0,
   0, 0, 0, 0, 0, 0, 0, 0, 255, 255>;
-def BRForm_vector_VECTOR_instructions_VEXTRACT_h_s_d_z_vn_v_rn_r_fn_s : BedrockVectorEncodingForm<
-  "VECTOR.instructions.VEXTRACT.h_s_d_z_vn_v_rn_r_fn_s", "vextract", "11111101111110000zz10rrrrssssvvvvv", "?hsd", 1, 122, 14, 65535, 0, 0, 3,
-  4, 118, 0, 0, 2, 114, 0, 0, 3, 115, 0, 0, 0, 0, 0, 0,
-  0, 0, 0, 0, 0, 0, 0, 0, 255, 255>;
-def BRForm_vector_VECTOR_instructions_VINSERT_b_w_l_q_z_rn_r_rn_s_vn_v : BedrockVectorEncodingForm<
-  "VECTOR.instructions.VINSERT.b_w_l_q_z_rn_r_rn_s_vn_v", "vinsert", "11111101111110000zz01rrrrssssvvvvv", "bwlq", 1, 122, 15, 65535, 0, 0, 3,
+def BRForm_vector_VECTOR_VINSERT_b_w_l_q_z_rn_r_rn_s_vn_v : BedrockVectorEncodingForm<
+  "VECTOR.VINSERT.b_w_l_q_z_rn_r_rn_s_vn_v", "vinsert", "VECTOR", "11111101111110000zz01rrrrssssvvvvv", "bwlq", 1, 122, 15, 65535, 0, 0, 3,
   2, 114, 0, 0, 2, 115, 0, 0, 4, 118, 0, 0, 0, 0, 0, 0,
   0, 0, 0, 0, 0, 0, 0, 0, 255, 255>;
-def BRForm_vector_VECTOR_instructions_VINSERT_h_s_d_z_fn_r_rn_s_vn_v : BedrockVectorEncodingForm<
-  "VECTOR.instructions.VINSERT.h_s_d_z_fn_r_rn_s_vn_v", "vinsert", "11111101111110000zz11rrrrssssvvvvv", "?hsd", 1, 122, 14, 65535, 0, 0, 3,
-  3, 114, 0, 0, 2, 115, 0, 0, 4, 118, 0, 0, 0, 0, 0, 0,
-  0, 0, 0, 0, 0, 0, 0, 0, 255, 255>;
-def BRForm_vector_VECTOR_instructions_VREDADD_b_w_l_q_z_pn_p_vn_v_rn_r : BedrockVectorEncodingForm<
-  "VECTOR.instructions.VREDADD.b_w_l_q_z_pn_p_vn_v_rn_r", "vredadd", "11111101111110100zz00pppprrrrvvvvv", "bwlq", 1, 122, 15, 65535, 0, 0, 3,
+def BRForm_vector_VECTOR_VREDADD_b_w_l_q_z_pn_p_vn_v_rn_r : BedrockVectorEncodingForm<
+  "VECTOR.VREDADD.b_w_l_q_z_pn_p_vn_v_rn_r", "vredadd", "VECTOR", "11111101111110100zz00pppprrrrvvvvv", "bwlq", 1, 122, 15, 65535, 0, 0, 3,
   5, 112, 0, 0, 4, 118, 0, 0, 2, 114, 0, 0, 0, 0, 0, 0,
   0, 0, 0, 0, 0, 0, 0, 0, 255, 255>;
-def BRForm_vector_VECTOR_instructions_VREDADD_h_s_d_z_pn_p_vn_v_fn_r : BedrockVectorEncodingForm<
-  "VECTOR.instructions.VREDADD.h_s_d_z_pn_p_vn_v_fn_r", "vredadd", "11111101111110110zz00pppprrrrvvvvv", "?hsd", 1, 122, 14, 65535, 0, 0, 3,
-  5, 112, 0, 0, 4, 118, 0, 0, 3, 114, 0, 0, 0, 0, 0, 0,
-  0, 0, 0, 0, 0, 0, 0, 0, 255, 255>;
-def BRForm_vector_VECTOR_instructions_VREDADD_b_w_l_q_z_pn_p_ea_e_rn_r : BedrockVectorEncodingForm<
-  "VECTOR.instructions.VREDADD.b_w_l_q_z_pn_p_ea_e_rn_r", "vredadd", "11111111000000101110zz00000pppprrrreeeeeee", "bwlq", 2, 122, 15, 65535, 0, 0, 3,
+def BRForm_vector_VECTOR_VREDADD_b_w_l_q_z_pn_p_ea_e_rn_r : BedrockVectorEncodingForm<
+  "VECTOR.VREDADD.b_w_l_q_z_pn_p_ea_e_rn_r", "vredadd", "VECTOR", "11111111000000101110zz00000pppprrrreeeeeee", "bwlq", 2, 122, 15, 65535, 0, 0, 3,
   5, 112, 0, 0, 7, 101, 0, 0, 2, 114, 0, 0, 0, 0, 0, 0,
   0, 0, 0, 0, 0, 0, 0, 0, 255, 255>;
-def BRForm_vector_VECTOR_instructions_VREDADD_h_s_d_z_pn_p_ea_e_fn_r : BedrockVectorEncodingForm<
-  "VECTOR.instructions.VREDADD.h_s_d_z_pn_p_ea_e_fn_r", "vredadd", "11111111000000101110zz01000pppprrrreeeeeee", "?hsd", 2, 122, 14, 65535, 0, 0, 3,
-  5, 112, 0, 0, 7, 101, 0, 0, 3, 114, 0, 0, 0, 0, 0, 0,
-  0, 0, 0, 0, 0, 0, 0, 0, 255, 255>;
-def BRForm_vector_VECTOR_instructions_VREDMINS_b_w_l_q_z_pn_p_vn_v_rn_r : BedrockVectorEncodingForm<
-  "VECTOR.instructions.VREDMINS.b_w_l_q_z_pn_p_vn_v_rn_r", "vredmins", "11111101111110100zz01pppprrrrvvvvv", "bwlq", 1, 122, 15, 65535, 0, 0, 3,
+def BRForm_vector_VECTOR_VREDMINS_b_w_l_q_z_pn_p_vn_v_rn_r : BedrockVectorEncodingForm<
+  "VECTOR.VREDMINS.b_w_l_q_z_pn_p_vn_v_rn_r", "vredmins", "VECTOR", "11111101111110100zz01pppprrrrvvvvv", "bwlq", 1, 122, 15, 65535, 0, 0, 3,
   5, 112, 0, 0, 4, 118, 0, 0, 2, 114, 0, 0, 0, 0, 0, 0,
   0, 0, 0, 0, 0, 0, 0, 0, 255, 255>;
-def BRForm_vector_VECTOR_instructions_VREDMINS_b_w_l_q_z_pn_p_ea_e_rn_r : BedrockVectorEncodingForm<
-  "VECTOR.instructions.VREDMINS.b_w_l_q_z_pn_p_ea_e_rn_r", "vredmins", "11111111000000101110zz00001pppprrrreeeeeee", "bwlq", 2, 122, 15, 65535, 0, 0, 3,
+def BRForm_vector_VECTOR_VREDMINS_b_w_l_q_z_pn_p_ea_e_rn_r : BedrockVectorEncodingForm<
+  "VECTOR.VREDMINS.b_w_l_q_z_pn_p_ea_e_rn_r", "vredmins", "VECTOR", "11111111000000101110zz00001pppprrrreeeeeee", "bwlq", 2, 122, 15, 65535, 0, 0, 3,
   5, 112, 0, 0, 7, 101, 0, 0, 2, 114, 0, 0, 0, 0, 0, 0,
   0, 0, 0, 0, 0, 0, 0, 0, 255, 255>;
-def BRForm_vector_VECTOR_instructions_VREDMINU_b_w_l_q_z_pn_p_vn_v_rn_r : BedrockVectorEncodingForm<
-  "VECTOR.instructions.VREDMINU.b_w_l_q_z_pn_p_vn_v_rn_r", "vredminu", "11111101111110100zz10pppprrrrvvvvv", "bwlq", 1, 122, 15, 65535, 0, 0, 3,
+def BRForm_vector_VECTOR_VREDMINU_b_w_l_q_z_pn_p_vn_v_rn_r : BedrockVectorEncodingForm<
+  "VECTOR.VREDMINU.b_w_l_q_z_pn_p_vn_v_rn_r", "vredminu", "VECTOR", "11111101111110100zz10pppprrrrvvvvv", "bwlq", 1, 122, 15, 65535, 0, 0, 3,
   5, 112, 0, 0, 4, 118, 0, 0, 2, 114, 0, 0, 0, 0, 0, 0,
   0, 0, 0, 0, 0, 0, 0, 0, 255, 255>;
-def BRForm_vector_VECTOR_instructions_VREDMINU_b_w_l_q_z_pn_p_ea_e_rn_r : BedrockVectorEncodingForm<
-  "VECTOR.instructions.VREDMINU.b_w_l_q_z_pn_p_ea_e_rn_r", "vredminu", "11111111000000101110zz00010pppprrrreeeeeee", "bwlq", 2, 122, 15, 65535, 0, 0, 3,
+def BRForm_vector_VECTOR_VREDMINU_b_w_l_q_z_pn_p_ea_e_rn_r : BedrockVectorEncodingForm<
+  "VECTOR.VREDMINU.b_w_l_q_z_pn_p_ea_e_rn_r", "vredminu", "VECTOR", "11111111000000101110zz00010pppprrrreeeeeee", "bwlq", 2, 122, 15, 65535, 0, 0, 3,
   5, 112, 0, 0, 7, 101, 0, 0, 2, 114, 0, 0, 0, 0, 0, 0,
   0, 0, 0, 0, 0, 0, 0, 0, 255, 255>;
-def BRForm_vector_VECTOR_instructions_VREDMAXS_b_w_l_q_z_pn_p_vn_v_rn_r : BedrockVectorEncodingForm<
-  "VECTOR.instructions.VREDMAXS.b_w_l_q_z_pn_p_vn_v_rn_r", "vredmaxs", "11111101111110100zz11pppprrrrvvvvv", "bwlq", 1, 122, 15, 65535, 0, 0, 3,
+def BRForm_vector_VECTOR_VREDMAXS_b_w_l_q_z_pn_p_vn_v_rn_r : BedrockVectorEncodingForm<
+  "VECTOR.VREDMAXS.b_w_l_q_z_pn_p_vn_v_rn_r", "vredmaxs", "VECTOR", "11111101111110100zz11pppprrrrvvvvv", "bwlq", 1, 122, 15, 65535, 0, 0, 3,
   5, 112, 0, 0, 4, 118, 0, 0, 2, 114, 0, 0, 0, 0, 0, 0,
   0, 0, 0, 0, 0, 0, 0, 0, 255, 255>;
-def BRForm_vector_VECTOR_instructions_VREDMAXS_b_w_l_q_z_pn_p_ea_e_rn_r : BedrockVectorEncodingForm<
-  "VECTOR.instructions.VREDMAXS.b_w_l_q_z_pn_p_ea_e_rn_r", "vredmaxs", "11111111000000101110zz00011pppprrrreeeeeee", "bwlq", 2, 122, 15, 65535, 0, 0, 3,
+def BRForm_vector_VECTOR_VREDMAXS_b_w_l_q_z_pn_p_ea_e_rn_r : BedrockVectorEncodingForm<
+  "VECTOR.VREDMAXS.b_w_l_q_z_pn_p_ea_e_rn_r", "vredmaxs", "VECTOR", "11111111000000101110zz00011pppprrrreeeeeee", "bwlq", 2, 122, 15, 65535, 0, 0, 3,
   5, 112, 0, 0, 7, 101, 0, 0, 2, 114, 0, 0, 0, 0, 0, 0,
   0, 0, 0, 0, 0, 0, 0, 0, 255, 255>;
-def BRForm_vector_VECTOR_instructions_VREDMAXU_b_w_l_q_z_pn_p_vn_v_rn_r : BedrockVectorEncodingForm<
-  "VECTOR.instructions.VREDMAXU.b_w_l_q_z_pn_p_vn_v_rn_r", "vredmaxu", "11111101111110101zz00pppprrrrvvvvv", "bwlq", 1, 122, 15, 65535, 0, 0, 3,
+def BRForm_vector_VECTOR_VREDMAXU_b_w_l_q_z_pn_p_vn_v_rn_r : BedrockVectorEncodingForm<
+  "VECTOR.VREDMAXU.b_w_l_q_z_pn_p_vn_v_rn_r", "vredmaxu", "VECTOR", "11111101111110101zz00pppprrrrvvvvv", "bwlq", 1, 122, 15, 65535, 0, 0, 3,
   5, 112, 0, 0, 4, 118, 0, 0, 2, 114, 0, 0, 0, 0, 0, 0,
   0, 0, 0, 0, 0, 0, 0, 0, 255, 255>;
-def BRForm_vector_VECTOR_instructions_VREDMAXU_b_w_l_q_z_pn_p_ea_e_rn_r : BedrockVectorEncodingForm<
-  "VECTOR.instructions.VREDMAXU.b_w_l_q_z_pn_p_ea_e_rn_r", "vredmaxu", "11111111000000101110zz00100pppprrrreeeeeee", "bwlq", 2, 122, 15, 65535, 0, 0, 3,
+def BRForm_vector_VECTOR_VREDMAXU_b_w_l_q_z_pn_p_ea_e_rn_r : BedrockVectorEncodingForm<
+  "VECTOR.VREDMAXU.b_w_l_q_z_pn_p_ea_e_rn_r", "vredmaxu", "VECTOR", "11111111000000101110zz00100pppprrrreeeeeee", "bwlq", 2, 122, 15, 65535, 0, 0, 3,
   5, 112, 0, 0, 7, 101, 0, 0, 2, 114, 0, 0, 0, 0, 0, 0,
   0, 0, 0, 0, 0, 0, 0, 0, 255, 255>;
-def BRForm_vector_VECTOR_instructions_VREDAND_b_w_l_q_z_pn_p_vn_v_rn_r : BedrockVectorEncodingForm<
-  "VECTOR.instructions.VREDAND.b_w_l_q_z_pn_p_vn_v_rn_r", "vredand", "11111101111110101zz01pppprrrrvvvvv", "bwlq", 1, 122, 15, 65535, 0, 0, 3,
+def BRForm_vector_VECTOR_VREDAND_b_w_l_q_z_pn_p_vn_v_rn_r : BedrockVectorEncodingForm<
+  "VECTOR.VREDAND.b_w_l_q_z_pn_p_vn_v_rn_r", "vredand", "VECTOR", "11111101111110101zz01pppprrrrvvvvv", "bwlq", 1, 122, 15, 65535, 0, 0, 3,
   5, 112, 0, 0, 4, 118, 0, 0, 2, 114, 0, 0, 0, 0, 0, 0,
   0, 0, 0, 0, 0, 0, 0, 0, 255, 255>;
-def BRForm_vector_VECTOR_instructions_VREDAND_b_w_l_q_z_pn_p_ea_e_rn_r : BedrockVectorEncodingForm<
-  "VECTOR.instructions.VREDAND.b_w_l_q_z_pn_p_ea_e_rn_r", "vredand", "11111111000000101110zz00101pppprrrreeeeeee", "bwlq", 2, 122, 15, 65535, 0, 0, 3,
+def BRForm_vector_VECTOR_VREDAND_b_w_l_q_z_pn_p_ea_e_rn_r : BedrockVectorEncodingForm<
+  "VECTOR.VREDAND.b_w_l_q_z_pn_p_ea_e_rn_r", "vredand", "VECTOR", "11111111000000101110zz00101pppprrrreeeeeee", "bwlq", 2, 122, 15, 65535, 0, 0, 3,
   5, 112, 0, 0, 7, 101, 0, 0, 2, 114, 0, 0, 0, 0, 0, 0,
   0, 0, 0, 0, 0, 0, 0, 0, 255, 255>;
-def BRForm_vector_VECTOR_instructions_VREDOR_b_w_l_q_z_pn_p_vn_v_rn_r : BedrockVectorEncodingForm<
-  "VECTOR.instructions.VREDOR.b_w_l_q_z_pn_p_vn_v_rn_r", "vredor", "11111101111110101zz10pppprrrrvvvvv", "bwlq", 1, 122, 15, 65535, 0, 0, 3,
+def BRForm_vector_VECTOR_VREDOR_b_w_l_q_z_pn_p_vn_v_rn_r : BedrockVectorEncodingForm<
+  "VECTOR.VREDOR.b_w_l_q_z_pn_p_vn_v_rn_r", "vredor", "VECTOR", "11111101111110101zz10pppprrrrvvvvv", "bwlq", 1, 122, 15, 65535, 0, 0, 3,
   5, 112, 0, 0, 4, 118, 0, 0, 2, 114, 0, 0, 0, 0, 0, 0,
   0, 0, 0, 0, 0, 0, 0, 0, 255, 255>;
-def BRForm_vector_VECTOR_instructions_VREDOR_b_w_l_q_z_pn_p_ea_e_rn_r : BedrockVectorEncodingForm<
-  "VECTOR.instructions.VREDOR.b_w_l_q_z_pn_p_ea_e_rn_r", "vredor", "11111111000000101110zz00110pppprrrreeeeeee", "bwlq", 2, 122, 15, 65535, 0, 0, 3,
+def BRForm_vector_VECTOR_VREDOR_b_w_l_q_z_pn_p_ea_e_rn_r : BedrockVectorEncodingForm<
+  "VECTOR.VREDOR.b_w_l_q_z_pn_p_ea_e_rn_r", "vredor", "VECTOR", "11111111000000101110zz00110pppprrrreeeeeee", "bwlq", 2, 122, 15, 65535, 0, 0, 3,
   5, 112, 0, 0, 7, 101, 0, 0, 2, 114, 0, 0, 0, 0, 0, 0,
   0, 0, 0, 0, 0, 0, 0, 0, 255, 255>;
-def BRForm_vector_VECTOR_instructions_VREDXOR_b_w_l_q_z_pn_p_vn_v_rn_r : BedrockVectorEncodingForm<
-  "VECTOR.instructions.VREDXOR.b_w_l_q_z_pn_p_vn_v_rn_r", "vredxor", "11111101111110101zz11pppprrrrvvvvv", "bwlq", 1, 122, 15, 65535, 0, 0, 3,
+def BRForm_vector_VECTOR_VREDXOR_b_w_l_q_z_pn_p_vn_v_rn_r : BedrockVectorEncodingForm<
+  "VECTOR.VREDXOR.b_w_l_q_z_pn_p_vn_v_rn_r", "vredxor", "VECTOR", "11111101111110101zz11pppprrrrvvvvv", "bwlq", 1, 122, 15, 65535, 0, 0, 3,
   5, 112, 0, 0, 4, 118, 0, 0, 2, 114, 0, 0, 0, 0, 0, 0,
   0, 0, 0, 0, 0, 0, 0, 0, 255, 255>;
-def BRForm_vector_VECTOR_instructions_VREDXOR_b_w_l_q_z_pn_p_ea_e_rn_r : BedrockVectorEncodingForm<
-  "VECTOR.instructions.VREDXOR.b_w_l_q_z_pn_p_ea_e_rn_r", "vredxor", "11111111000000101110zz00111pppprrrreeeeeee", "bwlq", 2, 122, 15, 65535, 0, 0, 3,
+def BRForm_vector_VECTOR_VREDXOR_b_w_l_q_z_pn_p_ea_e_rn_r : BedrockVectorEncodingForm<
+  "VECTOR.VREDXOR.b_w_l_q_z_pn_p_ea_e_rn_r", "vredxor", "VECTOR", "11111111000000101110zz00111pppprrrreeeeeee", "bwlq", 2, 122, 15, 65535, 0, 0, 3,
   5, 112, 0, 0, 7, 101, 0, 0, 2, 114, 0, 0, 0, 0, 0, 0,
   0, 0, 0, 0, 0, 0, 0, 0, 255, 255>;
-def BRForm_vector_VECTOR_instructions_VREDMIN_h_s_d_z_pn_p_vn_v_fn_r : BedrockVectorEncodingForm<
-  "VECTOR.instructions.VREDMIN.h_s_d_z_pn_p_vn_v_fn_r", "vredmin", "11111101111110110zz01pppprrrrvvvvv", "?hsd", 1, 122, 14, 65535, 0, 0, 3,
-  5, 112, 0, 0, 4, 118, 0, 0, 3, 114, 0, 0, 0, 0, 0, 0,
-  0, 0, 0, 0, 0, 0, 0, 0, 255, 255>;
-def BRForm_vector_VECTOR_instructions_VREDMIN_h_s_d_z_pn_p_ea_e_fn_r : BedrockVectorEncodingForm<
-  "VECTOR.instructions.VREDMIN.h_s_d_z_pn_p_ea_e_fn_r", "vredmin", "11111111000000101110zz01001pppprrrreeeeeee", "?hsd", 2, 122, 14, 65535, 0, 0, 3,
-  5, 112, 0, 0, 7, 101, 0, 0, 3, 114, 0, 0, 0, 0, 0, 0,
-  0, 0, 0, 0, 0, 0, 0, 0, 255, 255>;
-def BRForm_vector_VECTOR_instructions_VREDMAX_h_s_d_z_pn_p_vn_v_fn_r : BedrockVectorEncodingForm<
-  "VECTOR.instructions.VREDMAX.h_s_d_z_pn_p_vn_v_fn_r", "vredmax", "11111101111110110zz10pppprrrrvvvvv", "?hsd", 1, 122, 14, 65535, 0, 0, 3,
-  5, 112, 0, 0, 4, 118, 0, 0, 3, 114, 0, 0, 0, 0, 0, 0,
-  0, 0, 0, 0, 0, 0, 0, 0, 255, 255>;
-def BRForm_vector_VECTOR_instructions_VREDMAX_h_s_d_z_pn_p_ea_e_fn_r : BedrockVectorEncodingForm<
-  "VECTOR.instructions.VREDMAX.h_s_d_z_pn_p_ea_e_fn_r", "vredmax", "11111111000000101110zz01010pppprrrreeeeeee", "?hsd", 2, 122, 14, 65535, 0, 0, 3,
-  5, 112, 0, 0, 7, 101, 0, 0, 3, 114, 0, 0, 0, 0, 0, 0,
-  0, 0, 0, 0, 0, 0, 0, 0, 255, 255>;
-def BRForm_vector_VECTOR_instructions_PSEL_pn_p_pn_q_pn_h : BedrockVectorEncodingForm<
-  "VECTOR.instructions.PSEL.pn_p_pn_q_pn_h", "psel", "1111110111111100000000ppppqqqqhhhh", "", 1, 0, 1, 65535, 0, 0, 3,
+def BRForm_vector_VECTOR_PSEL_pn_p_pn_q_pn_h : BedrockVectorEncodingForm<
+  "VECTOR.PSEL.pn_p_pn_q_pn_h", "psel", "VECTOR", "1111110111111100000000ppppqqqqhhhh", "", 1, 0, 1, 65535, 0, 0, 3,
   5, 112, 0, 0, 5, 113, 0, 0, 5, 104, 0, 0, 0, 0, 0, 0,
   0, 0, 0, 0, 0, 0, 0, 0, 255, 255>;
-def BRForm_vector_VECTOR_instructions_PZIPLO_b_w_l_q_z_pn_p_pn_q_pn_h : BedrockVectorEncodingForm<
-  "VECTOR.instructions.PZIPLO.b_w_l_q_z_pn_p_pn_q_pn_h", "pziplo", "11111101111111000zz001ppppqqqqhhhh", "bwlq", 1, 122, 15, 65535, 0, 1, 3,
+def BRForm_vector_VECTOR_PZIPLO_b_w_l_q_z_pn_p_pn_q_pn_h : BedrockVectorEncodingForm<
+  "VECTOR.PZIPLO.b_w_l_q_z_pn_p_pn_q_pn_h", "pziplo", "VECTOR", "11111101111111000zz001ppppqqqqhhhh", "bwlq", 1, 122, 15, 65535, 0, 0, 3,
   5, 112, 0, 0, 5, 113, 0, 0, 5, 104, 0, 0, 0, 0, 0, 0,
   0, 0, 0, 0, 0, 0, 0, 0, 255, 255>;
-def BRForm_vector_VECTOR_instructions_PZIPHI_b_w_l_q_z_pn_p_pn_q_pn_h : BedrockVectorEncodingForm<
-  "VECTOR.instructions.PZIPHI.b_w_l_q_z_pn_p_pn_q_pn_h", "pziphi", "11111101111111000zz010ppppqqqqhhhh", "bwlq", 1, 122, 15, 65535, 0, 1, 3,
+def BRForm_vector_VECTOR_PZIPHI_b_w_l_q_z_pn_p_pn_q_pn_h : BedrockVectorEncodingForm<
+  "VECTOR.PZIPHI.b_w_l_q_z_pn_p_pn_q_pn_h", "pziphi", "VECTOR", "11111101111111000zz010ppppqqqqhhhh", "bwlq", 1, 122, 15, 65535, 0, 0, 3,
   5, 112, 0, 0, 5, 113, 0, 0, 5, 104, 0, 0, 0, 0, 0, 0,
   0, 0, 0, 0, 0, 0, 0, 0, 255, 255>;
-def BRForm_vector_VECTOR_instructions_PUZIPLO_b_w_l_q_z_pn_p_pn_q_pn_h : BedrockVectorEncodingForm<
-  "VECTOR.instructions.PUZIPLO.b_w_l_q_z_pn_p_pn_q_pn_h", "puziplo", "11111101111111000zz011ppppqqqqhhhh", "bwlq", 1, 122, 15, 65535, 0, 1, 3,
+def BRForm_vector_VECTOR_PUZIPLO_b_w_l_q_z_pn_p_pn_q_pn_h : BedrockVectorEncodingForm<
+  "VECTOR.PUZIPLO.b_w_l_q_z_pn_p_pn_q_pn_h", "puziplo", "VECTOR", "11111101111111000zz011ppppqqqqhhhh", "bwlq", 1, 122, 15, 65535, 0, 0, 3,
   5, 112, 0, 0, 5, 113, 0, 0, 5, 104, 0, 0, 0, 0, 0, 0,
   0, 0, 0, 0, 0, 0, 0, 0, 255, 255>;
-def BRForm_vector_VECTOR_instructions_PUZIPHI_b_w_l_q_z_pn_p_pn_q_pn_h : BedrockVectorEncodingForm<
-  "VECTOR.instructions.PUZIPHI.b_w_l_q_z_pn_p_pn_q_pn_h", "puziphi", "11111101111111000zz100ppppqqqqhhhh", "bwlq", 1, 122, 15, 65535, 0, 1, 3,
+def BRForm_vector_VECTOR_PUZIPHI_b_w_l_q_z_pn_p_pn_q_pn_h : BedrockVectorEncodingForm<
+  "VECTOR.PUZIPHI.b_w_l_q_z_pn_p_pn_q_pn_h", "puziphi", "VECTOR", "11111101111111000zz100ppppqqqqhhhh", "bwlq", 1, 122, 15, 65535, 0, 0, 3,
   5, 112, 0, 0, 5, 113, 0, 0, 5, 104, 0, 0, 0, 0, 0, 0,
   0, 0, 0, 0, 0, 0, 0, 0, 255, 255>;
-def BRForm_vector_VECTOR_instructions_PTRNLO_b_w_l_q_z_pn_p_pn_q_pn_h : BedrockVectorEncodingForm<
-  "VECTOR.instructions.PTRNLO.b_w_l_q_z_pn_p_pn_q_pn_h", "ptrnlo", "11111101111111000zz101ppppqqqqhhhh", "bwlq", 1, 122, 15, 65535, 0, 1, 3,
+def BRForm_vector_VECTOR_PTRNLO_b_w_l_q_z_pn_p_pn_q_pn_h : BedrockVectorEncodingForm<
+  "VECTOR.PTRNLO.b_w_l_q_z_pn_p_pn_q_pn_h", "ptrnlo", "VECTOR", "11111101111111000zz101ppppqqqqhhhh", "bwlq", 1, 122, 15, 65535, 0, 0, 3,
   5, 112, 0, 0, 5, 113, 0, 0, 5, 104, 0, 0, 0, 0, 0, 0,
   0, 0, 0, 0, 0, 0, 0, 0, 255, 255>;
-def BRForm_vector_VECTOR_instructions_PTRNHI_b_w_l_q_z_pn_p_pn_q_pn_h : BedrockVectorEncodingForm<
-  "VECTOR.instructions.PTRNHI.b_w_l_q_z_pn_p_pn_q_pn_h", "ptrnhi", "11111101111111000zz110ppppqqqqhhhh", "bwlq", 1, 122, 15, 65535, 0, 1, 3,
+def BRForm_vector_VECTOR_PTRNHI_b_w_l_q_z_pn_p_pn_q_pn_h : BedrockVectorEncodingForm<
+  "VECTOR.PTRNHI.b_w_l_q_z_pn_p_pn_q_pn_h", "ptrnhi", "VECTOR", "11111101111111000zz110ppppqqqqhhhh", "bwlq", 1, 122, 15, 65535, 0, 0, 3,
   5, 112, 0, 0, 5, 113, 0, 0, 5, 104, 0, 0, 0, 0, 0, 0,
   0, 0, 0, 0, 0, 0, 0, 0, 255, 255>;
-def BRForm_vector_VECTOR_instructions_PSLICE_b_w_l_q_z_pn_p_imm6_i_pn_q : BedrockVectorEncodingForm<
-  "VECTOR.instructions.PSLICE.b_w_l_q_z_pn_p_imm6_i_pn_q", "pslice", "111111011111111000zzppppqqqqiiiiii", "bwlq", 1, 122, 15, 65535, 0, 1, 3,
+def BRForm_vector_VECTOR_PSLICE_b_w_l_q_z_pn_p_imm6_i_pn_q : BedrockVectorEncodingForm<
+  "VECTOR.PSLICE.b_w_l_q_z_pn_p_imm6_i_pn_q", "pslice", "VECTOR", "111111011111111000zzppppqqqqiiiiii", "bwlq", 1, 122, 15, 65535, 0, 0, 3,
   5, 112, 0, 0, 8, 105, 6, 0, 5, 113, 0, 0, 0, 0, 0, 0,
   0, 0, 0, 0, 0, 0, 0, 0, 255, 255>;
-def BRForm_vector_VECTOR_instructions_VMOVZ_b_w_l_q_z_pn_p_ea_e_vn_v : BedrockVectorEncodingForm<
-  "VECTOR.instructions.VMOVZ.b_w_l_q_z_pn_p_ea_e_vn_v", "vmovz", "11111111000000100000zz0010ppppvvvvveeeeeee", "bwlq", 2, 122, 15, 65535, 0, 1, 3,
+def BRForm_vector_VECTOR_VMOVZ_b_w_l_q_z_pn_p_ea_e_vn_v : BedrockVectorEncodingForm<
+  "VECTOR.VMOVZ.b_w_l_q_z_pn_p_ea_e_vn_v", "vmovz", "VECTOR", "11111111000000100000zz0010ppppvvvvveeeeeee", "bwlq", 2, 122, 15, 65535, 0, 0, 3,
   5, 112, 0, 0, 7, 101, 0, 0, 4, 118, 0, 0, 0, 0, 0, 0,
   0, 0, 0, 0, 0, 0, 0, 0, 255, 255>;
-def BRForm_vector_VECTOR_instructions_PLOOP_b_w_l_q_z_rn_r_rn_s_pn_p_ea_e : BedrockVectorEncodingForm<
-  "VECTOR.instructions.PLOOP.b_w_l_q_z_rn_r_rn_s_pn_p_ea_e", "ploop", "11111111000000101010zz0rrrrssssppppeeeeeee", "bwlq", 2, 122, 15, 65535, 0, 1, 4,
+def BRForm_vector_VECTOR_PLOOP_b_w_l_q_z_rn_r_rn_s_pn_p_ea_e : BedrockVectorEncodingForm<
+  "VECTOR.PLOOP.b_w_l_q_z_rn_r_rn_s_pn_p_ea_e", "ploop", "VECTOR", "11111111000000101010zz0rrrrssssppppeeeeeee", "bwlq", 2, 122, 15, 65535, 0, 0, 4,
   2, 114, 0, 0, 2, 115, 0, 0, 5, 112, 0, 0, 6, 101, 0, 1,
   0, 0, 0, 0, 0, 0, 0, 0, 0, 1>;
-def BRForm_vector_VECTOR_instructions_PMOV_ea_e_pn_p : BedrockVectorEncodingForm<
-  "VECTOR.instructions.PMOV.ea_e_pn_p", "pmov", "1111111100000011000000000000000ppppeeeeeee", "", 2, 0, 1, 65535, 0, 0, 2,
+def BRForm_vector_VECTOR_PMOV_ea_e_pn_p : BedrockVectorEncodingForm<
+  "VECTOR.PMOV.ea_e_pn_p", "pmov", "VECTOR", "1111111100000011000000000000000ppppeeeeeee", "", 2, 0, 1, 65535, 0, 0, 2,
   6, 101, 0, 1, 5, 112, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
   0, 0, 0, 0, 0, 0, 0, 0, 255, 255>;
-def BRForm_vector_VECTOR_instructions_PMOV_pn_p_ea_e : BedrockVectorEncodingForm<
-  "VECTOR.instructions.PMOV.pn_p_ea_e", "pmov", "1111111100000011000000000000001ppppeeeeeee", "", 2, 0, 1, 65535, 0, 0, 2,
+def BRForm_vector_VECTOR_PMOV_pn_p_ea_e : BedrockVectorEncodingForm<
+  "VECTOR.PMOV.pn_p_ea_e", "pmov", "VECTOR", "1111111100000011000000000000001ppppeeeeeee", "", 2, 0, 1, 65535, 0, 0, 2,
   5, 112, 0, 0, 6, 101, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+  0, 0, 0, 0, 0, 0, 0, 0, 255, 255>;
+def BRForm_vector_VECTORFP_VFDUP_h_s_d_z_fn_r_vn_v : BedrockVectorEncodingForm<
+  "VECTORFP.VFDUP.h_s_d_z_fn_r_vn_v", "vfdup", "VECTORFP", "11111010010010zz1rrrrvvvvv", "?hsd", 0, 122, 14, 65535, 0, 0, 2,
+  3, 114, 0, 0, 4, 118, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+  0, 0, 0, 0, 0, 0, 0, 0, 255, 255>;
+def BRForm_vector_VECTORFP_VFNEG_h_s_d_x_pn_p_vn_v : BedrockVectorEncodingForm<
+  "VECTORFP.VFNEG.h_s_d_x_pn_p_vn_v", "vfneg", "VECTORFP", "1111101000000xxx0ppppvvvvv", "?????hsd", 0, 120, 224, 65535, 0, 0, 2,
+  5, 112, 0, 0, 4, 118, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+  0, 0, 0, 0, 0, 0, 0, 0, 255, 255>;
+def BRForm_vector_VECTORFP_VFNEG_h_s_d_x_pn_p_ea_e_vn_v : BedrockVectorEncodingForm<
+  "VECTORFP.VFNEG.h_s_d_x_pn_p_ea_e_vn_v", "vfneg", "VECTORFP", "1111111100000010010xxx0000ppppvvvvveeeeeee", "?????hsd", 2, 120, 224, 65535, 0, 0, 3,
+  5, 112, 0, 0, 7, 101, 0, 0, 4, 118, 0, 0, 0, 0, 0, 0,
+  0, 0, 0, 0, 0, 0, 0, 0, 255, 255>;
+def BRForm_vector_VECTORFP_VFNEG_h_s_d_x_pn_p_vn_v_ea_e : BedrockVectorEncodingForm<
+  "VECTORFP.VFNEG.h_s_d_x_pn_p_vn_v_ea_e", "vfneg", "VECTORFP", "1111111100000010010xxx0001ppppvvvvveeeeeee", "?????hsd", 2, 120, 224, 65535, 0, 0, 3,
+  5, 112, 0, 0, 4, 118, 0, 0, 7, 101, 0, 0, 0, 0, 0, 0,
+  0, 0, 0, 0, 0, 0, 0, 0, 255, 255>;
+def BRForm_vector_VECTORFP_VFABS_h_s_d_x_pn_p_vn_v : BedrockVectorEncodingForm<
+  "VECTORFP.VFABS.h_s_d_x_pn_p_vn_v", "vfabs", "VECTORFP", "1111101000000xxx1ppppvvvvv", "?????hsd", 0, 120, 224, 65535, 0, 0, 2,
+  5, 112, 0, 0, 4, 118, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+  0, 0, 0, 0, 0, 0, 0, 0, 255, 255>;
+def BRForm_vector_VECTORFP_VFABS_h_s_d_x_pn_p_ea_e_vn_v : BedrockVectorEncodingForm<
+  "VECTORFP.VFABS.h_s_d_x_pn_p_ea_e_vn_v", "vfabs", "VECTORFP", "1111111100000010010xxx0010ppppvvvvveeeeeee", "?????hsd", 2, 120, 224, 65535, 0, 0, 3,
+  5, 112, 0, 0, 7, 101, 0, 0, 4, 118, 0, 0, 0, 0, 0, 0,
+  0, 0, 0, 0, 0, 0, 0, 0, 255, 255>;
+def BRForm_vector_VECTORFP_VFABS_h_s_d_x_pn_p_vn_v_ea_e : BedrockVectorEncodingForm<
+  "VECTORFP.VFABS.h_s_d_x_pn_p_vn_v_ea_e", "vfabs", "VECTORFP", "1111111100000010010xxx0011ppppvvvvveeeeeee", "?????hsd", 2, 120, 224, 65535, 0, 0, 3,
+  5, 112, 0, 0, 4, 118, 0, 0, 7, 101, 0, 0, 0, 0, 0, 0,
+  0, 0, 0, 0, 0, 0, 0, 0, 255, 255>;
+def BRForm_vector_VECTORFP_VFSQRT_h_s_d_z_pn_p_vn_v : BedrockVectorEncodingForm<
+  "VECTORFP.VFSQRT.h_s_d_z_pn_p_vn_v", "vfsqrt", "VECTORFP", "11111010000101zz1ppppvvvvv", "?hsd", 0, 122, 14, 65535, 0, 0, 2,
+  5, 112, 0, 0, 4, 118, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+  0, 0, 0, 0, 0, 0, 0, 0, 255, 255>;
+def BRForm_vector_VECTORFP_VFSQRT_h_s_d_z_pn_p_ea_e_vn_v : BedrockVectorEncodingForm<
+  "VECTORFP.VFSQRT.h_s_d_z_pn_p_ea_e_vn_v", "vfsqrt", "VECTORFP", "11111111000000100100zz0111ppppvvvvveeeeeee", "?hsd", 2, 122, 14, 65535, 0, 0, 3,
+  5, 112, 0, 0, 7, 101, 0, 0, 4, 118, 0, 0, 0, 0, 0, 0,
+  0, 0, 0, 0, 0, 0, 0, 0, 255, 255>;
+def BRForm_vector_VECTORFP_VFSQRT_h_s_d_z_pn_p_vn_v_ea_e : BedrockVectorEncodingForm<
+  "VECTORFP.VFSQRT.h_s_d_z_pn_p_vn_v_ea_e", "vfsqrt", "VECTORFP", "11111111000000100100zz1000ppppvvvvveeeeeee", "?hsd", 2, 122, 14, 65535, 0, 0, 3,
+  5, 112, 0, 0, 4, 118, 0, 0, 7, 101, 0, 0, 0, 0, 0, 0,
+  0, 0, 0, 0, 0, 0, 0, 0, 255, 255>;
+def BRForm_vector_VECTORFP_VFROUND_h_s_d_z_pn_p_vn_v : BedrockVectorEncodingForm<
+  "VECTORFP.VFROUND.h_s_d_z_pn_p_vn_v", "vfround", "VECTORFP", "11111010000110zz0ppppvvvvv", "?hsd", 0, 122, 14, 65535, 0, 0, 2,
+  5, 112, 0, 0, 4, 118, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+  0, 0, 0, 0, 0, 0, 0, 0, 255, 255>;
+def BRForm_vector_VECTORFP_VFROUND_h_s_d_z_pn_p_ea_e_vn_v : BedrockVectorEncodingForm<
+  "VECTORFP.VFROUND.h_s_d_z_pn_p_ea_e_vn_v", "vfround", "VECTORFP", "11111111000000100100zz1001ppppvvvvveeeeeee", "?hsd", 2, 122, 14, 65535, 0, 0, 3,
+  5, 112, 0, 0, 7, 101, 0, 0, 4, 118, 0, 0, 0, 0, 0, 0,
+  0, 0, 0, 0, 0, 0, 0, 0, 255, 255>;
+def BRForm_vector_VECTORFP_VFROUND_h_s_d_z_pn_p_vn_v_ea_e : BedrockVectorEncodingForm<
+  "VECTORFP.VFROUND.h_s_d_z_pn_p_vn_v_ea_e", "vfround", "VECTORFP", "11111111000000100100zz1010ppppvvvvveeeeeee", "?hsd", 2, 122, 14, 65535, 0, 0, 3,
+  5, 112, 0, 0, 4, 118, 0, 0, 7, 101, 0, 0, 0, 0, 0, 0,
+  0, 0, 0, 0, 0, 0, 0, 0, 255, 255>;
+def BRForm_vector_VECTORFP_VFTRUNC_h_s_d_z_pn_p_vn_v : BedrockVectorEncodingForm<
+  "VECTORFP.VFTRUNC.h_s_d_z_pn_p_vn_v", "vftrunc", "VECTORFP", "11111010000110zz1ppppvvvvv", "?hsd", 0, 122, 14, 65535, 0, 0, 2,
+  5, 112, 0, 0, 4, 118, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+  0, 0, 0, 0, 0, 0, 0, 0, 255, 255>;
+def BRForm_vector_VECTORFP_VFTRUNC_h_s_d_z_pn_p_ea_e_vn_v : BedrockVectorEncodingForm<
+  "VECTORFP.VFTRUNC.h_s_d_z_pn_p_ea_e_vn_v", "vftrunc", "VECTORFP", "11111111000000100100zz1011ppppvvvvveeeeeee", "?hsd", 2, 122, 14, 65535, 0, 0, 3,
+  5, 112, 0, 0, 7, 101, 0, 0, 4, 118, 0, 0, 0, 0, 0, 0,
+  0, 0, 0, 0, 0, 0, 0, 0, 255, 255>;
+def BRForm_vector_VECTORFP_VFTRUNC_h_s_d_z_pn_p_vn_v_ea_e : BedrockVectorEncodingForm<
+  "VECTORFP.VFTRUNC.h_s_d_z_pn_p_vn_v_ea_e", "vftrunc", "VECTORFP", "11111111000000100100zz1100ppppvvvvveeeeeee", "?hsd", 2, 122, 14, 65535, 0, 0, 3,
+  5, 112, 0, 0, 4, 118, 0, 0, 7, 101, 0, 0, 0, 0, 0, 0,
+  0, 0, 0, 0, 0, 0, 0, 0, 255, 255>;
+def BRForm_vector_VECTORFP_VFFLOOR_h_s_d_z_pn_p_vn_v : BedrockVectorEncodingForm<
+  "VECTORFP.VFFLOOR.h_s_d_z_pn_p_vn_v", "vffloor", "VECTORFP", "11111010000111zz0ppppvvvvv", "?hsd", 0, 122, 14, 65535, 0, 0, 2,
+  5, 112, 0, 0, 4, 118, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+  0, 0, 0, 0, 0, 0, 0, 0, 255, 255>;
+def BRForm_vector_VECTORFP_VFFLOOR_h_s_d_z_pn_p_ea_e_vn_v : BedrockVectorEncodingForm<
+  "VECTORFP.VFFLOOR.h_s_d_z_pn_p_ea_e_vn_v", "vffloor", "VECTORFP", "11111111000000100100zz1101ppppvvvvveeeeeee", "?hsd", 2, 122, 14, 65535, 0, 0, 3,
+  5, 112, 0, 0, 7, 101, 0, 0, 4, 118, 0, 0, 0, 0, 0, 0,
+  0, 0, 0, 0, 0, 0, 0, 0, 255, 255>;
+def BRForm_vector_VECTORFP_VFFLOOR_h_s_d_z_pn_p_vn_v_ea_e : BedrockVectorEncodingForm<
+  "VECTORFP.VFFLOOR.h_s_d_z_pn_p_vn_v_ea_e", "vffloor", "VECTORFP", "11111111000000100100zz1110ppppvvvvveeeeeee", "?hsd", 2, 122, 14, 65535, 0, 0, 3,
+  5, 112, 0, 0, 4, 118, 0, 0, 7, 101, 0, 0, 0, 0, 0, 0,
+  0, 0, 0, 0, 0, 0, 0, 0, 255, 255>;
+def BRForm_vector_VECTORFP_VFCEIL_h_s_d_z_pn_p_vn_v : BedrockVectorEncodingForm<
+  "VECTORFP.VFCEIL.h_s_d_z_pn_p_vn_v", "vfceil", "VECTORFP", "11111010000111zz1ppppvvvvv", "?hsd", 0, 122, 14, 65535, 0, 0, 2,
+  5, 112, 0, 0, 4, 118, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+  0, 0, 0, 0, 0, 0, 0, 0, 255, 255>;
+def BRForm_vector_VECTORFP_VFCEIL_h_s_d_z_pn_p_ea_e_vn_v : BedrockVectorEncodingForm<
+  "VECTORFP.VFCEIL.h_s_d_z_pn_p_ea_e_vn_v", "vfceil", "VECTORFP", "11111111000000100100zz1111ppppvvvvveeeeeee", "?hsd", 2, 122, 14, 65535, 0, 0, 3,
+  5, 112, 0, 0, 7, 101, 0, 0, 4, 118, 0, 0, 0, 0, 0, 0,
+  0, 0, 0, 0, 0, 0, 0, 0, 255, 255>;
+def BRForm_vector_VECTORFP_VFCEIL_h_s_d_z_pn_p_vn_v_ea_e : BedrockVectorEncodingForm<
+  "VECTORFP.VFCEIL.h_s_d_z_pn_p_vn_v_ea_e", "vfceil", "VECTORFP", "11111111000000100101zz0100ppppvvvvveeeeeee", "?hsd", 2, 122, 14, 65535, 0, 0, 3,
+  5, 112, 0, 0, 4, 118, 0, 0, 7, 101, 0, 0, 0, 0, 0, 0,
+  0, 0, 0, 0, 0, 0, 0, 0, 255, 255>;
+def BRForm_vector_VECTORFP_VFCLASS_h_s_d_z_pn_p_vn_v : BedrockVectorEncodingForm<
+  "VECTORFP.VFCLASS.h_s_d_z_pn_p_vn_v", "vfclass", "VECTORFP", "11111010001000zz0ppppvvvvv", "?hsd", 0, 122, 14, 65535, 0, 0, 2,
+  5, 112, 0, 0, 4, 118, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+  0, 0, 0, 0, 0, 0, 0, 0, 255, 255>;
+def BRForm_vector_VECTORFP_VFCLASS_h_s_d_z_pn_p_ea_e_vn_v : BedrockVectorEncodingForm<
+  "VECTORFP.VFCLASS.h_s_d_z_pn_p_ea_e_vn_v", "vfclass", "VECTORFP", "11111111000000100101zz0101ppppvvvvveeeeeee", "?hsd", 2, 122, 14, 65535, 0, 0, 3,
+  5, 112, 0, 0, 7, 101, 0, 0, 4, 118, 0, 0, 0, 0, 0, 0,
+  0, 0, 0, 0, 0, 0, 0, 0, 255, 255>;
+def BRForm_vector_VECTORFP_VFCLASS_h_s_d_z_pn_p_vn_v_ea_e : BedrockVectorEncodingForm<
+  "VECTORFP.VFCLASS.h_s_d_z_pn_p_vn_v_ea_e", "vfclass", "VECTORFP", "11111111000000100101zz0110ppppvvvvveeeeeee", "?hsd", 2, 122, 14, 65535, 0, 0, 3,
+  5, 112, 0, 0, 4, 118, 0, 0, 7, 101, 0, 0, 0, 0, 0, 0,
+  0, 0, 0, 0, 0, 0, 0, 0, 255, 255>;
+def BRForm_vector_VECTORFP_VFCMPcc_h_s_d_x_pn_p_vn_v_vn_w_pn_q : BedrockVectorEncodingForm<
+  "VECTORFP.VFCMPcc.h_s_d_x_pn_p_vn_v_vn_w_pn_q", "vfcmp", "VECTORFP", "111111010xxxccccppppqqqqvvvvvwwwww", "?????hsd", 1, 120, 224, 62220, 1, 0, 5,
+  1, 99, 0, 0, 5, 112, 0, 0, 4, 118, 0, 0, 4, 119, 0, 0,
+  5, 113, 0, 0, 0, 0, 0, 0, 255, 255>;
+def BRForm_vector_VECTORFP_VFCMPcc_h_s_d_x_pn_p_vn_v_ea_e_pn_q : BedrockVectorEncodingForm<
+  "VECTORFP.VFCMPcc.h_s_d_x_pn_p_vn_v_ea_e_pn_q", "vfcmp", "VECTORFP", "111111110000000xxxccccppppqqqqvvvvveeeeeee", "?????hsd", 2, 120, 224, 62220, 1, 0, 5,
+  1, 99, 0, 0, 5, 112, 0, 0, 4, 118, 0, 0, 7, 101, 0, 0,
+  5, 113, 0, 0, 0, 0, 0, 0, 255, 255>;
+def BRForm_vector_VECTORFP_VFADD_h_s_d_x_pn_p_vn_v_vn_w : BedrockVectorEncodingForm<
+  "VECTORFP.VFADD.h_s_d_x_pn_p_vn_v_vn_w", "vfadd", "VECTORFP", "1111110111100000xxx0ppppvvvvvwwwww", "?????hsd", 1, 120, 224, 65535, 0, 0, 3,
+  5, 112, 0, 0, 4, 118, 0, 0, 4, 119, 0, 0, 0, 0, 0, 0,
+  0, 0, 0, 0, 0, 0, 0, 0, 255, 255>;
+def BRForm_vector_VECTORFP_VFADD_h_s_d_x_pn_p_ea_e_vn_v : BedrockVectorEncodingForm<
+  "VECTORFP.VFADD.h_s_d_x_pn_p_ea_e_vn_v", "vfadd", "VECTORFP", "1111111100000010000xxx0011ppppvvvvveeeeeee", "?????hsd", 2, 120, 224, 65535, 0, 0, 3,
+  5, 112, 0, 0, 7, 101, 0, 0, 4, 118, 0, 0, 0, 0, 0, 0,
+  0, 0, 0, 0, 0, 0, 0, 0, 255, 255>;
+def BRForm_vector_VECTORFP_VFADD_h_s_d_x_pn_p_vn_v_ea_e : BedrockVectorEncodingForm<
+  "VECTORFP.VFADD.h_s_d_x_pn_p_vn_v_ea_e", "vfadd", "VECTORFP", "1111111100000010000xxx0100ppppvvvvveeeeeee", "?????hsd", 2, 120, 224, 65535, 0, 0, 3,
+  5, 112, 0, 0, 4, 118, 0, 0, 7, 101, 0, 0, 0, 0, 0, 0,
+  0, 0, 0, 0, 0, 0, 0, 0, 255, 255>;
+def BRForm_vector_VECTORFP_VFSUB_h_s_d_x_pn_p_vn_v_vn_w : BedrockVectorEncodingForm<
+  "VECTORFP.VFSUB.h_s_d_x_pn_p_vn_v_vn_w", "vfsub", "VECTORFP", "1111110111100000xxx1ppppvvvvvwwwww", "?????hsd", 1, 120, 224, 65535, 0, 0, 3,
+  5, 112, 0, 0, 4, 118, 0, 0, 4, 119, 0, 0, 0, 0, 0, 0,
+  0, 0, 0, 0, 0, 0, 0, 0, 255, 255>;
+def BRForm_vector_VECTORFP_VFSUB_h_s_d_x_pn_p_ea_e_vn_v : BedrockVectorEncodingForm<
+  "VECTORFP.VFSUB.h_s_d_x_pn_p_ea_e_vn_v", "vfsub", "VECTORFP", "1111111100000010000xxx0101ppppvvvvveeeeeee", "?????hsd", 2, 120, 224, 65535, 0, 0, 3,
+  5, 112, 0, 0, 7, 101, 0, 0, 4, 118, 0, 0, 0, 0, 0, 0,
+  0, 0, 0, 0, 0, 0, 0, 0, 255, 255>;
+def BRForm_vector_VECTORFP_VFSUB_h_s_d_x_pn_p_vn_v_ea_e : BedrockVectorEncodingForm<
+  "VECTORFP.VFSUB.h_s_d_x_pn_p_vn_v_ea_e", "vfsub", "VECTORFP", "1111111100000010000xxx0110ppppvvvvveeeeeee", "?????hsd", 2, 120, 224, 65535, 0, 0, 3,
+  5, 112, 0, 0, 4, 118, 0, 0, 7, 101, 0, 0, 0, 0, 0, 0,
+  0, 0, 0, 0, 0, 0, 0, 0, 255, 255>;
+def BRForm_vector_VECTORFP_VFMUL_h_s_d_x_pn_p_vn_v_vn_w : BedrockVectorEncodingForm<
+  "VECTORFP.VFMUL.h_s_d_x_pn_p_vn_v_vn_w", "vfmul", "VECTORFP", "1111110111100001xxx0ppppvvvvvwwwww", "?????hsd", 1, 120, 224, 65535, 0, 0, 3,
+  5, 112, 0, 0, 4, 118, 0, 0, 4, 119, 0, 0, 0, 0, 0, 0,
+  0, 0, 0, 0, 0, 0, 0, 0, 255, 255>;
+def BRForm_vector_VECTORFP_VFMUL_h_s_d_x_pn_p_ea_e_vn_v : BedrockVectorEncodingForm<
+  "VECTORFP.VFMUL.h_s_d_x_pn_p_ea_e_vn_v", "vfmul", "VECTORFP", "1111111100000010000xxx0111ppppvvvvveeeeeee", "?????hsd", 2, 120, 224, 65535, 0, 0, 3,
+  5, 112, 0, 0, 7, 101, 0, 0, 4, 118, 0, 0, 0, 0, 0, 0,
+  0, 0, 0, 0, 0, 0, 0, 0, 255, 255>;
+def BRForm_vector_VECTORFP_VFMUL_h_s_d_x_pn_p_vn_v_ea_e : BedrockVectorEncodingForm<
+  "VECTORFP.VFMUL.h_s_d_x_pn_p_vn_v_ea_e", "vfmul", "VECTORFP", "1111111100000010000xxx1000ppppvvvvveeeeeee", "?????hsd", 2, 120, 224, 65535, 0, 0, 3,
+  5, 112, 0, 0, 4, 118, 0, 0, 7, 101, 0, 0, 0, 0, 0, 0,
+  0, 0, 0, 0, 0, 0, 0, 0, 255, 255>;
+def BRForm_vector_VECTORFP_VFMIN_h_s_d_z_pn_p_vn_v_vn_w : BedrockVectorEncodingForm<
+  "VECTORFP.VFMIN.h_s_d_z_pn_p_vn_v_vn_w", "vfmin", "VECTORFP", "11111101111001010zz1ppppvvvvvwwwww", "?hsd", 1, 122, 14, 65535, 0, 0, 3,
+  5, 112, 0, 0, 4, 118, 0, 0, 4, 119, 0, 0, 0, 0, 0, 0,
+  0, 0, 0, 0, 0, 0, 0, 0, 255, 255>;
+def BRForm_vector_VECTORFP_VFMIN_h_s_d_z_pn_p_ea_e_vn_v : BedrockVectorEncodingForm<
+  "VECTORFP.VFMIN.h_s_d_z_pn_p_ea_e_vn_v", "vfmin", "VECTORFP", "11111111000000100010zz1101ppppvvvvveeeeeee", "?hsd", 2, 122, 14, 65535, 0, 0, 3,
+  5, 112, 0, 0, 7, 101, 0, 0, 4, 118, 0, 0, 0, 0, 0, 0,
+  0, 0, 0, 0, 0, 0, 0, 0, 255, 255>;
+def BRForm_vector_VECTORFP_VFMIN_h_s_d_z_pn_p_vn_v_ea_e : BedrockVectorEncodingForm<
+  "VECTORFP.VFMIN.h_s_d_z_pn_p_vn_v_ea_e", "vfmin", "VECTORFP", "11111111000000100010zz1110ppppvvvvveeeeeee", "?hsd", 2, 122, 14, 65535, 0, 0, 3,
+  5, 112, 0, 0, 4, 118, 0, 0, 7, 101, 0, 0, 0, 0, 0, 0,
+  0, 0, 0, 0, 0, 0, 0, 0, 255, 255>;
+def BRForm_vector_VECTORFP_VFMAX_h_s_d_z_pn_p_vn_v_vn_w : BedrockVectorEncodingForm<
+  "VECTORFP.VFMAX.h_s_d_z_pn_p_vn_v_vn_w", "vfmax", "VECTORFP", "11111101111001011zz0ppppvvvvvwwwww", "?hsd", 1, 122, 14, 65535, 0, 0, 3,
+  5, 112, 0, 0, 4, 118, 0, 0, 4, 119, 0, 0, 0, 0, 0, 0,
+  0, 0, 0, 0, 0, 0, 0, 0, 255, 255>;
+def BRForm_vector_VECTORFP_VFMAX_h_s_d_z_pn_p_ea_e_vn_v : BedrockVectorEncodingForm<
+  "VECTORFP.VFMAX.h_s_d_z_pn_p_ea_e_vn_v", "vfmax", "VECTORFP", "11111111000000100010zz1111ppppvvvvveeeeeee", "?hsd", 2, 122, 14, 65535, 0, 0, 3,
+  5, 112, 0, 0, 7, 101, 0, 0, 4, 118, 0, 0, 0, 0, 0, 0,
+  0, 0, 0, 0, 0, 0, 0, 0, 255, 255>;
+def BRForm_vector_VECTORFP_VFMAX_h_s_d_z_pn_p_vn_v_ea_e : BedrockVectorEncodingForm<
+  "VECTORFP.VFMAX.h_s_d_z_pn_p_vn_v_ea_e", "vfmax", "VECTORFP", "11111111000000100011zz0000ppppvvvvveeeeeee", "?hsd", 2, 122, 14, 65535, 0, 0, 3,
+  5, 112, 0, 0, 4, 118, 0, 0, 7, 101, 0, 0, 0, 0, 0, 0,
+  0, 0, 0, 0, 0, 0, 0, 0, 255, 255>;
+def BRForm_vector_VECTORFP_VFDIV_h_s_d_z_pn_p_vn_v_vn_w : BedrockVectorEncodingForm<
+  "VECTORFP.VFDIV.h_s_d_z_pn_p_vn_v_vn_w", "vfdiv", "VECTORFP", "11111101111001011zz1ppppvvvvvwwwww", "?hsd", 1, 122, 14, 65535, 0, 0, 3,
+  5, 112, 0, 0, 4, 118, 0, 0, 4, 119, 0, 0, 0, 0, 0, 0,
+  0, 0, 0, 0, 0, 0, 0, 0, 255, 255>;
+def BRForm_vector_VECTORFP_VFDIV_h_s_d_z_pn_p_ea_e_vn_v : BedrockVectorEncodingForm<
+  "VECTORFP.VFDIV.h_s_d_z_pn_p_ea_e_vn_v", "vfdiv", "VECTORFP", "11111111000000100011zz0001ppppvvvvveeeeeee", "?hsd", 2, 122, 14, 65535, 0, 0, 3,
+  5, 112, 0, 0, 7, 101, 0, 0, 4, 118, 0, 0, 0, 0, 0, 0,
+  0, 0, 0, 0, 0, 0, 0, 0, 255, 255>;
+def BRForm_vector_VECTORFP_VFDIV_h_s_d_z_pn_p_vn_v_ea_e : BedrockVectorEncodingForm<
+  "VECTORFP.VFDIV.h_s_d_z_pn_p_vn_v_ea_e", "vfdiv", "VECTORFP", "11111111000000100011zz0010ppppvvvvveeeeeee", "?hsd", 2, 122, 14, 65535, 0, 0, 3,
+  5, 112, 0, 0, 4, 118, 0, 0, 7, 101, 0, 0, 0, 0, 0, 0,
+  0, 0, 0, 0, 0, 0, 0, 0, 255, 255>;
+def BRForm_vector_VECTORFP_VFCOPYSIGN_h_s_d_z_pn_p_vn_v_vn_w : BedrockVectorEncodingForm<
+  "VECTORFP.VFCOPYSIGN.h_s_d_z_pn_p_vn_v_vn_w", "vfcopysign", "VECTORFP", "11111101111001100zz0ppppvvvvvwwwww", "?hsd", 1, 122, 14, 65535, 0, 0, 3,
+  5, 112, 0, 0, 4, 118, 0, 0, 4, 119, 0, 0, 0, 0, 0, 0,
+  0, 0, 0, 0, 0, 0, 0, 0, 255, 255>;
+def BRForm_vector_VECTORFP_VFCOPYSIGN_h_s_d_z_pn_p_ea_e_vn_v : BedrockVectorEncodingForm<
+  "VECTORFP.VFCOPYSIGN.h_s_d_z_pn_p_ea_e_vn_v", "vfcopysign", "VECTORFP", "11111111000000100011zz0011ppppvvvvveeeeeee", "?hsd", 2, 122, 14, 65535, 0, 0, 3,
+  5, 112, 0, 0, 7, 101, 0, 0, 4, 118, 0, 0, 0, 0, 0, 0,
+  0, 0, 0, 0, 0, 0, 0, 0, 255, 255>;
+def BRForm_vector_VECTORFP_VFCOPYSIGN_h_s_d_z_pn_p_vn_v_ea_e : BedrockVectorEncodingForm<
+  "VECTORFP.VFCOPYSIGN.h_s_d_z_pn_p_vn_v_ea_e", "vfcopysign", "VECTORFP", "11111111000000100011zz0100ppppvvvvveeeeeee", "?hsd", 2, 122, 14, 65535, 0, 0, 3,
+  5, 112, 0, 0, 4, 118, 0, 0, 7, 101, 0, 0, 0, 0, 0, 0,
+  0, 0, 0, 0, 0, 0, 0, 0, 255, 255>;
+def BRForm_vector_VECTORFP_VFCVTS_h_d_z_pn_p_vn_v_vn_w : BedrockVectorEncodingForm<
+  "VECTORFP.VFCVTS.h_d_z_pn_p_vn_v_vn_w", "vfcvts", "VECTORFP", "11111101111010001zz0ppppvvvvvwwwww", "?h?d", 1, 122, 10, 65535, 0, 0, 3,
+  5, 112, 0, 0, 4, 118, 0, 0, 4, 119, 0, 0, 0, 0, 0, 0,
+  0, 0, 0, 0, 0, 0, 0, 0, 255, 255>;
+def BRForm_vector_VECTORFP_VFCVTS_l_q_z_pn_p_vn_v_vn_w : BedrockVectorEncodingForm<
+  "VECTORFP.VFCVTS.l_q_z_pn_p_vn_v_vn_w", "vfcvts", "VECTORFP", "11111101111010010zz0ppppvvvvvwwwww", "??lq", 1, 122, 12, 65535, 0, 0, 3,
+  5, 112, 0, 0, 4, 118, 0, 0, 4, 119, 0, 0, 0, 0, 0, 0,
+  0, 0, 0, 0, 0, 0, 0, 0, 255, 255>;
+def BRForm_vector_VECTORFP_VFCVTD_h_s_z_pn_p_vn_v_vn_w : BedrockVectorEncodingForm<
+  "VECTORFP.VFCVTD.h_s_z_pn_p_vn_v_vn_w", "vfcvtd", "VECTORFP", "11111101111010001zz1ppppvvvvvwwwww", "?hs", 1, 122, 6, 65535, 0, 0, 3,
+  5, 112, 0, 0, 4, 118, 0, 0, 4, 119, 0, 0, 0, 0, 0, 0,
+  0, 0, 0, 0, 0, 0, 0, 0, 255, 255>;
+def BRForm_vector_VECTORFP_VFCVTD_l_q_z_pn_p_vn_v_vn_w : BedrockVectorEncodingForm<
+  "VECTORFP.VFCVTD.l_q_z_pn_p_vn_v_vn_w", "vfcvtd", "VECTORFP", "11111101111010011zz0ppppvvvvvwwwww", "??lq", 1, 122, 12, 65535, 0, 0, 3,
+  5, 112, 0, 0, 4, 118, 0, 0, 4, 119, 0, 0, 0, 0, 0, 0,
+  0, 0, 0, 0, 0, 0, 0, 0, 255, 255>;
+def BRForm_vector_VECTORFP_VFCVTUS_l_q_z_pn_p_vn_v_vn_w : BedrockVectorEncodingForm<
+  "VECTORFP.VFCVTUS.l_q_z_pn_p_vn_v_vn_w", "vfcvtus", "VECTORFP", "11111101111010010zz1ppppvvvvvwwwww", "??lq", 1, 122, 12, 65535, 0, 0, 3,
+  5, 112, 0, 0, 4, 118, 0, 0, 4, 119, 0, 0, 0, 0, 0, 0,
+  0, 0, 0, 0, 0, 0, 0, 0, 255, 255>;
+def BRForm_vector_VECTORFP_VFCVTUD_l_q_z_pn_p_vn_v_vn_w : BedrockVectorEncodingForm<
+  "VECTORFP.VFCVTUD.l_q_z_pn_p_vn_v_vn_w", "vfcvtud", "VECTORFP", "11111101111010011zz1ppppvvvvvwwwww", "??lq", 1, 122, 12, 65535, 0, 0, 3,
+  5, 112, 0, 0, 4, 118, 0, 0, 4, 119, 0, 0, 0, 0, 0, 0,
+  0, 0, 0, 0, 0, 0, 0, 0, 255, 255>;
+def BRForm_vector_VECTORFP_VFCVTL_h_s_d_z_pn_p_vn_v_vn_w : BedrockVectorEncodingForm<
+  "VECTORFP.VFCVTL.h_s_d_z_pn_p_vn_v_vn_w", "vfcvtl", "VECTORFP", "11111101111010100zz0ppppvvvvvwwwww", "?hsd", 1, 122, 14, 65535, 0, 0, 3,
+  5, 112, 0, 0, 4, 118, 0, 0, 4, 119, 0, 0, 0, 0, 0, 0,
+  0, 0, 0, 0, 0, 0, 0, 0, 255, 255>;
+def BRForm_vector_VECTORFP_VFCVTUL_h_s_d_z_pn_p_vn_v_vn_w : BedrockVectorEncodingForm<
+  "VECTORFP.VFCVTUL.h_s_d_z_pn_p_vn_v_vn_w", "vfcvtul", "VECTORFP", "11111101111010100zz1ppppvvvvvwwwww", "?hsd", 1, 122, 14, 65535, 0, 0, 3,
+  5, 112, 0, 0, 4, 118, 0, 0, 4, 119, 0, 0, 0, 0, 0, 0,
+  0, 0, 0, 0, 0, 0, 0, 0, 255, 255>;
+def BRForm_vector_VECTORFP_VFCVTQ_h_s_d_z_pn_p_vn_v_vn_w : BedrockVectorEncodingForm<
+  "VECTORFP.VFCVTQ.h_s_d_z_pn_p_vn_v_vn_w", "vfcvtq", "VECTORFP", "11111101111010101zz0ppppvvvvvwwwww", "?hsd", 1, 122, 14, 65535, 0, 0, 3,
+  5, 112, 0, 0, 4, 118, 0, 0, 4, 119, 0, 0, 0, 0, 0, 0,
+  0, 0, 0, 0, 0, 0, 0, 0, 255, 255>;
+def BRForm_vector_VECTORFP_VFCVTUQ_h_s_d_z_pn_p_vn_v_vn_w : BedrockVectorEncodingForm<
+  "VECTORFP.VFCVTUQ.h_s_d_z_pn_p_vn_v_vn_w", "vfcvtuq", "VECTORFP", "11111101111010101zz1ppppvvvvvwwwww", "?hsd", 1, 122, 14, 65535, 0, 0, 3,
+  5, 112, 0, 0, 4, 118, 0, 0, 4, 119, 0, 0, 0, 0, 0, 0,
+  0, 0, 0, 0, 0, 0, 0, 0, 255, 255>;
+def BRForm_vector_VECTORFP_VFCVTH_s_d_z_pn_p_vn_v_vn_w : BedrockVectorEncodingForm<
+  "VECTORFP.VFCVTH.s_d_z_pn_p_vn_v_vn_w", "vfcvth", "VECTORFP", "11111101111011010zz0ppppvvvvvwwwww", "??sd", 1, 122, 12, 65535, 0, 0, 3,
+  5, 112, 0, 0, 4, 118, 0, 0, 4, 119, 0, 0, 0, 0, 0, 0,
+  0, 0, 0, 0, 0, 0, 0, 0, 255, 255>;
+def BRForm_vector_VECTORFP_VFCVTH_l_q_z_pn_p_vn_v_vn_w : BedrockVectorEncodingForm<
+  "VECTORFP.VFCVTH.l_q_z_pn_p_vn_v_vn_w", "vfcvth", "VECTORFP", "11111101111011011zz0ppppvvvvvwwwww", "??lq", 1, 122, 12, 65535, 0, 0, 3,
+  5, 112, 0, 0, 4, 118, 0, 0, 4, 119, 0, 0, 0, 0, 0, 0,
+  0, 0, 0, 0, 0, 0, 0, 0, 255, 255>;
+def BRForm_vector_VECTORFP_VFCVTUH_l_q_z_pn_p_vn_v_vn_w : BedrockVectorEncodingForm<
+  "VECTORFP.VFCVTUH.l_q_z_pn_p_vn_v_vn_w", "vfcvtuh", "VECTORFP", "11111101111011011zz1ppppvvvvvwwwww", "??lq", 1, 122, 12, 65535, 0, 0, 3,
+  5, 112, 0, 0, 4, 118, 0, 0, 4, 119, 0, 0, 0, 0, 0, 0,
+  0, 0, 0, 0, 0, 0, 0, 0, 255, 255>;
+def BRForm_vector_VECTORFP_VFMADD_h_s_d_z_pn_p_vn_v_vn_w_vn_y : BedrockVectorEncodingForm<
+  "VECTORFP.VFMADD.h_s_d_z_pn_p_vn_v_vn_w_vn_y", "vfmadd", "VECTORFP", "111111011100zz0ppppvvvvvwwwwwyyyyy", "?hsd", 1, 122, 14, 65535, 0, 0, 4,
+  5, 112, 0, 0, 4, 118, 0, 0, 4, 119, 0, 0, 4, 121, 0, 0,
+  0, 0, 0, 0, 0, 0, 0, 0, 255, 255>;
+def BRForm_vector_VECTORFP_VFMSUB_h_s_d_z_pn_p_vn_v_vn_w_vn_y : BedrockVectorEncodingForm<
+  "VECTORFP.VFMSUB.h_s_d_z_pn_p_vn_v_vn_w_vn_y", "vfmsub", "VECTORFP", "111111011100zz1ppppvvvvvwwwwwyyyyy", "?hsd", 1, 122, 14, 65535, 0, 0, 4,
+  5, 112, 0, 0, 4, 118, 0, 0, 4, 119, 0, 0, 4, 121, 0, 0,
+  0, 0, 0, 0, 0, 0, 0, 0, 255, 255>;
+def BRForm_vector_VECTORFP_VFNMADD_h_s_d_z_pn_p_vn_v_vn_w_vn_y : BedrockVectorEncodingForm<
+  "VECTORFP.VFNMADD.h_s_d_z_pn_p_vn_v_vn_w_vn_y", "vfnmadd", "VECTORFP", "111111011101zz0ppppvvvvvwwwwwyyyyy", "?hsd", 1, 122, 14, 65535, 0, 0, 4,
+  5, 112, 0, 0, 4, 118, 0, 0, 4, 119, 0, 0, 4, 121, 0, 0,
+  0, 0, 0, 0, 0, 0, 0, 0, 255, 255>;
+def BRForm_vector_VECTORFP_VFNMSUB_h_s_d_z_pn_p_vn_v_vn_w_vn_y : BedrockVectorEncodingForm<
+  "VECTORFP.VFNMSUB.h_s_d_z_pn_p_vn_v_vn_w_vn_y", "vfnmsub", "VECTORFP", "111111011101zz1ppppvvvvvwwwwwyyyyy", "?hsd", 1, 122, 14, 65535, 0, 0, 4,
+  5, 112, 0, 0, 4, 118, 0, 0, 4, 119, 0, 0, 4, 121, 0, 0,
+  0, 0, 0, 0, 0, 0, 0, 0, 255, 255>;
+def BRForm_vector_VECTORFP_VFEXTRACT_h_s_d_z_vn_v_rn_r_fn_s : BedrockVectorEncodingForm<
+  "VECTORFP.VFEXTRACT.h_s_d_z_vn_v_rn_r_fn_s", "vfextract", "VECTORFP", "11111101111110000zz10rrrrssssvvvvv", "?hsd", 1, 122, 14, 65535, 0, 0, 3,
+  4, 118, 0, 0, 2, 114, 0, 0, 3, 115, 0, 0, 0, 0, 0, 0,
+  0, 0, 0, 0, 0, 0, 0, 0, 255, 255>;
+def BRForm_vector_VECTORFP_VFINSERT_h_s_d_z_fn_r_rn_s_vn_v : BedrockVectorEncodingForm<
+  "VECTORFP.VFINSERT.h_s_d_z_fn_r_rn_s_vn_v", "vfinsert", "VECTORFP", "11111101111110000zz11rrrrssssvvvvv", "?hsd", 1, 122, 14, 65535, 0, 0, 3,
+  3, 114, 0, 0, 2, 115, 0, 0, 4, 118, 0, 0, 0, 0, 0, 0,
+  0, 0, 0, 0, 0, 0, 0, 0, 255, 255>;
+def BRForm_vector_VECTORFP_VFREDADD_h_s_d_z_pn_p_vn_v_fn_r : BedrockVectorEncodingForm<
+  "VECTORFP.VFREDADD.h_s_d_z_pn_p_vn_v_fn_r", "vfredadd", "VECTORFP", "11111101111110110zz00pppprrrrvvvvv", "?hsd", 1, 122, 14, 65535, 0, 0, 3,
+  5, 112, 0, 0, 4, 118, 0, 0, 3, 114, 0, 0, 0, 0, 0, 0,
+  0, 0, 0, 0, 0, 0, 0, 0, 255, 255>;
+def BRForm_vector_VECTORFP_VFREDADD_h_s_d_z_pn_p_ea_e_fn_r : BedrockVectorEncodingForm<
+  "VECTORFP.VFREDADD.h_s_d_z_pn_p_ea_e_fn_r", "vfredadd", "VECTORFP", "11111111000000101110zz01000pppprrrreeeeeee", "?hsd", 2, 122, 14, 65535, 0, 0, 3,
+  5, 112, 0, 0, 7, 101, 0, 0, 3, 114, 0, 0, 0, 0, 0, 0,
+  0, 0, 0, 0, 0, 0, 0, 0, 255, 255>;
+def BRForm_vector_VECTORFP_VFREDMIN_h_s_d_z_pn_p_vn_v_fn_r : BedrockVectorEncodingForm<
+  "VECTORFP.VFREDMIN.h_s_d_z_pn_p_vn_v_fn_r", "vfredmin", "VECTORFP", "11111101111110110zz01pppprrrrvvvvv", "?hsd", 1, 122, 14, 65535, 0, 0, 3,
+  5, 112, 0, 0, 4, 118, 0, 0, 3, 114, 0, 0, 0, 0, 0, 0,
+  0, 0, 0, 0, 0, 0, 0, 0, 255, 255>;
+def BRForm_vector_VECTORFP_VFREDMIN_h_s_d_z_pn_p_ea_e_fn_r : BedrockVectorEncodingForm<
+  "VECTORFP.VFREDMIN.h_s_d_z_pn_p_ea_e_fn_r", "vfredmin", "VECTORFP", "11111111000000101110zz01001pppprrrreeeeeee", "?hsd", 2, 122, 14, 65535, 0, 0, 3,
+  5, 112, 0, 0, 7, 101, 0, 0, 3, 114, 0, 0, 0, 0, 0, 0,
+  0, 0, 0, 0, 0, 0, 0, 0, 255, 255>;
+def BRForm_vector_VECTORFP_VFREDMAX_h_s_d_z_pn_p_vn_v_fn_r : BedrockVectorEncodingForm<
+  "VECTORFP.VFREDMAX.h_s_d_z_pn_p_vn_v_fn_r", "vfredmax", "VECTORFP", "11111101111110110zz10pppprrrrvvvvv", "?hsd", 1, 122, 14, 65535, 0, 0, 3,
+  5, 112, 0, 0, 4, 118, 0, 0, 3, 114, 0, 0, 0, 0, 0, 0,
+  0, 0, 0, 0, 0, 0, 0, 0, 255, 255>;
+def BRForm_vector_VECTORFP_VFREDMAX_h_s_d_z_pn_p_ea_e_fn_r : BedrockVectorEncodingForm<
+  "VECTORFP.VFREDMAX.h_s_d_z_pn_p_ea_e_fn_r", "vfredmax", "VECTORFP", "11111111000000101110zz01010pppprrrreeeeeee", "?hsd", 2, 122, 14, 65535, 0, 0, 3,
+  5, 112, 0, 0, 7, 101, 0, 0, 3, 114, 0, 0, 0, 0, 0, 0,
   0, 0, 0, 0, 0, 0, 0, 0, 255, 255>;
 
 class BedrockRepeatEligibility<string mnemonic, bit hasCondition,
@@ -5806,330 +5927,340 @@ def BedrockRepeatEligibilityTable : GenericTable {
                 "AllowsREPcc"];
 }
 
-def BRForm_repeat_base_instructions_ABS : BedrockRepeatEligibility<"abs", 0, 1, 1>;
-def BRForm_repeat_base_instructions_ADC : BedrockRepeatEligibility<"adc", 0, 1, 1>;
-def BRForm_repeat_base_instructions_ADD : BedrockRepeatEligibility<"add", 0, 1, 1>;
-def BRForm_repeat_base_instructions_AFENCE : BedrockRepeatEligibility<"afence", 0, 0, 0>;
-def BRForm_repeat_base_instructions_AND : BedrockRepeatEligibility<"and", 0, 1, 1>;
-def BRForm_repeat_base_instructions_BCHG : BedrockRepeatEligibility<"bchg", 0, 1, 1>;
-def BRForm_repeat_base_instructions_BCLR : BedrockRepeatEligibility<"bclr", 0, 1, 1>;
-def BRForm_repeat_base_instructions_BKPT : BedrockRepeatEligibility<"bkpt", 0, 0, 0>;
-def BRForm_repeat_base_instructions_BNDSII : BedrockRepeatEligibility<"bndsii", 0, 1, 1>;
-def BRForm_repeat_base_instructions_BNDSIX : BedrockRepeatEligibility<"bndsix", 0, 1, 1>;
-def BRForm_repeat_base_instructions_BNDSXI : BedrockRepeatEligibility<"bndsxi", 0, 1, 1>;
-def BRForm_repeat_base_instructions_BNDSXX : BedrockRepeatEligibility<"bndsxx", 0, 1, 1>;
-def BRForm_repeat_base_instructions_BNDUII : BedrockRepeatEligibility<"bnduii", 0, 1, 1>;
-def BRForm_repeat_base_instructions_BNDUIX : BedrockRepeatEligibility<"bnduix", 0, 1, 1>;
-def BRForm_repeat_base_instructions_BNDUXI : BedrockRepeatEligibility<"bnduxi", 0, 1, 1>;
-def BRForm_repeat_base_instructions_BNDUXX : BedrockRepeatEligibility<"bnduxx", 0, 1, 1>;
-def BRForm_repeat_base_instructions_BSET : BedrockRepeatEligibility<"bset", 0, 1, 1>;
-def BRForm_repeat_base_instructions_BTEST : BedrockRepeatEligibility<"btest", 0, 1, 1>;
-def BRForm_repeat_base_instructions_CALL : BedrockRepeatEligibility<"call", 0, 0, 0>;
-def BRForm_repeat_base_instructions_CALLcc : BedrockRepeatEligibility<"call", 1, 0, 0>;
-def BRForm_repeat_base_instructions_CLMUL : BedrockRepeatEligibility<"clmul", 0, 1, 1>;
-def BRForm_repeat_base_instructions_CLMULH : BedrockRepeatEligibility<"clmulh", 0, 1, 1>;
-def BRForm_repeat_base_instructions_CLR : BedrockRepeatEligibility<"clr", 0, 1, 1>;
-def BRForm_repeat_base_instructions_CLS : BedrockRepeatEligibility<"cls", 0, 1, 1>;
-def BRForm_repeat_base_instructions_CLZ : BedrockRepeatEligibility<"clz", 0, 1, 1>;
-def BRForm_repeat_base_instructions_CMP : BedrockRepeatEligibility<"cmp", 0, 1, 1>;
-def BRForm_repeat_base_instructions_CMPJcc : BedrockRepeatEligibility<"cmpj", 1, 0, 0>;
-def BRForm_repeat_base_instructions_CMPXCHG : BedrockRepeatEligibility<"cmpxchg", 0, 0, 0>;
-def BRForm_repeat_base_instructions_CPUID : BedrockRepeatEligibility<"cpuid", 0, 0, 0>;
-def BRForm_repeat_base_instructions_CTS : BedrockRepeatEligibility<"cts", 0, 1, 1>;
-def BRForm_repeat_base_instructions_CTZ : BedrockRepeatEligibility<"ctz", 0, 1, 1>;
-def BRForm_repeat_base_instructions_DEC : BedrockRepeatEligibility<"dec", 0, 1, 1>;
-def BRForm_repeat_base_instructions_DECF : BedrockRepeatEligibility<"decf", 0, 1, 1>;
-def BRForm_repeat_base_instructions_DIVMODS : BedrockRepeatEligibility<"divmods", 0, 1, 1>;
-def BRForm_repeat_base_instructions_DIVMODU : BedrockRepeatEligibility<"divmodu", 0, 1, 1>;
-def BRForm_repeat_base_instructions_DIVS : BedrockRepeatEligibility<"divs", 0, 1, 1>;
-def BRForm_repeat_base_instructions_DIVU : BedrockRepeatEligibility<"divu", 0, 1, 1>;
-def BRForm_repeat_base_instructions_DJcc : BedrockRepeatEligibility<"dj", 1, 0, 0>;
-def BRForm_repeat_base_instructions_ERET : BedrockRepeatEligibility<"eret", 0, 0, 0>;
-def BRForm_repeat_base_instructions_EXTRACT : BedrockRepeatEligibility<"extract", 0, 1, 1>;
-def BRForm_repeat_base_instructions_EXTSL : BedrockRepeatEligibility<"extsl", 0, 1, 1>;
-def BRForm_repeat_base_instructions_EXTSQ : BedrockRepeatEligibility<"extsq", 0, 1, 1>;
-def BRForm_repeat_base_instructions_EXTSW : BedrockRepeatEligibility<"extsw", 0, 1, 1>;
-def BRForm_repeat_base_instructions_EXTZL : BedrockRepeatEligibility<"extzl", 0, 1, 1>;
-def BRForm_repeat_base_instructions_EXTZQ : BedrockRepeatEligibility<"extzq", 0, 1, 1>;
-def BRForm_repeat_base_instructions_EXTZW : BedrockRepeatEligibility<"extzw", 0, 1, 1>;
-def BRForm_repeat_base_instructions_FETCHADD : BedrockRepeatEligibility<"fetchadd", 0, 0, 0>;
-def BRForm_repeat_base_instructions_FETCHAND : BedrockRepeatEligibility<"fetchand", 0, 0, 0>;
-def BRForm_repeat_base_instructions_FETCHOR : BedrockRepeatEligibility<"fetchor", 0, 0, 0>;
-def BRForm_repeat_base_instructions_FETCHSUB : BedrockRepeatEligibility<"fetchsub", 0, 0, 0>;
-def BRForm_repeat_base_instructions_FETCHXOR : BedrockRepeatEligibility<"fetchxor", 0, 0, 0>;
-def BRForm_repeat_base_instructions_FLSHDCACHE : BedrockRepeatEligibility<"flshdcache", 0, 0, 0>;
-def BRForm_repeat_base_instructions_HALT : BedrockRepeatEligibility<"halt", 0, 0, 0>;
-def BRForm_repeat_base_instructions_IJcc : BedrockRepeatEligibility<"ij", 1, 0, 0>;
-def BRForm_repeat_base_instructions_ILLEGAL : BedrockRepeatEligibility<"illegal", 0, 0, 0>;
-def BRForm_repeat_base_instructions_INC : BedrockRepeatEligibility<"inc", 0, 1, 1>;
-def BRForm_repeat_base_instructions_INCF : BedrockRepeatEligibility<"incf", 0, 1, 1>;
-def BRForm_repeat_base_instructions_INVASID : BedrockRepeatEligibility<"invasid", 0, 0, 0>;
-def BRForm_repeat_base_instructions_INVDCACHE : BedrockRepeatEligibility<"invdcache", 0, 0, 0>;
-def BRForm_repeat_base_instructions_INVICACHE : BedrockRepeatEligibility<"invicache", 0, 0, 0>;
-def BRForm_repeat_base_instructions_INVPAGE : BedrockRepeatEligibility<"invpage", 0, 0, 0>;
-def BRForm_repeat_base_instructions_INVTLB : BedrockRepeatEligibility<"invtlb", 0, 0, 0>;
-def BRForm_repeat_base_instructions_Jcc : BedrockRepeatEligibility<"j", 1, 0, 0>;
-def BRForm_repeat_base_instructions_JMP : BedrockRepeatEligibility<"jmp", 0, 0, 0>;
-def BRForm_repeat_base_instructions_LCALL : BedrockRepeatEligibility<"lcall", 0, 0, 0>;
-def BRForm_repeat_base_instructions_LEA : BedrockRepeatEligibility<"lea", 0, 1, 1>;
-def BRForm_repeat_base_instructions_LJMP : BedrockRepeatEligibility<"ljmp", 0, 0, 0>;
-def BRForm_repeat_base_instructions_LRET : BedrockRepeatEligibility<"lret", 0, 0, 0>;
-def BRForm_repeat_base_instructions_MAXS : BedrockRepeatEligibility<"maxs", 0, 1, 1>;
-def BRForm_repeat_base_instructions_MAXU : BedrockRepeatEligibility<"maxu", 0, 1, 1>;
-def BRForm_repeat_base_instructions_MINS : BedrockRepeatEligibility<"mins", 0, 1, 1>;
-def BRForm_repeat_base_instructions_MINU : BedrockRepeatEligibility<"minu", 0, 1, 1>;
-def BRForm_repeat_base_instructions_MODS : BedrockRepeatEligibility<"mods", 0, 1, 1>;
-def BRForm_repeat_base_instructions_MODU : BedrockRepeatEligibility<"modu", 0, 1, 1>;
-def BRForm_repeat_base_instructions_MOV : BedrockRepeatEligibility<"mov", 0, 1, 1>;
-def BRForm_repeat_base_instructions_MOVcc : BedrockRepeatEligibility<"mov", 1, 1, 0>;
-def BRForm_repeat_base_instructions_MOVCU : BedrockRepeatEligibility<"movcu", 0, 1, 1>;
-def BRForm_repeat_base_instructions_MOVNT : BedrockRepeatEligibility<"movnt", 0, 1, 1>;
-def BRForm_repeat_base_instructions_MOVUC : BedrockRepeatEligibility<"movuc", 0, 1, 1>;
-def BRForm_repeat_base_instructions_MOVUU : BedrockRepeatEligibility<"movuu", 0, 1, 1>;
-def BRForm_repeat_base_instructions_MUL : BedrockRepeatEligibility<"mul", 0, 1, 1>;
-def BRForm_repeat_base_instructions_MULHS : BedrockRepeatEligibility<"mulhs", 0, 1, 1>;
-def BRForm_repeat_base_instructions_MULHSU : BedrockRepeatEligibility<"mulhsu", 0, 1, 1>;
-def BRForm_repeat_base_instructions_MULHU : BedrockRepeatEligibility<"mulhu", 0, 1, 1>;
-def BRForm_repeat_base_instructions_NEG : BedrockRepeatEligibility<"neg", 0, 1, 1>;
-def BRForm_repeat_base_instructions_NOP : BedrockRepeatEligibility<"nop", 0, 0, 0>;
-def BRForm_repeat_base_instructions_NOT : BedrockRepeatEligibility<"not", 0, 1, 1>;
-def BRForm_repeat_base_instructions_OR : BedrockRepeatEligibility<"or", 0, 1, 1>;
-def BRForm_repeat_base_instructions_PARITY : BedrockRepeatEligibility<"parity", 0, 1, 1>;
-def BRForm_repeat_base_instructions_POP : BedrockRepeatEligibility<"pop", 0, 1, 1>;
-def BRForm_repeat_base_instructions_POPCNT : BedrockRepeatEligibility<"popcnt", 0, 1, 1>;
-def BRForm_repeat_base_instructions_POPP : BedrockRepeatEligibility<"popp", 0, 1, 0>;
-def BRForm_repeat_base_instructions_PREFETCH : BedrockRepeatEligibility<"prefetch", 0, 1, 0>;
-def BRForm_repeat_base_instructions_PREFETCHNT : BedrockRepeatEligibility<"prefetchnt", 0, 1, 0>;
-def BRForm_repeat_base_instructions_PTQUERY : BedrockRepeatEligibility<"ptquery", 0, 0, 0>;
-def BRForm_repeat_base_instructions_PUSH : BedrockRepeatEligibility<"push", 0, 1, 1>;
-def BRForm_repeat_base_instructions_PUSHP : BedrockRepeatEligibility<"pushp", 0, 1, 0>;
-def BRForm_repeat_base_instructions_RDCR : BedrockRepeatEligibility<"rdcr", 0, 0, 0>;
-def BRForm_repeat_base_instructions_RDFLAGS : BedrockRepeatEligibility<"rdflags", 0, 0, 0>;
-def BRForm_repeat_base_instructions_RDPMC : BedrockRepeatEligibility<"rdpmc", 0, 0, 0>;
-def BRForm_repeat_base_instructions_RDSEG : BedrockRepeatEligibility<"rdseg", 0, 0, 0>;
-def BRForm_repeat_base_instructions_RDSTATUS : BedrockRepeatEligibility<"rdstatus", 0, 0, 0>;
-def BRForm_repeat_base_instructions_REPcc : BedrockRepeatEligibility<"rep", 1, 0, 0>;
-def BRForm_repeat_base_instructions_RESET : BedrockRepeatEligibility<"reset", 0, 0, 0>;
-def BRForm_repeat_base_instructions_RESTORE : BedrockRepeatEligibility<"restore", 0, 0, 0>;
-def BRForm_repeat_base_instructions_RET : BedrockRepeatEligibility<"ret", 0, 0, 0>;
-def BRForm_repeat_base_instructions_REVBYTE : BedrockRepeatEligibility<"revbyte", 0, 1, 1>;
-def BRForm_repeat_base_instructions_RFENCE : BedrockRepeatEligibility<"rfence", 0, 0, 0>;
-def BRForm_repeat_base_instructions_ROL : BedrockRepeatEligibility<"rol", 0, 1, 1>;
-def BRForm_repeat_base_instructions_ROR : BedrockRepeatEligibility<"ror", 0, 1, 1>;
-def BRForm_repeat_base_instructions_SAR : BedrockRepeatEligibility<"sar", 0, 1, 1>;
-def BRForm_repeat_base_instructions_SAVE : BedrockRepeatEligibility<"save", 0, 0, 0>;
-def BRForm_repeat_base_instructions_SBB : BedrockRepeatEligibility<"sbb", 0, 1, 1>;
-def BRForm_repeat_base_instructions_SEGLEA : BedrockRepeatEligibility<"seglea", 0, 1, 1>;
-def BRForm_repeat_base_instructions_SET : BedrockRepeatEligibility<"set", 0, 1, 1>;
-def BRForm_repeat_base_instructions_SETcc : BedrockRepeatEligibility<"set", 1, 1, 1>;
-def BRForm_repeat_base_instructions_SETF : BedrockRepeatEligibility<"setf", 0, 0, 0>;
-def BRForm_repeat_base_instructions_SHL : BedrockRepeatEligibility<"shl", 0, 1, 1>;
-def BRForm_repeat_base_instructions_SHR : BedrockRepeatEligibility<"shr", 0, 1, 1>;
-def BRForm_repeat_base_instructions_SUB : BedrockRepeatEligibility<"sub", 0, 1, 1>;
-def BRForm_repeat_base_instructions_SWPT : BedrockRepeatEligibility<"swpt", 0, 0, 0>;
-def BRForm_repeat_base_instructions_SWPTA : BedrockRepeatEligibility<"swpta", 0, 0, 0>;
-def BRForm_repeat_base_instructions_SYNCCACHE : BedrockRepeatEligibility<"synccache", 0, 0, 0>;
-def BRForm_repeat_base_instructions_SYSCALL : BedrockRepeatEligibility<"syscall", 0, 0, 0>;
-def BRForm_repeat_base_instructions_TEST : BedrockRepeatEligibility<"test", 0, 1, 1>;
-def BRForm_repeat_base_instructions_TESTJcc : BedrockRepeatEligibility<"testj", 1, 0, 0>;
-def BRForm_repeat_base_instructions_TRACE : BedrockRepeatEligibility<"trace", 0, 0, 0>;
-def BRForm_repeat_base_instructions_VTOP : BedrockRepeatEligibility<"vtop", 0, 0, 0>;
-def BRForm_repeat_base_instructions_WAIT : BedrockRepeatEligibility<"wait", 0, 0, 0>;
-def BRForm_repeat_base_instructions_WFENCE : BedrockRepeatEligibility<"wfence", 0, 0, 0>;
-def BRForm_repeat_base_instructions_WRBKDCACHE : BedrockRepeatEligibility<"wrbkdcache", 0, 0, 0>;
-def BRForm_repeat_base_instructions_WRCR : BedrockRepeatEligibility<"wrcr", 0, 0, 0>;
-def BRForm_repeat_base_instructions_WRFLAGS : BedrockRepeatEligibility<"wrflags", 0, 0, 0>;
-def BRForm_repeat_base_instructions_WRSEG : BedrockRepeatEligibility<"wrseg", 0, 0, 0>;
-def BRForm_repeat_base_instructions_WRSTATUS : BedrockRepeatEligibility<"wrstatus", 0, 0, 0>;
-def BRForm_repeat_base_instructions_XCHG : BedrockRepeatEligibility<"xchg", 0, 1, 0>;
-def BRForm_repeat_base_instructions_XOR : BedrockRepeatEligibility<"xor", 0, 1, 1>;
-def BRForm_repeat_base_instructions_YIELD : BedrockRepeatEligibility<"yield", 0, 0, 0>;
-def BRForm_repeat_FP_instructions_FABS : BedrockRepeatEligibility<"fabs", 0, 1, 0>;
-def BRForm_repeat_FP_instructions_FADD : BedrockRepeatEligibility<"fadd", 0, 1, 0>;
-def BRForm_repeat_FP_instructions_FBNDII : BedrockRepeatEligibility<"fbndii", 0, 1, 0>;
-def BRForm_repeat_FP_instructions_FBNDIX : BedrockRepeatEligibility<"fbndix", 0, 1, 0>;
-def BRForm_repeat_FP_instructions_FBNDXI : BedrockRepeatEligibility<"fbndxi", 0, 1, 0>;
-def BRForm_repeat_FP_instructions_FBNDXX : BedrockRepeatEligibility<"fbndxx", 0, 1, 0>;
-def BRForm_repeat_FP_instructions_FCEIL : BedrockRepeatEligibility<"fceil", 0, 1, 0>;
-def BRForm_repeat_FP_instructions_FCLASS : BedrockRepeatEligibility<"fclass", 0, 1, 0>;
-def BRForm_repeat_FP_instructions_FCLR : BedrockRepeatEligibility<"fclr", 0, 1, 0>;
-def BRForm_repeat_FP_instructions_FCMP : BedrockRepeatEligibility<"fcmp", 0, 1, 0>;
-def BRForm_repeat_FP_instructions_FCOPYSIGN : BedrockRepeatEligibility<"fcopysign", 0, 1, 0>;
-def BRForm_repeat_FP_instructions_FCVT : BedrockRepeatEligibility<"fcvt", 0, 1, 0>;
-def BRForm_repeat_FP_instructions_FCVTU : BedrockRepeatEligibility<"fcvtu", 0, 1, 0>;
-def BRForm_repeat_FP_instructions_FDIV : BedrockRepeatEligibility<"fdiv", 0, 1, 0>;
-def BRForm_repeat_FP_instructions_FFLOOR : BedrockRepeatEligibility<"ffloor", 0, 1, 0>;
-def BRForm_repeat_FP_instructions_FGETEXP : BedrockRepeatEligibility<"fgetexp", 0, 1, 0>;
-def BRForm_repeat_FP_instructions_FGETMAN : BedrockRepeatEligibility<"fgetman", 0, 1, 0>;
-def BRForm_repeat_FP_instructions_FINT : BedrockRepeatEligibility<"fint", 0, 1, 0>;
-def BRForm_repeat_FP_instructions_FINTRZ : BedrockRepeatEligibility<"fintrz", 0, 1, 0>;
-def BRForm_repeat_FP_instructions_FMADD : BedrockRepeatEligibility<"fmadd", 0, 1, 0>;
-def BRForm_repeat_FP_instructions_FMAX : BedrockRepeatEligibility<"fmax", 0, 1, 0>;
-def BRForm_repeat_FP_instructions_FMIN : BedrockRepeatEligibility<"fmin", 0, 1, 0>;
-def BRForm_repeat_FP_instructions_FMOD : BedrockRepeatEligibility<"fmod", 0, 1, 0>;
-def BRForm_repeat_FP_instructions_FMOV : BedrockRepeatEligibility<"fmov", 0, 1, 0>;
-def BRForm_repeat_FP_instructions_FMOVcc : BedrockRepeatEligibility<"fmov", 1, 1, 0>;
-def BRForm_repeat_FP_instructions_FMOVCR : BedrockRepeatEligibility<"fmovcr", 0, 1, 0>;
-def BRForm_repeat_FP_instructions_FMSUB : BedrockRepeatEligibility<"fmsub", 0, 1, 0>;
-def BRForm_repeat_FP_instructions_FMUL : BedrockRepeatEligibility<"fmul", 0, 1, 0>;
-def BRForm_repeat_FP_instructions_FNEG : BedrockRepeatEligibility<"fneg", 0, 1, 0>;
-def BRForm_repeat_FP_instructions_FNMADD : BedrockRepeatEligibility<"fnmadd", 0, 1, 0>;
-def BRForm_repeat_FP_instructions_FNMSUB : BedrockRepeatEligibility<"fnmsub", 0, 1, 0>;
-def BRForm_repeat_FP_instructions_FPOPP : BedrockRepeatEligibility<"fpopp", 0, 1, 0>;
-def BRForm_repeat_FP_instructions_FPUSHP : BedrockRepeatEligibility<"fpushp", 0, 1, 0>;
-def BRForm_repeat_FP_instructions_FREM : BedrockRepeatEligibility<"frem", 0, 1, 0>;
-def BRForm_repeat_FP_instructions_FROUND : BedrockRepeatEligibility<"fround", 0, 1, 0>;
-def BRForm_repeat_FP_instructions_FSCALE : BedrockRepeatEligibility<"fscale", 0, 1, 0>;
-def BRForm_repeat_FP_instructions_FSQRT : BedrockRepeatEligibility<"fsqrt", 0, 1, 0>;
-def BRForm_repeat_FP_instructions_FSUB : BedrockRepeatEligibility<"fsub", 0, 1, 0>;
-def BRForm_repeat_FP_instructions_FTEST : BedrockRepeatEligibility<"ftest", 0, 1, 0>;
-def BRForm_repeat_FP_instructions_FTRUNC : BedrockRepeatEligibility<"ftrunc", 0, 1, 0>;
-def BRForm_repeat_FP_instructions_FXCHG : BedrockRepeatEligibility<"fxchg", 0, 1, 0>;
-def BRForm_repeat_FP_instructions_RDFFLAGS : BedrockRepeatEligibility<"rdfflags", 0, 0, 0>;
-def BRForm_repeat_FP_instructions_RDFSTATUS : BedrockRepeatEligibility<"rdfstatus", 0, 0, 0>;
-def BRForm_repeat_FP_instructions_WRFFLAGS : BedrockRepeatEligibility<"wrfflags", 0, 0, 0>;
-def BRForm_repeat_FP_instructions_WRFSTATUS : BedrockRepeatEligibility<"wrfstatus", 0, 0, 0>;
-def BRForm_repeat_FPTRANSA_instructions_FACOSA : BedrockRepeatEligibility<"facosa", 0, 1, 0>;
-def BRForm_repeat_FPTRANSA_instructions_FASINA : BedrockRepeatEligibility<"fasina", 0, 1, 0>;
-def BRForm_repeat_FPTRANSA_instructions_FATANA : BedrockRepeatEligibility<"fatana", 0, 1, 0>;
-def BRForm_repeat_FPTRANSA_instructions_FATANHA : BedrockRepeatEligibility<"fatanha", 0, 1, 0>;
-def BRForm_repeat_FPTRANSA_instructions_FCOSA : BedrockRepeatEligibility<"fcosa", 0, 1, 0>;
-def BRForm_repeat_FPTRANSA_instructions_FCOSHA : BedrockRepeatEligibility<"fcosha", 0, 1, 0>;
-def BRForm_repeat_FPTRANSA_instructions_FETOXA : BedrockRepeatEligibility<"fetoxa", 0, 1, 0>;
-def BRForm_repeat_FPTRANSA_instructions_FETOXM1A : BedrockRepeatEligibility<"fetoxm1a", 0, 1, 0>;
-def BRForm_repeat_FPTRANSA_instructions_FLOG10A : BedrockRepeatEligibility<"flog10a", 0, 1, 0>;
-def BRForm_repeat_FPTRANSA_instructions_FLOG2A : BedrockRepeatEligibility<"flog2a", 0, 1, 0>;
-def BRForm_repeat_FPTRANSA_instructions_FLOGNA : BedrockRepeatEligibility<"flogna", 0, 1, 0>;
-def BRForm_repeat_FPTRANSA_instructions_FLOGNP1A : BedrockRepeatEligibility<"flognp1a", 0, 1, 0>;
-def BRForm_repeat_FPTRANSA_instructions_FSINA : BedrockRepeatEligibility<"fsina", 0, 1, 0>;
-def BRForm_repeat_FPTRANSA_instructions_FSINCOSA : BedrockRepeatEligibility<"fsincosa", 0, 1, 0>;
-def BRForm_repeat_FPTRANSA_instructions_FSINHA : BedrockRepeatEligibility<"fsinha", 0, 1, 0>;
-def BRForm_repeat_FPTRANSA_instructions_FTANA : BedrockRepeatEligibility<"ftana", 0, 1, 0>;
-def BRForm_repeat_FPTRANSA_instructions_FTANHA : BedrockRepeatEligibility<"ftanha", 0, 1, 0>;
-def BRForm_repeat_FPTRANSA_instructions_FTENTOXA : BedrockRepeatEligibility<"ftentoxa", 0, 1, 0>;
-def BRForm_repeat_FPTRANSA_instructions_FTWOTOXA : BedrockRepeatEligibility<"ftwotoxa", 0, 1, 0>;
-def BRForm_repeat_VECTOR_instructions_VDUP : BedrockRepeatEligibility<"vdup", 0, 0, 0>;
-def BRForm_repeat_VECTOR_instructions_VMOV : BedrockRepeatEligibility<"vmov", 0, 0, 0>;
-def BRForm_repeat_VECTOR_instructions_PHEAD : BedrockRepeatEligibility<"phead", 0, 0, 0>;
-def BRForm_repeat_VECTOR_instructions_PTAIL : BedrockRepeatEligibility<"ptail", 0, 0, 0>;
-def BRForm_repeat_VECTOR_instructions_PFIRST : BedrockRepeatEligibility<"pfirst", 0, 0, 0>;
-def BRForm_repeat_VECTOR_instructions_PLAST : BedrockRepeatEligibility<"plast", 0, 0, 0>;
-def BRForm_repeat_VECTOR_instructions_PCOUNT : BedrockRepeatEligibility<"pcount", 0, 0, 0>;
-def BRForm_repeat_VECTOR_instructions_PAND : BedrockRepeatEligibility<"pand", 0, 0, 0>;
-def BRForm_repeat_VECTOR_instructions_POR : BedrockRepeatEligibility<"por", 0, 0, 0>;
-def BRForm_repeat_VECTOR_instructions_PXOR : BedrockRepeatEligibility<"pxor", 0, 0, 0>;
-def BRForm_repeat_VECTOR_instructions_PUNPKLO : BedrockRepeatEligibility<"punpklo", 0, 0, 0>;
-def BRForm_repeat_VECTOR_instructions_PUNPKHI : BedrockRepeatEligibility<"punpkhi", 0, 0, 0>;
-def BRForm_repeat_VECTOR_instructions_PPACKLO : BedrockRepeatEligibility<"ppacklo", 0, 0, 0>;
-def BRForm_repeat_VECTOR_instructions_PPACKHI : BedrockRepeatEligibility<"ppackhi", 0, 0, 0>;
-def BRForm_repeat_VECTOR_instructions_VCLR : BedrockRepeatEligibility<"vclr", 0, 0, 0>;
-def BRForm_repeat_VECTOR_instructions_VINDEX : BedrockRepeatEligibility<"vindex", 0, 0, 0>;
-def BRForm_repeat_VECTOR_instructions_VLCNT : BedrockRepeatEligibility<"vlcnt", 0, 0, 0>;
-def BRForm_repeat_VECTOR_instructions_VLCADD : BedrockRepeatEligibility<"vlcadd", 0, 0, 0>;
-def BRForm_repeat_VECTOR_instructions_VGATHER1 : BedrockRepeatEligibility<"vgather1", 0, 1, 0>;
-def BRForm_repeat_VECTOR_instructions_VSCATTER1 : BedrockRepeatEligibility<"vscatter1", 0, 1, 0>;
-def BRForm_repeat_VECTOR_instructions_PTRUE : BedrockRepeatEligibility<"ptrue", 0, 0, 0>;
-def BRForm_repeat_VECTOR_instructions_PFALSE : BedrockRepeatEligibility<"pfalse", 0, 0, 0>;
-def BRForm_repeat_VECTOR_instructions_PNOT : BedrockRepeatEligibility<"pnot", 0, 0, 0>;
-def BRForm_repeat_VECTOR_instructions_BPANY : BedrockRepeatEligibility<"bpany", 0, 0, 0>;
-def BRForm_repeat_VECTOR_instructions_BPNONE : BedrockRepeatEligibility<"bpnone", 0, 0, 0>;
-def BRForm_repeat_VECTOR_instructions_BPALL : BedrockRepeatEligibility<"bpall", 0, 0, 0>;
-def BRForm_repeat_VECTOR_instructions_VNEG : BedrockRepeatEligibility<"vneg", 0, 0, 0>;
-def BRForm_repeat_VECTOR_instructions_VABS : BedrockRepeatEligibility<"vabs", 0, 0, 0>;
-def BRForm_repeat_VECTOR_instructions_VNOT : BedrockRepeatEligibility<"vnot", 0, 0, 0>;
-def BRForm_repeat_VECTOR_instructions_VCLZ : BedrockRepeatEligibility<"vclz", 0, 0, 0>;
-def BRForm_repeat_VECTOR_instructions_VCTZ : BedrockRepeatEligibility<"vctz", 0, 0, 0>;
-def BRForm_repeat_VECTOR_instructions_VCLS : BedrockRepeatEligibility<"vcls", 0, 0, 0>;
-def BRForm_repeat_VECTOR_instructions_VCTS : BedrockRepeatEligibility<"vcts", 0, 0, 0>;
-def BRForm_repeat_VECTOR_instructions_VPOPCNT : BedrockRepeatEligibility<"vpopcnt", 0, 0, 0>;
-def BRForm_repeat_VECTOR_instructions_VREVBYTE : BedrockRepeatEligibility<"vrevbyte", 0, 0, 0>;
-def BRForm_repeat_VECTOR_instructions_VSQRT : BedrockRepeatEligibility<"vsqrt", 0, 0, 0>;
-def BRForm_repeat_VECTOR_instructions_VROUND : BedrockRepeatEligibility<"vround", 0, 0, 0>;
-def BRForm_repeat_VECTOR_instructions_VTRUNC : BedrockRepeatEligibility<"vtrunc", 0, 0, 0>;
-def BRForm_repeat_VECTOR_instructions_VFLOOR : BedrockRepeatEligibility<"vfloor", 0, 0, 0>;
-def BRForm_repeat_VECTOR_instructions_VCEIL : BedrockRepeatEligibility<"vceil", 0, 0, 0>;
-def BRForm_repeat_VECTOR_instructions_VCLASS : BedrockRepeatEligibility<"vclass", 0, 0, 0>;
-def BRForm_repeat_VECTOR_instructions_PPERM : BedrockRepeatEligibility<"pperm", 0, 0, 0>;
-def BRForm_repeat_VECTOR_instructions_PSLIDEUP : BedrockRepeatEligibility<"pslideup", 0, 0, 0>;
-def BRForm_repeat_VECTOR_instructions_PSLIDEDN : BedrockRepeatEligibility<"pslidedn", 0, 0, 0>;
-def BRForm_repeat_VECTOR_instructions_VCMPcc : BedrockRepeatEligibility<"vcmp", 1, 0, 0>;
-def BRForm_repeat_VECTOR_instructions_VTESTZ : BedrockRepeatEligibility<"vtestz", 0, 0, 0>;
-def BRForm_repeat_VECTOR_instructions_VTESTNZ : BedrockRepeatEligibility<"vtestnz", 0, 0, 0>;
-def BRForm_repeat_VECTOR_instructions_VADD : BedrockRepeatEligibility<"vadd", 0, 0, 0>;
-def BRForm_repeat_VECTOR_instructions_VSUB : BedrockRepeatEligibility<"vsub", 0, 0, 0>;
-def BRForm_repeat_VECTOR_instructions_VMUL : BedrockRepeatEligibility<"vmul", 0, 0, 0>;
-def BRForm_repeat_VECTOR_instructions_VAND : BedrockRepeatEligibility<"vand", 0, 0, 0>;
-def BRForm_repeat_VECTOR_instructions_VOR : BedrockRepeatEligibility<"vor", 0, 0, 0>;
-def BRForm_repeat_VECTOR_instructions_VXOR : BedrockRepeatEligibility<"vxor", 0, 0, 0>;
-def BRForm_repeat_VECTOR_instructions_VMINS : BedrockRepeatEligibility<"vmins", 0, 0, 0>;
-def BRForm_repeat_VECTOR_instructions_VMINU : BedrockRepeatEligibility<"vminu", 0, 0, 0>;
-def BRForm_repeat_VECTOR_instructions_VMAXS : BedrockRepeatEligibility<"vmaxs", 0, 0, 0>;
-def BRForm_repeat_VECTOR_instructions_VMAXU : BedrockRepeatEligibility<"vmaxu", 0, 0, 0>;
-def BRForm_repeat_VECTOR_instructions_VMULHS : BedrockRepeatEligibility<"vmulhs", 0, 0, 0>;
-def BRForm_repeat_VECTOR_instructions_VMULHU : BedrockRepeatEligibility<"vmulhu", 0, 0, 0>;
-def BRForm_repeat_VECTOR_instructions_VMULHSU : BedrockRepeatEligibility<"vmulhsu", 0, 0, 0>;
-def BRForm_repeat_VECTOR_instructions_VSHL : BedrockRepeatEligibility<"vshl", 0, 0, 0>;
-def BRForm_repeat_VECTOR_instructions_VSHR : BedrockRepeatEligibility<"vshr", 0, 0, 0>;
-def BRForm_repeat_VECTOR_instructions_VSAR : BedrockRepeatEligibility<"vsar", 0, 0, 0>;
-def BRForm_repeat_VECTOR_instructions_VROL : BedrockRepeatEligibility<"vrol", 0, 0, 0>;
-def BRForm_repeat_VECTOR_instructions_VROR : BedrockRepeatEligibility<"vror", 0, 0, 0>;
-def BRForm_repeat_VECTOR_instructions_VMIN : BedrockRepeatEligibility<"vmin", 0, 0, 0>;
-def BRForm_repeat_VECTOR_instructions_VMAX : BedrockRepeatEligibility<"vmax", 0, 0, 0>;
-def BRForm_repeat_VECTOR_instructions_VDIV : BedrockRepeatEligibility<"vdiv", 0, 0, 0>;
-def BRForm_repeat_VECTOR_instructions_VCOPYSIGN : BedrockRepeatEligibility<"vcopysign", 0, 0, 0>;
-def BRForm_repeat_VECTOR_instructions_VEXTZW : BedrockRepeatEligibility<"vextzw", 0, 0, 0>;
-def BRForm_repeat_VECTOR_instructions_VEXTSW : BedrockRepeatEligibility<"vextsw", 0, 0, 0>;
-def BRForm_repeat_VECTOR_instructions_VEXTZL : BedrockRepeatEligibility<"vextzl", 0, 0, 0>;
-def BRForm_repeat_VECTOR_instructions_VEXTSL : BedrockRepeatEligibility<"vextsl", 0, 0, 0>;
-def BRForm_repeat_VECTOR_instructions_VEXTZQ : BedrockRepeatEligibility<"vextzq", 0, 0, 0>;
-def BRForm_repeat_VECTOR_instructions_VEXTSQ : BedrockRepeatEligibility<"vextsq", 0, 0, 0>;
-def BRForm_repeat_VECTOR_instructions_VTRUNCB : BedrockRepeatEligibility<"vtruncb", 0, 0, 0>;
-def BRForm_repeat_VECTOR_instructions_VTRUNCW : BedrockRepeatEligibility<"vtruncw", 0, 0, 0>;
-def BRForm_repeat_VECTOR_instructions_VTRUNCL : BedrockRepeatEligibility<"vtruncl", 0, 0, 0>;
-def BRForm_repeat_VECTOR_instructions_VCVTS : BedrockRepeatEligibility<"vcvts", 0, 0, 0>;
-def BRForm_repeat_VECTOR_instructions_VCVTD : BedrockRepeatEligibility<"vcvtd", 0, 0, 0>;
-def BRForm_repeat_VECTOR_instructions_VCVTUS : BedrockRepeatEligibility<"vcvtus", 0, 0, 0>;
-def BRForm_repeat_VECTOR_instructions_VCVTUD : BedrockRepeatEligibility<"vcvtud", 0, 0, 0>;
-def BRForm_repeat_VECTOR_instructions_VCVTL : BedrockRepeatEligibility<"vcvtl", 0, 0, 0>;
-def BRForm_repeat_VECTOR_instructions_VCVTUL : BedrockRepeatEligibility<"vcvtul", 0, 0, 0>;
-def BRForm_repeat_VECTOR_instructions_VCVTQ : BedrockRepeatEligibility<"vcvtq", 0, 0, 0>;
-def BRForm_repeat_VECTOR_instructions_VCVTUQ : BedrockRepeatEligibility<"vcvtuq", 0, 0, 0>;
-def BRForm_repeat_VECTOR_instructions_VPERM : BedrockRepeatEligibility<"vperm", 0, 0, 0>;
-def BRForm_repeat_VECTOR_instructions_VZIPLO : BedrockRepeatEligibility<"vziplo", 0, 0, 0>;
-def BRForm_repeat_VECTOR_instructions_VZIPHI : BedrockRepeatEligibility<"vziphi", 0, 0, 0>;
-def BRForm_repeat_VECTOR_instructions_VUZIPLO : BedrockRepeatEligibility<"vuziplo", 0, 0, 0>;
-def BRForm_repeat_VECTOR_instructions_VUZIPHI : BedrockRepeatEligibility<"vuziphi", 0, 0, 0>;
-def BRForm_repeat_VECTOR_instructions_VTRNLO : BedrockRepeatEligibility<"vtrnlo", 0, 0, 0>;
-def BRForm_repeat_VECTOR_instructions_VTRNHI : BedrockRepeatEligibility<"vtrnhi", 0, 0, 0>;
-def BRForm_repeat_VECTOR_instructions_VCVTH : BedrockRepeatEligibility<"vcvth", 0, 0, 0>;
-def BRForm_repeat_VECTOR_instructions_VCVTUH : BedrockRepeatEligibility<"vcvtuh", 0, 0, 0>;
-def BRForm_repeat_VECTOR_instructions_VMADD : BedrockRepeatEligibility<"vmadd", 0, 0, 0>;
-def BRForm_repeat_VECTOR_instructions_VMSUB : BedrockRepeatEligibility<"vmsub", 0, 0, 0>;
-def BRForm_repeat_VECTOR_instructions_VNMADD : BedrockRepeatEligibility<"vnmadd", 0, 0, 0>;
-def BRForm_repeat_VECTOR_instructions_VNMSUB : BedrockRepeatEligibility<"vnmsub", 0, 0, 0>;
-def BRForm_repeat_VECTOR_instructions_VSLICE : BedrockRepeatEligibility<"vslice", 0, 0, 0>;
-def BRForm_repeat_VECTOR_instructions_VSLIDEUP : BedrockRepeatEligibility<"vslideup", 0, 0, 0>;
-def BRForm_repeat_VECTOR_instructions_VSLIDEDN : BedrockRepeatEligibility<"vslidedn", 0, 0, 0>;
-def BRForm_repeat_VECTOR_instructions_VEXTRACT : BedrockRepeatEligibility<"vextract", 0, 0, 0>;
-def BRForm_repeat_VECTOR_instructions_VINSERT : BedrockRepeatEligibility<"vinsert", 0, 0, 0>;
-def BRForm_repeat_VECTOR_instructions_VREDADD : BedrockRepeatEligibility<"vredadd", 0, 0, 0>;
-def BRForm_repeat_VECTOR_instructions_VREDMINS : BedrockRepeatEligibility<"vredmins", 0, 0, 0>;
-def BRForm_repeat_VECTOR_instructions_VREDMINU : BedrockRepeatEligibility<"vredminu", 0, 0, 0>;
-def BRForm_repeat_VECTOR_instructions_VREDMAXS : BedrockRepeatEligibility<"vredmaxs", 0, 0, 0>;
-def BRForm_repeat_VECTOR_instructions_VREDMAXU : BedrockRepeatEligibility<"vredmaxu", 0, 0, 0>;
-def BRForm_repeat_VECTOR_instructions_VREDAND : BedrockRepeatEligibility<"vredand", 0, 0, 0>;
-def BRForm_repeat_VECTOR_instructions_VREDOR : BedrockRepeatEligibility<"vredor", 0, 0, 0>;
-def BRForm_repeat_VECTOR_instructions_VREDXOR : BedrockRepeatEligibility<"vredxor", 0, 0, 0>;
-def BRForm_repeat_VECTOR_instructions_VREDMIN : BedrockRepeatEligibility<"vredmin", 0, 0, 0>;
-def BRForm_repeat_VECTOR_instructions_VREDMAX : BedrockRepeatEligibility<"vredmax", 0, 0, 0>;
-def BRForm_repeat_VECTOR_instructions_PSEL : BedrockRepeatEligibility<"psel", 0, 0, 0>;
-def BRForm_repeat_VECTOR_instructions_PZIPLO : BedrockRepeatEligibility<"pziplo", 0, 0, 0>;
-def BRForm_repeat_VECTOR_instructions_PZIPHI : BedrockRepeatEligibility<"pziphi", 0, 0, 0>;
-def BRForm_repeat_VECTOR_instructions_PUZIPLO : BedrockRepeatEligibility<"puziplo", 0, 0, 0>;
-def BRForm_repeat_VECTOR_instructions_PUZIPHI : BedrockRepeatEligibility<"puziphi", 0, 0, 0>;
-def BRForm_repeat_VECTOR_instructions_PTRNLO : BedrockRepeatEligibility<"ptrnlo", 0, 0, 0>;
-def BRForm_repeat_VECTOR_instructions_PTRNHI : BedrockRepeatEligibility<"ptrnhi", 0, 0, 0>;
-def BRForm_repeat_VECTOR_instructions_PSLICE : BedrockRepeatEligibility<"pslice", 0, 0, 0>;
-def BRForm_repeat_VECTOR_instructions_VMOVZ : BedrockRepeatEligibility<"vmovz", 0, 0, 0>;
-def BRForm_repeat_VECTOR_instructions_PLOOP : BedrockRepeatEligibility<"ploop", 0, 0, 0>;
-def BRForm_repeat_VECTOR_instructions_PMOV : BedrockRepeatEligibility<"pmov", 0, 0, 0>;
+def BRForm_repeat_base_ABS : BedrockRepeatEligibility<"abs", 0, 1, 1>;
+def BRForm_repeat_base_ADC : BedrockRepeatEligibility<"adc", 0, 1, 1>;
+def BRForm_repeat_base_ADD : BedrockRepeatEligibility<"add", 0, 1, 1>;
+def BRForm_repeat_base_AFENCE : BedrockRepeatEligibility<"afence", 0, 0, 0>;
+def BRForm_repeat_base_AND : BedrockRepeatEligibility<"and", 0, 1, 1>;
+def BRForm_repeat_base_BCHG : BedrockRepeatEligibility<"bchg", 0, 1, 1>;
+def BRForm_repeat_base_BCLR : BedrockRepeatEligibility<"bclr", 0, 1, 1>;
+def BRForm_repeat_base_BKPT : BedrockRepeatEligibility<"bkpt", 0, 0, 0>;
+def BRForm_repeat_base_BNDSII : BedrockRepeatEligibility<"bndsii", 0, 1, 1>;
+def BRForm_repeat_base_BNDSIX : BedrockRepeatEligibility<"bndsix", 0, 1, 1>;
+def BRForm_repeat_base_BNDSXI : BedrockRepeatEligibility<"bndsxi", 0, 1, 1>;
+def BRForm_repeat_base_BNDSXX : BedrockRepeatEligibility<"bndsxx", 0, 1, 1>;
+def BRForm_repeat_base_BNDUII : BedrockRepeatEligibility<"bnduii", 0, 1, 1>;
+def BRForm_repeat_base_BNDUIX : BedrockRepeatEligibility<"bnduix", 0, 1, 1>;
+def BRForm_repeat_base_BNDUXI : BedrockRepeatEligibility<"bnduxi", 0, 1, 1>;
+def BRForm_repeat_base_BNDUXX : BedrockRepeatEligibility<"bnduxx", 0, 1, 1>;
+def BRForm_repeat_base_BSET : BedrockRepeatEligibility<"bset", 0, 1, 1>;
+def BRForm_repeat_base_BTEST : BedrockRepeatEligibility<"btest", 0, 1, 1>;
+def BRForm_repeat_base_CALL : BedrockRepeatEligibility<"call", 0, 0, 0>;
+def BRForm_repeat_base_CALLcc : BedrockRepeatEligibility<"call", 1, 0, 0>;
+def BRForm_repeat_base_CLMUL : BedrockRepeatEligibility<"clmul", 0, 1, 1>;
+def BRForm_repeat_base_CLMULH : BedrockRepeatEligibility<"clmulh", 0, 1, 1>;
+def BRForm_repeat_base_CLR : BedrockRepeatEligibility<"clr", 0, 1, 1>;
+def BRForm_repeat_base_CLS : BedrockRepeatEligibility<"cls", 0, 1, 1>;
+def BRForm_repeat_base_CLZ : BedrockRepeatEligibility<"clz", 0, 1, 1>;
+def BRForm_repeat_base_CMP : BedrockRepeatEligibility<"cmp", 0, 1, 1>;
+def BRForm_repeat_base_CMPJcc : BedrockRepeatEligibility<"cmpj", 1, 0, 0>;
+def BRForm_repeat_base_CMPXCHG : BedrockRepeatEligibility<"cmpxchg", 0, 0, 0>;
+def BRForm_repeat_base_CPUID : BedrockRepeatEligibility<"cpuid", 0, 0, 0>;
+def BRForm_repeat_base_CTS : BedrockRepeatEligibility<"cts", 0, 1, 1>;
+def BRForm_repeat_base_CTZ : BedrockRepeatEligibility<"ctz", 0, 1, 1>;
+def BRForm_repeat_base_DEC : BedrockRepeatEligibility<"dec", 0, 1, 1>;
+def BRForm_repeat_base_DECF : BedrockRepeatEligibility<"decf", 0, 1, 1>;
+def BRForm_repeat_base_DIVMODS : BedrockRepeatEligibility<"divmods", 0, 1, 1>;
+def BRForm_repeat_base_DIVMODU : BedrockRepeatEligibility<"divmodu", 0, 1, 1>;
+def BRForm_repeat_base_DIVS : BedrockRepeatEligibility<"divs", 0, 1, 1>;
+def BRForm_repeat_base_DIVU : BedrockRepeatEligibility<"divu", 0, 1, 1>;
+def BRForm_repeat_base_DJcc : BedrockRepeatEligibility<"dj", 1, 0, 0>;
+def BRForm_repeat_base_ERET : BedrockRepeatEligibility<"eret", 0, 0, 0>;
+def BRForm_repeat_base_EXTRACT : BedrockRepeatEligibility<"extract", 0, 1, 1>;
+def BRForm_repeat_base_EXTSL : BedrockRepeatEligibility<"extsl", 0, 1, 1>;
+def BRForm_repeat_base_EXTSQ : BedrockRepeatEligibility<"extsq", 0, 1, 1>;
+def BRForm_repeat_base_EXTSW : BedrockRepeatEligibility<"extsw", 0, 1, 1>;
+def BRForm_repeat_base_EXTZL : BedrockRepeatEligibility<"extzl", 0, 1, 1>;
+def BRForm_repeat_base_EXTZQ : BedrockRepeatEligibility<"extzq", 0, 1, 1>;
+def BRForm_repeat_base_EXTZW : BedrockRepeatEligibility<"extzw", 0, 1, 1>;
+def BRForm_repeat_base_FETCHADD : BedrockRepeatEligibility<"fetchadd", 0, 0, 0>;
+def BRForm_repeat_base_FETCHAND : BedrockRepeatEligibility<"fetchand", 0, 0, 0>;
+def BRForm_repeat_base_FETCHOR : BedrockRepeatEligibility<"fetchor", 0, 0, 0>;
+def BRForm_repeat_base_FETCHSUB : BedrockRepeatEligibility<"fetchsub", 0, 0, 0>;
+def BRForm_repeat_base_FETCHXOR : BedrockRepeatEligibility<"fetchxor", 0, 0, 0>;
+def BRForm_repeat_base_FLSHDCACHE : BedrockRepeatEligibility<"flshdcache", 0, 0, 0>;
+def BRForm_repeat_base_HALT : BedrockRepeatEligibility<"halt", 0, 0, 0>;
+def BRForm_repeat_base_IJcc : BedrockRepeatEligibility<"ij", 1, 0, 0>;
+def BRForm_repeat_base_ILLEGAL : BedrockRepeatEligibility<"illegal", 0, 0, 0>;
+def BRForm_repeat_base_INC : BedrockRepeatEligibility<"inc", 0, 1, 1>;
+def BRForm_repeat_base_INCF : BedrockRepeatEligibility<"incf", 0, 1, 1>;
+def BRForm_repeat_base_INVASID : BedrockRepeatEligibility<"invasid", 0, 0, 0>;
+def BRForm_repeat_base_INVDCACHE : BedrockRepeatEligibility<"invdcache", 0, 0, 0>;
+def BRForm_repeat_base_INVICACHE : BedrockRepeatEligibility<"invicache", 0, 0, 0>;
+def BRForm_repeat_base_INVPAGE : BedrockRepeatEligibility<"invpage", 0, 0, 0>;
+def BRForm_repeat_base_INVTLB : BedrockRepeatEligibility<"invtlb", 0, 0, 0>;
+def BRForm_repeat_base_Jcc : BedrockRepeatEligibility<"j", 1, 0, 0>;
+def BRForm_repeat_base_JMP : BedrockRepeatEligibility<"jmp", 0, 0, 0>;
+def BRForm_repeat_base_LCALL : BedrockRepeatEligibility<"lcall", 0, 0, 0>;
+def BRForm_repeat_base_LEA : BedrockRepeatEligibility<"lea", 0, 1, 1>;
+def BRForm_repeat_base_LJMP : BedrockRepeatEligibility<"ljmp", 0, 0, 0>;
+def BRForm_repeat_base_LRET : BedrockRepeatEligibility<"lret", 0, 0, 0>;
+def BRForm_repeat_base_MAXS : BedrockRepeatEligibility<"maxs", 0, 1, 1>;
+def BRForm_repeat_base_MAXU : BedrockRepeatEligibility<"maxu", 0, 1, 1>;
+def BRForm_repeat_base_MINS : BedrockRepeatEligibility<"mins", 0, 1, 1>;
+def BRForm_repeat_base_MINU : BedrockRepeatEligibility<"minu", 0, 1, 1>;
+def BRForm_repeat_base_MODS : BedrockRepeatEligibility<"mods", 0, 1, 1>;
+def BRForm_repeat_base_MODU : BedrockRepeatEligibility<"modu", 0, 1, 1>;
+def BRForm_repeat_base_MOV : BedrockRepeatEligibility<"mov", 0, 1, 1>;
+def BRForm_repeat_base_MOVcc : BedrockRepeatEligibility<"mov", 1, 1, 0>;
+def BRForm_repeat_base_MOVCU : BedrockRepeatEligibility<"movcu", 0, 1, 1>;
+def BRForm_repeat_base_MOVNT : BedrockRepeatEligibility<"movnt", 0, 1, 1>;
+def BRForm_repeat_base_MOVUC : BedrockRepeatEligibility<"movuc", 0, 1, 1>;
+def BRForm_repeat_base_MOVUU : BedrockRepeatEligibility<"movuu", 0, 1, 1>;
+def BRForm_repeat_base_MUL : BedrockRepeatEligibility<"mul", 0, 1, 1>;
+def BRForm_repeat_base_MULHS : BedrockRepeatEligibility<"mulhs", 0, 1, 1>;
+def BRForm_repeat_base_MULHSU : BedrockRepeatEligibility<"mulhsu", 0, 1, 1>;
+def BRForm_repeat_base_MULHU : BedrockRepeatEligibility<"mulhu", 0, 1, 1>;
+def BRForm_repeat_base_NEG : BedrockRepeatEligibility<"neg", 0, 1, 1>;
+def BRForm_repeat_base_NOP : BedrockRepeatEligibility<"nop", 0, 0, 0>;
+def BRForm_repeat_base_NOT : BedrockRepeatEligibility<"not", 0, 1, 1>;
+def BRForm_repeat_base_OR : BedrockRepeatEligibility<"or", 0, 1, 1>;
+def BRForm_repeat_base_PARITY : BedrockRepeatEligibility<"parity", 0, 1, 1>;
+def BRForm_repeat_base_POP : BedrockRepeatEligibility<"pop", 0, 1, 1>;
+def BRForm_repeat_base_POPCNT : BedrockRepeatEligibility<"popcnt", 0, 1, 1>;
+def BRForm_repeat_base_POPP : BedrockRepeatEligibility<"popp", 0, 1, 0>;
+def BRForm_repeat_base_PREFETCH : BedrockRepeatEligibility<"prefetch", 0, 1, 0>;
+def BRForm_repeat_base_PREFETCHNT : BedrockRepeatEligibility<"prefetchnt", 0, 1, 0>;
+def BRForm_repeat_base_PTQUERY : BedrockRepeatEligibility<"ptquery", 0, 0, 0>;
+def BRForm_repeat_base_PUSH : BedrockRepeatEligibility<"push", 0, 1, 1>;
+def BRForm_repeat_base_PUSHP : BedrockRepeatEligibility<"pushp", 0, 1, 0>;
+def BRForm_repeat_base_RDCR : BedrockRepeatEligibility<"rdcr", 0, 0, 0>;
+def BRForm_repeat_base_RDFLAGS : BedrockRepeatEligibility<"rdflags", 0, 0, 0>;
+def BRForm_repeat_base_RDPMC : BedrockRepeatEligibility<"rdpmc", 0, 0, 0>;
+def BRForm_repeat_base_RDSEG : BedrockRepeatEligibility<"rdseg", 0, 0, 0>;
+def BRForm_repeat_base_RDSTATUS : BedrockRepeatEligibility<"rdstatus", 0, 0, 0>;
+def BRForm_repeat_base_REPcc : BedrockRepeatEligibility<"rep", 1, 0, 0>;
+def BRForm_repeat_base_RESET : BedrockRepeatEligibility<"reset", 0, 0, 0>;
+def BRForm_repeat_base_RESTORE : BedrockRepeatEligibility<"restore", 0, 0, 0>;
+def BRForm_repeat_base_RET : BedrockRepeatEligibility<"ret", 0, 0, 0>;
+def BRForm_repeat_base_REVBYTE : BedrockRepeatEligibility<"revbyte", 0, 1, 1>;
+def BRForm_repeat_base_RFENCE : BedrockRepeatEligibility<"rfence", 0, 0, 0>;
+def BRForm_repeat_base_ROL : BedrockRepeatEligibility<"rol", 0, 1, 1>;
+def BRForm_repeat_base_ROR : BedrockRepeatEligibility<"ror", 0, 1, 1>;
+def BRForm_repeat_base_SAR : BedrockRepeatEligibility<"sar", 0, 1, 1>;
+def BRForm_repeat_base_SAVE : BedrockRepeatEligibility<"save", 0, 0, 0>;
+def BRForm_repeat_base_SBB : BedrockRepeatEligibility<"sbb", 0, 1, 1>;
+def BRForm_repeat_base_SEGLEA : BedrockRepeatEligibility<"seglea", 0, 1, 1>;
+def BRForm_repeat_base_SET : BedrockRepeatEligibility<"set", 0, 1, 1>;
+def BRForm_repeat_base_SETcc : BedrockRepeatEligibility<"set", 1, 1, 1>;
+def BRForm_repeat_base_SETF : BedrockRepeatEligibility<"setf", 0, 0, 0>;
+def BRForm_repeat_base_SHL : BedrockRepeatEligibility<"shl", 0, 1, 1>;
+def BRForm_repeat_base_SHR : BedrockRepeatEligibility<"shr", 0, 1, 1>;
+def BRForm_repeat_base_SUB : BedrockRepeatEligibility<"sub", 0, 1, 1>;
+def BRForm_repeat_base_SWPT : BedrockRepeatEligibility<"swpt", 0, 0, 0>;
+def BRForm_repeat_base_SWPTA : BedrockRepeatEligibility<"swpta", 0, 0, 0>;
+def BRForm_repeat_base_SYNCCACHE : BedrockRepeatEligibility<"synccache", 0, 0, 0>;
+def BRForm_repeat_base_SYSCALL : BedrockRepeatEligibility<"syscall", 0, 0, 0>;
+def BRForm_repeat_base_TEST : BedrockRepeatEligibility<"test", 0, 1, 1>;
+def BRForm_repeat_base_TESTJcc : BedrockRepeatEligibility<"testj", 1, 0, 0>;
+def BRForm_repeat_base_TRACE : BedrockRepeatEligibility<"trace", 0, 0, 0>;
+def BRForm_repeat_base_VTOP : BedrockRepeatEligibility<"vtop", 0, 0, 0>;
+def BRForm_repeat_base_RELAX : BedrockRepeatEligibility<"relax", 0, 0, 0>;
+def BRForm_repeat_base_WFENCE : BedrockRepeatEligibility<"wfence", 0, 0, 0>;
+def BRForm_repeat_base_WRBKDCACHE : BedrockRepeatEligibility<"wrbkdcache", 0, 0, 0>;
+def BRForm_repeat_base_WRCR : BedrockRepeatEligibility<"wrcr", 0, 0, 0>;
+def BRForm_repeat_base_WRFLAGS : BedrockRepeatEligibility<"wrflags", 0, 0, 0>;
+def BRForm_repeat_base_WRSEG : BedrockRepeatEligibility<"wrseg", 0, 0, 0>;
+def BRForm_repeat_base_WRSTATUS : BedrockRepeatEligibility<"wrstatus", 0, 0, 0>;
+def BRForm_repeat_base_XCHG : BedrockRepeatEligibility<"xchg", 0, 1, 0>;
+def BRForm_repeat_base_XOR : BedrockRepeatEligibility<"xor", 0, 1, 1>;
+def BRForm_repeat_base_YIELD : BedrockRepeatEligibility<"yield", 0, 0, 0>;
+def BRForm_repeat_FP_FABS : BedrockRepeatEligibility<"fabs", 0, 1, 0>;
+def BRForm_repeat_FP_FADD : BedrockRepeatEligibility<"fadd", 0, 1, 0>;
+def BRForm_repeat_FP_FBNDII : BedrockRepeatEligibility<"fbndii", 0, 1, 0>;
+def BRForm_repeat_FP_FBNDIX : BedrockRepeatEligibility<"fbndix", 0, 1, 0>;
+def BRForm_repeat_FP_FBNDXI : BedrockRepeatEligibility<"fbndxi", 0, 1, 0>;
+def BRForm_repeat_FP_FBNDXX : BedrockRepeatEligibility<"fbndxx", 0, 1, 0>;
+def BRForm_repeat_FP_FCEIL : BedrockRepeatEligibility<"fceil", 0, 1, 0>;
+def BRForm_repeat_FP_FCLASS : BedrockRepeatEligibility<"fclass", 0, 1, 0>;
+def BRForm_repeat_FP_FCLR : BedrockRepeatEligibility<"fclr", 0, 1, 0>;
+def BRForm_repeat_FP_FCMP : BedrockRepeatEligibility<"fcmp", 0, 1, 0>;
+def BRForm_repeat_FP_FCOPYSIGN : BedrockRepeatEligibility<"fcopysign", 0, 1, 0>;
+def BRForm_repeat_FP_FCVT : BedrockRepeatEligibility<"fcvt", 0, 1, 0>;
+def BRForm_repeat_FP_FCVTU : BedrockRepeatEligibility<"fcvtu", 0, 1, 0>;
+def BRForm_repeat_FP_FDIV : BedrockRepeatEligibility<"fdiv", 0, 1, 0>;
+def BRForm_repeat_FP_FFLOOR : BedrockRepeatEligibility<"ffloor", 0, 1, 0>;
+def BRForm_repeat_FP_FGETEXP : BedrockRepeatEligibility<"fgetexp", 0, 1, 0>;
+def BRForm_repeat_FP_FGETMAN : BedrockRepeatEligibility<"fgetman", 0, 1, 0>;
+def BRForm_repeat_FP_FINT : BedrockRepeatEligibility<"fint", 0, 1, 0>;
+def BRForm_repeat_FP_FINTRZ : BedrockRepeatEligibility<"fintrz", 0, 1, 0>;
+def BRForm_repeat_FP_FMADD : BedrockRepeatEligibility<"fmadd", 0, 1, 0>;
+def BRForm_repeat_FP_FMAX : BedrockRepeatEligibility<"fmax", 0, 1, 0>;
+def BRForm_repeat_FP_FMIN : BedrockRepeatEligibility<"fmin", 0, 1, 0>;
+def BRForm_repeat_FP_FMOD : BedrockRepeatEligibility<"fmod", 0, 1, 0>;
+def BRForm_repeat_FP_FMOV : BedrockRepeatEligibility<"fmov", 0, 1, 0>;
+def BRForm_repeat_FP_FMOVcc : BedrockRepeatEligibility<"fmov", 1, 1, 0>;
+def BRForm_repeat_FP_FMOVCR : BedrockRepeatEligibility<"fmovcr", 0, 1, 0>;
+def BRForm_repeat_FP_FMSUB : BedrockRepeatEligibility<"fmsub", 0, 1, 0>;
+def BRForm_repeat_FP_FMUL : BedrockRepeatEligibility<"fmul", 0, 1, 0>;
+def BRForm_repeat_FP_FNEG : BedrockRepeatEligibility<"fneg", 0, 1, 0>;
+def BRForm_repeat_FP_FNMADD : BedrockRepeatEligibility<"fnmadd", 0, 1, 0>;
+def BRForm_repeat_FP_FNMSUB : BedrockRepeatEligibility<"fnmsub", 0, 1, 0>;
+def BRForm_repeat_FP_FPOPP : BedrockRepeatEligibility<"fpopp", 0, 1, 0>;
+def BRForm_repeat_FP_FPUSHP : BedrockRepeatEligibility<"fpushp", 0, 1, 0>;
+def BRForm_repeat_FP_FREM : BedrockRepeatEligibility<"frem", 0, 1, 0>;
+def BRForm_repeat_FP_FROUND : BedrockRepeatEligibility<"fround", 0, 1, 0>;
+def BRForm_repeat_FP_FSCALE : BedrockRepeatEligibility<"fscale", 0, 1, 0>;
+def BRForm_repeat_FP_FSQRT : BedrockRepeatEligibility<"fsqrt", 0, 1, 0>;
+def BRForm_repeat_FP_FSUB : BedrockRepeatEligibility<"fsub", 0, 1, 0>;
+def BRForm_repeat_FP_FTEST : BedrockRepeatEligibility<"ftest", 0, 1, 0>;
+def BRForm_repeat_FP_FTRUNC : BedrockRepeatEligibility<"ftrunc", 0, 1, 0>;
+def BRForm_repeat_FP_FXCHG : BedrockRepeatEligibility<"fxchg", 0, 1, 0>;
+def BRForm_repeat_FP_RDFFLAGS : BedrockRepeatEligibility<"rdfflags", 0, 0, 0>;
+def BRForm_repeat_FP_RDFSTATUS : BedrockRepeatEligibility<"rdfstatus", 0, 0, 0>;
+def BRForm_repeat_FP_WRFFLAGS : BedrockRepeatEligibility<"wrfflags", 0, 0, 0>;
+def BRForm_repeat_FP_WRFSTATUS : BedrockRepeatEligibility<"wrfstatus", 0, 0, 0>;
+def BRForm_repeat_FPTRANSA_FACOSA : BedrockRepeatEligibility<"facosa", 0, 1, 0>;
+def BRForm_repeat_FPTRANSA_FASINA : BedrockRepeatEligibility<"fasina", 0, 1, 0>;
+def BRForm_repeat_FPTRANSA_FATANA : BedrockRepeatEligibility<"fatana", 0, 1, 0>;
+def BRForm_repeat_FPTRANSA_FATANHA : BedrockRepeatEligibility<"fatanha", 0, 1, 0>;
+def BRForm_repeat_FPTRANSA_FCOSA : BedrockRepeatEligibility<"fcosa", 0, 1, 0>;
+def BRForm_repeat_FPTRANSA_FCOSHA : BedrockRepeatEligibility<"fcosha", 0, 1, 0>;
+def BRForm_repeat_FPTRANSA_FETOXA : BedrockRepeatEligibility<"fetoxa", 0, 1, 0>;
+def BRForm_repeat_FPTRANSA_FETOXM1A : BedrockRepeatEligibility<"fetoxm1a", 0, 1, 0>;
+def BRForm_repeat_FPTRANSA_FLOG10A : BedrockRepeatEligibility<"flog10a", 0, 1, 0>;
+def BRForm_repeat_FPTRANSA_FLOG2A : BedrockRepeatEligibility<"flog2a", 0, 1, 0>;
+def BRForm_repeat_FPTRANSA_FLOGNA : BedrockRepeatEligibility<"flogna", 0, 1, 0>;
+def BRForm_repeat_FPTRANSA_FLOGNP1A : BedrockRepeatEligibility<"flognp1a", 0, 1, 0>;
+def BRForm_repeat_FPTRANSA_FSINA : BedrockRepeatEligibility<"fsina", 0, 1, 0>;
+def BRForm_repeat_FPTRANSA_FSINCOSA : BedrockRepeatEligibility<"fsincosa", 0, 1, 0>;
+def BRForm_repeat_FPTRANSA_FSINHA : BedrockRepeatEligibility<"fsinha", 0, 1, 0>;
+def BRForm_repeat_FPTRANSA_FTANA : BedrockRepeatEligibility<"ftana", 0, 1, 0>;
+def BRForm_repeat_FPTRANSA_FTANHA : BedrockRepeatEligibility<"ftanha", 0, 1, 0>;
+def BRForm_repeat_FPTRANSA_FTENTOXA : BedrockRepeatEligibility<"ftentoxa", 0, 1, 0>;
+def BRForm_repeat_FPTRANSA_FTWOTOXA : BedrockRepeatEligibility<"ftwotoxa", 0, 1, 0>;
+def BRForm_repeat_VECTOR_VDUP : BedrockRepeatEligibility<"vdup", 0, 0, 0>;
+def BRForm_repeat_VECTOR_VMOV : BedrockRepeatEligibility<"vmov", 0, 0, 0>;
+def BRForm_repeat_VECTOR_PHEAD : BedrockRepeatEligibility<"phead", 0, 0, 0>;
+def BRForm_repeat_VECTOR_PTAIL : BedrockRepeatEligibility<"ptail", 0, 0, 0>;
+def BRForm_repeat_VECTOR_PFIRST : BedrockRepeatEligibility<"pfirst", 0, 0, 0>;
+def BRForm_repeat_VECTOR_PLAST : BedrockRepeatEligibility<"plast", 0, 0, 0>;
+def BRForm_repeat_VECTOR_PCOUNT : BedrockRepeatEligibility<"pcount", 0, 0, 0>;
+def BRForm_repeat_VECTOR_PAND : BedrockRepeatEligibility<"pand", 0, 0, 0>;
+def BRForm_repeat_VECTOR_POR : BedrockRepeatEligibility<"por", 0, 0, 0>;
+def BRForm_repeat_VECTOR_PXOR : BedrockRepeatEligibility<"pxor", 0, 0, 0>;
+def BRForm_repeat_VECTOR_PUNPKLO : BedrockRepeatEligibility<"punpklo", 0, 0, 0>;
+def BRForm_repeat_VECTOR_PUNPKHI : BedrockRepeatEligibility<"punpkhi", 0, 0, 0>;
+def BRForm_repeat_VECTOR_PPACKLO : BedrockRepeatEligibility<"ppacklo", 0, 0, 0>;
+def BRForm_repeat_VECTOR_PPACKHI : BedrockRepeatEligibility<"ppackhi", 0, 0, 0>;
+def BRForm_repeat_VECTOR_VCLR : BedrockRepeatEligibility<"vclr", 0, 0, 0>;
+def BRForm_repeat_VECTOR_VINDEX : BedrockRepeatEligibility<"vindex", 0, 0, 0>;
+def BRForm_repeat_VECTOR_VLCNT : BedrockRepeatEligibility<"vlcnt", 0, 0, 0>;
+def BRForm_repeat_VECTOR_VLCADD : BedrockRepeatEligibility<"vlcadd", 0, 0, 0>;
+def BRForm_repeat_VECTOR_VGATHER : BedrockRepeatEligibility<"vgather", 0, 0, 0>;
+def BRForm_repeat_VECTOR_VSCATTER : BedrockRepeatEligibility<"vscatter", 0, 0, 0>;
+def BRForm_repeat_VECTOR_PTRUE : BedrockRepeatEligibility<"ptrue", 0, 0, 0>;
+def BRForm_repeat_VECTOR_PFALSE : BedrockRepeatEligibility<"pfalse", 0, 0, 0>;
+def BRForm_repeat_VECTOR_PNOT : BedrockRepeatEligibility<"pnot", 0, 0, 0>;
+def BRForm_repeat_VECTOR_BPANY : BedrockRepeatEligibility<"bpany", 0, 0, 0>;
+def BRForm_repeat_VECTOR_BPNONE : BedrockRepeatEligibility<"bpnone", 0, 0, 0>;
+def BRForm_repeat_VECTOR_BPALL : BedrockRepeatEligibility<"bpall", 0, 0, 0>;
+def BRForm_repeat_VECTOR_VNEG : BedrockRepeatEligibility<"vneg", 0, 0, 0>;
+def BRForm_repeat_VECTOR_VABS : BedrockRepeatEligibility<"vabs", 0, 0, 0>;
+def BRForm_repeat_VECTOR_VNOT : BedrockRepeatEligibility<"vnot", 0, 0, 0>;
+def BRForm_repeat_VECTOR_VCLZ : BedrockRepeatEligibility<"vclz", 0, 0, 0>;
+def BRForm_repeat_VECTOR_VCTZ : BedrockRepeatEligibility<"vctz", 0, 0, 0>;
+def BRForm_repeat_VECTOR_VCLS : BedrockRepeatEligibility<"vcls", 0, 0, 0>;
+def BRForm_repeat_VECTOR_VCTS : BedrockRepeatEligibility<"vcts", 0, 0, 0>;
+def BRForm_repeat_VECTOR_VPOPCNT : BedrockRepeatEligibility<"vpopcnt", 0, 0, 0>;
+def BRForm_repeat_VECTOR_VREVBYTE : BedrockRepeatEligibility<"vrevbyte", 0, 0, 0>;
+def BRForm_repeat_VECTOR_PPERM : BedrockRepeatEligibility<"pperm", 0, 0, 0>;
+def BRForm_repeat_VECTOR_PSLIDEUP : BedrockRepeatEligibility<"pslideup", 0, 0, 0>;
+def BRForm_repeat_VECTOR_PSLIDEDN : BedrockRepeatEligibility<"pslidedn", 0, 0, 0>;
+def BRForm_repeat_VECTOR_VCMPcc : BedrockRepeatEligibility<"vcmp", 1, 0, 0>;
+def BRForm_repeat_VECTOR_VTESTZ : BedrockRepeatEligibility<"vtestz", 0, 0, 0>;
+def BRForm_repeat_VECTOR_VTESTNZ : BedrockRepeatEligibility<"vtestnz", 0, 0, 0>;
+def BRForm_repeat_VECTOR_VADD : BedrockRepeatEligibility<"vadd", 0, 0, 0>;
+def BRForm_repeat_VECTOR_VSUB : BedrockRepeatEligibility<"vsub", 0, 0, 0>;
+def BRForm_repeat_VECTOR_VMUL : BedrockRepeatEligibility<"vmul", 0, 0, 0>;
+def BRForm_repeat_VECTOR_VAND : BedrockRepeatEligibility<"vand", 0, 0, 0>;
+def BRForm_repeat_VECTOR_VOR : BedrockRepeatEligibility<"vor", 0, 0, 0>;
+def BRForm_repeat_VECTOR_VXOR : BedrockRepeatEligibility<"vxor", 0, 0, 0>;
+def BRForm_repeat_VECTOR_VMINS : BedrockRepeatEligibility<"vmins", 0, 0, 0>;
+def BRForm_repeat_VECTOR_VMINU : BedrockRepeatEligibility<"vminu", 0, 0, 0>;
+def BRForm_repeat_VECTOR_VMAXS : BedrockRepeatEligibility<"vmaxs", 0, 0, 0>;
+def BRForm_repeat_VECTOR_VMAXU : BedrockRepeatEligibility<"vmaxu", 0, 0, 0>;
+def BRForm_repeat_VECTOR_VMULHS : BedrockRepeatEligibility<"vmulhs", 0, 0, 0>;
+def BRForm_repeat_VECTOR_VMULHU : BedrockRepeatEligibility<"vmulhu", 0, 0, 0>;
+def BRForm_repeat_VECTOR_VMULHSU : BedrockRepeatEligibility<"vmulhsu", 0, 0, 0>;
+def BRForm_repeat_VECTOR_VSHL : BedrockRepeatEligibility<"vshl", 0, 0, 0>;
+def BRForm_repeat_VECTOR_VSHR : BedrockRepeatEligibility<"vshr", 0, 0, 0>;
+def BRForm_repeat_VECTOR_VSAR : BedrockRepeatEligibility<"vsar", 0, 0, 0>;
+def BRForm_repeat_VECTOR_VROL : BedrockRepeatEligibility<"vrol", 0, 0, 0>;
+def BRForm_repeat_VECTOR_VROR : BedrockRepeatEligibility<"vror", 0, 0, 0>;
+def BRForm_repeat_VECTOR_VEXTZW : BedrockRepeatEligibility<"vextzw", 0, 0, 0>;
+def BRForm_repeat_VECTOR_VEXTSW : BedrockRepeatEligibility<"vextsw", 0, 0, 0>;
+def BRForm_repeat_VECTOR_VEXTZL : BedrockRepeatEligibility<"vextzl", 0, 0, 0>;
+def BRForm_repeat_VECTOR_VEXTSL : BedrockRepeatEligibility<"vextsl", 0, 0, 0>;
+def BRForm_repeat_VECTOR_VEXTZQ : BedrockRepeatEligibility<"vextzq", 0, 0, 0>;
+def BRForm_repeat_VECTOR_VEXTSQ : BedrockRepeatEligibility<"vextsq", 0, 0, 0>;
+def BRForm_repeat_VECTOR_VTRUNCB : BedrockRepeatEligibility<"vtruncb", 0, 0, 0>;
+def BRForm_repeat_VECTOR_VTRUNCW : BedrockRepeatEligibility<"vtruncw", 0, 0, 0>;
+def BRForm_repeat_VECTOR_VTRUNCL : BedrockRepeatEligibility<"vtruncl", 0, 0, 0>;
+def BRForm_repeat_VECTOR_VPERM : BedrockRepeatEligibility<"vperm", 0, 0, 0>;
+def BRForm_repeat_VECTOR_VZIPLO : BedrockRepeatEligibility<"vziplo", 0, 0, 0>;
+def BRForm_repeat_VECTOR_VZIPHI : BedrockRepeatEligibility<"vziphi", 0, 0, 0>;
+def BRForm_repeat_VECTOR_VUZIPLO : BedrockRepeatEligibility<"vuziplo", 0, 0, 0>;
+def BRForm_repeat_VECTOR_VUZIPHI : BedrockRepeatEligibility<"vuziphi", 0, 0, 0>;
+def BRForm_repeat_VECTOR_VTRNLO : BedrockRepeatEligibility<"vtrnlo", 0, 0, 0>;
+def BRForm_repeat_VECTOR_VTRNHI : BedrockRepeatEligibility<"vtrnhi", 0, 0, 0>;
+def BRForm_repeat_VECTOR_VSLICE : BedrockRepeatEligibility<"vslice", 0, 0, 0>;
+def BRForm_repeat_VECTOR_VSLIDEUP : BedrockRepeatEligibility<"vslideup", 0, 0, 0>;
+def BRForm_repeat_VECTOR_VSLIDEDN : BedrockRepeatEligibility<"vslidedn", 0, 0, 0>;
+def BRForm_repeat_VECTOR_VEXTRACT : BedrockRepeatEligibility<"vextract", 0, 0, 0>;
+def BRForm_repeat_VECTOR_VINSERT : BedrockRepeatEligibility<"vinsert", 0, 0, 0>;
+def BRForm_repeat_VECTOR_VREDADD : BedrockRepeatEligibility<"vredadd", 0, 0, 0>;
+def BRForm_repeat_VECTOR_VREDMINS : BedrockRepeatEligibility<"vredmins", 0, 0, 0>;
+def BRForm_repeat_VECTOR_VREDMINU : BedrockRepeatEligibility<"vredminu", 0, 0, 0>;
+def BRForm_repeat_VECTOR_VREDMAXS : BedrockRepeatEligibility<"vredmaxs", 0, 0, 0>;
+def BRForm_repeat_VECTOR_VREDMAXU : BedrockRepeatEligibility<"vredmaxu", 0, 0, 0>;
+def BRForm_repeat_VECTOR_VREDAND : BedrockRepeatEligibility<"vredand", 0, 0, 0>;
+def BRForm_repeat_VECTOR_VREDOR : BedrockRepeatEligibility<"vredor", 0, 0, 0>;
+def BRForm_repeat_VECTOR_VREDXOR : BedrockRepeatEligibility<"vredxor", 0, 0, 0>;
+def BRForm_repeat_VECTOR_PSEL : BedrockRepeatEligibility<"psel", 0, 0, 0>;
+def BRForm_repeat_VECTOR_PZIPLO : BedrockRepeatEligibility<"pziplo", 0, 0, 0>;
+def BRForm_repeat_VECTOR_PZIPHI : BedrockRepeatEligibility<"pziphi", 0, 0, 0>;
+def BRForm_repeat_VECTOR_PUZIPLO : BedrockRepeatEligibility<"puziplo", 0, 0, 0>;
+def BRForm_repeat_VECTOR_PUZIPHI : BedrockRepeatEligibility<"puziphi", 0, 0, 0>;
+def BRForm_repeat_VECTOR_PTRNLO : BedrockRepeatEligibility<"ptrnlo", 0, 0, 0>;
+def BRForm_repeat_VECTOR_PTRNHI : BedrockRepeatEligibility<"ptrnhi", 0, 0, 0>;
+def BRForm_repeat_VECTOR_PSLICE : BedrockRepeatEligibility<"pslice", 0, 0, 0>;
+def BRForm_repeat_VECTOR_VMOVZ : BedrockRepeatEligibility<"vmovz", 0, 0, 0>;
+def BRForm_repeat_VECTOR_PLOOP : BedrockRepeatEligibility<"ploop", 0, 0, 0>;
+def BRForm_repeat_VECTOR_PMOV : BedrockRepeatEligibility<"pmov", 0, 0, 0>;
+def BRForm_repeat_VECTORFP_VFDUP : BedrockRepeatEligibility<"vfdup", 0, 0, 0>;
+def BRForm_repeat_VECTORFP_VFNEG : BedrockRepeatEligibility<"vfneg", 0, 0, 0>;
+def BRForm_repeat_VECTORFP_VFABS : BedrockRepeatEligibility<"vfabs", 0, 0, 0>;
+def BRForm_repeat_VECTORFP_VFSQRT : BedrockRepeatEligibility<"vfsqrt", 0, 0, 0>;
+def BRForm_repeat_VECTORFP_VFROUND : BedrockRepeatEligibility<"vfround", 0, 0, 0>;
+def BRForm_repeat_VECTORFP_VFTRUNC : BedrockRepeatEligibility<"vftrunc", 0, 0, 0>;
+def BRForm_repeat_VECTORFP_VFFLOOR : BedrockRepeatEligibility<"vffloor", 0, 0, 0>;
+def BRForm_repeat_VECTORFP_VFCEIL : BedrockRepeatEligibility<"vfceil", 0, 0, 0>;
+def BRForm_repeat_VECTORFP_VFCLASS : BedrockRepeatEligibility<"vfclass", 0, 0, 0>;
+def BRForm_repeat_VECTORFP_VFCMPcc : BedrockRepeatEligibility<"vfcmp", 1, 0, 0>;
+def BRForm_repeat_VECTORFP_VFADD : BedrockRepeatEligibility<"vfadd", 0, 0, 0>;
+def BRForm_repeat_VECTORFP_VFSUB : BedrockRepeatEligibility<"vfsub", 0, 0, 0>;
+def BRForm_repeat_VECTORFP_VFMUL : BedrockRepeatEligibility<"vfmul", 0, 0, 0>;
+def BRForm_repeat_VECTORFP_VFMIN : BedrockRepeatEligibility<"vfmin", 0, 0, 0>;
+def BRForm_repeat_VECTORFP_VFMAX : BedrockRepeatEligibility<"vfmax", 0, 0, 0>;
+def BRForm_repeat_VECTORFP_VFDIV : BedrockRepeatEligibility<"vfdiv", 0, 0, 0>;
+def BRForm_repeat_VECTORFP_VFCOPYSIGN : BedrockRepeatEligibility<"vfcopysign", 0, 0, 0>;
+def BRForm_repeat_VECTORFP_VFCVTS : BedrockRepeatEligibility<"vfcvts", 0, 0, 0>;
+def BRForm_repeat_VECTORFP_VFCVTD : BedrockRepeatEligibility<"vfcvtd", 0, 0, 0>;
+def BRForm_repeat_VECTORFP_VFCVTUS : BedrockRepeatEligibility<"vfcvtus", 0, 0, 0>;
+def BRForm_repeat_VECTORFP_VFCVTUD : BedrockRepeatEligibility<"vfcvtud", 0, 0, 0>;
+def BRForm_repeat_VECTORFP_VFCVTL : BedrockRepeatEligibility<"vfcvtl", 0, 0, 0>;
+def BRForm_repeat_VECTORFP_VFCVTUL : BedrockRepeatEligibility<"vfcvtul", 0, 0, 0>;
+def BRForm_repeat_VECTORFP_VFCVTQ : BedrockRepeatEligibility<"vfcvtq", 0, 0, 0>;
+def BRForm_repeat_VECTORFP_VFCVTUQ : BedrockRepeatEligibility<"vfcvtuq", 0, 0, 0>;
+def BRForm_repeat_VECTORFP_VFCVTH : BedrockRepeatEligibility<"vfcvth", 0, 0, 0>;
+def BRForm_repeat_VECTORFP_VFCVTUH : BedrockRepeatEligibility<"vfcvtuh", 0, 0, 0>;
+def BRForm_repeat_VECTORFP_VFMADD : BedrockRepeatEligibility<"vfmadd", 0, 0, 0>;
+def BRForm_repeat_VECTORFP_VFMSUB : BedrockRepeatEligibility<"vfmsub", 0, 0, 0>;
+def BRForm_repeat_VECTORFP_VFNMADD : BedrockRepeatEligibility<"vfnmadd", 0, 0, 0>;
+def BRForm_repeat_VECTORFP_VFNMSUB : BedrockRepeatEligibility<"vfnmsub", 0, 0, 0>;
+def BRForm_repeat_VECTORFP_VFEXTRACT : BedrockRepeatEligibility<"vfextract", 0, 0, 0>;
+def BRForm_repeat_VECTORFP_VFINSERT : BedrockRepeatEligibility<"vfinsert", 0, 0, 0>;
+def BRForm_repeat_VECTORFP_VFREDADD : BedrockRepeatEligibility<"vfredadd", 0, 0, 0>;
+def BRForm_repeat_VECTORFP_VFREDMIN : BedrockRepeatEligibility<"vfredmin", 0, 0, 0>;
+def BRForm_repeat_VECTORFP_VFREDMAX : BedrockRepeatEligibility<"vfredmax", 0, 0, 0>;

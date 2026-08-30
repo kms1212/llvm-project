@@ -1290,18 +1290,17 @@ bool matchVectorMnemonic(const BedrockMC::VectorEncodingForm &Form,
          (Form.AllowedConditionMask & (1u << Condition)) != 0;
 }
 
-bool isVectorMnemonic(StringRef Mnemonic, bool &RequiresFPU) {
+bool isVectorMnemonic(StringRef Mnemonic, bool &RequiresVectorFP) {
   for (const BedrockMC::VectorEncodingForm &Form :
        BedrockMC::vectorEncodingForms()) {
     unsigned Suffix;
     unsigned Condition;
     if (!matchVectorMnemonic(Form, Mnemonic, Suffix, Condition))
       continue;
-    char SuffixChar = Form.SuffixField == '\0' ? '\0' : Form.Suffixes[Suffix];
-    RequiresFPU = SuffixChar == 'h' || SuffixChar == 's' || SuffixChar == 'd';
+    RequiresVectorFP = StringRef(Form.Owner) == "VECTORFP";
     return true;
   }
-  RequiresFPU = false;
+  RequiresVectorFP = false;
   return false;
 }
 
@@ -1359,7 +1358,8 @@ bool tryEncodeScalarTableInstruction(OperandVector &Operands,
                                      unsigned RequestedLength = 0) {
   if (Operands.empty() || !Operands[0]->isToken())
     return false;
-  StringRef Mnemonic = static_cast<const BedrockOperand &>(*Operands[0]).getToken();
+  StringRef Mnemonic =
+      static_cast<const BedrockOperand &>(*Operands[0]).getToken();
   auto GetOp = [&](unsigned I) -> const BedrockOperand & {
     return static_cast<const BedrockOperand &>(*Operands[I]);
   };
@@ -1376,8 +1376,9 @@ bool tryEncodeScalarTableInstruction(OperandVector &Operands,
       continue;
 
     SmallVector<PatternFieldValue, 8> Fields;
-    SmallVector<uint8_t, 8> EATail;
-    SmallVector<uint8_t, 8> Tail;
+    SmallVector<uint8_t, 8> DescriptorTail;
+    SmallVector<uint8_t, 8> PayloadTail;
+    unsigned StandalonePayloadBytes = 0;
     SmallVector<RawFixup, 4> CandidateFixups;
     if (Form.SuffixField != '\0')
       Fields.push_back({static_cast<char>(Form.SuffixField), Suffix});
@@ -1401,15 +1402,61 @@ bool tryEncodeScalarTableInstruction(OperandVector &Operands,
         break;
       case BedrockMC::ScalarOperandKind::EA: {
         uint8_t EA = 0;
-        Valid = encodeCompactEA(Op, Desc.AllowImmediateEA, EA, EATail,
-                                &CandidateFixups);
+        SmallVector<uint8_t, 10> EncodedEA;
+        SmallVector<RawFixup, 2> EAFixups;
+        Valid = encodeCompactEA(Op, Desc.AllowImmediateEA, EA, EncodedEA,
+                                &EAFixups);
+        unsigned DescriptorBytes = 0;
+        unsigned PayloadBytes = 0;
+        Valid =
+            Valid &&
+            BedrockMC::getCompactEALayout(EA, DescriptorBytes, PayloadBytes) &&
+            EncodedEA.size() == DescriptorBytes + PayloadBytes;
+        if (Valid) {
+          DescriptorTail.append(EncodedEA.begin(),
+                                EncodedEA.begin() + DescriptorBytes);
+          unsigned PayloadBase = PayloadTail.size();
+          PayloadTail.append(EncodedEA.begin() + DescriptorBytes,
+                             EncodedEA.end());
+          for (RawFixup Fixup : EAFixups) {
+            if (Fixup.Offset < DescriptorBytes) {
+              Valid = false;
+              break;
+            }
+            Fixup.Offset = PayloadBase + Fixup.Offset - DescriptorBytes;
+            CandidateFixups.push_back(Fixup);
+          }
+        }
         Value = EA;
         break;
       }
       case BedrockMC::ScalarOperandKind::FEA: {
         uint8_t EA = 0;
-        Valid = encodeCompactFEA(Op, Desc.AllowImmediateEA, Suffix, EA, EATail,
-                                 &CandidateFixups);
+        SmallVector<uint8_t, 10> EncodedEA;
+        SmallVector<RawFixup, 2> EAFixups;
+        Valid = encodeCompactFEA(Op, Desc.AllowImmediateEA, Suffix, EA,
+                                 EncodedEA, &EAFixups);
+        unsigned DescriptorBytes = 0;
+        unsigned PayloadBytes = 0;
+        Valid =
+            Valid &&
+            BedrockMC::getCompactEALayout(EA, DescriptorBytes, PayloadBytes) &&
+            EncodedEA.size() == DescriptorBytes + PayloadBytes;
+        if (Valid) {
+          DescriptorTail.append(EncodedEA.begin(),
+                                EncodedEA.begin() + DescriptorBytes);
+          unsigned PayloadBase = PayloadTail.size();
+          PayloadTail.append(EncodedEA.begin() + DescriptorBytes,
+                             EncodedEA.end());
+          for (RawFixup Fixup : EAFixups) {
+            if (Fixup.Offset < DescriptorBytes) {
+              Valid = false;
+              break;
+            }
+            Fixup.Offset = PayloadBase + Fixup.Offset - DescriptorBytes;
+            CandidateFixups.push_back(Fixup);
+          }
+        }
         Value = EA;
         break;
       }
@@ -1439,23 +1486,25 @@ bool tryEncodeScalarTableInstruction(OperandVector &Operands,
                           : (Imm >= 0 && isUIntN(Desc.Width, Imm)));
         if (Valid) {
           Value = static_cast<unsigned>(Imm);
-          appendLE(Tail, static_cast<uint64_t>(Imm), Desc.Width / 8);
+          appendLE(PayloadTail, static_cast<uint64_t>(Imm), Desc.Width / 8);
+          StandalonePayloadBytes += Desc.Width / 8;
         }
         break;
       }
       case BedrockMC::ScalarOperandKind::RegisterSelector: {
         int64_t Imm = 0;
         uint64_t Selector = 0;
-        Valid = (getConstantImm(Op, Imm) && Imm >= 0 &&
-                 isUIntN(Desc.Width, Imm));
+        Valid =
+            (getConstantImm(Op, Imm) && Imm >= 0 && isUIntN(Desc.Width, Imm));
         if (!Valid && Op.isToken())
-          Valid = BedrockMC::lookupRegisterSelector(
-              Desc.FixedValue, Op.getToken(), Selector);
+          Valid = BedrockMC::lookupRegisterSelector(Desc.FixedValue,
+                                                    Op.getToken(), Selector);
         else if (Valid)
           Selector = static_cast<uint64_t>(Imm);
         if (Valid) {
           Value = static_cast<unsigned>(Selector);
-          appendLE(Tail, Selector, Desc.Width / 8);
+          appendLE(PayloadTail, Selector, Desc.Width / 8);
+          StandalonePayloadBytes += Desc.Width / 8;
         }
         break;
       }
@@ -1495,9 +1544,12 @@ bool tryEncodeScalarTableInstruction(OperandVector &Operands,
 
     StringRef Pattern(Form.Pattern);
     uint64_t Payload = applyPatternValues64(Pattern, Fields);
-    if (Tail.size() != Form.FixedPayloadBytes)
+    if (StandalonePayloadBytes != Form.FixedPayloadBytes)
       continue;
-    EATail.append(Tail.begin(), Tail.end());
+    for (RawFixup &Fixup : CandidateFixups)
+      Fixup.Offset += DescriptorTail.size();
+    SmallVector<uint8_t, 16> Tail(DescriptorTail.begin(), DescriptorTail.end());
+    Tail.append(PayloadTail.begin(), PayloadTail.end());
     SmallVector<uint8_t, 16> CandidateBytes;
     bool Encoded = false;
     if (Pattern.size() == 7)
@@ -1505,15 +1557,15 @@ bool tryEncodeScalarTableInstruction(OperandVector &Operands,
     else if (Pattern.size() == 14)
       Encoded = BedrockMC::encodeShort(Payload, CandidateBytes);
     else
-      Encoded = encodePatternWithTail(Pattern, Payload, EATail, CandidateBytes,
+      Encoded = encodePatternWithTail(Pattern, Payload, Tail, CandidateBytes,
                                       &CandidateFixups);
     bool CandidateIsExact =
         RequestedLength != 0 && CandidateBytes.size() == RequestedLength;
-    bool BestIsExact = RequestedLength != 0 && BestBytes.size() == RequestedLength;
-    if (Encoded &&
-        (BestBytes.empty() || (CandidateIsExact && !BestIsExact) ||
-         (CandidateIsExact == BestIsExact &&
-          CandidateBytes.size() < BestBytes.size()))) {
+    bool BestIsExact =
+        RequestedLength != 0 && BestBytes.size() == RequestedLength;
+    if (Encoded && (BestBytes.empty() || (CandidateIsExact && !BestIsExact) ||
+                    (CandidateIsExact == BestIsExact &&
+                     CandidateBytes.size() < BestBytes.size()))) {
       BestBytes = std::move(CandidateBytes);
       BestFixups = std::move(CandidateFixups);
     }
@@ -1534,8 +1586,8 @@ bool tryEncodeVectorStepInstruction(OperandVector &Operands,
   const auto &MnemonicOp = static_cast<const BedrockOperand &>(*Operands[0]);
   StringRef Mnemonic = MnemonicOp.getToken();
   auto Parts = Mnemonic.rsplit('.');
-  bool IsGather = Parts.first == "vgather1";
-  bool IsScatter = Parts.first == "vscatter1";
+  bool IsGather = Parts.first == "vgather";
+  bool IsScatter = Parts.first == "vscatter";
   if ((!IsGather && !IsScatter) || Parts.second.size() != 1)
     return false;
   size_t SizePos = StringRef("bwlq").find(Parts.second.front());
@@ -1547,14 +1599,17 @@ bool tryEncodeVectorStepInstruction(OperandVector &Operands,
     return static_cast<const BedrockOperand &>(*Operands[I]);
   };
   unsigned Predicate;
-  if (!GetOp(1).isReg() || !getPRegNo(GetOp(1).getReg(), Predicate))
+  unsigned Completion;
+  if (!GetOp(1).isReg() || !getPRegNo(GetOp(1).getReg(), Predicate) ||
+      !GetOp(2).isReg() || !getPRegNo(GetOp(2).getReg(), Completion) ||
+      Predicate == Completion)
     return false;
 
-  unsigned MarkerIndex = IsGather ? 2 : 3;
+  unsigned MarkerIndex = IsGather ? 3 : 4;
   if (!GetOp(MarkerIndex).isToken())
     return false;
   StringRef Marker = GetOp(MarkerIndex).getToken();
-  unsigned VectorIndex = IsGather ? Operands.size() - 1 : 2;
+  unsigned VectorIndex = IsGather ? Operands.size() - 1 : 3;
   unsigned Vector;
   if (!GetOp(VectorIndex).isReg() ||
       !getVRegNo(GetOp(VectorIndex).getReg(), Vector))
@@ -1562,45 +1617,41 @@ bool tryEncodeVectorStepInstruction(OperandVector &Operands,
 
   unsigned FieldIndex = MarkerIndex + 1;
   SmallVector<PatternFieldValue, 8> Fields = {
-      {'z', Size}, {'p', Predicate}, {'v', Vector}};
+      {'z', Size}, {'p', Predicate}, {'c', Completion}, {'v', Vector}};
   SmallVector<uint8_t, 8> Tail;
   SmallVector<RawFixup, 2> LocalFixups;
   StringRef Pattern;
+  int AddressVector = -1;
 
   if (Marker == "__step_scalar_stride") {
     if (Operands.size() != 7)
       return false;
     unsigned Base;
-    unsigned Cursor;
     unsigned Stride;
     if (!GetOp(FieldIndex).isReg() ||
         !getRegNo(GetOp(FieldIndex).getReg(), Base) ||
         !GetOp(FieldIndex + 1).isReg() ||
-        !getRegNo(GetOp(FieldIndex + 1).getReg(), Cursor) ||
-        !GetOp(FieldIndex + 2).isReg() ||
-        !getRegNo(GetOp(FieldIndex + 2).getReg(), Stride))
+        !getRegNo(GetOp(FieldIndex + 1).getReg(), Stride))
       return false;
-    Fields.append({{'b', Base}, {'i', Cursor}, {'s', Stride}});
-    Pattern = IsGather ? "111111110000010000zz0bbbbppppiiiissssvvvvv"
-                       : "111111110000011000zz0bbbbppppiiiissssvvvvv";
+    Fields.append({{'b', Base}, {'s', Stride}});
+    Pattern = IsGather ? "111111110000010000zz0bbbbppppccccssssvvvvv"
+                       : "111111110000011000zz0bbbbppppccccssssvvvvv";
   } else if (Marker == "__step_vector") {
     unsigned Address;
-    unsigned Cursor;
     if (!GetOp(FieldIndex).isReg() ||
-        !getVRegNo(GetOp(FieldIndex).getReg(), Address) ||
-        !GetOp(FieldIndex + 1).isReg() ||
-        !getRegNo(GetOp(FieldIndex + 1).getReg(), Cursor))
+        !getVRegNo(GetOp(FieldIndex).getReg(), Address))
       return false;
-    Fields.append({{'x', Address}, {'i', Cursor}});
+    AddressVector = Address;
+    Fields.push_back({'x', Address});
     if (Operands.size() == 6) {
       if (Size != 2 && Size != 3)
         return false;
       if (IsGather)
-        Pattern = Size == 2 ? "111111110000010001000000ppppiiiivvvvvxxxxx"
-                            : "111111110000010001000001ppppiiiivvvvvxxxxx";
+        Pattern = Size == 2 ? "111111110000010001000000ppppccccvvvvvxxxxx"
+                            : "111111110000010001000001ppppccccvvvvvxxxxx";
       else
-        Pattern = Size == 2 ? "111111110000011001000000ppppiiiivvvvvxxxxx"
-                            : "111111110000011001000001ppppiiiivvvvvxxxxx";
+        Pattern = Size == 2 ? "111111110000011001000000ppppccccvvvvvxxxxx"
+                            : "111111110000011001000001ppppccccvvvvvxxxxx";
     } else {
       return false;
     }
@@ -1609,26 +1660,24 @@ bool tryEncodeVectorStepInstruction(OperandVector &Operands,
              Marker == "__step_vector_disp") {
     unsigned Base;
     unsigned Address;
-    unsigned Cursor;
     if (!GetOp(FieldIndex).isReg() ||
         !getRegNo(GetOp(FieldIndex).getReg(), Base) ||
         !GetOp(FieldIndex + 1).isReg() ||
-        !getVRegNo(GetOp(FieldIndex + 1).getReg(), Address) ||
-        !GetOp(FieldIndex + 2).isReg() ||
-        !getRegNo(GetOp(FieldIndex + 2).getReg(), Cursor))
+        !getVRegNo(GetOp(FieldIndex + 1).getReg(), Address))
       return false;
-    Fields.append({{'b', Base}, {'x', Address}, {'i', Cursor}});
+    AddressVector = Address;
+    Fields.append({{'b', Base}, {'x', Address}});
     if (Marker == "__step_vector_base") {
-      Pattern = IsGather ? "111111110000010010zzbbbbppppiiiivvvvvxxxxx"
-                         : "111111110000011010zzbbbbppppiiiivvvvvxxxxx";
+      Pattern = IsGather ? "111111110000010010zzbbbbppppccccvvvvvxxxxx"
+                         : "111111110000011010zzbbbbppppccccvvvvvxxxxx";
     } else if (Marker == "__step_vector_scaled") {
-      Pattern = IsGather ? "111111110000010011zzbbbbppppiiiivvvvvxxxxx"
-                         : "111111110000011011zzbbbbppppiiiivvvvvxxxxx";
+      Pattern = IsGather ? "111111110000010011zzbbbbppppccccvvvvvxxxxx"
+                         : "111111110000011011zzbbbbppppccccvvvvvxxxxx";
     } else {
       if (Operands.size() != 8)
         return false;
       int64_t Disp;
-      const BedrockOperand &DispOp = GetOp(FieldIndex + 3);
+      const BedrockOperand &DispOp = GetOp(FieldIndex + 2);
       if (!getConstantImm(DispOp, Disp))
         return false;
       unsigned WidthCode;
@@ -1657,15 +1706,15 @@ bool tryEncodeVectorStepInstruction(OperandVector &Operands,
       }
       appendLE(Tail, static_cast<uint64_t>(Disp), Width);
       static constexpr StringLiteral GatherPatterns[] = {
-          "111111110000010100zzbbbbppppiiiivvvvvxxxxx",
-          "111111110000010101zzbbbbppppiiiivvvvvxxxxx",
-          "111111110000010110zzbbbbppppiiiivvvvvxxxxx",
-          "111111110000010111zzbbbbppppiiiivvvvvxxxxx"};
+          "111111110000010100zzbbbbppppccccvvvvvxxxxx",
+          "111111110000010101zzbbbbppppccccvvvvvxxxxx",
+          "111111110000010110zzbbbbppppccccvvvvvxxxxx",
+          "111111110000010111zzbbbbppppccccvvvvvxxxxx"};
       static constexpr StringLiteral ScatterPatterns[] = {
-          "111111110000011100zzbbbbppppiiiivvvvvxxxxx",
-          "111111110000011101zzbbbbppppiiiivvvvvxxxxx",
-          "111111110000011110zzbbbbppppiiiivvvvvxxxxx",
-          "111111110000011111zzbbbbppppiiiivvvvvxxxxx"};
+          "111111110000011100zzbbbbppppccccvvvvvxxxxx",
+          "111111110000011101zzbbbbppppccccvvvvvxxxxx",
+          "111111110000011110zzbbbbppppccccvvvvvxxxxx",
+          "111111110000011111zzbbbbppppccccvvvvvxxxxx"};
       Pattern =
           IsGather ? GatherPatterns[WidthCode] : ScatterPatterns[WidthCode];
     }
@@ -1673,6 +1722,8 @@ bool tryEncodeVectorStepInstruction(OperandVector &Operands,
     return false;
   }
 
+  if (IsGather && AddressVector >= 0 && unsigned(AddressVector) == Vector)
+    return false;
   uint64_t Payload = applyPatternValues64(Pattern, Fields);
   if (!encodeXxlongWithTail(Payload, Tail, Bytes, &LocalFixups))
     return false;
@@ -1707,7 +1758,8 @@ bool tryEncodeVectorInstruction(OperandVector &Operands,
       Fields.push_back({static_cast<char>(Form.SuffixField), Suffix});
     if (Form.HasCondition)
       Fields.push_back({'c', Condition});
-    SmallVector<uint8_t, 16> Tail;
+    SmallVector<uint8_t, 8> DescriptorTail;
+    SmallVector<uint8_t, 16> PayloadTail;
     SmallVector<RawFixup, 4> LocalFixups;
     SmallVector<unsigned, 5> ExplicitValues;
     unsigned OperandIndex = 1;
@@ -1738,14 +1790,60 @@ bool tryEncodeVectorInstruction(OperandVector &Operands,
         break;
       case BedrockMC::VectorOperandKind::EA: {
         uint8_t EA = 0;
-        Valid = encodeCompactEA(Operand, Desc.AllowImmediateEA, EA, Tail,
-                                &LocalFixups);
+        SmallVector<uint8_t, 10> EncodedEA;
+        SmallVector<RawFixup, 2> EAFixups;
+        Valid = encodeCompactEA(Operand, Desc.AllowImmediateEA, EA, EncodedEA,
+                                &EAFixups);
+        unsigned DescriptorBytes = 0;
+        unsigned PayloadBytes = 0;
+        Valid =
+            Valid &&
+            BedrockMC::getCompactEALayout(EA, DescriptorBytes, PayloadBytes) &&
+            EncodedEA.size() == DescriptorBytes + PayloadBytes;
+        if (Valid) {
+          DescriptorTail.append(EncodedEA.begin(),
+                                EncodedEA.begin() + DescriptorBytes);
+          unsigned PayloadBase = PayloadTail.size();
+          PayloadTail.append(EncodedEA.begin() + DescriptorBytes,
+                             EncodedEA.end());
+          for (RawFixup Fixup : EAFixups) {
+            if (Fixup.Offset < DescriptorBytes) {
+              Valid = false;
+              break;
+            }
+            Fixup.Offset = PayloadBase + Fixup.Offset - DescriptorBytes;
+            LocalFixups.push_back(Fixup);
+          }
+        }
         Value = EA;
         break;
       }
       case BedrockMC::VectorOperandKind::VEA: {
         uint8_t EA = 0;
-        Valid = encodeVectorEA(Operand, EA, Tail, &LocalFixups);
+        SmallVector<uint8_t, 10> EncodedEA;
+        SmallVector<RawFixup, 2> EAFixups;
+        Valid = encodeVectorEA(Operand, EA, EncodedEA, &EAFixups);
+        unsigned DescriptorBytes = 0;
+        unsigned PayloadBytes = 0;
+        Valid =
+            Valid &&
+            BedrockMC::getVectorEALayout(EA, DescriptorBytes, PayloadBytes) &&
+            EncodedEA.size() == DescriptorBytes + PayloadBytes;
+        if (Valid) {
+          DescriptorTail.append(EncodedEA.begin(),
+                                EncodedEA.begin() + DescriptorBytes);
+          unsigned PayloadBase = PayloadTail.size();
+          PayloadTail.append(EncodedEA.begin() + DescriptorBytes,
+                             EncodedEA.end());
+          for (RawFixup Fixup : EAFixups) {
+            if (Fixup.Offset < DescriptorBytes) {
+              Valid = false;
+              break;
+            }
+            Fixup.Offset = PayloadBase + Fixup.Offset - DescriptorBytes;
+            LocalFixups.push_back(Fixup);
+          }
+        }
         Value = EA;
         break;
       }
@@ -1762,7 +1860,7 @@ bool tryEncodeVectorInstruction(OperandVector &Operands,
                       ? isIntN(Desc.Width, Immediate)
                       : isUIntN(Desc.Width, Immediate);
           if (Valid)
-            appendLE(Tail, static_cast<uint64_t>(Immediate), Width);
+            appendLE(PayloadTail, static_cast<uint64_t>(Immediate), Width);
         } else if (Operand.isImm()) {
           MCFixupKind Kind =
               Desc.Kind == BedrockMC::VectorOperandKind::TailSigned &&
@@ -1770,8 +1868,8 @@ bool tryEncodeVectorInstruction(OperandVector &Operands,
                       StringRef(Form.Mnemonic).starts_with("bp")
                   ? MCFixupKind(Bedrock::fixup_bedrock_pcrel32)
                   : getDataFixupKind(Width);
-          Valid =
-              appendExprTail(Operand.getImm(), Width, Tail, &LocalFixups, Kind);
+          Valid = appendExprTail(Operand.getImm(), Width, PayloadTail,
+                                 &LocalFixups, Kind);
         } else {
           Valid = false;
         }
@@ -1792,6 +1890,10 @@ bool tryEncodeVectorInstruction(OperandVector &Operands,
       continue;
 
     uint64_t Payload = applyPatternValues64(Form.Pattern, Fields);
+    for (RawFixup &Fixup : LocalFixups)
+      Fixup.Offset += DescriptorTail.size();
+    SmallVector<uint8_t, 24> Tail(DescriptorTail.begin(), DescriptorTail.end());
+    Tail.append(PayloadTail.begin(), PayloadTail.end());
     bool Encoded = false;
     switch (Form.encodingClass()) {
     case BedrockMC::VectorEncodingClass::Long:
@@ -2027,16 +2129,15 @@ bool BedrockAsmParser::matchAndEmitInstruction(SMLoc IDLoc, unsigned &Opcode,
   if (!EffectiveOperands.empty()) {
     const auto &MnemonicOp =
         static_cast<const BedrockOperand &>(*EffectiveOperands[0]);
-    bool RequiresVectorFPU = false;
+    bool RequiresVectorFP = false;
     if (MnemonicOp.isToken() &&
-        isVectorMnemonic(MnemonicOp.getToken(), RequiresVectorFPU)) {
+        isVectorMnemonic(MnemonicOp.getToken(), RequiresVectorFP)) {
       IsVectorInstruction = true;
       if (!getSTI().hasFeature(Bedrock::FeatureVector))
         return Error(IDLoc, "instruction requires the +vector feature");
-      if (RequiresVectorFPU && !getSTI().hasFeature(Bedrock::FeatureFPU))
-        return Error(
-            IDLoc,
-            "floating-point vector instruction requires the +fpu feature");
+      if (RequiresVectorFP &&
+          !getSTI().hasFeature(Bedrock::FeatureVectorFP))
+        return Error(IDLoc, "instruction requires the +vectorfp feature");
     }
     if (MnemonicOp.isToken() && isFPTRANSAMnemonic(MnemonicOp.getToken()) &&
         !getSTI().hasFeature(Bedrock::FeatureFPTRANSA))
@@ -2342,20 +2443,10 @@ bool BedrockAsmParser::parseVectorStepMemoryOperand(OperandVector &Operands) {
   unsigned FirstGPR;
   unsigned FirstVector;
   if (getVRegNo(First, FirstVector)) {
-    if (parseToken(AsmToken::LBrac, "expected '[' before vector cursor"))
-      return true;
-    MCRegister Cursor;
-    SMLoc CursorStart;
-    SMLoc CursorEnd;
-    unsigned CursorNo;
-    if (ParseReg(Cursor, CursorStart, CursorEnd) || !getRegNo(Cursor, CursorNo))
-      return Error(getLexer().getLoc(), "expected general register cursor");
-    if (parseToken(AsmToken::RBrac, "expected ']' after vector cursor") ||
-        parseToken(AsmToken::RBrac, "expected ']' after vector address"))
+    if (parseToken(AsmToken::RBrac, "expected ']' after vector address"))
       return true;
     Operands.push_back(BedrockOperand::createToken("__step_vector", Start));
     PushReg(First, FirstStart, FirstEnd);
-    PushReg(Cursor, CursorStart, CursorEnd);
     return false;
   }
   if (!getRegNo(First, FirstGPR))
@@ -2371,36 +2462,16 @@ bool BedrockAsmParser::parseVectorStepMemoryOperand(OperandVector &Operands) {
   unsigned SecondGPR;
   unsigned SecondVector;
   if (getRegNo(Second, SecondGPR)) {
-    if (parseToken(AsmToken::Star, "expected '*' before stride register"))
-      return true;
-    MCRegister Stride;
-    SMLoc StrideStart;
-    SMLoc StrideEnd;
-    unsigned StrideNo;
-    if (ParseReg(Stride, StrideStart, StrideEnd) || !getRegNo(Stride, StrideNo))
-      return Error(getLexer().getLoc(), "expected general stride register");
     if (parseToken(AsmToken::RBrac, "expected ']' after vector address"))
       return true;
     Operands.push_back(
         BedrockOperand::createToken("__step_scalar_stride", Start));
     PushReg(First, FirstStart, FirstEnd);
     PushReg(Second, SecondStart, SecondEnd);
-    PushReg(Stride, StrideStart, StrideEnd);
     return false;
   }
   if (!getVRegNo(Second, SecondVector))
     return Error(SecondStart, "expected general or vector address register");
-
-  if (parseToken(AsmToken::LBrac, "expected '[' before vector cursor"))
-    return true;
-  MCRegister Cursor;
-  SMLoc CursorStart;
-  SMLoc CursorEnd;
-  unsigned CursorNo;
-  if (ParseReg(Cursor, CursorStart, CursorEnd) || !getRegNo(Cursor, CursorNo))
-    return Error(getLexer().getLoc(), "expected general register cursor");
-  if (parseToken(AsmToken::RBrac, "expected ']' after vector cursor"))
-    return true;
 
   StringRef Marker = "__step_vector_base";
   if (parseOptionalToken(AsmToken::Star)) {
@@ -2440,7 +2511,6 @@ bool BedrockAsmParser::parseVectorStepMemoryOperand(OperandVector &Operands) {
   Operands.push_back(BedrockOperand::createToken(Marker, Start));
   PushReg(First, FirstStart, FirstEnd);
   PushReg(Second, SecondStart, SecondEnd);
-  PushReg(Cursor, CursorStart, CursorEnd);
   if (Disp)
     Operands.push_back(BedrockOperand::createImm(Disp, DispStart, DispEnd));
   return false;
@@ -2862,8 +2932,8 @@ bool BedrockAsmParser::parseInstruction(ParseInstructionInfo &Info,
     return false;
   }
 
-  bool IsVectorStep = StringRef(Mnemonic).starts_with("vgather1.") ||
-                      StringRef(Mnemonic).starts_with("vscatter1.");
+  bool IsVectorStep = StringRef(Mnemonic).starts_with("vgather.") ||
+                      StringRef(Mnemonic).starts_with("vscatter.");
   auto ParseOperand = [&]() {
     if (IsVectorStep && getLexer().is(AsmToken::LBrac))
       return parseVectorStepMemoryOperand(Operands);

@@ -731,6 +731,27 @@ static void getMemEAFromOperands(const MachineInstr *MI, unsigned BaseOp,
   llvm_unreachable("unknown Bedrock memory address kind");
 }
 
+static void appendEATailSections(uint8_t EA, ArrayRef<uint8_t> EncodedTail,
+                                 SmallVectorImpl<uint8_t> &DescriptorTail,
+                                 SmallVectorImpl<uint8_t> &PayloadTail) {
+  unsigned DescriptorBytes = 0;
+  unsigned PayloadBytes = 0;
+  if (!BedrockMC::getCompactEALayout(EA, DescriptorBytes, PayloadBytes) ||
+      EncodedTail.size() != DescriptorBytes + PayloadBytes)
+    report_fatal_error("invalid Bedrock effective-address tail");
+  DescriptorTail.append(EncodedTail.begin(),
+                        EncodedTail.begin() + DescriptorBytes);
+  PayloadTail.append(EncodedTail.begin() + DescriptorBytes, EncodedTail.end());
+}
+
+static SmallVector<uint8_t, 16>
+joinTailSections(ArrayRef<uint8_t> DescriptorTail,
+                 ArrayRef<uint8_t> PayloadTail) {
+  SmallVector<uint8_t, 16> Tail(DescriptorTail.begin(), DescriptorTail.end());
+  Tail.append(PayloadTail.begin(), PayloadTail.end());
+  return Tail;
+}
+
 static uint32_t getMovPayload(bool IsLoad, unsigned Size, uint8_t EA,
                               Register Reg) {
   bool IsLQ = Size >= 2;
@@ -5885,15 +5906,16 @@ void BedrockAsmPrinter::emitSelectedVectorInstruction(const MachineInstr *MI) {
 
   switch (MI->getOpcode()) {
   case Bedrock::VECTOR_BINARY: {
+    bool IsFP = Type(4) >= 5;
     switch (MI->getOperand(3).getImm()) {
     case BedrockVectorPseudo::Add:
-      Mnemonic = "vadd";
+      Mnemonic = IsFP ? "vfadd" : "vadd";
       break;
     case BedrockVectorPseudo::Sub:
-      Mnemonic = "vsub";
+      Mnemonic = IsFP ? "vfsub" : "vsub";
       break;
     case BedrockVectorPseudo::Mul:
-      Mnemonic = "vmul";
+      Mnemonic = IsFP ? "vfmul" : "vmul";
       break;
     case BedrockVectorPseudo::And:
       Mnemonic = "vand";
@@ -5905,7 +5927,7 @@ void BedrockAsmPrinter::emitSelectedVectorInstruction(const MachineInstr *MI) {
       Mnemonic = "vxor";
       break;
     case BedrockVectorPseudo::DivFP:
-      Mnemonic = "vdiv";
+      Mnemonic = "vfdiv";
       break;
     default:
       report_fatal_error("unsupported selected vector binary operation");
@@ -5923,7 +5945,8 @@ void BedrockAsmPrinter::emitSelectedVectorInstruction(const MachineInstr *MI) {
   case Bedrock::VECTOR_COMPARE: {
     const Kind Kinds[] = {Kind::Condition, Kind::Predicate, Kind::Vector,
                           Kind::Vector, Kind::Predicate};
-    Form = findVectorForm("vcmp", Class::ExtraLong, Kinds);
+    Form = findVectorForm(Type(4) >= 5 ? "vfcmp" : "vcmp",
+                          Class::ExtraLong, Kinds);
     if (!Form)
       report_fatal_error("missing selected vector comparison encoding");
     AddType(*Form, Type(4));
@@ -5984,7 +6007,7 @@ void BedrockAsmPrinter::emitSelectedVectorInstruction(const MachineInstr *MI) {
     bool IsFP = MI->getOpcode() == Bedrock::VECTOR_REDUCE_FP;
     const Kind FPKinds[] = {Kind::Predicate, Kind::Vector, Kind::FPR};
     const Kind IntegerKinds[] = {Kind::Predicate, Kind::Vector, Kind::GPR};
-    Form = findVectorForm("vredadd", Class::ExtraLong,
+    Form = findVectorForm(IsFP ? "vfredadd" : "vredadd", Class::ExtraLong,
                           IsFP ? ArrayRef<Kind>(FPKinds)
                                : ArrayRef<Kind>(IntegerKinds));
     if (!Form)
@@ -6882,12 +6905,19 @@ void BedrockAsmPrinter::emitMemMoveFold(const MachineInstr *LoadMI,
                                         MemAddrKind DstKind) {
   uint8_t SrcEA;
   uint8_t DstEA;
-  SmallVector<uint8_t, 8> Tail;
+  SmallVector<uint8_t, 8> DescriptorTail;
+  SmallVector<uint8_t, 8> PayloadTail;
+  SmallVector<uint8_t, 8> EncodedEA;
 
-  unsigned SrcTailStart = Tail.size();
-  getMemEAFromOperands(LoadMI, 1, SrcKind, SrcEA, Tail);
-  unsigned DstTailStart = Tail.size();
-  getMemEAFromOperands(StoreMI, 1, DstKind, DstEA, Tail);
+  getMemEAFromOperands(LoadMI, 1, SrcKind, SrcEA, EncodedEA);
+  unsigned SrcPayloadStart = PayloadTail.size();
+  appendEATailSections(SrcEA, EncodedEA, DescriptorTail, PayloadTail);
+  EncodedEA.clear();
+  getMemEAFromOperands(StoreMI, 1, DstKind, DstEA, EncodedEA);
+  unsigned DstPayloadStart = PayloadTail.size();
+  appendEATailSections(DstEA, EncodedEA, DescriptorTail, PayloadTail);
+  SmallVector<uint8_t, 16> Tail =
+      joinTailSections(DescriptorTail, PayloadTail);
 
   SmallVector<uint8_t, 16> Bytes;
   uint32_t Payload = applyPatternValues(
@@ -6897,10 +6927,12 @@ void BedrockAsmPrinter::emitMemMoveFold(const MachineInstr *LoadMI,
 
   SmallVector<RawExprFixup, 2> Fixups;
   if (SrcKind == MemAddrKind::Abs)
-    Fixups.push_back({4 + SrcTailStart, FK_Data_4,
+    Fixups.push_back({4u + unsigned(DescriptorTail.size()) + SrcPayloadStart,
+                      FK_Data_4,
                       lowerSymbolOperand(LoadMI->getOperand(1))});
   if (DstKind == MemAddrKind::Abs)
-    Fixups.push_back({4 + DstTailStart, FK_Data_4,
+    Fixups.push_back({4u + unsigned(DescriptorTail.size()) + DstPayloadStart,
+                      FK_Data_4,
                       lowerSymbolOperand(StoreMI->getOperand(1))});
 
   if (!Fixups.empty()) {
@@ -7349,9 +7381,14 @@ void BedrockAsmPrinter::emitConstStoreFold(const MachineInstr *ConstMI,
   }
 
   uint8_t DstEA;
-  SmallVector<uint8_t, 16> Tail;
-  appendLE(Tail, 0, 4);
-  getMemEAFromOperands(StoreMI, 1, AddrKind, DstEA, Tail);
+  SmallVector<uint8_t, 8> DescriptorTail;
+  SmallVector<uint8_t, 16> PayloadTail;
+  SmallVector<uint8_t, 8> DstTail;
+  appendLE(PayloadTail, 0, 4);
+  getMemEAFromOperands(StoreMI, 1, AddrKind, DstEA, DstTail);
+  appendEATailSections(DstEA, DstTail, DescriptorTail, PayloadTail);
+  SmallVector<uint8_t, 16> Tail =
+      joinTailSections(DescriptorTail, PayloadTail);
 
   SmallVector<uint8_t, 24> Bytes;
   if (!BedrockMC::encodeLong(getImmStorePayload(Size, 0x5d, DstEA), Tail,
@@ -7359,11 +7396,11 @@ void BedrockAsmPrinter::emitConstStoreFold(const MachineInstr *ConstMI,
     report_fatal_error("failed to encode Bedrock symbolic store fold");
 
   SmallVector<RawExprFixup, 2> Fixups;
-  Fixups.push_back(
-      {4, MCFixupKind(Bedrock::fixup_bedrock_imm32), SrcExpr});
+  Fixups.push_back({4u + unsigned(DescriptorTail.size()),
+                    MCFixupKind(Bedrock::fixup_bedrock_imm32), SrcExpr});
   if (AddrKind == MemAddrKind::Abs)
-    Fixups.push_back(
-        {8, FK_Data_4, lowerSymbolOperand(StoreMI->getOperand(1))});
+    Fixups.push_back({8u + unsigned(DescriptorTail.size()), FK_Data_4,
+                      lowerSymbolOperand(StoreMI->getOperand(1))});
   emitRawExpr(Bytes, Fixups);
 }
 
@@ -7436,15 +7473,20 @@ void BedrockAsmPrinter::emitImmStore(const MachineInstr *MI, unsigned Size,
 
   uint8_t SrcEA;
   uint8_t DstEA;
-  SmallVector<uint8_t, 16> Tail;
+  SmallVector<uint8_t, 8> DescriptorTail;
+  SmallVector<uint8_t, 16> PayloadTail;
   unsigned WidthCode;
-  appendSignedAuto(Imm, Tail, WidthCode);
+  appendSignedAuto(Imm, PayloadTail, WidthCode);
   SrcEA = 0x5b + WidthCode;
 
+  SmallVector<uint8_t, 8> DstTail;
   if (IsFrame)
-    getMemEAForSP(getFrameOffset(MI, 1), DstEA, Tail);
+    getMemEAForSP(getFrameOffset(MI, 1), DstEA, DstTail);
   else
-    getMemEAForReg(MI->getOperand(1).getReg(), DstEA, Tail);
+    getMemEAForReg(MI->getOperand(1).getReg(), DstEA, DstTail);
+  appendEATailSections(DstEA, DstTail, DescriptorTail, PayloadTail);
+  SmallVector<uint8_t, 16> Tail =
+      joinTailSections(DescriptorTail, PayloadTail);
 
   SmallVector<uint8_t, 24> Bytes;
   if (!BedrockMC::encodeLong(getImmStorePayload(Size, SrcEA, DstEA), Tail,
@@ -7461,11 +7503,16 @@ void BedrockAsmPrinter::emitImmStoreOffset(const MachineInstr *MI,
 
   uint8_t SrcEA;
   uint8_t DstEA;
-  SmallVector<uint8_t, 16> Tail;
+  SmallVector<uint8_t, 8> DescriptorTail;
+  SmallVector<uint8_t, 16> PayloadTail;
   unsigned WidthCode;
-  appendSignedAuto(Imm, Tail, WidthCode);
+  appendSignedAuto(Imm, PayloadTail, WidthCode);
   SrcEA = 0x5b + WidthCode;
-  getMemEAForRegOffset(BaseReg, Offset, DstEA, Tail);
+  SmallVector<uint8_t, 8> DstTail;
+  getMemEAForRegOffset(BaseReg, Offset, DstEA, DstTail);
+  appendEATailSections(DstEA, DstTail, DescriptorTail, PayloadTail);
+  SmallVector<uint8_t, 16> Tail =
+      joinTailSections(DescriptorTail, PayloadTail);
 
   SmallVector<uint8_t, 24> Bytes;
   if (!BedrockMC::encodeLong(getImmStorePayload(Size, SrcEA, DstEA), Tail,
@@ -7492,15 +7539,15 @@ void BedrockAsmPrinter::emitImmStoreAbs(const MachineInstr *MI, unsigned Size) {
   }
 
   uint8_t SrcEA;
-  SmallVector<uint8_t, 16> Tail;
+  SmallVector<uint8_t, 16> PayloadTail;
   unsigned WidthCode;
-  appendSignedAuto(Imm, Tail, WidthCode);
+  appendSignedAuto(Imm, PayloadTail, WidthCode);
   SrcEA = 0x5b + WidthCode;
-  appendLE(Tail, 0, 4);
+  appendLE(PayloadTail, 0, 4);
 
   SmallVector<uint8_t, 24> Bytes;
-  if (!BedrockMC::encodeLong(getImmStorePayload(Size, SrcEA, AddrInfo.EA), Tail,
-                             Bytes))
+  if (!BedrockMC::encodeLong(getImmStorePayload(Size, SrcEA, AddrInfo.EA),
+                             PayloadTail, Bytes))
     report_fatal_error("failed to encode Bedrock immediate absolute store");
   emitRawExpr(Bytes, 4 + getSignedAutoSize(Imm), AddrInfo.FixupKind, Expr);
 }

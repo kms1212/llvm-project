@@ -20,6 +20,10 @@ def FeatureFPTRANSA
                        [FeatureFPU]>;
 def FeatureVector : SubtargetFeature<"vector", "HasVector", "true",
                                      "Enable scalable-vector instructions">;
+def FeatureVectorFP
+    : SubtargetFeature<"vectorfp", "HasVectorFP", "true",
+                       "Enable scalable floating-point vector instructions",
+                       [FeatureFPU, FeatureVector]>;
 def : Proc<"generic", [FeatureFPU, FeatureVector]>;
 
 include "BedrockRegisterInfo.td"

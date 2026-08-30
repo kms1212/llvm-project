@@ -19,7 +19,7 @@ class PassBuilder;
 
 class BedrockTargetMachine : public CodeGenTargetMachineImpl {
   std::unique_ptr<TargetLoweringObjectFile> TLOF;
-  BedrockSubtarget Subtarget;
+  mutable StringMap<std::unique_ptr<BedrockSubtarget>> SubtargetMap;
 
 public:
   BedrockTargetMachine(const Target &T, const Triple &TT, StringRef CPU,
@@ -28,9 +28,7 @@ public:
                        std::optional<CodeModel::Model> CM, CodeGenOptLevel OL,
                        bool JIT);
 
-  const BedrockSubtarget *getSubtargetImpl(const Function &F) const override {
-    return &Subtarget;
-  }
+  const BedrockSubtarget *getSubtargetImpl(const Function &F) const override;
 
   TargetTransformInfo getTargetTransformInfo(const Function &F) const override;
 

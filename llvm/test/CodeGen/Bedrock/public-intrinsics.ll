@@ -30,14 +30,14 @@ declare i64 @llvm.bedrock.fclass.f64(double)
 ; CHECK: trace 4660
 ; CHECK: bkpt
 ; CHECK: yield
-; CHECK: wait
+; CHECK: relax
 ; CHECK: cpuid
 ; CHECK: rdpmc 22136
 ; CHECK: rdstatus
 ; DIS: trace 4660
 ; DIS: bkpt
 ; DIS: yield
-; DIS: wait
+; DIS: relax
 ; DIS: cpuid
 ; DIS: rdpmc 22136
 ; DIS: rdstatus

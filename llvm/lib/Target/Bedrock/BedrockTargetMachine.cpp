@@ -163,11 +163,30 @@ BedrockTargetMachine::BedrockTargetMachine(const Target &T, const Triple &TT,
     : CodeGenTargetMachineImpl(T, TT.computeDataLayout(), TT, CPU, FS, Options,
                                getEffectiveRelocModel(RM),
                                getBedrockCodeModel(CM), OL),
-      TLOF(std::make_unique<TargetLoweringObjectFileELF>()),
-      Subtarget(TT, CPU, FS, *this, Options, getCodeModel(), OL) {
+      TLOF(std::make_unique<TargetLoweringObjectFileELF>()) {
   initAsmInfo();
   setMachineOutliner(true);
   setSupportsDefaultOutlining(true);
+}
+
+const BedrockSubtarget *
+BedrockTargetMachine::getSubtargetImpl(const Function &F) const {
+  Attribute CPUAttr = F.getFnAttribute("target-cpu");
+  Attribute FSAttr = F.getFnAttribute("target-features");
+
+  std::string CPU =
+      CPUAttr.isValid() ? CPUAttr.getValueAsString().str() : TargetCPU;
+  std::string FS =
+      FSAttr.isValid() ? FSAttr.getValueAsString().str() : TargetFS;
+
+  std::string Key = CPU + FS;
+  auto &I = SubtargetMap[Key];
+  if (!I) {
+    resetTargetOptions(F);
+    I = std::make_unique<BedrockSubtarget>(
+        TargetTriple, CPU, FS, *this, Options, getCodeModel(), getOptLevel());
+  }
+  return I.get();
 }
 
 TargetTransformInfo

@@ -41,9 +41,8 @@ BedrockTargetLowering::BedrockTargetLowering(const TargetMachine &TM,
   addRegisterClass(MVT::f32, &Bedrock::FPR64RegClass);
   addRegisterClass(MVT::f64, &Bedrock::FPR64RegClass);
   if (Subtarget.hasVector()) {
-    for (MVT VT : {MVT::nxv16i8, MVT::nxv8i16, MVT::nxv4i32,
-                   MVT::nxv2i64, MVT::nxv8f16, MVT::nxv4f32,
-                   MVT::nxv2f64}) {
+    for (MVT VT :
+         {MVT::nxv16i8, MVT::nxv8i16, MVT::nxv4i32, MVT::nxv2i64}) {
       addRegisterClass(VT, &Bedrock::VRRegClass);
       setOperationAction(ISD::LOAD, VT, Legal);
       setOperationAction(ISD::STORE, VT, Legal);
@@ -54,14 +53,21 @@ BedrockTargetLowering::BedrockTargetLowering(const TargetMachine &TM,
       for (unsigned Opcode : {ISD::ADD, ISD::SUB, ISD::MUL, ISD::AND,
                               ISD::OR, ISD::XOR})
         setOperationAction(Opcode, VT, Legal);
-    for (MVT VT : {MVT::nxv8f16, MVT::nxv4f32, MVT::nxv2f64})
-      for (unsigned Opcode : {ISD::FADD, ISD::FSUB, ISD::FMUL, ISD::FDIV})
-        setOperationAction(Opcode, VT, Legal);
     for (MVT VT : {MVT::nxv16i1, MVT::nxv8i1, MVT::nxv4i1,
                    MVT::nxv2i1}) {
       addRegisterClass(VT, &Bedrock::PRRegClass);
       setOperationAction(ISD::LOAD, VT, Legal);
       setOperationAction(ISD::STORE, VT, Legal);
+    }
+  }
+  if (Subtarget.hasVectorFP()) {
+    for (MVT VT : {MVT::nxv8f16, MVT::nxv4f32, MVT::nxv2f64}) {
+      addRegisterClass(VT, &Bedrock::VRRegClass);
+      setOperationAction(ISD::LOAD, VT, Legal);
+      setOperationAction(ISD::STORE, VT, Legal);
+      setOperationAction(ISD::SETCC, VT, Legal);
+      for (unsigned Opcode : {ISD::FADD, ISD::FSUB, ISD::FMUL, ISD::FDIV})
+        setOperationAction(Opcode, VT, Legal);
     }
   }
 

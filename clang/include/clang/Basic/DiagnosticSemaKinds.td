@@ -3362,6 +3362,8 @@ def warn_attribute_arm_zt0_builtin_no_zt0_state : Warning<
   InGroup<DiagGroup<"undefined-arm-zt0">>;
 def err_sve_vector_in_non_sve_target : Error<
   "SVE vector type %0 cannot be used in a target without sve">;
+def err_bedrock_vector_type_requires_feature : Error<
+  "bedrock vector type %0 requires target feature %1">;
 def err_sve_vector_in_non_streaming_function : Error<
   "SVE vector type %0 cannot be used in a non-streaming function">;
 def err_sve_fixed_vector_in_streaming_function

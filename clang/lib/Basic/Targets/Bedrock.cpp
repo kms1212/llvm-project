@@ -45,7 +45,15 @@ bool BedrockTargetInfo::initFeatureMap(
         return Feature == "+vector" || Feature == "-vector";
       }))
     EffectiveFeatures.emplace_back("+vector");
-  return TargetInfo::initFeatureMap(Features, Diags, CPU, EffectiveFeatures);
+  if (!TargetInfo::initFeatureMap(Features, Diags, CPU, EffectiveFeatures))
+    return false;
+  if (Features.lookup("fptransa"))
+    Features["fpu"] = true;
+  if (Features.lookup("vectorfp")) {
+    Features["fpu"] = true;
+    Features["vector"] = true;
+  }
+  return true;
 }
 
 bool BedrockTargetInfo::handleTargetFeatures(std::vector<std::string> &Features,
@@ -63,9 +71,17 @@ bool BedrockTargetInfo::handleTargetFeatures(std::vector<std::string> &Features,
       HasVector = true;
     else if (Feature == "-vector")
       HasVector = false;
+    else if (Feature == "+vectorfp")
+      HasVectorFP = true;
+    else if (Feature == "-vectorfp")
+      HasVectorFP = false;
   }
   if (HasFPTRANSA)
     HasFPU = true;
+  if (HasVectorFP) {
+    HasFPU = true;
+    HasVector = true;
+  }
   return true;
 }
 

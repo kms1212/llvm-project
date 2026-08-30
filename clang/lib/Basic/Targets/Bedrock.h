@@ -23,6 +23,7 @@ class LLVM_LIBRARY_VISIBILITY BedrockTargetInfo : public TargetInfo {
   bool HasFPU = true;
   bool HasFPTRANSA = false;
   bool HasVector = true;
+  bool HasVectorFP = false;
 
 public:
   BedrockTargetInfo(const llvm::Triple &Triple, const TargetOptions &)
@@ -63,7 +64,8 @@ public:
   bool hasFeature(StringRef Feature) const override {
     return Feature == "bedrock" || (Feature == "fpu" && HasFPU) ||
            (Feature == "fptransa" && HasFPTRANSA) ||
-           (Feature == "vector" && HasVector);
+           (Feature == "vector" && HasVector) ||
+           (Feature == "vectorfp" && HasVectorFP);
   }
   bool
   initFeatureMap(llvm::StringMap<bool> &Features, DiagnosticsEngine &Diags,

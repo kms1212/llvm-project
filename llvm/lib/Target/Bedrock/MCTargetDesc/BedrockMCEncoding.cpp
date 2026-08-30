@@ -331,9 +331,22 @@ bool decodeCompactFEA(uint8_t EA, ArrayRef<uint8_t> Tail, unsigned &Consumed,
                       SmallString<64> &Text, bool AllowImmediate);
 bool isCompactEAImmediate(uint8_t EA);
 
+bool getOperandPayloadWidth(BedrockMC::ScalarOperandDesc Desc,
+                            unsigned &Width) {
+  switch (Desc.Kind) {
+  case BedrockMC::ScalarOperandKind::TailSigned:
+  case BedrockMC::ScalarOperandKind::TailUnsigned:
+  case BedrockMC::ScalarOperandKind::RegisterSelector:
+    Width = Desc.Width / 8;
+    return Width != 0;
+  default:
+    Width = 0;
+    return true;
+  }
+}
+
 bool decodeScalarTablePayload(uint64_t Payload, unsigned PatternWidth,
-                              ArrayRef<uint8_t> Tail,
-                              SmallString<128> &Text,
+                              ArrayRef<uint8_t> Tail, SmallString<128> &Text,
                               bool *PreserveEncodingWidth = nullptr) {
   for (const BedrockMC::ScalarEncodingForm &Form :
        BedrockMC::scalarEncodingForms()) {
@@ -371,7 +384,11 @@ bool decodeScalarTablePayload(uint64_t Payload, unsigned PatternWidth,
     unsigned ExplicitValues[4] = {};
     int64_t SemanticValues[4] = {};
     SmallString<64> DecodedEAs[4];
-    unsigned TailOffset = 0;
+    unsigned DescriptorOffsets[4] = {};
+    unsigned PayloadOffsets[4] = {};
+    unsigned DescriptorBytes[4] = {};
+    unsigned PayloadBytes[4] = {};
+    unsigned DescriptorEnd = 0;
     bool Valid = true;
     for (unsigned I = 0; I != Form.OperandCount; ++I) {
       BedrockMC::ScalarOperandDesc Desc = Form.operand(I);
@@ -379,29 +396,62 @@ bool decodeScalarTablePayload(uint64_t Payload, unsigned PatternWidth,
           Desc.Kind != BedrockMC::ScalarOperandKind::FEA)
         continue;
       unsigned Value = extractPatternField64(Pattern, Payload, Desc.Field);
-      unsigned Consumed = 0;
-      bool Decoded =
-          Desc.Kind == BedrockMC::ScalarOperandKind::FEA
-              ? decodeCompactFEA(Value, Tail.drop_front(TailOffset), Consumed,
-                                 DecodedEAs[I], Desc.AllowImmediateEA)
-              : decodeCompactEA(Value, Tail.drop_front(TailOffset), Consumed,
-                                DecodedEAs[I]);
-      if (Decoded && Desc.Kind == BedrockMC::ScalarOperandKind::EA &&
-          !Desc.AllowImmediateEA && isCompactEAImmediate(Value))
-        Decoded = false;
-      if (!Decoded || !Desc.allows(Value)) {
+      DescriptorOffsets[I] = DescriptorEnd;
+      if (!BedrockMC::getCompactEALayout(Value, DescriptorBytes[I],
+                                         PayloadBytes[I])) {
         Valid = false;
         break;
       }
-      TailOffset += Consumed;
+      DescriptorEnd += DescriptorBytes[I];
+    }
+    unsigned PayloadEnd = DescriptorEnd;
+    for (unsigned I = 0; Valid && I != Form.OperandCount; ++I) {
+      BedrockMC::ScalarOperandDesc Desc = Form.operand(I);
+      PayloadOffsets[I] = PayloadEnd;
+      unsigned Width = PayloadBytes[I];
+      if (Desc.Kind != BedrockMC::ScalarOperandKind::EA &&
+          Desc.Kind != BedrockMC::ScalarOperandKind::FEA &&
+          !getOperandPayloadWidth(Desc, Width)) {
+        Valid = false;
+        break;
+      }
+      PayloadEnd += Width;
+    }
+    if (!Valid || PayloadEnd != Tail.size())
+      continue;
+    for (unsigned I = 0; I != Form.OperandCount; ++I) {
+      BedrockMC::ScalarOperandDesc Desc = Form.operand(I);
+      if (Desc.Kind != BedrockMC::ScalarOperandKind::EA &&
+          Desc.Kind != BedrockMC::ScalarOperandKind::FEA)
+        continue;
+      unsigned Value = extractPatternField64(Pattern, Payload, Desc.Field);
+      SmallVector<uint8_t, 10> EATail;
+      EATail.append(Tail.begin() + DescriptorOffsets[I],
+                    Tail.begin() + DescriptorOffsets[I] + DescriptorBytes[I]);
+      EATail.append(Tail.begin() + PayloadOffsets[I],
+                    Tail.begin() + PayloadOffsets[I] + PayloadBytes[I]);
+      unsigned Consumed = 0;
+      bool Decoded =
+          Desc.Kind == BedrockMC::ScalarOperandKind::FEA
+              ? decodeCompactFEA(Value, EATail, Consumed, DecodedEAs[I],
+                                 Desc.AllowImmediateEA)
+              : decodeCompactEA(Value, EATail, Consumed, DecodedEAs[I]);
+      if (Decoded && Desc.Kind == BedrockMC::ScalarOperandKind::EA &&
+          !Desc.AllowImmediateEA && isCompactEAImmediate(Value))
+        Decoded = false;
+      if (!Decoded || Consumed != EATail.size() || !Desc.allows(Value)) {
+        Valid = false;
+        break;
+      }
     }
     if (!Valid)
       continue;
     for (unsigned I = 0; I != Form.OperandCount; ++I) {
       BedrockMC::ScalarOperandDesc Desc = Form.operand(I);
-      unsigned Value = Desc.Field == '\0'
-                           ? 0
-                           : extractPatternField64(Pattern, Payload, Desc.Field);
+      unsigned Value =
+          Desc.Field == '\0'
+              ? 0
+              : extractPatternField64(Pattern, Payload, Desc.Field);
       ExplicitValues[I] = Value;
       SemanticValues[I] = Value;
       if (Desc.Field != '\0' && !Desc.allows(Value)) {
@@ -450,12 +500,11 @@ bool decodeScalarTablePayload(uint64_t Payload, unsigned PatternWidth,
       case BedrockMC::ScalarOperandKind::TailSigned:
       case BedrockMC::ScalarOperandKind::TailUnsigned: {
         unsigned Width = Desc.Width / 8;
-        if (Width == 0 || TailOffset + Width > Tail.size()) {
+        if (Width == 0 || PayloadOffsets[I] + Width > Tail.size()) {
           Valid = false;
           break;
         }
-        uint64_t Raw = readLE(Tail, TailOffset, Width);
-        TailOffset += Width;
+        uint64_t Raw = readLE(Tail, PayloadOffsets[I], Width);
         if (Desc.Kind == BedrockMC::ScalarOperandKind::TailSigned) {
           SemanticValues[I] = signExtend(Raw, Desc.Width);
           appendText(Operands, Twine(SemanticValues[I]));
@@ -467,12 +516,11 @@ bool decodeScalarTablePayload(uint64_t Payload, unsigned PatternWidth,
       }
       case BedrockMC::ScalarOperandKind::RegisterSelector: {
         unsigned Width = Desc.Width / 8;
-        if (Width == 0 || TailOffset + Width > Tail.size()) {
+        if (Width == 0 || PayloadOffsets[I] + Width > Tail.size()) {
           Valid = false;
           break;
         }
-        uint64_t Raw = readLE(Tail, TailOffset, Width);
-        TailOffset += Width;
+        uint64_t Raw = readLE(Tail, PayloadOffsets[I], Width);
         SemanticValues[I] = Raw;
         appendText(Operands, Twine(Raw));
         break;
@@ -493,7 +541,7 @@ bool decodeScalarTablePayload(uint64_t Payload, unsigned PatternWidth,
       if (!Valid)
         break;
     }
-    if (!Valid || TailOffset != Tail.size())
+    if (!Valid)
       continue;
     if (Form.distinctOperandA() >= 0 && Form.distinctOperandB() >= 0 &&
         ExplicitValues[Form.distinctOperandA()] ==
@@ -508,24 +556,32 @@ bool decodeScalarTablePayload(uint64_t Payload, unsigned PatternWidth,
     if (PreserveEncodingWidth) {
       auto PrimaryBytes = [](unsigned Width) -> unsigned {
         switch (Width) {
-        case 7: return 1;
-        case 14: return 2;
-        case 18: return 3;
-        case 26: return 4;
-        case 34: return 5;
-        case 42: return 6;
-        default: return UINT_MAX;
+        case 7:
+          return 1;
+        case 14:
+          return 2;
+        case 18:
+          return 3;
+        case 26:
+          return 4;
+        case 34:
+          return 5;
+        case 42:
+          return 6;
+        default:
+          return UINT_MAX;
         }
       };
-      unsigned CurrentBytes = PrimaryBytes(PatternWidth) + Form.FixedPayloadBytes;
+      unsigned CurrentBytes =
+          PrimaryBytes(PatternWidth) + Form.FixedPayloadBytes;
       for (const BedrockMC::ScalarEncodingForm &Candidate :
            BedrockMC::scalarEncodingForms()) {
         unsigned CandidateBytes =
             PrimaryBytes(StringRef(Candidate.Pattern).size()) +
             Candidate.FixedPayloadBytes;
-        if (CandidateBytes >= CurrentBytes || Candidate.OperandCount != Form.OperandCount ||
-            (Candidate.ConditionField == '\0') !=
-                (Form.ConditionField == '\0'))
+        if (CandidateBytes >= CurrentBytes ||
+            Candidate.OperandCount != Form.OperandCount ||
+            (Candidate.ConditionField == '\0') != (Form.ConditionField == '\0'))
           continue;
         SmallString<48> CandidateMnemonic(Candidate.Mnemonic);
         if (Candidate.ConditionField != '\0') {
@@ -545,7 +601,8 @@ bool decodeScalarTablePayload(uint64_t Payload, unsigned PatternWidth,
           if (Mnemonic.size() != CandidateMnemonic.size() + 1 ||
               !Mnemonic.starts_with(CandidateMnemonic))
             continue;
-          size_t CandidateSuffix = StringRef(Candidate.Suffixes).find(Mnemonic.back());
+          size_t CandidateSuffix =
+              StringRef(Candidate.Suffixes).find(Mnemonic.back());
           if (CandidateSuffix == StringRef::npos || CandidateSuffix >= 16 ||
               (Candidate.AllowedSuffixMask & (1u << CandidateSuffix)) == 0)
             continue;
@@ -558,16 +615,17 @@ bool decodeScalarTablePayload(uint64_t Payload, unsigned PatternWidth,
               (SourceDesc.Kind == BedrockMC::ScalarOperandKind::TailSigned ||
                SourceDesc.Kind == BedrockMC::ScalarOperandKind::TailUnsigned) &&
               (CandidateDesc.Kind == BedrockMC::ScalarOperandKind::TailSigned ||
-               CandidateDesc.Kind == BedrockMC::ScalarOperandKind::TailUnsigned);
+               CandidateDesc.Kind ==
+                   BedrockMC::ScalarOperandKind::TailUnsigned);
           if ((!BothTails && SourceDesc.Kind != CandidateDesc.Kind) ||
               SourceDesc.FixedValue != CandidateDesc.FixedValue) {
             CandidateValid = false;
             break;
           }
           int64_t Value = SemanticValues[I];
-          bool Signed = CandidateDesc.Signed ||
-                        CandidateDesc.Kind ==
-                            BedrockMC::ScalarOperandKind::TailSigned;
+          bool Signed =
+              CandidateDesc.Signed ||
+              CandidateDesc.Kind == BedrockMC::ScalarOperandKind::TailSigned;
           if (CandidateDesc.Kind != BedrockMC::ScalarOperandKind::EA &&
               CandidateDesc.Kind != BedrockMC::ScalarOperandKind::FEA &&
               CandidateDesc.Width != 0 &&
@@ -893,6 +951,51 @@ bool isCompactEAImmediate(uint8_t EA) { return EA >= 0x5b && EA <= 0x5e; }
 
 } // end anonymous namespace
 
+bool BedrockMC::getCompactEALayout(uint8_t EA, unsigned &DescriptorBytes,
+                                   unsigned &PayloadBytes) {
+  DescriptorBytes = 0;
+  PayloadBytes = 0;
+  if (EA <= 0x0f || EA == 0x58)
+    return true;
+  if (EA >= 0x10 && EA <= 0x4f) {
+    PayloadBytes = 1u << ((EA >> 4) - 1);
+    return true;
+  }
+  if (EA >= 0x50 && EA <= 0x57) {
+    PayloadBytes = 1u << (EA & 0x3);
+    return true;
+  }
+  if (EA == 0x59 || EA == 0x5a) {
+    PayloadBytes = EA == 0x59 ? 4 : 8;
+    return true;
+  }
+  if (EA >= 0x5b && EA <= 0x5e) {
+    PayloadBytes = 1u << (EA - 0x5b);
+    return true;
+  }
+  if (EA >= 0x5f && EA <= 0x63) {
+    DescriptorBytes = 1;
+    PayloadBytes = EA == 0x63 ? 0 : 1u << (EA - 0x5f);
+    return true;
+  }
+  if (EA >= 0x64 && EA <= 0x68) {
+    DescriptorBytes = 2;
+    PayloadBytes = EA == 0x68 ? 0 : 1u << (EA - 0x64);
+    return true;
+  }
+  return false;
+}
+
+bool BedrockMC::getVectorEALayout(uint8_t EA, unsigned &DescriptorBytes,
+                                  unsigned &PayloadBytes) {
+  if (EA == 0x58 || (EA >= 0x5b && EA <= 0x5e)) {
+    DescriptorBytes = 1;
+    PayloadBytes = EA == 0x58 ? 0 : 1u << (EA - 0x5b);
+    return true;
+  }
+  return getCompactEALayout(EA, DescriptorBytes, PayloadBytes);
+}
+
 void BedrockMC::createRawInst(ArrayRef<uint8_t> Bytes, MCInst &Inst) {
   Inst.clear();
   Inst.setOpcode(Bedrock::RAW);
@@ -1041,31 +1144,36 @@ bool decodeVectorPayload(BedrockMC::VectorEncodingClass EncodingClass,
     }
 
     StringRef VectorMnemonic(Form.Mnemonic);
-    bool IsGather1 = VectorMnemonic.starts_with("vgather1");
-    bool IsScatter1 = VectorMnemonic.starts_with("vscatter1");
-    if (IsGather1 || IsScatter1) {
+    bool IsGather = VectorMnemonic.starts_with("vgather");
+    bool IsScatter = VectorMnemonic.starts_with("vscatter");
+    if (IsGather || IsScatter) {
       StringRef Pattern(Form.Pattern);
       unsigned Predicate = extractPatternField64(Pattern, Payload, 'p');
+      unsigned Completion = extractPatternField64(Pattern, Payload, 'c');
       unsigned Vector = extractPatternField64(Pattern, Payload, 'v');
-      unsigned Cursor = extractPatternField64(Pattern, Payload, 'i');
+      if (Predicate == Completion)
+        continue;
       SmallString<96> Address;
       if (Pattern.contains('s')) {
-        Address = formatv("[r{0} + r{1} * r{2}]",
-                          extractPatternField64(Pattern, Payload, 'b'), Cursor,
+        Address = formatv("[r{0} + r{1}]",
+                          extractPatternField64(Pattern, Payload, 'b'),
                           extractPatternField64(Pattern, Payload, 's'))
                       .str();
       } else if (!Pattern.contains('b')) {
-        Address = formatv("[v{0}[r{1}]]",
-                          extractPatternField64(Pattern, Payload, 'x'), Cursor)
-                      .str();
+        unsigned VectorAddress =
+            extractPatternField64(Pattern, Payload, 'x');
+        if (IsGather && VectorAddress == Vector)
+          continue;
+        Address = formatv("[v{0}]", VectorAddress).str();
       } else {
         unsigned Base = extractPatternField64(Pattern, Payload, 'b');
         unsigned VectorAddress = extractPatternField64(Pattern, Payload, 'x');
+        if (IsGather && VectorAddress == Vector)
+          continue;
         bool Unscaled =
-            Pattern == "111111110000010010zzbbbbppppiiiivvvvvxxxxx" ||
-            Pattern == "111111110000011010zzbbbbppppiiiivvvvvxxxxx";
-        Address =
-            formatv("[r{0} + v{1}[r{2}]", Base, VectorAddress, Cursor).str();
+            Pattern == "111111110000010010zzbbbbppppccccvvvvvxxxxx" ||
+            Pattern == "111111110000011010zzbbbbppppccccvvvvvxxxxx";
+        Address = formatv("[r{0} + v{1}", Base, VectorAddress).str();
         if (!Unscaled)
           Address += formatv(" * {0}", 1u << Suffix).str();
 
@@ -1111,19 +1219,56 @@ bool decodeVectorPayload(BedrockMC::VectorEncodingClass EncodingClass,
       }
       if ((!Pattern.contains('b') || Pattern.contains('s')) && !Tail.empty())
         return false;
-      if (IsGather1)
-        Text = formatv("{0}\tp{1}, {2}, v{3}", Mnemonic, Predicate, Address,
-                       Vector)
+      if (IsGather)
+        Text = formatv("{0}\tp{1}, p{2}, {3}, v{4}", Mnemonic, Predicate,
+                       Completion, Address, Vector)
                    .str();
       else
-        Text = formatv("{0}\tp{1}, v{2}, {3}", Mnemonic, Predicate, Vector,
-                       Address)
+        Text = formatv("{0}\tp{1}, p{2}, v{3}, {4}", Mnemonic, Predicate,
+                       Completion, Vector, Address)
                    .str();
       return true;
     }
 
     SmallString<96> Operands;
-    unsigned TailOffset = 0;
+    unsigned DescriptorOffsets[5] = {};
+    unsigned PayloadOffsets[5] = {};
+    unsigned DescriptorBytes[5] = {};
+    unsigned PayloadBytes[5] = {};
+    unsigned DescriptorEnd = 0;
+    for (unsigned I = 0; I != Form.OperandCount; ++I) {
+      const BedrockMC::VectorOperandDesc Operand = Form.operand(I);
+      if (Operand.Kind != VectorOperandKind::EA &&
+          Operand.Kind != VectorOperandKind::VEA)
+        continue;
+      unsigned Value =
+          extractPatternField64(Form.Pattern, Payload, Operand.Field);
+      DescriptorOffsets[I] = DescriptorEnd;
+      bool LayoutValid = Operand.Kind == VectorOperandKind::VEA
+                             ? BedrockMC::getVectorEALayout(
+                                   Value, DescriptorBytes[I], PayloadBytes[I])
+                             : BedrockMC::getCompactEALayout(
+                                   Value, DescriptorBytes[I], PayloadBytes[I]);
+      if (!LayoutValid) {
+        DescriptorEnd = UINT_MAX;
+        break;
+      }
+      DescriptorEnd += DescriptorBytes[I];
+    }
+    if (DescriptorEnd == UINT_MAX)
+      continue;
+    unsigned PayloadEnd = DescriptorEnd;
+    for (unsigned I = 0; I != Form.OperandCount; ++I) {
+      const BedrockMC::VectorOperandDesc Operand = Form.operand(I);
+      PayloadOffsets[I] = PayloadEnd;
+      unsigned Width = PayloadBytes[I];
+      if (Operand.Kind == VectorOperandKind::TailSigned ||
+          Operand.Kind == VectorOperandKind::TailUnsigned)
+        Width = Operand.Width / 8;
+      PayloadEnd += Width;
+    }
+    if (PayloadEnd != Tail.size())
+      continue;
     SmallVector<unsigned, 5> ExplicitValues;
     bool Valid = true;
     for (unsigned I = 0; I != Form.OperandCount; ++I) {
@@ -1161,24 +1306,32 @@ bool decodeVectorPayload(BedrockMC::VectorEncodingClass EncodingClass,
         }
         unsigned Consumed = 0;
         SmallString<64> EAText;
-        if (!decodeCompactEA(Value, Tail.drop_front(TailOffset), Consumed,
-                             EAText)) {
+        SmallVector<uint8_t, 10> EATail;
+        EATail.append(Tail.begin() + DescriptorOffsets[I],
+                      Tail.begin() + DescriptorOffsets[I] + DescriptorBytes[I]);
+        EATail.append(Tail.begin() + PayloadOffsets[I],
+                      Tail.begin() + PayloadOffsets[I] + PayloadBytes[I]);
+        if (!decodeCompactEA(Value, EATail, Consumed, EAText) ||
+            Consumed != EATail.size()) {
           Valid = false;
           break;
         }
-        TailOffset += Consumed;
         Operands += EAText;
         break;
       }
       case VectorOperandKind::VEA: {
         unsigned Consumed = 0;
         SmallString<64> EAText;
-        if (!decodeVectorEA(Value, Tail.drop_front(TailOffset), Consumed,
-                            EAText)) {
+        SmallVector<uint8_t, 10> EATail;
+        EATail.append(Tail.begin() + DescriptorOffsets[I],
+                      Tail.begin() + DescriptorOffsets[I] + DescriptorBytes[I]);
+        EATail.append(Tail.begin() + PayloadOffsets[I],
+                      Tail.begin() + PayloadOffsets[I] + PayloadBytes[I]);
+        if (!decodeVectorEA(Value, EATail, Consumed, EAText) ||
+            Consumed != EATail.size()) {
           Valid = false;
           break;
         }
-        TailOffset += Consumed;
         Operands += EAText;
         break;
       }
@@ -1188,12 +1341,12 @@ bool decodeVectorPayload(BedrockMC::VectorEncodingClass EncodingClass,
       case VectorOperandKind::TailSigned:
       case VectorOperandKind::TailUnsigned: {
         unsigned Width = Operand.Width / 8;
-        if (TailOffset > Tail.size() || Tail.size() - TailOffset < Width) {
+        if (PayloadOffsets[I] > Tail.size() ||
+            Tail.size() - PayloadOffsets[I] < Width) {
           Valid = false;
           break;
         }
-        uint64_t Raw = readLE(Tail, TailOffset, Width);
-        TailOffset += Width;
+        uint64_t Raw = readLE(Tail, PayloadOffsets[I], Width);
         if (Operand.Kind == VectorOperandKind::TailSigned)
           appendText(Operands, Twine(signExtend(Raw, Operand.Width)));
         else
@@ -1204,7 +1357,7 @@ bool decodeVectorPayload(BedrockMC::VectorEncodingClass EncodingClass,
       if (!Valid)
         break;
     }
-    if (!Valid || TailOffset != Tail.size())
+    if (!Valid)
       continue;
     if (Form.distinctOperandA() >= 0 && Form.distinctOperandB() >= 0 &&
         ExplicitValues[Form.distinctOperandA()] ==

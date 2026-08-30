@@ -25,6 +25,7 @@ class BedrockSubtarget : public BedrockGenSubtargetInfo {
   bool HasFPU = false;
   bool HasFPTRANSA = false;
   bool HasVector = false;
+  bool HasVectorFP = false;
   BedrockInstrInfo InstrInfo;
   BedrockFrameLowering FrameLowering;
   BedrockTargetLowering TLInfo;
@@ -42,6 +43,7 @@ public:
   bool hasFPU() const { return HasFPU; }
   bool hasFPTRANSA() const { return HasFPTRANSA; }
   bool hasVector() const { return HasVector; }
+  bool hasVectorFP() const { return HasVectorFP; }
   const BedrockInstrInfo *getInstrInfo() const override { return &InstrInfo; }
   const TargetFrameLowering *getFrameLowering() const override {
     return &FrameLowering;
