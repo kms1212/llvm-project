@@ -21,6 +21,10 @@ rep.eq r0, nop
 ; CHECK: error: invalid instruction mnemonic
 ; CHECK-NEXT: rep.eq r0, nop
 
+rept r0, (nop)
+; CHECK: error: expected operand
+; CHECK-NEXT: rept r0, (nop)
+
 dj.eq.l r1, [r2]
 ; CHECK: error: invalid instruction mnemonic
 ; CHECK-NEXT: dj.eq.l r1, [r2]

@@ -78,20 +78,9 @@ private:
   DenseSet<const MachineInstr *> ConstStoreConsts;
   DenseMap<const MachineInstr *, const MachineInstr *> MemMoveStores;
   DenseSet<const MachineInstr *> MemMoveLoads;
-  DenseMap<const MachineInstr *, const MachineInstr *> DJBranches;
-  DenseMap<const MachineInstr *, const MachineInstr *> DJTests;
-  DenseSet<const MachineInstr *> DJCounterInstrs;
-  DenseSet<const MachineInstr *> DJTestInstrs;
-  DenseSet<const MachineInstr *> DJ8Branches;
-  DenseSet<const MachineInstr *> DJ16Branches;
-  DenseMap<const MachineInstr *, const MachineInstr *> IJBranches;
-  DenseMap<const MachineInstr *, const MachineInstr *> IJCmps;
-  DenseSet<const MachineInstr *> IJCounterInstrs;
-  DenseSet<const MachineInstr *> IJCompareInstrs;
   DenseMap<const MachineInstr *, int64_t> ShortBranchDisplacements;
   DenseMap<const MachineInstr *, int64_t> MediumBranchDisplacements;
   DenseMap<const MachineInstr *, int64_t> CmpTestJumpDisplacements;
-  DenseMap<const MachineInstr *, int64_t> DJDisplacements;
   MCOperand lowerOperand(const MachineOperand &MO) const;
   const MCExpr *lowerSymbolOperand(const MachineOperand &MO) const;
   bool usesLocalTransferFixup(const MachineOperand &MO) const;
@@ -223,8 +212,6 @@ private:
   void emitStackAdjust(const MachineInstr *MI, bool IsDown);
   void emitBranch(const MachineInstr *MI, bool IsCond);
   void emitCmpTestJump(const MachineInstr *MI);
-  void emitDJ(const MachineInstr *MI);
-  void emitIJ(const MachineInstr *MI);
   void emitRegOffsetAddress(const MachineInstr *MI);
   void emitScaledIndexAddress(const MachineInstr *MI);
   void emitMemMoveFold(const MachineInstr *LoadMI,
@@ -4119,11 +4106,13 @@ static bool shouldPreferCmpTestJumpOverShortSplit(const MachineFunction &MF) {
          !MF.getFunction().hasOptSize();
 }
 
-static bool isDJCandidate(const MachineInstr &DecMI, const MachineInstr &TestMI,
-                          const MachineInstr &BranchMI) {
+static bool isDJLoopControlSequence(const MachineInstr &DecMI,
+                                    const MachineInstr &TestMI,
+                                    const MachineInstr &BranchMI) {
   if (DecMI.getOpcode() != Bedrock::DECQ3r ||
       TestMI.getOpcode() != Bedrock::TESTQrr ||
-      BranchMI.getOpcode() != Bedrock::BRCC || BranchMI.getOperand(1).getImm() != 0x3)
+      BranchMI.getOpcode() != Bedrock::BRCC ||
+      BranchMI.getOperand(1).getImm() != 0x3)
     return false;
 
   Register CounterReg = DecMI.getOperand(0).getReg();
@@ -4133,8 +4122,9 @@ static bool isDJCandidate(const MachineInstr &DecMI, const MachineInstr &TestMI,
          TestMI.getOperand(1).getReg() == CounterReg;
 }
 
-static bool isIJCandidate(const MachineInstr &IncMI, const MachineInstr &CmpMI,
-                          const MachineInstr &BranchMI) {
+static bool isIJLoopControlSequence(const MachineInstr &IncMI,
+                                    const MachineInstr &CmpMI,
+                                    const MachineInstr &BranchMI) {
   if (IncMI.getOpcode() != Bedrock::INCQ3r ||
       CmpMI.getOpcode() != Bedrock::CMPQrr ||
       BranchMI.getOpcode() != Bedrock::BRCC)
@@ -4568,17 +4558,6 @@ void BedrockAsmPrinter::collectCmpTestJumpBranches(const MachineFunction &MF) {
   ConstStoreConsts.clear();
   MemMoveStores.clear();
   MemMoveLoads.clear();
-  DJBranches.clear();
-  DJTests.clear();
-  DJCounterInstrs.clear();
-  DJTestInstrs.clear();
-  DJ8Branches.clear();
-  DJ16Branches.clear();
-  DJDisplacements.clear();
-  IJBranches.clear();
-  IJCmps.clear();
-  IJCounterInstrs.clear();
-  IJCompareInstrs.clear();
 
   collectZeroMemStores(MF);
   collectConstStores(MF);
@@ -4634,12 +4613,14 @@ void BedrockAsmPrinter::collectCmpTestJumpBranches(const MachineFunction &MF) {
         auto PrevI = std::prev(I);
         while (PrevI != MBB.begin() && PrevI->isDebugInstr())
           --PrevI;
-        // DJ/IJ memory EAs read a Q target. A BRCC target is a direct label, so
-        // keep these sequences scalar instead of treating its displacement as
-        // a memory control-target EA.
+        // DJcc/IJcc take a Q-valued target from an EA, while BRCC takes a
+        // direct label. They also test flags produced by their own decrement
+        // or increment, not the flags produced by this separate TEST/CMP.
+        // Keep these sequences scalar: a printer-only fold cannot preserve
+        // either contract.
         if (!PrevI->isDebugInstr() &&
-            (isDJCandidate(*PrevI, *I, *BranchI) ||
-             isIJCandidate(*PrevI, *I, *BranchI))) {
+            (isDJLoopControlSequence(*PrevI, *I, *BranchI) ||
+             isIJLoopControlSequence(*PrevI, *I, *BranchI))) {
           continue;
         }
         const MachineInstr *CopyMI = nullptr;
@@ -4753,16 +4734,6 @@ BedrockAsmPrinter::getInstSizeForBranchLayout(const MachineInstr &MI) const {
   }
   if (CmpTestJumpBranches.contains(&MI))
     return (CmpTestJump8Branches.contains(&MI) ? 5 : 6);
-  if (DJCounterInstrs.contains(&MI) || DJTestInstrs.contains(&MI))
-    return 0;
-  if (DJBranches.contains(&MI))
-    return 0 +
-           (DJ8Branches.contains(&MI) ? 5
-                                      : (DJ16Branches.contains(&MI) ? 6 : 8));
-  if (IJCounterInstrs.contains(&MI) || IJCompareInstrs.contains(&MI))
-    return 0;
-  if (IJBranches.contains(&MI))
-    return 9;
   unsigned AtomicSize;
   StringRef AtomicPattern;
   bool IsCmpXchg;
@@ -5478,9 +5449,6 @@ void BedrockAsmPrinter::computeShortBranches(const MachineFunction &MF) {
   MediumBranchDisplacements.clear();
   CmpTestJump8Branches.clear();
   CmpTestJumpDisplacements.clear();
-  DJ8Branches.clear();
-  DJ16Branches.clear();
-  DJDisplacements.clear();
 
   const bool PreferCmpTestJumpOverShortSplit =
       shouldPreferCmpTestJumpOverShortSplit(MF);
@@ -5494,50 +5462,6 @@ void BedrockAsmPrinter::computeShortBranches(const MachineFunction &MF) {
     for (const MachineBasicBlock &MBB : MF) {
       uint64_t Offset = BlockOffsets[MBB.getNumber()];
       for (const MachineInstr &MI : MBB) {
-        if (IJBranches.contains(&MI)) {
-          Offset += getInstSizeForBranchLayout(MI);
-          continue;
-        }
-        if (DJBranches.contains(&MI)) {
-          const MachineBasicBlock *TargetMBB = MI.getOperand(0).getMBB();
-          int64_t Disp =
-              static_cast<int64_t>(BlockOffsets[TargetMBB->getNumber()]) -
-              static_cast<int64_t>(Offset);
-          if (isInt<8>(Disp)) {
-            if (!DJ8Branches.contains(&MI)) {
-              DJ8Branches.insert(&MI);
-              DJ16Branches.erase(&MI);
-              Changed = true;
-            }
-          } else if (DJ8Branches.erase(&MI)) {
-            Changed = true;
-          }
-
-          if (!isInt<8>(Disp) && isInt<16>(Disp)) {
-            if (!DJ16Branches.contains(&MI)) {
-              DJ16Branches.insert(&MI);
-              Changed = true;
-            }
-          } else if (DJ16Branches.erase(&MI)) {
-            Changed = true;
-          }
-
-          if (!isInt<32>(Disp)) {
-            if (const MachineInstr *DecMI = DJBranches.lookup(&MI))
-              DJCounterInstrs.erase(DecMI);
-            if (const MachineInstr *TestMI = DJTests.lookup(&MI))
-              DJTestInstrs.erase(TestMI);
-            DJBranches.erase(&MI);
-            DJTests.erase(&MI);
-            DJ8Branches.erase(&MI);
-            DJ16Branches.erase(&MI);
-            Changed = true;
-          }
-
-          Offset += getInstSizeForBranchLayout(MI);
-          continue;
-        }
-
         if (CmpTestJumpBranches.contains(&MI)) {
           const MachineBasicBlock *TargetMBB = MI.getOperand(0).getMBB();
           if (!PreferCmpTestJumpOverShortSplit) {
@@ -5630,21 +5554,6 @@ void BedrockAsmPrinter::computeShortBranches(const MachineFunction &MF) {
               "Bedrock cmpj/testj imm16 displacement out of range");
         }
         CmpTestJumpDisplacements[&MI] = Disp;
-      } else if (DJBranches.contains(&MI)) {
-        const MachineBasicBlock *TargetMBB = MI.getOperand(0).getMBB();
-        int64_t Disp =
-            static_cast<int64_t>(BlockOffsets[TargetMBB->getNumber()]) -
-            static_cast<int64_t>(Offset);
-        if (DJ8Branches.contains(&MI)) {
-          if (!isInt<8>(Disp))
-            report_fatal_error("Bedrock djt disp8 out of range");
-        } else if (DJ16Branches.contains(&MI)) {
-          if (!isInt<16>(Disp))
-            report_fatal_error("Bedrock djt disp16 out of range");
-        } else if (!isInt<32>(Disp)) {
-          report_fatal_error("Bedrock djt disp32 out of range");
-        }
-        DJDisplacements[&MI] = Disp;
       } else if (ShortBranches.contains(&MI)) {
         const MachineBasicBlock *TargetMBB = MI.getOperand(0).getMBB();
         int64_t Disp = static_cast<int64_t>(BlockOffsets[TargetMBB->getNumber()]) -
@@ -8312,91 +8221,6 @@ void BedrockAsmPrinter::emitCmpTestJump(const MachineInstr *MI) {
       Expr);
 }
 
-void BedrockAsmPrinter::emitDJ(const MachineInstr *MI) {
-  const MachineInstr *DecMI = DJBranches.lookup(MI);
-  if (!DecMI)
-    report_fatal_error("missing Bedrock djt counter instruction");
-
-  Register CounterReg = DecMI->getOperand(0).getReg();
-  const MachineOperand &Target = MI->getOperand(0);
-  const MCExpr *Expr = lowerSymbolOperand(Target);
-
-  if (OutStreamer->hasRawTextSupport()) {
-    SmallString<96> Text;
-    raw_svector_ostream OS(Text);
-    OS << "\tdjt\t" << BedrockInstPrinter::getRegisterName(CounterReg)
-       << ", [pc + ";
-    MAI->printExpr(OS, *Expr);
-    OS << "]";
-    OutStreamer->emitRawText(OS.str());
-    return;
-  }
-
-  auto DispIt = DJDisplacements.find(MI);
-  if (DispIt == DJDisplacements.end())
-    report_fatal_error("missing Bedrock djt displacement");
-
-  unsigned WidthCode = DJ8Branches.contains(MI) ? 0
-                       : DJ16Branches.contains(MI) ? 1
-                                                    : 2;
-  unsigned Width = WidthCode == 0 ? 1 : (WidthCode == 1 ? 2 : 4);
-  SmallVector<uint8_t, 4> Tail(Width, 0);
-
-  PatternFieldValue Fields[] = {
-      {'c', 0},
-      {'r', getGPRNo(CounterReg)},
-      {'e', 0x54 + WidthCode},
-  };
-  SmallVector<uint8_t, 8> Bytes;
-  uint32_t Payload =
-      applyPatternValues("11110110100ccccrrrreeeeeee", Fields);
-  if (!BedrockMC::encodeLong(Payload, Tail, Bytes))
-    report_fatal_error("failed to encode Bedrock djt");
-  MCFixupKind Kind = MCFixupKind(
-      Width == 1   ? Bedrock::fixup_bedrock_pcrel8_local
-      : Width == 2 ? Bedrock::fixup_bedrock_pcrel16_local
-                   : Bedrock::fixup_bedrock_pcrel32_local);
-  emitRawExpr(Bytes, /*FixupOffset=*/Bytes.size() - Width, Kind, Expr);
-}
-
-void BedrockAsmPrinter::emitIJ(const MachineInstr *MI) {
-  const MachineInstr *IncMI = IJBranches.lookup(MI);
-  const MachineInstr *CmpMI = IJCmps.lookup(MI);
-  if (!IncMI || !CmpMI)
-    report_fatal_error("missing Bedrock ij instruction components");
-
-  Register IndexReg = IncMI->getOperand(0).getReg();
-  Register BoundReg = CmpMI->getOperand(0).getReg();
-  unsigned Cond = MI->getOperand(1).getImm();
-  const MCExpr *Expr = lowerSymbolOperand(MI->getOperand(0));
-
-  if (OutStreamer->hasRawTextSupport()) {
-    SmallString<112> Text;
-    raw_svector_ostream OS(Text);
-    OS << "\tij" << getCondSuffix(Cond) << "\t"
-       << BedrockInstPrinter::getRegisterName(IndexReg) << ", "
-       << BedrockInstPrinter::getRegisterName(BoundReg) << ", [pc + ";
-    MAI->printExpr(OS, *Expr);
-    OS << "]";
-    OutStreamer->emitRawText(OS.str());
-    return;
-  }
-
-  constexpr uint8_t EA = 0x56; // [pc + disp32]
-  uint64_t Payload = applyPatternValues64(
-      "111111000100110cccciiiibbbbeeeeeee",
-      {{'c', Cond},
-       {'i', getGPRNo(IndexReg)},
-       {'b', getGPRNo(BoundReg)},
-       {'e', EA}});
-  SmallVector<uint8_t, 4> Tail(4, 0);
-  SmallVector<uint8_t, 12> Bytes;
-  if (!BedrockMC::encodeExtraLong(Payload, Tail, Bytes))
-    report_fatal_error("failed to encode Bedrock ij instruction");
-  emitRawExpr(Bytes, /*FixupOffset=*/5,
-              MCFixupKind(Bedrock::fixup_bedrock_pcrel32_local), Expr);
-}
-
 void BedrockAsmPrinter::emitSetCC(const MachineInstr *MI) {
   Register DstReg = MI->getOperand(0).getReg();
   unsigned Cond = MI->getOperand(1).getImm();
@@ -8942,10 +8766,6 @@ void BedrockAsmPrinter::emitInstruction(const MachineInstr *MI) {
     emitPredicateStackAccess(MI, /*IsLoad=*/true);
     return;
   }
-  if (DJCounterInstrs.contains(MI) || DJTestInstrs.contains(MI))
-    return;
-  if (IJCounterInstrs.contains(MI) || IJCompareInstrs.contains(MI))
-    return;
   if (CmpTestJumpCompareInstrs.contains(MI))
     return;
   if (BitTestSuppressedInstrs.contains(MI))
@@ -10164,14 +9984,6 @@ void BedrockAsmPrinter::emitInstruction(const MachineInstr *MI) {
     emitBranch(MI, /*IsCond=*/false);
     return;
   case Bedrock::BRCC:
-    if (IJBranches.contains(MI)) {
-      emitIJ(MI);
-      return;
-    }
-    if (DJBranches.contains(MI)) {
-      emitDJ(MI);
-      return;
-    }
     if (CmpTestJumpBranches.contains(MI)) {
       emitCmpTestJump(MI);
       return;

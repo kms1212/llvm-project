@@ -953,9 +953,10 @@ static bool selectCompareImmediate(SelectionDAG *DAG, SDNode *N, SDLoc DL) {
   if (!CN)
     return false;
 
-  // Keep an increment-and-bound comparison in register form so the late
-  // printer can select IJcc.  The constant materialization is loop invariant
-  // and MachineLICM can hoist it out of the loop.
+  // Keep unit-increment comparisons in register form. When one feeds a direct
+  // CFG branch, the late branch collector deliberately leaves it scalar:
+  // IJcc tests the increment's flags and takes a Q-valued target. The constant
+  // materialization is loop invariant and MachineLICM can hoist it.
   auto IsUnitIncrement = [](SDValue V) {
     if (V.getOpcode() != ISD::ADD)
       return false;

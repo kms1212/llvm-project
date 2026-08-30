@@ -624,7 +624,6 @@ bool getConditionSuffix(StringRef Mnemonic, StringRef Base, unsigned &Cond) {
 bool getRepeatCondition(StringRef Mnemonic, unsigned &Cond) {
   int Value = StringSwitch<int>(Mnemonic)
                   .Case("rep", 0x0)
-                  .Case("rept", 0x0)
                   .Case("repeq", 0x2)
                   .Case("repz", 0x2)
                   .Case("repne", 0x3)

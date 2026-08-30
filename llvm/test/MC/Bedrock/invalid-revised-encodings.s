@@ -25,6 +25,9 @@
 ; RUN: echo '[0xc7,0xd1,0x01,0x12]' \
 ; RUN:   | not llvm-mc -triple=bedrock -disassemble -show-encoding 2>&1 \
 ; RUN:   | FileCheck %s --check-prefix=DIRECT-DJ-FALSE
+; RUN: echo '[0xc3,0xbe,0x10,0x01]' \
+; RUN:   | not llvm-mc -triple=bedrock -disassemble -show-encoding 2>&1 \
+; RUN:   | FileCheck %s --check-prefix=DIRECT-REP-FALSE
 ; RUN: echo '[0xcb,0xf0,0x20,0x11,0x23]' \
 ; RUN:   | not llvm-mc -triple=bedrock -disassemble -show-encoding 2>&1 \
 ; RUN:   | FileCheck %s --check-prefix=DIRECT-IJ-FALSE
@@ -70,6 +73,7 @@
 ; OLD-CMPXCHG: warning: invalid instruction encoding
 ; MOVCC-IMMEDIATE-DEST: warning: invalid instruction encoding
 ; DIRECT-DJ-FALSE: warning: invalid instruction encoding
+; DIRECT-REP-FALSE: warning: invalid instruction encoding
 ; DIRECT-IJ-FALSE: warning: invalid instruction encoding
 ; MOVUC-IMMEDIATE-DEST: warning: invalid instruction encoding
 ; IMMEDIATE-DEST: warning: invalid instruction encoding
@@ -101,6 +105,12 @@ djf r1, r2
 
 ijf r1, r2, r3
 ; CHECK: error: invalid operand for instruction
+
+rep r0, (ret)
+; CHECK: error: instruction is not eligible as a repeat body
+
+repeq r0, (movt.q r1, r2)
+; CHECK: error: instruction is not eligible as a repeat body
 
 pop cs
 ; CHECK: error: invalid operand for instruction
